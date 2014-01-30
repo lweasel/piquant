@@ -9,7 +9,8 @@
 """
 
 from docopt import docopt
-from schema import Schema, SchemaError
+from options import validate_file_option
+from schema import SchemaError
 
 HELP_SHORT = "-h"
 HELP = "--help"
@@ -27,12 +28,7 @@ __doc__ = __doc__.format(
 # Read in command-line options
 options = docopt(__doc__, version="set_isoform_frequencies v0.1")
 
-
 # Validate command-line options
-
-def validate_file_option(file_option, msg):
-    msg = "{msg} '{file}'.".format(msg=msg, file=file_option)
-    return Schema(open, error=msg).validate(file_option)
 
 try:
     options[PRO_FILE] = validate_file_option(
