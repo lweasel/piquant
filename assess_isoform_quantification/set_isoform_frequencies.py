@@ -10,6 +10,7 @@
 
 from docopt import docopt
 from options import validate_file_option
+from pandas import read_csv
 from schema import SchemaError
 
 HELP_SHORT = "-h"
@@ -17,6 +18,25 @@ HELP = "--help"
 VERSION_SHORT = "-v"
 VERSION = "--version"
 PRO_FILE = "<pro-file>"
+
+LOCUS_COL = 'loc'
+TRANSCRIPT_ID_COL = 't_id'
+CODING_COL = 'c'
+LENGTH_COL = 'len'
+FRACTION_COL = 'f'
+NUM_TRANSCRIPTS_COL = 'n'
+UNKNOWN_COL_1 = 'u1'
+UNKNOWN_COL_2 = 'u2'
+
+PRO_FILE_COLUMNS = [
+    LOCUS_COL,
+    TRANSCRIPT_ID_COL,
+    CODING_COL,
+    LENGTH_COL,
+    FRACTION_COL,
+    NUM_TRANSCRIPTS_COL,
+    UNKNOWN_COL_1,
+    UNKNOWN_COL_2]
 
 __doc__ = __doc__.format(
     help_short=HELP_SHORT,
@@ -36,4 +56,5 @@ try:
 except SchemaError as exc:
     exit(exc.code)
 
-print("Now do all the things.")
+df = read_csv(options[PRO_FILE], sep='\s*',
+              names=PRO_FILE_COLUMNS, index_col=TRANSCRIPT_ID_COL)
