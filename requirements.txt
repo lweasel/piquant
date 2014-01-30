@@ -1,2 +1,4 @@
-ez-setup==0.9
-gtf-to-genes==1.09
+docopt>=0.6.1
+ez-setup>=0.9
+gtf-to-genes>=1.09
+schema>=0.2.0
