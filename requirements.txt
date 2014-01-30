@@ -1,4 +1,6 @@
 docopt>=0.6.1
 ez-setup>=0.9
 gtf-to-genes>=1.09
+py>=1.4.20
+pytest>=2.5.2
 schema>=0.2.0
