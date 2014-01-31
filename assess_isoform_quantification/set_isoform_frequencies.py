@@ -56,5 +56,8 @@ try:
 except SchemaError as exc:
     exit(exc.code)
 
-df = read_csv(options[PRO_FILE], sep='\s*',
-              names=PRO_FILE_COLUMNS, index_col=TRANSCRIPT_ID_COL)
+transcript_abundances = read_csv(options[PRO_FILE], sep='\s*',
+                                 names=PRO_FILE_COLUMNS,
+                                 index_col=TRANSCRIPT_ID_COL)
+
+num_molecules = transcript_abundances[NUM_TRANSCRIPTS_COL].sum()
