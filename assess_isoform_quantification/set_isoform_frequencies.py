@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+# Typical usage:
+#
+# python set_isoform_frequencies.py --output-dir out mouse_params.pro Mus_musculus.GRCm38.74.gtf
+
 """Usage:
     set_isoform_frequencies [{help}] [{version}] [{log_level}={log_level_val}] [{out_dir}={out_dir_val}] {pro_file} {gtf_file}
 
@@ -12,10 +16,10 @@
 """
 
 from docopt import docopt
-from gtf_to_genes import index_gtf_files, get_indexed_genes_for_identifier
 from log import getLogger, LEVELS
 from options import validate_file_option, validate_dict_option
 from pandas import read_csv
+from read_gtf import get_protein_coding_genes
 from schema import SchemaError
 from sys import stderr
 
@@ -93,12 +97,4 @@ logger.info("Reading genes and transcripts from GTF file.")
 if not os.path.isdir(options[OUT_DIR]):
     os.makedirs(options[OUT_DIR])
 
-index_file = options[OUT_DIR] + "/gtf.index"
-gtf_path, gtf_filename = os.path.split(options[GTF_FILE])
-
-if not os.path.exists(index_file):
-    index_gtf_files(index_file, gtf_path, r"(.+\/)(" + gtf_filename + ")$",
-                    r"\1/\2.cache", r"\2", False, logger)
-
-species, fn, genes = get_indexed_genes_for_identifier(index_file,  logger,  gtf_filename)
-logger.info(len(genes['protein_coding']))
+genes = get_protein_coding_genes(options[OUT_DIR], options[GTF_FILE], logger)
