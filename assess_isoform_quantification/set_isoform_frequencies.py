@@ -5,13 +5,14 @@
 # python set_isoform_frequencies.py --output-dir out mouse_params.pro Mus_musculus.GRCm38.74.gtf
 
 """Usage:
-    set_isoform_frequencies [{help}] [{version}] [{log_level}={log_level_val}] [{out_dir}={out_dir_val}] [{abundance_method}={abundance_method_val}] {pro_file} {gtf_file}
+    set_isoform_frequencies [{help}] [{version}] [{log_level}={log_level_val}] [{out_dir}={out_dir_val}] [{abundance_method}={abundance_method_val}] [{num_genes}={num_genes_val}] {pro_file} {gtf_file}
 
 {help_short} {help}                  Show this message.
 {version_short} {version}               Show version.
 {log_level}={log_level_val}    Set logging level (one of {log_level_vals}) [default: info].
 {out_dir}={out_dir_val}  Directory for output files; will be created if it doesn't exist [default: .].
 {abundance_method}={abundance_method_val}          Method to assign abundances to transcripts (one of {abundance_method_vals}) [default: uniform].
+{num_genes}={num_genes_val}  Number of genes to assign to abundances to (0 means all) [default: 0].
 {pro_file}                 Flux simulator gene expression profile file.
 {gtf_file}                 GTF file defining genes and transcripts.
 """
@@ -20,7 +21,8 @@ from abundances import ABUNDANCE_METHODS
 from docopt import docopt
 from itertools import chain
 from log import getLogger, LEVELS
-from options import validate_file_option, validate_dict_option
+from options import \
+    validate_file_option, validate_dict_option, validate_int_option
 from pandas import read_csv
 from read_gtf import get_protein_coding_genes
 from schema import SchemaError
@@ -42,6 +44,8 @@ OUT_DIR_VAL = "<output-dir>"
 ABUNDANCE_METHOD = "--method"
 ABUNDANCE_METHOD_VAL = "<method>"
 ABUNDANCE_METHOD_VALS = str(ABUNDANCE_METHODS.keys())
+NUM_GENES = "--num-genes"
+NUM_GENES_VAL = "<num-genes>"
 
 
 __doc__ = __doc__.format(
@@ -58,7 +62,9 @@ __doc__ = __doc__.format(
     out_dir_val=OUT_DIR_VAL,
     abundance_method=ABUNDANCE_METHOD,
     abundance_method_val=ABUNDANCE_METHOD_VAL,
-    abundance_method_vals=ABUNDANCE_METHOD_VALS)
+    abundance_method_vals=ABUNDANCE_METHOD_VALS,
+    num_genes=NUM_GENES,
+    num_genes_val=NUM_GENES_VAL)
 
 LOCUS_COL = 'loc'
 TRANSCRIPT_ID_COL = 't_id'
@@ -93,6 +99,9 @@ try:
     options[ABUNDANCE_METHOD] = validate_dict_option(
         options[ABUNDANCE_METHOD], ABUNDANCE_METHODS,
         "Invalid abundance method")
+    options[NUM_GENES] = validate_int_option(
+        options[NUM_GENES], "Number of genes must be a non-negative int",
+        nonneg=True)
 except SchemaError as exc:
     exit(exc.code)
 
@@ -121,15 +130,16 @@ abundances = {gene.gene_id: [[transcript.cdna_id, 0]
                              for transcript in gene.transcripts]
               for gene in genes}
 
-num_molecules = options[ABUNDANCE_METHOD](abundances, 0, num_molecules)
+num_transcripts, num_molecules = options[ABUNDANCE_METHOD](
+    abundances, options[NUM_GENES], num_molecules, logger)
 
 for transcript, transcript_mols in chain.from_iterable(abundances.values()):
     transcript_abundances.at[transcript, NUM_TRANSCRIPTS_COL] = transcript_mols
     transcript_abundances.at[transcript, FRACTION_COL] = \
         float(transcript_mols)/num_molecules
 
-logger.info("Assigned {mols} molecules to TODO transcripts.".
-            format(mols=num_molecules))
+logger.info("Assigned {mols} molecules to {nt} transcripts.".
+            format(mols=num_molecules, nt=num_transcripts))
 
 output_pro_file = os.path.join(options[OUT_DIR],
                                os.path.basename(options[PRO_FILE]))
