@@ -1,10 +1,12 @@
--e git+/home/odando/git/assess_isoform_quantification.git/@0a732900648cc0c6ece5bf52b00e01b55a3daceb#egg=assess_isoform_quantification-master
+Cython>=0.20.1
+-e git+/home/odando/git/assess_isoform_quantification.git/@e26d2ce22036b27c258ff2be5061d7f3eedb468a#egg=assess_isoform_quantification-master
 docopt>=0.6.1
 ez-setup>=0.9
 gtf-to-genes>=1.09
 numpy>=1.8.0
 pandas>=0.13.0
 py>=1.4.20
+pysam>=0.7.7
 pytest>=2.5.2
 python-dateutil>=2.2
 pytz>=2013.9
