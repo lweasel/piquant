@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """Usage:
-    set_isoform_frequencies [{help}] [{version}] [{log_level}={log_level_val}] [{out_dir}={out_dir_val}] [{abundance_method}={abundance_method_val}] [{num_genes}={num_genes_val}] [{num_molecules}={num_molecules_val}] {pro_file} {gtf_file}
+    set_isoform_frequencies [{help}] [{version}] [{log_level}={log_level_val}] [{out_dir}={out_dir_val}] [{abundance_method}={abundance_method_val}] [{num_genes}={num_genes_val}] [{num_molecules}={num_molecules_val}] [{seed}={seed_val}] {pro_file} {gtf_file}
 
 {help_short} {help}                  Show this message.
 {version_short} {version}               Show version.
@@ -10,6 +10,7 @@
 {abundance_method}={abundance_method_val}          Method to assign abundances to transcripts (one of {abundance_method_vals}) [default: uniform].
 {num_genes}={num_genes_val}  Number of genes to assign to abundances to (0 means all) [default: 0].
 {num_molecules}={num_molecules_val}  Total number of molecules to split between transcript abundances (0 means use value from original expression profile file) [default: 0].
+{seed}={seed_val}   Use this integer value as seed for random number generation.
 {pro_file}                 Flux simulator gene expression profile file.
 {gtf_file}                 GTF file defining genes and transcripts.
 """
@@ -23,9 +24,10 @@ from options import \
 from pandas import read_csv
 from read_gtf import get_protein_coding_genes
 from schema import SchemaError
-from sys import stderr
 
 import os.path
+import random
+import sys
 
 HELP_SHORT = "-h"
 HELP = "--help"
@@ -45,6 +47,8 @@ NUM_GENES = "--num-genes"
 NUM_GENES_VAL = "<num-genes>"
 NUM_MOLECULES = "--num-mols"
 NUM_MOLECULES_VAL = "<num-molecules>"
+SEED = "--seed"
+SEED_VAL = "<random-seed>"
 
 __doc__ = __doc__.format(
     help_short=HELP_SHORT,
@@ -64,7 +68,9 @@ __doc__ = __doc__.format(
     num_genes=NUM_GENES,
     num_genes_val=NUM_GENES_VAL,
     num_molecules=NUM_MOLECULES,
-    num_molecules_val=NUM_MOLECULES_VAL)
+    num_molecules_val=NUM_MOLECULES_VAL,
+    seed=SEED,
+    seed_val=SEED_VAL)
 
 LOCUS_COL = 'loc'
 TRANSCRIPT_ID_COL = 't_id'
@@ -106,10 +112,20 @@ try:
         options[NUM_MOLECULES],
         "Number of molecules must be a non-negative int",
         nonneg=True)
+    options[SEED] = validate_int_option(
+        options[SEED],
+        "If specified, seed must be an int",
+        nullable=True)
 except SchemaError as exc:
     exit(exc.code)
 
-logger = getLogger(stderr, options[LOG_LEVEL])
+if options[SEED] is None:
+    options[SEED] = random.randint(0, sys.maxint)
+random.seed(options[SEED])
+
+logger = getLogger(sys.stderr, options[LOG_LEVEL])
+logger.info("Using random seed {seed}".format(seed=options[SEED]))
+
 logger.info("Reading transcript abundances from expression profile file...")
 
 transcript_abundances = read_csv(options[PRO_FILE], sep='\s*',

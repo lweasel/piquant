@@ -73,6 +73,15 @@ def test_validate_int_option_does_not_raise_exception_for_negative_if_nonneg_not
     validate_int_option(-1, "dummy")
 
 
+def test_validate_int_option_raises_exception_for_none_if_nullable_not_specified():
+    with pytest.raises(SchemaError):
+        validate_int_option(None, "dummy")
+
+
+def test_validate_int_option_does_not_raise_exception_for_none_if_nullable_specified():
+    validate_int_option(None, "dummy", nullable=True)
+
+
 def test_validate_int_option_exception_message_contains_correct_info():
     msg = "dummy"
     str_val = "abcde"
