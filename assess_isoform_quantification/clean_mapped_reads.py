@@ -1,10 +1,13 @@
 #!/usr/bin/python
 
 """Usage:
-    clean_mapped_reads {in_bam_file} {out_bam_file}
+    clean_mapped_reads [{help}] [{version}] [{write_rejected}] {in_bam_file}
+                       {out_bam_file}
 
 {help_short} {help}                 Show this message.
 {version_short} {version}              Show version.
+{write_rejected}            If specfied, write rejected reads to the file
+                            "rejected.bam".
 {in_bam_file}             Input BAM file containing mapped reads to be cleaned.
 {out_bam_file}            Output BAM file to write cleaned reads to.
 """
@@ -20,6 +23,7 @@ HELP_SHORT = "-h"
 HELP = "--help"
 VERSION_SHORT = "-v"
 VERSION = "--version"
+WRITE_REJECTED = "--write-rejected"
 IN_BAM_FILE = "<in-bam-file>"
 OUT_BAM_FILE = "<out-bam-file>"
 
@@ -28,6 +32,7 @@ __doc__ = __doc__.format(
     help=HELP,
     version_short=VERSION_SHORT,
     version=VERSION,
+    write_rejected=WRITE_REJECTED,
     in_bam_file=IN_BAM_FILE,
     out_bam_file=OUT_BAM_FILE)
 
@@ -42,7 +47,8 @@ except SchemaError as exc:
 
 input_bam = Samfile(options[IN_BAM_FILE], "rb")
 output_bam = Samfile(options[OUT_BAM_FILE], "wb", template=input_bam)
-#rejected_bam = Samfile("rejected.bam", "wb", template=input_bam)
+rejected_bam = Samfile("rejected.bam", "wb", template=input_bam) \
+    if options[WRITE_REJECTED] else None
 
 for read in input_bam.fetch():
     # Check read region and position are consistent with originating
@@ -62,7 +68,7 @@ for read in input_bam.fetch():
     # fragment should lie
     f_region, f_start, f_end = fs.get_fragment_bounds(read.qname)
 
-    bam = None
+    bam = rejected_bam
 
     if f_region == r_region and r_start >= f_start and r_end <= f_end:
         t_region, t_start, t_end = fs.get_transcript_bounds(read.qname)
