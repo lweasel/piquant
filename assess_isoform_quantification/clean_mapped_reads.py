@@ -10,10 +10,11 @@
 """
 
 from docopt import docopt
-from flux_simulator import get_fragment_bounds
 from options import validate_file_option
 from pysam import Samfile
 from schema import SchemaError
+
+import flux_simulator as fs
 
 HELP_SHORT = "-h"
 HELP = "--help"
@@ -41,20 +42,32 @@ except SchemaError as exc:
 
 input_bam = Samfile(options[IN_BAM_FILE], "rb")
 output_bam = Samfile(options[OUT_BAM_FILE], "wb", template=input_bam)
+#rejected_bam = Samfile("rejected.bam", "wb", template=input_bam)
 
 for read in input_bam.fetch():
-    # Find region and start, end positions within which the originating
-    # fragment should lie
-    f_region, f_start, f_end = get_fragment_bounds(read.qname)
+    # Check read region and position are consistent with originating
+    # transcript - otherwise the incorrectly mapped read is suppressed.
+    # We also suppress correctly mapped reads which lie wholly outside
+    # the bounds of the original transcript (e.g. ones lying entirely
+    # within the polyA tail.
+    # NB. this procedure does not eliminate reads incorrectly mapped
+    # within the bounds of the originating transcript.
 
     # Find region and start, end positions of mapped read
     r_region = input_bam.getrname(read.tid)
     r_start = read.pos
     r_end = read.aend
 
-    # Check read region and position are consistent with originating
-    # transcript - otherwise the incorrectly mapped read is suppressed.
-    # NB. this does not eliminate reads incorrectly mapped within the
-    # bounds of the originating transcript.
+    # Find region and start, end positions within which the originating
+    # fragment should lie
+    f_region, f_start, f_end = fs.get_fragment_bounds(read.qname)
+
+    bam = None
+
     if f_region == r_region and r_start >= f_start and r_end <= f_end:
-        output_bam.write(read)
+        t_region, t_start, t_end = fs.get_transcript_bounds(read.qname)
+        if r_end >= t_start and r_start <= t_end:
+            bam = output_bam
+
+    if bam is not None:
+        bam.write(read)

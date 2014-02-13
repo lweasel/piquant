@@ -2,6 +2,16 @@ import pandas as pd
 
 # TODO: numeric literals in get_fragment_bounds
 
+# n.b. a Flux Simulator read identifier takes a form like:
+#
+# 17:23917458-23919441W:ENSMUST00000115428:3404:610:576:768:S
+#
+# Here "17" is the region, "23917458" and 23919441 are the start and end
+# positions of the originating transcript (both in 1-based co-ordinates),
+# "610" is the length of the processed transcript, "576" is the start
+# position of the fragment relative to the transcript and "768" is the
+# end position of the fragment relative to the transcript.
+
 PRO_FILE_LOCUS_COL = 0
 PRO_FILE_TRANSCRIPT_ID_COL = 1
 PRO_FILE_CODING_COL = 2
@@ -32,22 +42,22 @@ def get_transcript_length(read_identifier):
     return int(rid_elems[4])
 
 
-def get_fragment_bounds(read_identifier):
-    """Return region bounds for a Flux Simulator read.
-
-    A Flux Simulator read identifier takes a form like:
-
-    17:23917458-23919441W:ENSMUST00000115428:3404:610:576:768:S
-
-    Here "17" is the region, "23917458" and 23919441 are the start and end
-    positions of the originating transcript (both in 1-based co-ordinates),
-    "610" is the length of the processed transcript, "576" is the start
-    position of the fragment relative to the transcript and "768" is the
-    end position of the fragment relative to the transcript.
+def get_transcript_bounds(read_identifier):
+    """Return transcript bounds for a Flux Simulator read.
 
     Along with the region of the originating transcript, this function
     will return (in 0-based, half-open co-ordinates) the start and end
-    positions of the originating transcript, unless:
+    positions of the read's originating transcript."""
+    rid_elems = _get_read_identifier_elems(read_identifier)
+    region = rid_elems[0]
+    start_str, end_str = rid_elems[1][:-1].split("-")
+    return region, int(start_str) - 1, int(end_str)
+
+
+def get_fragment_bounds(read_identifier):
+    """Return fragment bounds for a Flux Simulator read.
+
+    This function behaves the same as get_transcript_bounds above, unless:
     i)  The fragment start position relative to the transcript is negative,
         in which case the bounds will be extended at the start to accommodate
         this, or

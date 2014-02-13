@@ -24,6 +24,27 @@ def test_get_transcript_length_returns_correct_value():
     assert length == t_len
 
 
+def test_get_transcript_bounds_returns_correct_region():
+    region = "X"
+    rid = _get_read_identifier(t_region=region)
+    t_region, t_start, t_end = fs.get_transcript_bounds(rid)
+    assert t_region == region
+
+
+def test_get_transcript_bounds_returns_correct_start():
+    start = 1000
+    rid = _get_read_identifier(t_start=start)
+    t_region, t_start, t_end = fs.get_transcript_bounds(rid)
+    assert t_start == start - 1
+
+
+def test_get_transcript_bounds_returns_correct_end():
+    end = 2000
+    rid = _get_read_identifier(t_end=end)
+    t_region, t_start, t_end = fs.get_transcript_bounds(rid)
+    assert t_end == end
+
+
 def test_get_fragment_bounds_returns_correct_region():
     region = 17
     rid = _get_read_identifier(t_region=region)
