@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# TODO: use flux_simulator.read_expression_profiles
+
 """Usage:
     set_isoform_frequencies [{help}] [{version}] [{log_level}={log_level_val}] [{out_dir}={out_dir_val}] [{abundance_method}={abundance_method_val}] [{num_genes}={num_genes_val}] [{num_molecules}={num_molecules_val}] [{seed}={seed_val}] {pro_file} {gtf_file}
 

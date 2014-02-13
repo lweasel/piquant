@@ -1,5 +1,39 @@
+import pandas as pd
+
+# TODO: numeric literals in get_fragment_bounds
+
+PRO_FILE_LOCUS_COL = 0
+PRO_FILE_TRANSCRIPT_ID_COL = 1
+PRO_FILE_CODING_COL = 2
+PRO_FILE_LENGTH_COL = 3
+PRO_FILE_FRAC_COL = 4
+PRO_FILE_NUM_COL = 5
+
+
+def read_expression_profiles(pro_file):
+    profiles = pd.read_csv(pro_file, delim_whitespace=True, header=None)
+    #profiles.set_index(PRO_FILE_TRANSCRIPT_ID_COL, inplace=True)
+    return profiles
+
+
+def _get_read_identifier_elems(read_identifier):
+    return read_identifier.split(":")
+
+
+def get_transcript_id(read_identifier):
+    """Return originating transcript ID for a Flux Simulator read."""
+    rid_elems = _get_read_identifier_elems(read_identifier)
+    return rid_elems[2]
+
+
+def get_transcript_length(read_identifier):
+    """Return the processed length of the originating transcript of a read"""
+    rid_elems = _get_read_identifier_elems(read_identifier)
+    return int(rid_elems[4])
+
+
 def get_fragment_bounds(read_identifier):
-    """Return region bounds for a Flux Simulator read identifier.
+    """Return region bounds for a Flux Simulator read.
 
     A Flux Simulator read identifier takes a form like:
 
@@ -21,7 +55,7 @@ def get_fragment_bounds(read_identifier):
         end of the transcript (i.e. end pos >= len), in which case the bounds
         will be extended at the end to accommodate this.
     """
-    rid_elems = read_identifier.split(":")
+    rid_elems = _get_read_identifier_elems(read_identifier)
     region = rid_elems[0]
 
     t_start_str, t_end_str = rid_elems[1][:-1].split("-")
