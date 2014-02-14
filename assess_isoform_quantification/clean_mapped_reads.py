@@ -50,30 +50,37 @@ output_bam = Samfile(options[OUT_BAM_FILE], "wb", template=input_bam)
 rejected_bam = Samfile("rejected.bam", "wb", template=input_bam) \
     if options[WRITE_REJECTED] else None
 
+read_ids = {}
+
 for read in input_bam.fetch():
-    # Check read region and position are consistent with originating
-    # transcript - otherwise the incorrectly mapped read is suppressed.
-    # We also suppress correctly mapped reads which lie wholly outside
-    # the bounds of the original transcript (e.g. ones lying entirely
-    # within the polyA tail.
-    # NB. this procedure does not eliminate reads incorrectly mapped
-    # within the bounds of the originating transcript.
-
-    # Find region and start, end positions of mapped read
-    r_region = input_bam.getrname(read.tid)
-    r_start = read.pos
-    r_end = read.aend
-
-    # Find region and start, end positions within which the originating
-    # fragment should lie
-    f_region, f_start, f_end = fs.get_fragment_bounds(read.qname)
-
     bam = rejected_bam
 
-    if f_region == r_region and r_start >= f_start and r_end <= f_end:
-        t_region, t_start, t_end = fs.get_transcript_bounds(read.qname)
-        if r_end >= t_start and r_start <= t_end:
-            bam = output_bam
+    if read.qname not in read_ids:
+        # Now check read region and position are consistent with originating
+        # transcript - otherwise the incorrectly mapped read is suppressed.
+        # We also suppress correctly mapped reads which lie wholly outside
+        # the bounds of the original transcript (e.g. ones lying entirely
+        # within the polyA tail.
+        # NB. this procedure does not eliminate reads incorrectly mapped
+        # within the bounds of the originating transcript.
+
+        # Find region and start, end positions of mapped read
+        r_region = input_bam.getrname(read.tid)
+        r_start = read.pos
+        r_end = read.aend
+
+        # Find region and start, end positions within which the originating
+        # fragment should lie
+        f_region, f_start, f_end = fs.get_fragment_bounds(read.qname)
+
+        if f_region == r_region and r_start >= f_start and r_end <= f_end:
+            t_region, t_start, t_end = fs.get_transcript_bounds(read.qname)
+            if r_end >= t_start and r_start <= t_end:
+                # We retain only one alignment per read, and set all retained
+                # alignments to be primary
+                read_ids[read.qname] = True
+                read.is_secondary = False
+                bam = output_bam
 
     if bam is not None:
         bam.write(read)
