@@ -1,21 +1,23 @@
 #!/usr/bin/python
 
 """Usage:
-    assess_isoform_quantification {pro_file} {read_file}
+    assess_isoform_quantification {quant_method}={quant_method_val} {pro_file} {read_file} {quant_file}
 
 {help_short} {help}                 Show this message.
 {version_short} {version}              Show version.
+{quant_method_short} {quant_method_val} {quant_method}={quant_method_val}       Method used to quantify transcript abundances.
 {pro_file}          Flux Simulator gene expression profile file.
-{read_file}         BAM file containing mapped reads used as input to
-                    transcript quantifier
+{read_file}         BAM file containing mapped reads used as input to transcript quantifier
+{quant_file}        Output file from transcript quantifier from which abundances will be read.
 """
 
 from docopt import docopt
-from options import validate_file_option
 from schema import SchemaError
 
 import flux_simulator as fs
+import options as opt
 import pysam
+import quantifiers as qs
 
 HELP_SHORT = "-h"
 HELP = "--help"
@@ -23,8 +25,19 @@ VERSION_SHORT = "-v"
 VERSION = "--version"
 PRO_FILE = "<pro-file>"
 READ_FILE = "<read-file>"
+QUANT_METHOD_SHORT = "-m"
+QUANT_METHOD = "--method"
+QUANT_METHOD_VAL = "<quantification-method>"
+QUANT_FILE = "<quantification-file>"
 
-FPKM_COL = 'FPKM'
+REAL_FPKM_COL = 'Real FPKM'
+CALCULATED_FPKM_COL = 'Calculated FPKM'
+
+CUFFLINKS_METHOD = "cufflinks"
+
+QUANT_METHODS = {
+    CUFFLINKS_METHOD: qs.Cufflinks
+}
 
 __doc__ = __doc__.format(
     help_short=HELP_SHORT,
@@ -32,17 +45,25 @@ __doc__ = __doc__.format(
     version_short=VERSION_SHORT,
     version=VERSION,
     pro_file=PRO_FILE,
-    read_file=READ_FILE)
+    read_file=READ_FILE,
+    quant_method_short=QUANT_METHOD_SHORT,
+    quant_method=QUANT_METHOD,
+    quant_method_val=QUANT_METHOD_VAL,
+    quant_file=QUANT_FILE)
 
 # Read in command-line options
 options = docopt(__doc__, version="assess_isoform_quantification v0.1")
 
 # Validate command-line options
 try:
-    options[PRO_FILE] = validate_file_option(
+    options[PRO_FILE] = opt.validate_file_option(
         options[PRO_FILE], "Could not open expression profile file")
-    validate_file_option(
+    options[QUANT_FILE] = opt.validate_file_option(
+        options[QUANT_FILE], "Could not open transcript abundance file")
+    opt.validate_file_option(
         options[READ_FILE], "Could not open BAM file containing reads")
+    options[QUANT_METHOD] = opt.validate_dict_option(
+        options[QUANT_METHOD], QUANT_METHODS, "Unknown quantification method")
 except SchemaError as exc:
     exit(exc.code)
 
@@ -79,7 +100,16 @@ def fpkm_calc(profile_row):
     return t_info[1] / (t_kb * m_r_millons)
 
 profiles = fs.read_expression_profiles(options[PRO_FILE])
-profiles[FPKM_COL] = profiles.apply(fpkm_calc, axis=1)
+profiles[REAL_FPKM_COL] = profiles.apply(fpkm_calc, axis=1)
 
-# Temporarily just print info for those transcripts with non-zero FPKM
-print(profiles[profiles[FPKM_COL] != 0])
+# Read calculated FPKM values for each transcript produced by a particular
+# quanfication method
+quant_method = options[QUANT_METHOD]()
+quant_method.calculate_transcript_abundances(options[QUANT_FILE])
+
+set_calculated_fpkm = lambda row: \
+    quant_method.get_transcript_abundance(row[fs.PRO_FILE_TRANSCRIPT_ID_COL])
+profiles[CALCULATED_FPKM_COL] = profiles.apply(set_calculated_fpkm, axis=1)
+
+# Temporarily just print info for those transcripts with non-zero real FPKM
+print(profiles[profiles[REAL_FPKM_COL] != 0])
