@@ -112,4 +112,5 @@ set_calculated_fpkm = lambda row: \
 profiles[CALCULATED_FPKM_COL] = profiles.apply(set_calculated_fpkm, axis=1)
 
 # Temporarily just print info for those transcripts with non-zero real FPKM
-print(profiles[profiles[REAL_FPKM_COL] != 0])
+non_zero = profiles[profiles[REAL_FPKM_COL] != 0]
+print(non_zero)
