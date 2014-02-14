@@ -14,10 +14,10 @@
 
 from docopt import docopt
 from options import validate_file_option
-from pysam import Samfile
 from schema import SchemaError
 
 import flux_simulator as fs
+import pysam
 
 HELP_SHORT = "-h"
 HELP = "--help"
@@ -45,9 +45,11 @@ try:
 except SchemaError as exc:
     exit(exc.code)
 
-input_bam = Samfile(options[IN_BAM_FILE], "rb")
-output_bam = Samfile(options[OUT_BAM_FILE], "wb", template=input_bam)
-rejected_bam = Samfile("rejected.bam", "wb", template=input_bam) \
+pysam.index(options[IN_BAM_FILE])
+
+input_bam = pysam.Samfile(options[IN_BAM_FILE], "rb")
+output_bam = pysam.Samfile(options[OUT_BAM_FILE], "wb", template=input_bam)
+rejected_bam = pysam.Samfile("rejected.bam", "wb", template=input_bam) \
     if options[WRITE_REJECTED] else None
 
 read_ids = {}
