@@ -1,15 +1,17 @@
 #!/usr/bin/python
 
 """Usage:
-    assess_isoform_quantification [{log_level}={log_level_val}] {quant_method}={quant_method_val} {pro_file} {read_file} {quant_file}
+    assess_isoform_quantification [{log_level}={log_level_val}] {quant_method}={quant_method_val} {out_file}={out_file_val} {pro_file} {read_file} {quant_file} {count_file}
 
 {help_short} {help}                 Show this message.
 {version_short} {version}              Show version.
 {log_level}={log_level_val}    Set logging level (one of {log_level_vals}) [default: info].
 {quant_method_short} {quant_method_val} {quant_method}={quant_method_val}       Method used to quantify transcript abundances.
+{out_file_short} {out_file_val} {out_file}={out_file_val}      Output file for real and calculated FPKMs.
 {pro_file}          Flux Simulator gene expression profile file.
 {read_file}         BAM file containing mapped reads used as input to transcript quantifier
 {quant_file}        Output file from transcript quantifier from which abundances will be read.
+{count_file}  File containing per-gene transcript counts.
 """
 
 from docopt import docopt
@@ -18,6 +20,7 @@ from schema import SchemaError
 import flux_simulator as fs
 import log
 import options as opt
+import pandas
 import pysam
 import quantifiers as qs
 import sys
@@ -29,15 +32,24 @@ VERSION = "--version"
 LOG_LEVEL = "--log-level"
 LOG_LEVEL_VAL = "<log-level>"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
-PRO_FILE = "<pro-file>"
-READ_FILE = "<read-file>"
 QUANT_METHOD_SHORT = "-m"
 QUANT_METHOD = "--method"
 QUANT_METHOD_VAL = "<quantification-method>"
+OUT_FILE_SHORT = "-o"
+OUT_FILE = "--out"
+OUT_FILE_VAL = "<output-file>"
+PRO_FILE = "<pro-file>"
+READ_FILE = "<read-file>"
 QUANT_FILE = "<quantification-file>"
+COUNT_FILE = "<transcript-count-file>"
 
+COUNTS_TRANSCRIPT_COL = "transcript"
+COUNTS_COUNT_COL = "transcript_count"
+
+TRANSCRIPT_COL = 'Transcript'
 REAL_FPKM_COL = 'Real FPKM'
 CALCULATED_FPKM_COL = 'Calculated FPKM'
+TRANSCRIPT_COUNT_COL = 'Num transcripts for gene'
 
 CUFFLINKS_METHOD = "cufflinks"
 
@@ -53,12 +65,16 @@ __doc__ = __doc__.format(
     log_level=LOG_LEVEL,
     log_level_val=LOG_LEVEL_VAL,
     log_level_vals=LOG_LEVEL_VALS,
-    pro_file=PRO_FILE,
-    read_file=READ_FILE,
     quant_method_short=QUANT_METHOD_SHORT,
     quant_method=QUANT_METHOD,
     quant_method_val=QUANT_METHOD_VAL,
-    quant_file=QUANT_FILE)
+    out_file_short=OUT_FILE_SHORT,
+    out_file=OUT_FILE,
+    out_file_val=OUT_FILE_VAL,
+    pro_file=PRO_FILE,
+    read_file=READ_FILE,
+    quant_file=QUANT_FILE,
+    count_file=COUNT_FILE)
 
 # Read in command-line options
 options = docopt(__doc__, version="assess_isoform_quantification v0.1")
@@ -73,6 +89,8 @@ try:
         options[QUANT_FILE], "Could not open transcript abundance file")
     opt.validate_file_option(
         options[READ_FILE], "Could not open BAM file containing reads")
+    opt.validate_file_option(
+        options[COUNT_FILE], "Could not open transcript count file")
     options[QUANT_METHOD] = opt.validate_dict_option(
         options[QUANT_METHOD], QUANT_METHODS, "Unknown quantification method")
 except SchemaError as exc:
@@ -138,6 +156,28 @@ set_calculated_fpkm = lambda row: \
     quant_method.get_transcript_abundance(row[fs.PRO_FILE_TRANSCRIPT_ID_COL])
 profiles[CALCULATED_FPKM_COL] = profiles.apply(set_calculated_fpkm, axis=1)
 
-# Temporarily just print info for those transcripts with non-zero real FPKM
-non_zero = profiles[profiles[REAL_FPKM_COL] != 0]
-print(non_zero)
+# Read per-gene transcript counts
+
+logger.info("Reading per-gene transcript counts...")
+
+transcript_counts = pandas.read_csv(
+    options[COUNT_FILE], index_col=COUNTS_TRANSCRIPT_COL)
+
+
+def set_transcript_count(profile_row):
+    t_id = profile_row[fs.PRO_FILE_TRANSCRIPT_ID_COL]
+    if t_id not in transcript_counts.index:
+        return 0
+    return transcript_counts.ix[t_id][COUNTS_COUNT_COL]
+
+profiles[TRANSCRIPT_COUNT_COL] = profiles.apply(set_transcript_count, axis=1)
+
+# Write FPKMs and other relevant data to output file
+
+logger.info("Writing FPKMs to file {out}".format(out=options[OUT_FILE]))
+
+profiles.rename(columns={1: TRANSCRIPT_COL}, inplace=True)
+
+profiles.to_csv(options[OUT_FILE], index=False,
+                cols=[TRANSCRIPT_COL, TRANSCRIPT_COUNT_COL,
+                      REAL_FPKM_COL, CALCULATED_FPKM_COL])

@@ -20,6 +20,10 @@ VERSION_SHORT = "-v"
 VERSION = "--version"
 GTF_FILE = "<gtf-file>"
 
+TRANSCRIPT_COL = "transcript"
+GENE_COL = "gene"
+TRANSCRIPT_COUNT_COL = "transcript_count"
+
 __doc__ = __doc__.format(
     help_short=HELP_SHORT,
     help=HELP,
@@ -52,6 +56,6 @@ transcript_count = {}
 for transcript, gene in transcript_to_gene.items():
     transcript_count[gene] = transcript_count.get(gene, 0) + 1
 
-print "transcript,gene,transcript_count"
+print TRANSCRIPT_COL + "," + GENE_COL + "," + TRANSCRIPT_COUNT_COL
 for transcript, gene in transcript_to_gene.items():
     print("{t},{g},{c}".format(t=transcript, g=gene, c=transcript_count[gene]))
