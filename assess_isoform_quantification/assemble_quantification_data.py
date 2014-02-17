@@ -1,17 +1,19 @@
 #!/usr/bin/python
 
 """Usage:
-    assess_isoform_quantification [{log_level}={log_level_val}] {quant_method}={quant_method_val} {out_file}={out_file_val} {pro_file} {read_file} {quant_file} {count_file}
+    assess_isoform_quantification [--log-level=<log-level>] --method=<quantification-method> --out=<output-file> <pro-file> <read-file> <quantification-file> <transcript-count-file>
 
-{help_short} {help}                 Show this message.
-{version_short} {version}              Show version.
-{log_level}={log_level_val}    Set logging level (one of {log_level_vals}) [default: info].
-{quant_method_short} {quant_method_val} {quant_method}={quant_method_val}       Method used to quantify transcript abundances.
-{out_file_short} {out_file_val} {out_file}={out_file_val}      Output file for real and calculated FPKMs.
-{pro_file}          Flux Simulator gene expression profile file.
-{read_file}         BAM file containing mapped reads used as input to transcript quantifier
-{quant_file}        Output file from transcript quantifier from which abundances will be read.
-{count_file}  File containing per-gene transcript counts.
+-h --help                 Show this message.
+-v --version              Show version.
+--log-level=<log-level>   Set logging level (one of {log_level_vals}) [default: info].
+-m <quantification-method> --method=<quantification-method>
+                          Method used to quantify transcript abundances.
+-o <output-file> --out=<output-file>
+                          Output file for real and calculated FPKMs.
+<pro-file>                Flux Simulator gene expression profile file.
+<read-file>               BAM file containing mapped reads used as input to transcript quantifier
+<quantification-file>     Output file from transcript quantifier from which abundances will be read.
+<transcript-count-file>   File containing per-gene transcript counts.
 """
 
 from docopt import docopt
@@ -25,19 +27,10 @@ import pysam
 import quantifiers as qs
 import sys
 
-HELP_SHORT = "-h"
-HELP = "--help"
-VERSION_SHORT = "-v"
-VERSION = "--version"
 LOG_LEVEL = "--log-level"
-LOG_LEVEL_VAL = "<log-level>"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
-QUANT_METHOD_SHORT = "-m"
 QUANT_METHOD = "--method"
-QUANT_METHOD_VAL = "<quantification-method>"
-OUT_FILE_SHORT = "-o"
 OUT_FILE = "--out"
-OUT_FILE_VAL = "<output-file>"
 PRO_FILE = "<pro-file>"
 READ_FILE = "<read-file>"
 QUANT_FILE = "<quantification-file>"
@@ -57,26 +50,8 @@ QUANT_METHODS = {
     CUFFLINKS_METHOD: qs.Cufflinks
 }
 
-__doc__ = __doc__.format(
-    help_short=HELP_SHORT,
-    help=HELP,
-    version_short=VERSION_SHORT,
-    version=VERSION,
-    log_level=LOG_LEVEL,
-    log_level_val=LOG_LEVEL_VAL,
-    log_level_vals=LOG_LEVEL_VALS,
-    quant_method_short=QUANT_METHOD_SHORT,
-    quant_method=QUANT_METHOD,
-    quant_method_val=QUANT_METHOD_VAL,
-    out_file_short=OUT_FILE_SHORT,
-    out_file=OUT_FILE,
-    out_file_val=OUT_FILE_VAL,
-    pro_file=PRO_FILE,
-    read_file=READ_FILE,
-    quant_file=QUANT_FILE,
-    count_file=COUNT_FILE)
-
 # Read in command-line options
+__doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
 options = docopt(__doc__, version="assemble_quantification_data v0.1")
 
 # Validate command-line options
