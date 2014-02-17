@@ -77,7 +77,7 @@ __doc__ = __doc__.format(
     count_file=COUNT_FILE)
 
 # Read in command-line options
-options = docopt(__doc__, version="assess_isoform_quantification v0.1")
+options = docopt(__doc__, version="assemble_quantification_data v0.1")
 
 # Validate command-line options
 try:
