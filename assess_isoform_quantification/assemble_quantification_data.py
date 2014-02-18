@@ -3,7 +3,7 @@
 # TODO: Think I should be using DataFrame.map, not DataFrame.apply.
 
 """Usage:
-    assess_isoform_quantification [--log-level=<log-level>] --method=<quantification-method> --out=<output-file> <pro-file> <read-file> <quantification-file> <transcript-count-file>
+    assemble_quantification_data [--log-level=<log-level>] --method=<quantification-method> --out=<output-file> <pro-file> <read-file> <quantification-file> <transcript-count-file>
 
 -h --help                 Show this message.
 -v --version              Show version.
