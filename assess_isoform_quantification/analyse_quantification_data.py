@@ -1,12 +1,13 @@
 #!/usr/bin/python
 
 """Usage:
-    analyse_quantification_data <fpkm-file> <out-file>
+    analyse_quantification_data [--scatter-max=<scatter-max-val>] <fpkm-file> <out-file>
 
--h --help                 Show this message.
--v --version              Show version.
-<fpkm-file>               File containing real and calculated FPKMs.
-<out-file>                Basename for output graph and data files.
+-h --help                      Show this message.
+-v --version                   Show version.
+--scatter-max=scatter-max-val  Maximum x and y values for scatter plot [default: 1000].
+<fpkm-file>                    File containing real and calculated FPKMs.
+<out-file>                     Basename for output graph and data files.
 """
 
 from docopt import docopt
@@ -19,6 +20,7 @@ import pandas as pd
 
 FPKM_FILE = "<fpkm-file>"
 OUT_FILE_BASENAME = "<out-file>"
+SCATTER_MAX = "--scatter-max"
 
 REAL_FPKM_COL = "Real FPKM"
 CALCULATED_FPKM_COl = "Calculated FPKM"
@@ -32,6 +34,10 @@ options = docopt(__doc__, version="assemble_quantification_data v0.1")
 try:
     options[FPKM_FILE] = opt.validate_file_option(
         options[FPKM_FILE], "Could not open FPKM file")
+    options[SCATTER_MAX] = opt.validate_int_option(
+        options[SCATTER_MAX],
+        "Invalid maximum value for scatter plot axes",
+        nullable=True)
 except SchemaError as exc:
     exit(exc.code)
 
@@ -55,6 +61,19 @@ with open(options[OUT_FILE_BASENAME] + "_stats.txt", "w") as out_file:
     summary = filtered.groupby(TRANSCRIPT_COUNT_COL).describe()
     summary = summary.drop(TRANSCRIPT_COUNT_COL, 1)
     out_file.write(str(summary))
+
+# Make a scatter plot of log transformed calculated vs real log transformed
+# FPKMs
+scatter = plt.scatter(
+    filtered[CALCULATED_FPKM_COl].values,
+    filtered[REAL_FPKM_COL].values)
+plt.suptitle("Scatter plot of log transformed calculated vs real FPKMs")
+plt.xlabel("Real FPKM")
+plt.ylabel("Calculated FPKM")
+plt.xlim(0, options[SCATTER_MAX])
+plt.ylim(0, options[SCATTER_MAX])
+
+plt.savefig(options[OUT_FILE_BASENAME] + "_scatter.pdf", format="pdf")
 
 # Make a boxplot of log ratios stratified by the number of transcripts per
 # originating gene.
