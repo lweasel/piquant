@@ -6,17 +6,16 @@
 """Usage:
     assemble_quantification_data [--log-level=<log-level>] --method=<quantification-method> --out=<output-file> <pro-file> <read-file> <quantification-file> <transcript-count-file>
 
--h --help                 Show this message.
--v --version              Show version.
---log-level=<log-level>   Set logging level (one of {log_level_vals}) [default: info].
--m <quantification-method> --method=<quantification-method>
-                          Method used to quantify transcript abundances.
+-h --help                    Show this message.
+-v --version                 Show version.
+--log-level=<log-level>      Set logging level (one of {log_level_vals}) [default: info].
+-m --method=<quant-method>   Method used to quantify transcript abundances.
 -o <output-file> --out=<output-file>
-                          Output file for real and calculated FPKMs.
-<pro-file>                Flux Simulator gene expression profile file.
-<read-file>               BAM file containing mapped reads used as input to transcript quantifier
-<quantification-file>     Output file from transcript quantifier from which abundances will be read.
-<transcript-count-file>   File containing per-gene transcript counts.
+                             Output file for real and calculated FPKMs.
+<pro-file>                   Flux Simulator gene expression profile file.
+<read-file>                  BAM file containing mapped reads used as input to transcript quantifier
+<quantification-file>        Output file from transcript quantifier from which abundances will be read.
+<transcript-count-file>      File containing per-gene transcript counts.
 """
 
 from docopt import docopt
@@ -47,12 +46,6 @@ REAL_FPKM_COL = 'Real FPKM'
 CALCULATED_FPKM_COL = 'Calculated FPKM'
 TRANSCRIPT_COUNT_COL = 'Num transcripts for gene'
 
-CUFFLINKS_METHOD = "cufflinks"
-
-QUANT_METHODS = {
-    CUFFLINKS_METHOD: qs.Cufflinks
-}
-
 # Read in command-line options
 __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
 options = docopt(__doc__, version="assemble_quantification_data v0.1")
@@ -70,7 +63,8 @@ try:
     opt.validate_file_option(
         options[COUNT_FILE], "Could not open transcript count file")
     options[QUANT_METHOD] = opt.validate_dict_option(
-        options[QUANT_METHOD], QUANT_METHODS, "Unknown quantification method")
+        options[QUANT_METHOD], qs.QUANT_METHODS,
+        "Unknown quantification method")
 except SchemaError as exc:
     exit(exc.code)
 
