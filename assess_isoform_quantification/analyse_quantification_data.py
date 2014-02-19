@@ -64,8 +64,8 @@ with open(options[OUT_FILE_BASENAME] + "_stats.txt", "w") as out_file:
 
 # Make a scatter plot of calculated vs real FPKMs
 scatter = plt.scatter(
-    filtered[CALCULATED_FPKM_COl].values,
-    filtered[REAL_FPKM_COL].values)
+    filtered[REAL_FPKM_COL].values,
+    filtered[CALCULATED_FPKM_COl].values)
 plt.suptitle("Scatter plot of log transformed calculated vs real FPKMs")
 plt.xlabel("Real FPKM")
 plt.ylabel("Calculated FPKM")
