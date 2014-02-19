@@ -1,15 +1,17 @@
 from assess_isoform_quantification.options \
-    import validate_file_option, validate_dict_option, validate_int_option
-from tempfile import NamedTemporaryFile
+    import validate_file_option, validate_dir_option, \
+    validate_dict_option, validate_int_option
+from tempfile import mkdtemp, NamedTemporaryFile
 from schema import SchemaError
 
 import pytest
+import os
 
 
-def test_validate_file_option_returns_handle_for_file_that_exists():
+def test_validate_file_option_does_not_raise_exception_for_file_that_exists():
     file = NamedTemporaryFile()
     file_name = file.name
-    assert validate_file_option(file_name, "dummy") is not None
+    validate_file_option(file_name, "dummy")
 
 
 def test_validate_file_option_raises_exception_for_non_existing_file():
@@ -30,6 +32,43 @@ def test_validate_file_option_exception_message_contains_correct_info():
         validate_file_option(file_name, msg)
 
     check_exception_message(exc_info, msg, file_name)
+
+
+def test_validate_dir_option_does_not_raise_exception_for_existing_dir_if_dir_should_exist():
+    dir_path = mkdtemp()
+    validate_dir_option(dir_path, "dummy")
+    os.rmdir(dir_path)
+
+
+def test_validate_dir_option_does_not_raise_exception_for_non_existing_dir_if_dir_should_not_exist():
+    dir_path = mkdtemp()
+    os.rmdir(dir_path)
+    validate_dir_option(dir_path, "dummy", should_exist=False)
+
+
+def test_validate_dir_option_raises_exception_for_non_existing_dir_if_dir_should_exist():
+    dir_path = mkdtemp()
+    os.rmdir(dir_path)
+    with pytest.raises(SchemaError):
+        validate_dir_option(dir_path, "dummy")
+
+
+def test_validate_dir_option_raises_exception_for_existing_dir_if_dir_should_not_exist():
+    dir_path = mkdtemp()
+    with pytest.raises(SchemaError):
+        validate_dir_option(dir_path, "dummy", should_exist=False)
+    os.rmdir(dir_path)
+
+
+def test_validate_dir_option_exception_message_contains_correct_info():
+    dir_path = mkdtemp()
+    os.rmdir(dir_path)
+
+    msg = "dummy"
+    with pytest.raises(SchemaError) as exc_info:
+        validate_dir_option(dir_path, msg)
+
+    check_exception_message(exc_info, msg, dir_path)
 
 
 def test_validate_dict_option_returns_correct_dict_value():
