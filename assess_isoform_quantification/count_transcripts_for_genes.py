@@ -38,8 +38,7 @@ options = docopt(__doc__, version="count_transcripts_for_genes.py")
 
 # Validate command-line options
 try:
-    options[GTF_FILE] = opt.validate_file_option(
-        options[GTF_FILE], "Could not open GTF file")
+    opt.validate_file_option(options[GTF_FILE], "Could not open GTF file")
 except SchemaError as exc:
     exit(exc.code)
 

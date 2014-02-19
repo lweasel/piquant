@@ -40,12 +40,16 @@ TOPHAT_OUTPUT_DIR = "tho"
 PYTHON_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__)) + os.path.sep
 CLEAN_READS_SCRIPT = PYTHON_SCRIPT_DIR + "clean_mapped_reads.py"
 TRANSCRIPT_COUNTS_SCRIPT = PYTHON_SCRIPT_DIR + "count_transcripts_for_genes.py"
+ASSEMBLE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "assemble_quantification_data.py"
 
 # Read in command-line options
 __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
 options = docopt(__doc__, version="prepare_quantification_run v0.1")
 
 # Validate and process command-line options
+
+quant_method_name = options[QUANT_METHOD]
+
 try:
     opt.validate_dict_option(
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
@@ -174,10 +178,24 @@ with get_output_file(RUN_SCRIPT) as script:
     add_script_section(script_lines, [
         "# Calculate the number of transcripts per gene",
         "python {s} {t} > {out}".format(
-            s=TRANSCRIPT_COUNTS_SCRIPT, t=TRANSCRIPT_GTF_FILE,
+            s=TRANSCRIPT_COUNTS_SCRIPT, t=options[TRANSCRIPT_GTF_FILE],
             out=TRANSCRIPT_COUNTS)
     ])
 
+    # Now assemble data required for analysis of quantification performance
+    # into one file
+    DATA_FILE = "fpkms.csv"
+    calculated_fpkms = quant_method.get_fpkm_file()
+
+    add_script_section(script_lines, [
+        "# Assemble data required for analysis of quantification performance",
+        "# into one file",
+        "python {s} --method={m} --out={out} {p} {r} {q} {t}".format(
+            s=ASSEMBLE_DATA_SCRIPT, m=quant_method_name,
+            out=DATA_FILE, p=FLUX_SIMULATOR_PRO_FILE,
+            r=CLEANED_READS, q=calculated_fpkms,
+            t=TRANSCRIPT_COUNTS)
+    ])
 
     write_lines(script, script_lines)
 

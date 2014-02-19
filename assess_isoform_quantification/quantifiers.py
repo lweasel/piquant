@@ -11,7 +11,10 @@ class Cufflinks:
             if transcript_id in self.abundances.index else 0
 
     def get_command(self, bowtie_index, transcripts_gtf, mapped_reads):
-        return "cufflinks -o transcriptome -b {b} -p 8 --library-type fr-unstranded -G {t} {m}".format(b=bowtie_index, t=transcripts_gtf, m=mapped_reads)
+        return "cufflinks -o transcriptome -b {b}.fa -p 8 --library-type fr-unstranded -G {t} {m}".format(b=bowtie_index, t=transcripts_gtf, m=mapped_reads)
+
+    def get_fpkm_file(self):
+        return "transcriptome/isoforms.fpkm_tracking"
 
 CUFFLINKS_METHOD = "cufflinks"
 
