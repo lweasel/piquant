@@ -34,17 +34,13 @@ options = docopt(__doc__, version="assemble_quantification_data v0.1")
 
 # Validate command-line options
 try:
-    options[FPKM_FILE] = opt.validate_file_option(
-        options[FPKM_FILE], "Could not open FPKM file")
+    opt.validate_file_option(options[FPKM_FILE], "Could not open FPKM file")
     options[SCATTER_MAX] = opt.validate_int_option(
         options[SCATTER_MAX],
         "Invalid maximum value for scatter plot axes",
         nullable=True)
 except SchemaError as exc:
     exit(exc.code)
-
-print(type(options[FPKM_FILE]))
-exit(0)
 
 fpkms = pd.read_csv(options[FPKM_FILE])
 

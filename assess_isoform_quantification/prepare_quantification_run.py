@@ -41,6 +41,7 @@ PYTHON_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__)) + os.path.sep
 CLEAN_READS_SCRIPT = PYTHON_SCRIPT_DIR + "clean_mapped_reads.py"
 TRANSCRIPT_COUNTS_SCRIPT = PYTHON_SCRIPT_DIR + "count_transcripts_for_genes.py"
 ASSEMBLE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "assemble_quantification_data.py"
+ANALYSE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "analyse_quantification_data.py"
 
 # Read in command-line options
 __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
@@ -74,7 +75,7 @@ options[GENOME_DIRECTORY] = os.path.abspath(options[GENOME_DIRECTORY])
 
 logger = log.getLogger(sys.stderr, options[LOG_LEVEL])
 
-logger.info("Creating run directory {dir}.".
+logger.info("Creating run directory '{dir}'.".
             format(dir=options[RUN_DIRECTORY]))
 
 os.mkdir(options[RUN_DIRECTORY])
@@ -93,21 +94,20 @@ def write_lines(f, lines):
     f.write("\n")
 
 with get_output_file(FLUX_SIMULATOR_PARAMS_FILE) as params:
-    lines = [
+    write_lines(params, [
         "REF_FILE_NAME {f}".format(f=options[TRANSCRIPT_GTF_FILE]),
         "GEN_DIR {d}".format(d=options[GENOME_DIRECTORY]),
         "PCR_DISTRIBUTION none",
         "LIB_FILE_NAME flux_simulator.lib",
         "SEQ_FILE_NAME reads.bed",
         "FASTA YES",
-        "READ_NUMBER 5000",
+        "READ_NUMBER 5000000",
         "READ_LENGTH 50"
-    ]
-    write_lines(params, lines)
+    ])
 
-# Write shell script to run quantification
+# Write shell script to run quantification analysis
 
-logger.info("Creating shell script to run quantification assessment.")
+logger.info("Creating shell script to run quantification analysis.")
 
 script_path = None
 
@@ -195,6 +195,13 @@ with get_output_file(RUN_SCRIPT) as script:
             out=DATA_FILE, p=FLUX_SIMULATOR_PRO_FILE,
             r=CLEANED_READS, q=calculated_fpkms,
             t=TRANSCRIPT_COUNTS)
+    ])
+
+    # Finally perform analysis on the calculated FPKMs
+    add_script_section(script_lines, [
+        "# Perform analysis on calculated FPKMs",
+        "python {s} {f} {out}".format(
+            s=ANALYSE_DATA_SCRIPT, f=DATA_FILE, out="results")
     ])
 
     write_lines(script, script_lines)
