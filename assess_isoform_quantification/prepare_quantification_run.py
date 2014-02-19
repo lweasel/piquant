@@ -97,23 +97,29 @@ with get_output_file(FLUX_SIMULATOR_PARAMS_FILE) as params:
 # Write shell script to run quantification
 script_path = None
 
+
+def add_script_section(script_lines, lines):
+    script_lines += lines
+    script_lines.append("")
+
 with get_output_file(RUN_SCRIPT) as script:
-    lines = [
-        "#!/bin/bash", ""
-    ]
+    script_lines = []
+
+    add_script_section(script_lines, [
+        "#!/bin/bash"
+    ])
 
     # Run Flux Simulator to create expression profiles
-    lines += [
+    add_script_section(script_lines, [
         "# Run Flux Simulator to create expression profiles then simulate reads",
         "flux-simulator -t simulator -x -p {f}".format(f=FLUX_SIMULATOR_PARAMS_FILE),
-        ""
-    ]
+    ])
 
     # When creating expression profiles, Flux Simulator sometimes appears to
     # output (incorrectly) one transcript with zero length - which then causes
     # read simulation to barf. The following hack will remove the offending 
     # transcript(s).
-    lines += [
+    add_script_section(script_lines, [
         "# (this is a hack - Flux Simulator seems to sometimes incorrectly",
         "# output transcripts with zero length)",
         "ZERO_LENGTH_COUNT=$(awk 'BEGIN {i=0} $4 == 0 {i++;} END{print i}'" +
@@ -122,28 +128,25 @@ with get_output_file(RUN_SCRIPT) as script:
         "echo Removing $ZERO_LENGTH_COUNT transcripts with zero length...",
         "echo",
         "awk '$4 > 0' {f} > tmp; mv tmp {f}".format(f=FLUX_SIMULATOR_PRO_FILE),
-        ""
-    ]
+    ])
 
     # Now use Flux Simulator to simulate reads
-    lines += [
+    add_script_section(script_lines, [
         "flux-simulator -t simulator -l -s -p {f}".format(f=FLUX_SIMULATOR_PARAMS_FILE),
-        ""
-    ]
+    ])
 
     # Map simulated reads to the genome with TopHat
-    lines += [
+    add_script_section(script_lines, [
         "# Map simulated reads to the genome with TopHat",
         "tophat --library-type fr-unstranded --no-coverage-search -p 8 -o {tho} {b} reads.fasta".format(tho=TOPHAT_OUTPUT_DIR, b=BOWTIE_INDEX)
-        ""
-    ]
+    ])
 
     # Clean mapped reads, retaining only those which mapped to the correct locus
-    lines += [
+    add_script_section(script_lines, [
         "# Clean mapped reads to retain only those which mappedi to the",
         "# correct locus",
-        "python {s} {tho} cleaned.bam".format(s=CLEAN_READS_SCRIPT, tho=TOPHAT_OUTPUT_DIR)
-    ]
+        "python {s} {tho} cleaned.bam".format(s=CLEAN_READS_SCRIPT, tho=TOPHAT_OUTPUT_DIR),
+    ])
 
     write_lines(script, lines)
 
