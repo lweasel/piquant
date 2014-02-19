@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 # TODO: Think I should be using DataFrame.map, not DataFrame.apply.
+# TODO: validate_file_option does not return file
 
 """Usage:
     assemble_quantification_data [--log-level=<log-level>] --method=<quantification-method> --out=<output-file> <pro-file> <read-file> <quantification-file> <transcript-count-file>

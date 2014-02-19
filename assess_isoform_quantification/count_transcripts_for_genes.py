@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# TODO: validate_file_option does not return file
+
 """Usage:
     count_transcripts_for_genes {gtf_file}
 

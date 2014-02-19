@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# TODO: validate_file_option does not return file
+
 """Usage:
     analyse_quantification_data [--scatter-max=<scatter-max-val>] <fpkm-file> <out-file>
 
@@ -40,6 +42,9 @@ try:
         nullable=True)
 except SchemaError as exc:
     exit(exc.code)
+
+print(type(options[FPKM_FILE]))
+exit(0)
 
 fpkms = pd.read_csv(options[FPKM_FILE])
 
