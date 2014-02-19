@@ -5,7 +5,7 @@
 
 -h --help                      Show this message.
 -v --version                   Show version.
---scatter-max=scatter-max-val  Maximum x and y values for scatter plot [default: 1000].
+--scatter-max=scatter-max-val  Maximum x and y values for scatter plot; a value of 0 means do not impose a maximum [default: 0].
 <fpkm-file>                    File containing real and calculated FPKMs.
 <out-file>                     Basename for output graph and data files.
 """
@@ -69,8 +69,11 @@ scatter = plt.scatter(
 plt.suptitle("Scatter plot of log transformed calculated vs real FPKMs")
 plt.xlabel("Real FPKM")
 plt.ylabel("Calculated FPKM")
-plt.xlim(0, options[SCATTER_MAX])
-plt.ylim(0, options[SCATTER_MAX])
+plt.xlim(xmin=0)
+plt.ylim(ymin=0)
+if options[SCATTER_MAX] > 0:
+    plt.xlim(xmax=options[SCATTER_MAX])
+    plt.ylim(ymax=options[SCATTER_MAX])
 
 plt.savefig(options[OUT_FILE_BASENAME] + "_scatter.pdf", format="pdf")
 
