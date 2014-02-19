@@ -54,9 +54,9 @@ options = docopt(__doc__, version="assemble_quantification_data v0.1")
 try:
     opt.validate_dict_option(
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
-    options[PRO_FILE] = opt.validate_file_option(
+    opt.validate_file_option(
         options[PRO_FILE], "Could not open expression profile file")
-    options[QUANT_FILE] = opt.validate_file_option(
+    opt.validate_file_option(
         options[QUANT_FILE], "Could not open transcript abundance file")
     opt.validate_file_option(
         options[READ_FILE], "Could not open BAM file containing reads")
