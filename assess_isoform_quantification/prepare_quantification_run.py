@@ -9,6 +9,7 @@
 -d --run-directory=<run-directory>  Directory to create to which run files will be written [default: out].
 <transcript-gtf-file>               GTF formatted file describing transcripts to be simulated.
 <genome-dir>                        Directory containing per-chromosome sequences as FASTA files.
+<bowtie-index>                      Basename of the genome index used when mapping reads.
 """
 
 from docopt import docopt
@@ -26,6 +27,7 @@ LOG_LEVEL_VALS = str(log.LEVELS.keys())
 RUN_DIRECTORY = "--run-directory"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_DIRECTORY = "<genome-dir>"
+BOWTIE_INDEX = "<bowtie-index>"
 
 FLUX_SIMULATOR_PARAMS_FILE = "flux_simulator.par"
 FLUX_SIMULATOR_PRO_FILE = "flux_simulator.pro"
@@ -82,7 +84,9 @@ with get_output_file(FLUX_SIMULATOR_PARAMS_FILE) as params:
         "PCR_DISTRIBUTION none",
         "LIB_FILE_NAME flux_simulator.lib",
         "SEQ_FILE_NAME reads.bed",
-        "FASTA YES"
+        "FASTA YES",
+        "READ_NUMBER 5000",
+        "READ_LENGTH 50"
     ]
     write_lines(params, lines)
 
@@ -105,7 +109,10 @@ with get_output_file(RUN_SCRIPT) as script:
         "echo",
         "awk '$4 > 0' {f} > tmp; mv tmp {f}".format(f=FLUX_SIMULATOR_PRO_FILE),
         "",
-        "flux-simulator -t simulator -l -s -p {f}".format(f=FLUX_SIMULATOR_PARAMS_FILE)
+        "flux-simulator -t simulator -l -s -p {f}".format(f=FLUX_SIMULATOR_PARAMS_FILE),
+        "",
+        "# Map simulated reads to the genome with TopHat",
+        "tophat --library-type fr-unstranded --no-coverage-search -p 8 -o tho {b} reads.fasta".format(b=BOWTIE_INDEX)
     ]
     write_lines(script, lines)
 
