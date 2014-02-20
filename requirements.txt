@@ -1,5 +1,5 @@
 Cython>=0.20.1
--e git+/home/odando/git/assess_isoform_quantification.git/@6b11bd2aaccbe1e67ccca8fa7d2ceccbf6c9d22f#egg=assess_isoform_quantification-master
+-e git+/home/odando/git/assess_isoform_quantification.git/@4a5623199a958d88ac4a8c3f56bc4efb8138ece7#egg=assess_isoform_quantification-master
 backports.ssl-match-hostname>=3.4.0.2
 docopt>=0.6.1
 ez-setup>=0.9
@@ -15,5 +15,6 @@ pytest>=2.5.2
 python-dateutil>=2.2
 pytz>=2013.9
 schema>=0.2.0
+scipy>=0.13.3
 six>=1.5.2
 tornado>=3.2
