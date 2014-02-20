@@ -1,8 +1,5 @@
 #!/usr/bin/python
 
-# TODO: Think I should be using DataFrame.map, not DataFrame.apply.
-# TODO: validate_file_option does not return file
-
 """Usage:
     assemble_quantification_data [--log-level=<log-level>] --method=<quantification-method> --out=<output-file> <pro-file> <read-file> <quantification-file> <transcript-count-file>
 
@@ -105,8 +102,7 @@ logger.info("{num} mapped reads read.".format(num=mapped_reads))
 logger.info("Reading expression profiles...")
 
 
-def fpkm_calc(profile_row):
-    t_id = profile_row[fs.PRO_FILE_TRANSCRIPT_ID_COL]
+def fpkm_calc(t_id):
     if t_id not in transcript_info:
         return 0
     t_info = transcript_info[t_id]
@@ -114,7 +110,8 @@ def fpkm_calc(profile_row):
     return t_info[1] / (t_kb * m_r_millons)
 
 profiles = fs.read_expression_profiles(options[PRO_FILE])
-profiles[REAL_FPKM_COL] = profiles.apply(fpkm_calc, axis=1)
+profiles[REAL_FPKM_COL] = \
+    profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].map(fpkm_calc)
 
 # Read calculated FPKM values for each transcript produced by a particular
 # quanfication method
@@ -124,9 +121,8 @@ logger.info("Reading calculated FPKMs...")
 quant_method = options[QUANT_METHOD]()
 quant_method.calculate_transcript_abundances(options[QUANT_FILE])
 
-set_calculated_fpkm = lambda row: \
-    quant_method.get_transcript_abundance(row[fs.PRO_FILE_TRANSCRIPT_ID_COL])
-profiles[CALCULATED_FPKM_COL] = profiles.apply(set_calculated_fpkm, axis=1)
+profiles[CALCULATED_FPKM_COL] = profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].\
+    map(quant_method.get_transcript_abundance)
 
 # Read per-gene transcript counts
 
@@ -136,13 +132,12 @@ transcript_counts = pandas.read_csv(
     options[COUNT_FILE], index_col=COUNTS_TRANSCRIPT_COL)
 
 
-def set_transcript_count(profile_row):
-    t_id = profile_row[fs.PRO_FILE_TRANSCRIPT_ID_COL]
-    if t_id not in transcript_counts.index:
-        return 0
-    return transcript_counts.ix[t_id][COUNTS_COUNT_COL]
+set_transcript_count = lambda t_id: \
+    transcript_counts.ix[t_id][COUNTS_COUNT_COL] \
+    if t_id in transcript_counts.index else 0
 
-profiles[TRANSCRIPT_COUNT_COL] = profiles.apply(set_transcript_count, axis=1)
+profiles[TRANSCRIPT_COUNT_COL] = \
+    profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].map(set_transcript_count)
 
 # Write FPKMs and other relevant data to output file
 

@@ -1,7 +1,5 @@
 import pandas as pd
 
-# TODO: numeric literals in get_fragment_bounds
-
 # n.b. a Flux Simulator read identifier takes a form like:
 #
 # 17:23917458-23919441W:ENSMUST00000115428:3404:610:576:768:S
@@ -19,6 +17,13 @@ PRO_FILE_LENGTH_COL = 3
 PRO_FILE_FRAC_COL = 4
 PRO_FILE_NUM_COL = 5
 
+REGION_READ_ELEMENT = 0
+LOCUS_READ_ELEMENT = 1
+TRANSCRIPT_ID_READ_ELEMENT = 2
+LENGTH_READ_ELEMENT = 4
+START_POS_READ_ELEMENT = 5
+END_POS_READ_ELEMENT = 6
+
 
 def read_expression_profiles(pro_file):
     profiles = pd.read_csv(pro_file, delim_whitespace=True, header=None)
@@ -33,13 +38,13 @@ def _get_read_identifier_elems(read_identifier):
 def get_transcript_id(read_identifier):
     """Return originating transcript ID for a Flux Simulator read."""
     rid_elems = _get_read_identifier_elems(read_identifier)
-    return rid_elems[2]
+    return rid_elems[TRANSCRIPT_ID_READ_ELEMENT]
 
 
 def get_transcript_length(read_identifier):
     """Return the processed length of the originating transcript of a read"""
     rid_elems = _get_read_identifier_elems(read_identifier)
-    return int(rid_elems[4])
+    return int(rid_elems[LENGTH_READ_ELEMENT])
 
 
 def get_transcript_bounds(read_identifier):
@@ -49,8 +54,8 @@ def get_transcript_bounds(read_identifier):
     will return (in 0-based, half-open co-ordinates) the start and end
     positions of the read's originating transcript."""
     rid_elems = _get_read_identifier_elems(read_identifier)
-    region = rid_elems[0]
-    start_str, end_str = rid_elems[1][:-1].split("-")
+    region = rid_elems[REGION_READ_ELEMENT]
+    start_str, end_str = rid_elems[LOCUS_READ_ELEMENT][:-1].split("-")
     return region, int(start_str) - 1, int(end_str)
 
 
@@ -66,18 +71,18 @@ def get_fragment_bounds(read_identifier):
         will be extended at the end to accommodate this.
     """
     rid_elems = _get_read_identifier_elems(read_identifier)
-    region = rid_elems[0]
+    region = rid_elems[REGION_READ_ELEMENT]
 
-    t_start_str, t_end_str = rid_elems[1][:-1].split("-")
+    t_start_str, t_end_str = rid_elems[LOCUS_READ_ELEMENT][:-1].split("-")
     t_start = int(t_start_str) - 1
     t_end = int(t_end_str)
-    t_len = int(rid_elems[4])
+    t_len = int(rid_elems[LENGTH_READ_ELEMENT])
 
-    f_start = int(rid_elems[5])
+    f_start = int(rid_elems[START_POS_READ_ELEMENT])
     if f_start < 0:
         t_start += f_start
 
-    f_end = int(rid_elems[6])
+    f_end = int(rid_elems[END_POS_READ_ELEMENT])
     if f_end >= t_len:
         t_end += f_end - t_len + 1
 

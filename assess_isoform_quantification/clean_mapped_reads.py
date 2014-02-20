@@ -1,7 +1,5 @@
 #!/usr/bin/python
 
-# TODO: validate_file_option does not return file
-
 """Usage:
     clean_mapped_reads [{help}] [{version}] [{write_rejected}] {in_bam_file}
                        {out_bam_file}

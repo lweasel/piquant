@@ -1,7 +1,5 @@
 #!/usr/bin/python
 
-# TODO: validate_file_option does not return file
-
 """Usage:
     analyse_quantification_data [--scatter-max=<scatter-max-val>] [--log2-scatter-min=<log2-scatter-min-val>] [--log2-scatter-max=<log2-scatter-max-val>] <fpkm-file> <out-file>
 
