@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
 """Usage:
-    count_transcripts_for_genes {gtf_file}
+    count_transcripts_for_genes <gtf-file>
 
-{help_short} {help}         Show this message.
-{version_short} {version}           Show version.
-{gtf_file}          GTF file containing genes and transcripts.
+-h --help     Show this message.
+-v --version  Show version.
+<gtf-file>    GTF file containing genes and transcripts.
 """
 
 from docopt import docopt
@@ -14,22 +14,11 @@ from schema import SchemaError
 import options as opt
 import pandas as pd
 
-HELP_SHORT = "-h"
-HELP = "--help"
-VERSION_SHORT = "-v"
-VERSION = "--version"
 GTF_FILE = "<gtf-file>"
 
 TRANSCRIPT_COL = "transcript"
 GENE_COL = "gene"
 TRANSCRIPT_COUNT_COL = "transcript_count"
-
-__doc__ = __doc__.format(
-    help_short=HELP_SHORT,
-    help=HELP,
-    version_short=VERSION_SHORT,
-    version=VERSION,
-    gtf_file=GTF_FILE)
 
 # Read in command-line options
 options = docopt(__doc__, version="count_transcripts_for_genes.py")

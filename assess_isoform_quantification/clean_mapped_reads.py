@@ -1,15 +1,13 @@
 #!/usr/bin/python
 
 """Usage:
-    clean_mapped_reads [{help}] [{version}] [{write_rejected}] {in_bam_file}
-                       {out_bam_file}
+    clean_mapped_reads [--help] [--version] [--write-rejected] <in-bam-file> <out-bam-file>
 
-{help_short} {help}                 Show this message.
-{version_short} {version}              Show version.
-{write_rejected}            If specfied, write rejected reads to the file
-                            "rejected.bam".
-{in_bam_file}             Input BAM file containing mapped reads to be cleaned.
-{out_bam_file}            Output BAM file to write cleaned reads to.
+-h --help         Show this message.
+-v --version      Show version.
+--write-rejected  If specfied, write rejected reads to the file "rejected.bam".
+<in-bam-file>     Input BAM file containing mapped reads to be cleaned.
+<out-bam-file>    Output BAM file to write cleaned reads to.
 """
 
 from docopt import docopt
@@ -19,22 +17,9 @@ from schema import SchemaError
 import flux_simulator as fs
 import pysam
 
-HELP_SHORT = "-h"
-HELP = "--help"
-VERSION_SHORT = "-v"
-VERSION = "--version"
 WRITE_REJECTED = "--write-rejected"
 IN_BAM_FILE = "<in-bam-file>"
 OUT_BAM_FILE = "<out-bam-file>"
-
-__doc__ = __doc__.format(
-    help_short=HELP_SHORT,
-    help=HELP,
-    version_short=VERSION_SHORT,
-    version=VERSION,
-    write_rejected=WRITE_REJECTED,
-    in_bam_file=IN_BAM_FILE,
-    out_bam_file=OUT_BAM_FILE)
 
 # Read in command-line options
 options = docopt(__doc__, version="clean_mapped_reads v0.1")
