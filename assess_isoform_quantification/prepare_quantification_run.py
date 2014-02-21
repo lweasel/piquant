@@ -1,16 +1,14 @@
 #!/usr/bin/python
 
 """Usage:
-    prepare_quantification_run [--log-level=<log-level>] --method <quant-method> [--run-directory <run-directory>] <transcript-gtf-file> <genome-dir> <bowtie-index>
+    prepare_quantification_run [--log-level=<log-level>] --method <quant-method> [--run-directory <run-directory>] --params=<param-values>
 
 -h --help                           Show this message.
 -v --version                        Show version.
 --log-level=<log-level>             Set logging level (one of {log_level_vals}) [default: info].
 -d --run-directory=<run-directory>  Directory to create to which run files will be written [default: out].
 -m --method=<quant-method>          Method used to quantify transcript abundances.
-<transcript-gtf-file>               GTF formatted file describing transcripts to be simulated.
-<genome-dir>                        Directory containing per-chromosome sequences as FASTA files.
-<bowtie-index>                      Basename of the genome index used when mapping reads.
+-p --params=<param-values>          Comma-separated list of key=value specifications of parameters required by quantification assessment
 """
 
 from docopt import docopt
@@ -28,9 +26,7 @@ LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
 RUN_DIRECTORY = "--run-directory"
 QUANT_METHOD = "--method"
-TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
-GENOME_DIRECTORY = "<genome-dir>"
-BOWTIE_INDEX = "<bowtie-index>"
+PARAMS_SPEC = "--params"
 
 FLUX_SIMULATOR_PARAMS_FILE = "flux_simulator.par"
 FLUX_SIMULATOR_PRO_FILE = "flux_simulator.pro"
@@ -58,18 +54,18 @@ try:
         options[RUN_DIRECTORY],
         "Run directory should not already exist",
         should_exist=False)
-    opt.validate_file_option(
-        options[TRANSCRIPT_GTF_FILE], "Transcripts GTF file does not exist")
-    opt.validate_dir_option(
-        options[GENOME_DIRECTORY], "Genome sequence directory does not exist")
     options[QUANT_METHOD] = opt.validate_dict_option(
         options[QUANT_METHOD], qs.QUANT_METHODS,
         "Unknown quantification method")
 except SchemaError as exc:
     exit("Exiting. " + exc.code)
 
-options[TRANSCRIPT_GTF_FILE] = os.path.abspath(options[TRANSCRIPT_GTF_FILE])
-options[GENOME_DIRECTORY] = os.path.abspath(options[GENOME_DIRECTORY])
+# Read run parameters
+
+params = {}
+for param_spec in options[PARAMS_SPEC].split(","):
+    param, value = param_spec.split("=")
+    params[param] = value
 
 # Create directory for run files
 
@@ -93,10 +89,10 @@ def write_lines(f, lines):
     f.write("\n".join(lines))
     f.write("\n")
 
-with get_output_file(FLUX_SIMULATOR_PARAMS_FILE) as params:
-    write_lines(params, [
-        "REF_FILE_NAME {f}".format(f=options[TRANSCRIPT_GTF_FILE]),
-        "GEN_DIR {d}".format(d=options[GENOME_DIRECTORY]),
+with get_output_file(FLUX_SIMULATOR_PARAMS_FILE) as fs_params_file:
+    write_lines(fs_params_file, [
+        "REF_FILE_NAME {f}".format(f=params[qs.TRANSCRIPT_GTF_FILE]),
+        "GEN_DIR {d}".format(d=params[qs.GENOME_FASTA_DIR]),
         "PCR_DISTRIBUTION none",
         "LIB_FILE_NAME flux_simulator.lib",
         "SEQ_FILE_NAME reads.bed",
@@ -125,13 +121,15 @@ with get_output_file(RUN_SCRIPT) as script:
 
     # Run Flux Simulator to create expression profiles
     add_script_section(script_lines, [
-        "# Run Flux Simulator to create expression profiles then simulate reads",
-        "flux-simulator -t simulator -x -p {f}".format(f=FLUX_SIMULATOR_PARAMS_FILE),
+        "# Run Flux Simulator to create expression profiles " +
+        "then simulate reads",
+        "flux-simulator -t simulator -x -p {f}".
+        format(f=FLUX_SIMULATOR_PARAMS_FILE),
     ])
 
     # When creating expression profiles, Flux Simulator sometimes appears to
     # output (incorrectly) one transcript with zero length - which then causes
-    # read simulation to barf. The following hack will remove the offending 
+    # read simulation to barf. The following hack will remove the offending
     # transcript(s).
     add_script_section(script_lines, [
         "# (this is a hack - Flux Simulator seems to sometimes incorrectly",
@@ -146,30 +144,35 @@ with get_output_file(RUN_SCRIPT) as script:
 
     # Now use Flux Simulator to simulate reads
     add_script_section(script_lines, [
-        "flux-simulator -t simulator -l -s -p {f}".format(f=FLUX_SIMULATOR_PARAMS_FILE),
+        "flux-simulator -t simulator -l -s -p {f}".
+        format(f=FLUX_SIMULATOR_PARAMS_FILE),
     ])
 
     # Map simulated reads to the genome with TopHat
     add_script_section(script_lines, [
         "# Map simulated reads to the genome with TopHat",
-        "tophat --library-type fr-unstranded --no-coverage-search -p 8 -o {tho} {b} reads.fasta".format(tho=TOPHAT_OUTPUT_DIR, b=options[BOWTIE_INDEX])
+        "tophat --library-type fr-unstranded --no-coverage-search -p 8 " +
+        "-o {tho} {b} reads.fasta".format(tho=TOPHAT_OUTPUT_DIR,
+                                          b=params[qs.BOWTIE_INDEX])
     ])
 
-    # Clean mapped reads, retaining only those which mapped to the correct locus
+    # Clean mapped reads, retaining only those which mapped to the
+    # correct locus
     CLEANED_READS = "cleaned.bam"
     add_script_section(script_lines, [
         "# Clean mapped reads to retain only those which mapped to the",
         "# correct locus",
-        "python {s} {tho}/accepted_hits.bam {r}".format(s=CLEAN_READS_SCRIPT, tho=TOPHAT_OUTPUT_DIR, r=CLEANED_READS),
+        "python {s} {tho}/accepted_hits.bam {r}".
+        format(s=CLEAN_READS_SCRIPT, tho=TOPHAT_OUTPUT_DIR, r=CLEANED_READS),
     ])
 
     # Use the specified quantification method to calculate per-transcript FPKMs
     quant_method = options[QUANT_METHOD]()
-    quant_method_cl = quant_method.get_command(
-        options[BOWTIE_INDEX], options[TRANSCRIPT_GTF_FILE], CLEANED_READS)
+    quant_method_cl = quant_method.get_command(CLEANED_READS, params)
 
     add_script_section(script_lines, [
-        "# Use specified quantification method to calculate per-transcript FPKMs",
+        "# Use specified quantification method to calculate " +
+        "per-transcript FPKMs",
         quant_method_cl
     ])
 
@@ -178,7 +181,7 @@ with get_output_file(RUN_SCRIPT) as script:
     add_script_section(script_lines, [
         "# Calculate the number of transcripts per gene",
         "python {s} {t} > {out}".format(
-            s=TRANSCRIPT_COUNTS_SCRIPT, t=options[TRANSCRIPT_GTF_FILE],
+            s=TRANSCRIPT_COUNTS_SCRIPT, t=params[qs.TRANSCRIPT_GTF_FILE],
             out=TRANSCRIPT_COUNTS)
     ])
 
