@@ -148,31 +148,29 @@ with get_output_file(RUN_SCRIPT) as script:
         format(f=FLUX_SIMULATOR_PARAMS_FILE),
     ])
 
-    # Map simulated reads to the genome with TopHat
-    add_script_section(script_lines, [
-        "# Map simulated reads to the genome with TopHat",
-        "tophat --library-type fr-unstranded --no-coverage-search -p 8 " +
-        "-o {tho} {b} reads.fasta".format(tho=TOPHAT_OUTPUT_DIR,
-                                          b=params[qs.BOWTIE_INDEX])
-    ])
+    # Perform preparatory tasks required by a particular quantification method
+    # prior to calculating abundances; for example, this might include mapping
+    # reads to the genome with TopHat
+    quant_method = options[QUANT_METHOD]()
+    quant_method_prep = quant_method.get_preparatory_commands(params)
+
+    add_script_section(script_lines, quant_method_prep)
 
     # Clean mapped reads, retaining only those which mapped to the
     # correct locus
-    CLEANED_READS = "cleaned.bam"
-    add_script_section(script_lines, [
-        "# Clean mapped reads to retain only those which mapped to the",
-        "# correct locus",
-        "python {s} {tho}/accepted_hits.bam {r}".
-        format(s=CLEAN_READS_SCRIPT, tho=TOPHAT_OUTPUT_DIR, r=CLEANED_READS),
-    ])
+    #add_script_section(script_lines, [
+    #    "# Clean mapped reads to retain only those which mapped to the",
+    #    "# correct locus",
+    #    "python {s} {tho}/accepted_hits.bam {r}".
+    #    format(s=CLEAN_READS_SCRIPT, tho=TOPHAT_OUTPUT_DIR, r=CLEANED_READS),
+    #])
 
     # Use the specified quantification method to calculate per-transcript FPKMs
-    quant_method = options[QUANT_METHOD]()
-    quant_method_cl = quant_method.get_command(CLEANED_READS, params)
+    quant_method_cl = quant_method.get_command(params)
 
     add_script_section(script_lines, [
-        "# Use specified quantification method to calculate " +
-        "per-transcript FPKMs",
+        "# Use {m} to calculate per-transcript FPKMs".
+        format(m=options[QUANT_METHOD].__name__),
         quant_method_cl
     ])
 
@@ -196,7 +194,8 @@ with get_output_file(RUN_SCRIPT) as script:
         "python {s} --method={m} --out={out} {p} {r} {q} {t}".format(
             s=ASSEMBLE_DATA_SCRIPT, m=quant_method_name,
             out=DATA_FILE, p=FLUX_SIMULATOR_PRO_FILE,
-            r=CLEANED_READS, q=calculated_fpkms,
+            r=quant_method.get_mapped_reads_file(),
+            q=calculated_fpkms,
             t=TRANSCRIPT_COUNTS)
     ])
 
