@@ -1,5 +1,12 @@
 #!/usr/bin/python
 
+# e.g.
+#
+# python prepare_quantification_run.py -d cufflinks_test -m RSEM -p TRANSCRIPT_REFERENCE=~/data/genome/mouse/mm10/rsem/mm10-protein-coding ~/data/genome/mouse/mm10/Mus_musculus.protein_coding.gtf ~/data/genome/mouse/mm10/top_level_per_contig
+#
+# python prepare_quantification_run.py -d rsem_test -m RSEM -p TRANSCRIPT_REFERENCE=~/data/genome/mouse/mm10/rsem/mm10-protein-coding ~/data/genome/mouse/mm10/Mus_musculus.protein_coding.gtf ~/data/genome/mouse/mm10/top_level_per_contig
+#
+
 """Usage:
     prepare_quantification_run [--log-level=<log-level>] --method <quant-method> --params=<param-values> [--run-directory <run-directory] <transcript-gtf-file> <genome-fasta-dir>
 
@@ -170,7 +177,7 @@ with get_output_file(RUN_SCRIPT) as script:
     # Use the specified quantification method to calculate per-transcript FPKMs
     add_script_section(script_lines, [
         "# Use {m} to calculate per-transcript FPKMs".
-        format(m=options[QUANT_METHOD].get_name()),
+        format(m=options[QUANT_METHOD].get_method_name()),
         options[QUANT_METHOD].get_command(options[PARAMS_SPEC])
 
     ])

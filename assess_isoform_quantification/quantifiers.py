@@ -3,6 +3,9 @@ from schema import SchemaError
 import pandas as pd
 import os.path
 
+# TODO: many instance methods could be class methods - only those calculating
+# abundances are instance methods
+
 TRANSCRIPT_GTF_FILE = "TRANSCRIPT_GTF_FILE"
 TRANSCRIPT_REFERENCE = "TRANSCRIPT_REFERENCE"
 GENOME_FASTA_DIR = "GENOME_FASTA_DIR"
@@ -13,6 +16,8 @@ PARAM_DESCRIPTIONS = {
     TRANSCRIPT_REFERENCE: "name of RSEM transcript reference",
     BOWTIE_INDEX: "name of Bowtie index used when TopHat maps reads to genome"
 }
+
+QUANT_METHODS = {}
 
 
 class ParamsValidator:
@@ -37,25 +42,28 @@ class ParamsValidator:
         return params
 
 
-class Quantifier:
-    def __init__(self, method):
-        self.method = method
+# Hmm...
+def Quantifier(cls):
+    method_name = cls.__name__
+    QUANT_METHODS[method_name] = cls
 
-    def get_params_validator(self):
-        return ParamsValidator(self.method, self._get_required_params())
+    required_params = cls.get_required_params()
 
-    def get_name(self):
-        return self.method
+    def get_params_validator(obj):
+        return ParamsValidator(method_name, required_params)
+
+    cls.get_params_validator = get_params_validator
+
+    return cls
 
 
-class Cufflinks(Quantifier):
+@Quantifier
+class Cufflinks:
     TOPHAT_OUTPUT_DIR = "tho"
     TOPHAT_MAPPED_READS = TOPHAT_OUTPUT_DIR + os.path.sep + "accepted_hits.bam"
 
-    def __init__(self):
-        Quantifier.__init__(self, CUFFLINKS_METHOD)
-
-    def _get_required_params(self):
+    @classmethod
+    def get_required_params(cls):
         return [BOWTIE_INDEX]
 
     def calculate_transcript_abundances(self, quant_file):
@@ -89,13 +97,12 @@ class Cufflinks(Quantifier):
         return "transcriptome/isoforms.fpkm_tracking"
 
 
-class RSEM(Quantifier):
+@Quantifier
+class RSEM:
     SAMPLE_NAME = "rsem_sample"
 
-    def __init__(self):
-        Quantifier.__init__(self, RSEM_METHOD)
-
-    def _get_required_params(self):
+    @classmethod
+    def get_required_params(cls):
         return [TRANSCRIPT_REFERENCE]
 
     def calculate_transcript_abundances(self, quant_file):
@@ -132,11 +139,3 @@ class RSEM(Quantifier):
 
     def get_fpkm_file(self):
         return RSEM.SAMPLE_NAME + ".isoforms.results"
-
-CUFFLINKS_METHOD = "Cufflinks"
-RSEM_METHOD = "RSEM"
-
-QUANT_METHODS = {
-    CUFFLINKS_METHOD: Cufflinks,
-    RSEM_METHOD: RSEM
-}
