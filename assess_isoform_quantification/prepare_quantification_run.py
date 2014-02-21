@@ -1,14 +1,16 @@
 #!/usr/bin/python
 
 """Usage:
-    prepare_quantification_run [--log-level=<log-level>] --method <quant-method> [--run-directory <run-directory>] --params=<param-values>
+    prepare_quantification_run [--log-level=<log-level>] --method <quant-method> --params=<param-values> [--run-directory <run-directory] <transcript-gtf-file> <genome-fasta-dir>
 
 -h --help                           Show this message.
 -v --version                        Show version.
 --log-level=<log-level>             Set logging level (one of {log_level_vals}) [default: info].
 -d --run-directory=<run-directory>  Directory to create to which run files will be written [default: out].
 -m --method=<quant-method>          Method used to quantify transcript abundances.
--p --params=<param-values>          Comma-separated list of key=value specifications of parameters required by quantification assessment
+-p --params=<param-values>          Comma-separated list of key=value parameters required by the specified quantification method.
+<transcript-gtf-file>               GTF formatted file describing the transcripts to be simulated.
+<genome-fasta-dir>                  Directory containing per-chromosome sequences as FASTA files.
 """
 
 from docopt import docopt
@@ -27,6 +29,8 @@ LOG_LEVEL_VALS = str(log.LEVELS.keys())
 RUN_DIRECTORY = "--run-directory"
 QUANT_METHOD = "--method"
 PARAMS_SPEC = "--params"
+TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
+GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
 FLUX_SIMULATOR_PARAMS_FILE = "flux_simulator.par"
 FLUX_SIMULATOR_PRO_FILE = "flux_simulator.pro"
@@ -57,6 +61,10 @@ try:
     options[QUANT_METHOD] = opt.validate_dict_option(
         options[QUANT_METHOD], qs.QUANT_METHODS,
         "Unknown quantification method")
+    opt.validate_file_option(
+        options[TRANSCRIPT_GTF_FILE], "Transcript GTF file does not exist")
+    opt.validate_dir_option(
+        options[GENOME_FASTA_DIR], "Genome FASTA directory does not exist")
 except SchemaError as exc:
     exit("Exiting. " + exc.code)
 
@@ -66,6 +74,9 @@ params = {}
 for param_spec in options[PARAMS_SPEC].split(","):
     param, value = param_spec.split("=")
     params[param] = value
+
+params[qs.TRANSCRIPT_GTF_FILE] = options[TRANSCRIPT_GTF_FILE]
+params[qs.GENOME_FASTA_DIR] = options[GENOME_FASTA_DIR]
 
 # Create directory for run files
 
@@ -91,7 +102,7 @@ def write_lines(f, lines):
 
 with get_output_file(FLUX_SIMULATOR_PARAMS_FILE) as fs_params_file:
     write_lines(fs_params_file, [
-        "REF_FILE_NAME {f}".format(f=params[qs.TRANSCRIPT_GTF_FILE]),
+        "REF_FILE_NAME {f}".format(f=options[TRANSCRIPT_GTF_FILE]),
         "GEN_DIR {d}".format(d=params[qs.GENOME_FASTA_DIR]),
         "PCR_DISTRIBUTION none",
         "LIB_FILE_NAME flux_simulator.lib",
@@ -151,6 +162,8 @@ with get_output_file(RUN_SCRIPT) as script:
     # Perform preparatory tasks required by a particular quantification method
     # prior to calculating abundances; for example, this might include mapping
     # reads to the genome with TopHat
+    params[qs.SIMULATED_READS] = "reads.fasta"
+
     quant_method = options[QUANT_METHOD]()
     quant_method_prep = quant_method.get_preparatory_commands(params)
 
@@ -179,7 +192,7 @@ with get_output_file(RUN_SCRIPT) as script:
     add_script_section(script_lines, [
         "# Calculate the number of transcripts per gene",
         "python {s} {t} > {out}".format(
-            s=TRANSCRIPT_COUNTS_SCRIPT, t=params[qs.TRANSCRIPT_GTF_FILE],
+            s=TRANSCRIPT_COUNTS_SCRIPT, t=options[TRANSCRIPT_GTF_FILE],
             out=TRANSCRIPT_COUNTS)
     ])
 
