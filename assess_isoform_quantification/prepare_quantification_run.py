@@ -14,7 +14,7 @@
 """
 
 from docopt import docopt
-from schema import SchemaError
+from schema import Schema, SchemaError
 
 import log
 import options as opt
@@ -54,29 +54,29 @@ quant_method_name = options[QUANT_METHOD]
 try:
     opt.validate_dict_option(
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
+
     opt.validate_dir_option(
         options[RUN_DIRECTORY],
         "Run directory should not already exist",
         should_exist=False)
+
     options[QUANT_METHOD] = opt.validate_dict_option(
         options[QUANT_METHOD], qs.QUANT_METHODS,
-        "Unknown quantification method")
+        "Unknown quantification method")()
+
+    options[PARAMS_SPEC] = Schema(
+        options[QUANT_METHOD].get_params_validator()).\
+        validate(options[PARAMS_SPEC])
+    options[PARAMS_SPEC][qs.TRANSCRIPT_GTF_FILE] = options[TRANSCRIPT_GTF_FILE]
+    options[PARAMS_SPEC][qs.GENOME_FASTA_DIR] = options[GENOME_FASTA_DIR]
+
     opt.validate_file_option(
         options[TRANSCRIPT_GTF_FILE], "Transcript GTF file does not exist")
+
     opt.validate_dir_option(
         options[GENOME_FASTA_DIR], "Genome FASTA directory does not exist")
 except SchemaError as exc:
     exit("Exiting. " + exc.code)
-
-# Read run parameters
-
-params = {}
-for param_spec in options[PARAMS_SPEC].split(","):
-    param, value = param_spec.split("=")
-    params[param] = value
-
-params[qs.TRANSCRIPT_GTF_FILE] = options[TRANSCRIPT_GTF_FILE]
-params[qs.GENOME_FASTA_DIR] = options[GENOME_FASTA_DIR]
 
 # Create directory for run files
 
@@ -97,13 +97,12 @@ def get_output_file(filename):
 
 
 def write_lines(f, lines):
-    f.write("\n".join(lines))
-    f.write("\n")
+    f.write("\n".join(lines) + '\n')
 
 with get_output_file(FLUX_SIMULATOR_PARAMS_FILE) as fs_params_file:
     write_lines(fs_params_file, [
         "REF_FILE_NAME {f}".format(f=options[TRANSCRIPT_GTF_FILE]),
-        "GEN_DIR {d}".format(d=params[qs.GENOME_FASTA_DIR]),
+        "GEN_DIR {d}".format(d=options[PARAMS_SPEC][qs.GENOME_FASTA_DIR]),
         "PCR_DISTRIBUTION none",
         "LIB_FILE_NAME flux_simulator.lib",
         "SEQ_FILE_NAME reads.bed",
@@ -162,29 +161,18 @@ with get_output_file(RUN_SCRIPT) as script:
     # Perform preparatory tasks required by a particular quantification method
     # prior to calculating abundances; for example, this might include mapping
     # reads to the genome with TopHat
-    params[qs.SIMULATED_READS] = "reads.fasta"
+    options[PARAMS_SPEC][qs.SIMULATED_READS] = "reads.fasta"
 
-    quant_method = options[QUANT_METHOD]()
-    quant_method_prep = quant_method.get_preparatory_commands(params)
-
-    add_script_section(script_lines, quant_method_prep)
-
-    # Clean mapped reads, retaining only those which mapped to the
-    # correct locus
-    #add_script_section(script_lines, [
-    #    "# Clean mapped reads to retain only those which mapped to the",
-    #    "# correct locus",
-    #    "python {s} {tho}/accepted_hits.bam {r}".
-    #    format(s=CLEAN_READS_SCRIPT, tho=TOPHAT_OUTPUT_DIR, r=CLEANED_READS),
-    #])
+    add_script_section(
+        script_lines,
+        options[QUANT_METHOD].get_preparatory_commands(options[PARAMS_SPEC]))
 
     # Use the specified quantification method to calculate per-transcript FPKMs
-    quant_method_cl = quant_method.get_command(params)
-
     add_script_section(script_lines, [
         "# Use {m} to calculate per-transcript FPKMs".
-        format(m=options[QUANT_METHOD].__name__),
-        quant_method_cl
+        format(m=options[QUANT_METHOD].get_name()),
+        options[QUANT_METHOD].get_command(options[PARAMS_SPEC])
+
     ])
 
     # Calculate the number of transcripts per gene and write to a file
@@ -199,7 +187,7 @@ with get_output_file(RUN_SCRIPT) as script:
     # Now assemble data required for analysis of quantification performance
     # into one file
     DATA_FILE = "fpkms.csv"
-    calculated_fpkms = quant_method.get_fpkm_file()
+    calculated_fpkms = options[QUANT_METHOD].get_fpkm_file()
 
     add_script_section(script_lines, [
         "# Assemble data required for analysis of quantification performance",
@@ -207,7 +195,7 @@ with get_output_file(RUN_SCRIPT) as script:
         "python {s} --method={m} --out={out} {p} {r} {q} {t}".format(
             s=ASSEMBLE_DATA_SCRIPT, m=quant_method_name,
             out=DATA_FILE, p=FLUX_SIMULATOR_PRO_FILE,
-            r=quant_method.get_mapped_reads_file(),
+            r=options[QUANT_METHOD].get_mapped_reads_file(),
             q=calculated_fpkms,
             t=TRANSCRIPT_COUNTS)
     ])
