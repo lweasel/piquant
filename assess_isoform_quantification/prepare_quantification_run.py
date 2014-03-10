@@ -2,13 +2,13 @@
 
 # e.g.
 #
-# python prepare_quantification_run.py -d cufflinks_test -m RSEM -p TRANSCRIPT_REFERENCE=~/data/genome/mouse/mm10/rsem/mm10-protein-coding ~/data/genome/mouse/mm10/Mus_musculus.protein_coding.gtf ~/data/genome/mouse/mm10/top_level_per_contig
+# python prepare_quantification_run.py -d cufflinks_test -m Cufflinks -p BOWTIE_INDEX=~/data/genome/mouse/mm10/bowtie-index/mm10 ~/data/genome/mouse/mm10/Mus_musculus.protein_coding.gtf ~/data/genome/mouse/mm10/top_level_per_contig
 #
 # python prepare_quantification_run.py -d rsem_test -m RSEM -p TRANSCRIPT_REFERENCE=~/data/genome/mouse/mm10/rsem/mm10-protein-coding ~/data/genome/mouse/mm10/Mus_musculus.protein_coding.gtf ~/data/genome/mouse/mm10/top_level_per_contig
 #
 
 """Usage:
-    prepare_quantification_run [--log-level=<log-level>] --method <quant-method> --params=<param-values> [--run-directory <run-directory] <transcript-gtf-file> <genome-fasta-dir>
+    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-directory=<run-directory] [--num-fragments=<num-fragments>] <transcript-gtf-file> <genome-fasta-dir>
 
 -h --help                           Show this message.
 -v --version                        Show version.
@@ -16,6 +16,7 @@
 -d --run-directory=<run-directory>  Directory to create to which run files will be written [default: out].
 -m --method=<quant-method>          Method used to quantify transcript abundances.
 -p --params=<param-values>          Comma-separated list of key=value parameters required by the specified quantification method.
+--num-fragments=<num-fragments>     Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
 <transcript-gtf-file>               GTF formatted file describing the transcripts to be simulated.
 <genome-fasta-dir>                  Directory containing per-chromosome sequences as FASTA files.
 """
@@ -36,11 +37,14 @@ LOG_LEVEL_VALS = str(log.LEVELS.keys())
 RUN_DIRECTORY = "--run-directory"
 QUANT_METHOD = "--method"
 PARAMS_SPEC = "--params"
+NUM_FRAGMENTS = "--num-fragments"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
 FLUX_SIMULATOR_PARAMS_FILE = "flux_simulator.par"
 FLUX_SIMULATOR_PRO_FILE = "flux_simulator.pro"
+FRAGMENTS_PER_MOLECULE = 13.2
+
 RUN_SCRIPT = "run_quantification.sh"
 TOPHAT_OUTPUT_DIR = "tho"
 
@@ -77,6 +81,11 @@ try:
     options[PARAMS_SPEC][qs.TRANSCRIPT_GTF_FILE] = options[TRANSCRIPT_GTF_FILE]
     options[PARAMS_SPEC][qs.GENOME_FASTA_DIR] = options[GENOME_FASTA_DIR]
 
+    options[NUM_FRAGMENTS] = opt.validate_int_option(
+        options[NUM_FRAGMENTS],
+        "Number of fragments must be a positive integer.",
+        nonneg=True)
+
     opt.validate_file_option(
         options[TRANSCRIPT_GTF_FILE], "Transcript GTF file does not exist")
 
@@ -106,14 +115,17 @@ def get_output_file(filename):
 def write_lines(f, lines):
     f.write("\n".join(lines) + '\n')
 
+num_molecules = int(options[NUM_FRAGMENTS] / FRAGMENTS_PER_MOLECULE)
+
 with get_output_file(FLUX_SIMULATOR_PARAMS_FILE) as fs_params_file:
     write_lines(fs_params_file, [
-        "REF_FILE_NAME {f}".format(f=options[TRANSCRIPT_GTF_FILE]),
-        "GEN_DIR {d}".format(d=options[PARAMS_SPEC][qs.GENOME_FASTA_DIR]),
+        "REF_FILE_NAME " + options[TRANSCRIPT_GTF_FILE],
+        "GEN_DIR " + options[PARAMS_SPEC][qs.GENOME_FASTA_DIR],
         "PCR_DISTRIBUTION none",
         "LIB_FILE_NAME flux_simulator.lib",
         "SEQ_FILE_NAME reads.bed",
         "FASTA YES",
+        "NB_MOLECULES " + str(num_molecules),
         "READ_NUMBER 5000000",
         "READ_LENGTH 50"
     ])
@@ -177,7 +189,7 @@ with get_output_file(RUN_SCRIPT) as script:
     # Use the specified quantification method to calculate per-transcript FPKMs
     add_script_section(script_lines, [
         "# Use {m} to calculate per-transcript FPKMs".
-        format(m=options[QUANT_METHOD].get_method_name()),
+        format(m=options[QUANT_METHOD].__class__.__name__),
         options[QUANT_METHOD].get_command(options[PARAMS_SPEC])
 
     ])
