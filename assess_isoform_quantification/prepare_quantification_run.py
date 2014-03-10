@@ -8,7 +8,7 @@
 #
 
 """Usage:
-    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-directory=<run-directory] [--num-fragments=<num-fragments>] <transcript-gtf-file> <genome-fasta-dir>
+    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-directory=<run-directory] [--num-fragments=<num-fragments>] [--read-depth=<read-depth>] <transcript-gtf-file> <genome-fasta-dir>
 
 -h --help                           Show this message.
 -v --version                        Show version.
@@ -17,6 +17,7 @@
 -m --method=<quant-method>          Method used to quantify transcript abundances.
 -p --params=<param-values>          Comma-separated list of key=value parameters required by the specified quantification method.
 --num-fragments=<num-fragments>     Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
+--read-depth=<read-depth>           The approximate depth of reads required across the expressed transcriptomei [default: 30].
 <transcript-gtf-file>               GTF formatted file describing the transcripts to be simulated.
 <genome-fasta-dir>                  Directory containing per-chromosome sequences as FASTA files.
 """
@@ -38,21 +39,26 @@ RUN_DIRECTORY = "--run-directory"
 QUANT_METHOD = "--method"
 PARAMS_SPEC = "--params"
 NUM_FRAGMENTS = "--num-fragments"
+READ_DEPTH = "--read-depth"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
-FLUX_SIMULATOR_PARAMS_FILE = "flux_simulator.par"
-FLUX_SIMULATOR_PRO_FILE = "flux_simulator.pro"
+FS_EXPRESSION_PARAMS_FILE = "flux_simulator_expression.par"
+FS_SIMULATION_PARAMS_FILE = "flux_simulator_simulation.par"
+FS_PRO_FILE = FS_EXPRESSION_PARAMS_FILE.replace("par", "pro")
 FRAGMENTS_PER_MOLECULE = 13.2
+READ_LENGTH = 50
 
 RUN_SCRIPT = "run_quantification.sh"
 TOPHAT_OUTPUT_DIR = "tho"
+READ_NUMBER_PLACEHOLDER = "READ_NUMBER_PLACEHOLDER"
 
 PYTHON_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__)) + os.path.sep
 CLEAN_READS_SCRIPT = PYTHON_SCRIPT_DIR + "clean_mapped_reads.py"
 TRANSCRIPT_COUNTS_SCRIPT = PYTHON_SCRIPT_DIR + "count_transcripts_for_genes.py"
 ASSEMBLE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "assemble_quantification_data.py"
 ANALYSE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "analyse_quantification_data.py"
+CALC_READ_DEPTH_SCRIPT = PYTHON_SCRIPT_DIR + "calculate_reads_for_depth.py"
 
 # Read in command-line options
 __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
@@ -86,6 +92,10 @@ try:
         "Number of fragments must be a positive integer.",
         nonneg=True)
 
+    options[READ_DEPTH] = opt.validate_int_option(
+        options[READ_DEPTH], "Read depth must be a positive integer",
+        nonneg=True)
+
     opt.validate_file_option(
         options[TRANSCRIPT_GTF_FILE], "Transcript GTF file does not exist")
 
@@ -117,17 +127,22 @@ def write_lines(f, lines):
 
 num_molecules = int(options[NUM_FRAGMENTS] / FRAGMENTS_PER_MOLECULE)
 
-with get_output_file(FLUX_SIMULATOR_PARAMS_FILE) as fs_params_file:
-    write_lines(fs_params_file, [
-        "REF_FILE_NAME " + options[TRANSCRIPT_GTF_FILE],
-        "GEN_DIR " + options[PARAMS_SPEC][qs.GENOME_FASTA_DIR],
-        "PCR_DISTRIBUTION none",
+common_fs_params_file_lines = [
+    "REF_FILE_NAME " + options[TRANSCRIPT_GTF_FILE],
+    "GEN_DIR " + options[PARAMS_SPEC][qs.GENOME_FASTA_DIR],
+    "NB_MOLECULES " + str(num_molecules),
+]
+
+with get_output_file(FS_EXPRESSION_PARAMS_FILE) as fs_params_file:
+    write_lines(fs_params_file, common_fs_params_file_lines)
+
+with get_output_file(FS_SIMULATION_PARAMS_FILE) as fs_params_file:
+    write_lines(fs_params_file, common_fs_params_file_lines + [
         "LIB_FILE_NAME flux_simulator.lib",
         "SEQ_FILE_NAME reads.bed",
         "FASTA YES",
-        "NB_MOLECULES " + str(num_molecules),
-        "READ_NUMBER 5000000",
-        "READ_LENGTH 50"
+        "READ_NUMBER " + READ_NUMBER_PLACEHOLDER,
+        "READ_LENGTH " + str(READ_LENGTH)
     ])
 
 # Write shell script to run quantification analysis
@@ -153,7 +168,7 @@ with get_output_file(RUN_SCRIPT) as script:
         "# Run Flux Simulator to create expression profiles " +
         "then simulate reads",
         "flux-simulator -t simulator -x -p {f}".
-        format(f=FLUX_SIMULATOR_PARAMS_FILE),
+        format(f=FS_EXPRESSION_PARAMS_FILE),
     ])
 
     # When creating expression profiles, Flux Simulator sometimes appears to
@@ -164,17 +179,40 @@ with get_output_file(RUN_SCRIPT) as script:
         "# (this is a hack - Flux Simulator seems to sometimes incorrectly",
         "# output transcripts with zero length)",
         "ZERO_LENGTH_COUNT=$(awk 'BEGIN {i=0} $4 == 0 {i++;} END{print i}'" +
-        " {f})".format(f=FLUX_SIMULATOR_PRO_FILE),
+        " {f})".format(f=FS_PRO_FILE),
         "echo",
         "echo Removing $ZERO_LENGTH_COUNT transcripts with zero length...",
         "echo",
-        "awk '$4 > 0' {f} > tmp; mv tmp {f}".format(f=FLUX_SIMULATOR_PRO_FILE),
+        "awk '$4 > 0' {f} > tmp; mv tmp {f}".format(f=FS_PRO_FILE),
+    ])
+
+    # Given the expression profile created, calculate the number of reads
+    # required to give the (approximate) read depth specified. Then edit
+    # the Flux Simulator parameter file to specify this number of reads.
+    add_script_section(script_lines, [
+        "# Calculate the number of reads required to give (approximately)",
+        "# a read depth of {depth} across the transcriptome, given a read".
+        format(depth=options[READ_DEPTH]),
+        "# length of {length}.".format(length=READ_LENGTH),
+        "READS=$(python {s} {t} {e} {l} {d})".
+        format(s=CALC_READ_DEPTH_SCRIPT,
+               t=options[TRANSCRIPT_GTF_FILE],
+               e=FS_PRO_FILE,
+               l=READ_LENGTH,
+               d=options[READ_DEPTH])
+    ])
+
+    add_script_section(script_lines, [
+        "# Update the Flux Simulator parameters file with this number",
+        "# of reads.",
+        "sed -i \"s/{p}/$READS/\" {f}".
+        format(p=READ_NUMBER_PLACEHOLDER, f=FS_SIMULATION_PARAMS_FILE)
     ])
 
     # Now use Flux Simulator to simulate reads
     add_script_section(script_lines, [
         "flux-simulator -t simulator -l -s -p {f}".
-        format(f=FLUX_SIMULATOR_PARAMS_FILE),
+        format(f=FS_SIMULATION_PARAMS_FILE),
     ])
 
     # Perform preparatory tasks required by a particular quantification method
@@ -213,7 +251,7 @@ with get_output_file(RUN_SCRIPT) as script:
         "# into one file",
         "python {s} --method={m} --out={out} {p} {r} {q} {t}".format(
             s=ASSEMBLE_DATA_SCRIPT, m=quant_method_name,
-            out=DATA_FILE, p=FLUX_SIMULATOR_PRO_FILE,
+            out=DATA_FILE, p=FS_PRO_FILE,
             r=options[QUANT_METHOD].get_mapped_reads_file(),
             q=calculated_fpkms,
             t=TRANSCRIPT_COUNTS)
