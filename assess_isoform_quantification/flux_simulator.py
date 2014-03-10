@@ -16,6 +16,19 @@ PRO_FILE_CODING_COL = 2
 PRO_FILE_LENGTH_COL = 3
 PRO_FILE_FRAC_COL = 4
 PRO_FILE_NUM_COL = 5
+PRO_FILE_LIBRARY_FRAC_COL = 6
+PRO_FILE_LIBRARY_NUM_COL = 7
+
+PRO_FILE_COLS = [
+    PRO_FILE_LOCUS_COL,
+    PRO_FILE_TRANSCRIPT_ID_COL,
+    PRO_FILE_CODING_COL,
+    PRO_FILE_LENGTH_COL,
+    PRO_FILE_FRAC_COL,
+    PRO_FILE_NUM_COL,
+    PRO_FILE_LIBRARY_FRAC_COL,
+    PRO_FILE_LIBRARY_NUM_COL
+]
 
 REGION_READ_ELEMENT = 0
 LOCUS_READ_ELEMENT = 1
@@ -26,13 +39,20 @@ END_POS_READ_ELEMENT = 6
 
 
 def read_expression_profiles(pro_file):
-    profiles = pd.read_csv(pro_file, delim_whitespace=True, header=None)
+    profiles = pd.read_csv(pro_file, delim_whitespace=True,
+                           header=None, names=PRO_FILE_COLS)
     #profiles.set_index(PRO_FILE_TRANSCRIPT_ID_COL, inplace=True)
     return profiles
 
 
 def _get_read_identifier_elems(read_identifier):
     return read_identifier.split(":")
+
+
+def strip_orientation_info(read_identifier):
+    """Return read identifier minus the orientation information."""
+    rid_elems = _get_read_identifier_elems(read_identifier)
+    return ":".join(rid_elems[:-1])
 
 
 def get_transcript_id(read_identifier):

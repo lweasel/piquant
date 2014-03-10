@@ -73,6 +73,7 @@ logger = log.getLogger(sys.stderr, options[LOG_LEVEL])
 
 logger.info("Reading mapped reads...")
 
+unique_read_ids = {}
 transcript_info = {}
 
 pysam.index(options[READ_FILE])
@@ -80,6 +81,14 @@ read_bam = pysam.Samfile(options[READ_FILE], "rb")
 count = 0
 
 for read in read_bam.fetch():
+    # Make sure that we only count each originating fragment for paired-end
+    # reads once.
+    unique_id = fs.strip_orientation_info(read.qname)
+    if unique_id in unique_read_ids:
+        continue
+
+    unique_read_ids[unique_id] = True
+
     transcript_id = fs.get_transcript_id(read.qname)
     if transcript_id in transcript_info:
         info = transcript_info[transcript_id]

@@ -8,7 +8,7 @@
 #
 
 """Usage:
-    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-directory=<run-directory] [--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>] <transcript-gtf-file> <genome-fasta-dir>
+    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-directory=<run-directory] [--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>] [--paired-end] <transcript-gtf-file> <genome-fasta-dir>
 
 -h --help                           Show this message.
 -v --version                        Show version.
@@ -19,6 +19,7 @@
 --num-fragments=<num-fragments>     Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
 --read-depth=<read-depth>           The approximate depth of reads required across the expressed transcriptomei [default: 30].
 --read-length=<read-length>         The length of sequence reads [default: 50].
+--paired-end                        If specified, create paired-end sequence reads.
 <transcript-gtf-file>               GTF formatted file describing the transcripts to be simulated.
 <genome-fasta-dir>                  Directory containing per-chromosome sequences as FASTA files.
 """
@@ -42,6 +43,7 @@ PARAMS_SPEC = "--params"
 NUM_FRAGMENTS = "--num-fragments"
 READ_DEPTH = "--read-depth"
 READ_LENGTH = "--read-length"
+PAIRED_END = "--paired-end"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
@@ -53,6 +55,7 @@ FRAGMENTS_PER_MOLECULE = 13.2
 RUN_SCRIPT = "run_quantification.sh"
 TOPHAT_OUTPUT_DIR = "tho"
 READ_NUMBER_PLACEHOLDER = "READ_NUMBER_PLACEHOLDER"
+SIMULATED_READS_PREFIX = "reads"
 
 PYTHON_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__)) + os.path.sep
 CLEAN_READS_SCRIPT = PYTHON_SCRIPT_DIR + "clean_mapped_reads.py"
@@ -118,7 +121,7 @@ logger.info("Creating run directory '{dir}'.".
 
 os.mkdir(options[RUN_DIRECTORY])
 
-# Write Flux Simulator parameters file
+# Write Flux Simulator parameters files
 
 logger.info("Creating Flux Simulator parameters file.")
 
@@ -141,14 +144,20 @@ common_fs_params_file_lines = [
 with get_output_file(FS_EXPRESSION_PARAMS_FILE) as fs_params_file:
     write_lines(fs_params_file, common_fs_params_file_lines)
 
+simulation_fs_params_file_lines = common_fs_params_file_lines + [
+    "SEQ_FILE_NAME " + SIMULATED_READS_PREFIX + ".bed",
+    "PRO_FILE_NAME " + FS_PRO_FILE,
+    "FASTA YES",
+    "READ_NUMBER " + READ_NUMBER_PLACEHOLDER,
+    "READ_LENGTH " + str(options[READ_LENGTH]),
+    "PCR_DISTRIBUTION none"
+]
+
+if options[PAIRED_END]:
+    simulation_fs_params_file_lines += ["PAIRED_END YES", "UNIQUE_IDS YES"]
+
 with get_output_file(FS_SIMULATION_PARAMS_FILE) as fs_params_file:
-    write_lines(fs_params_file, common_fs_params_file_lines + [
-        "LIB_FILE_NAME flux_simulator.lib",
-        "SEQ_FILE_NAME reads.bed",
-        "FASTA YES",
-        "READ_NUMBER " + READ_NUMBER_PLACEHOLDER,
-        "READ_LENGTH " + str(options[READ_LENGTH])
-    ])
+    write_lines(fs_params_file, simulation_fs_params_file_lines)
 
 # Write shell script to run quantification analysis
 
@@ -223,7 +232,8 @@ with get_output_file(RUN_SCRIPT) as script:
     # Perform preparatory tasks required by a particular quantification method
     # prior to calculating abundances; for example, this might include mapping
     # reads to the genome with TopHat
-    options[PARAMS_SPEC][qs.SIMULATED_READS] = "reads.fasta"
+    options[PARAMS_SPEC][qs.SIMULATED_READS] = \
+        "{f}.fasta".format(f=SIMULATED_READS_PREFIX)
 
     add_script_section(
         script_lines,
