@@ -8,7 +8,7 @@
 #
 
 """Usage:
-    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-directory=<run-directory] [--num-fragments=<num-fragments>] [--read-depth=<read-depth>] <transcript-gtf-file> <genome-fasta-dir>
+    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-directory=<run-directory] [--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>] <transcript-gtf-file> <genome-fasta-dir>
 
 -h --help                           Show this message.
 -v --version                        Show version.
@@ -18,6 +18,7 @@
 -p --params=<param-values>          Comma-separated list of key=value parameters required by the specified quantification method.
 --num-fragments=<num-fragments>     Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
 --read-depth=<read-depth>           The approximate depth of reads required across the expressed transcriptomei [default: 30].
+--read-length=<read-length>         The length of sequence reads [default: 50].
 <transcript-gtf-file>               GTF formatted file describing the transcripts to be simulated.
 <genome-fasta-dir>                  Directory containing per-chromosome sequences as FASTA files.
 """
@@ -40,6 +41,7 @@ QUANT_METHOD = "--method"
 PARAMS_SPEC = "--params"
 NUM_FRAGMENTS = "--num-fragments"
 READ_DEPTH = "--read-depth"
+READ_LENGTH = "--read-length"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
@@ -47,7 +49,6 @@ FS_EXPRESSION_PARAMS_FILE = "flux_simulator_expression.par"
 FS_SIMULATION_PARAMS_FILE = "flux_simulator_simulation.par"
 FS_PRO_FILE = FS_EXPRESSION_PARAMS_FILE.replace("par", "pro")
 FRAGMENTS_PER_MOLECULE = 13.2
-READ_LENGTH = 50
 
 RUN_SCRIPT = "run_quantification.sh"
 TOPHAT_OUTPUT_DIR = "tho"
@@ -96,6 +97,10 @@ try:
         options[READ_DEPTH], "Read depth must be a positive integer",
         nonneg=True)
 
+    options[READ_LENGTH] = opt.validate_int_option(
+        options[READ_LENGTH], "Read length must be a positive integer",
+        nonneg=True)
+
     opt.validate_file_option(
         options[TRANSCRIPT_GTF_FILE], "Transcript GTF file does not exist")
 
@@ -142,7 +147,7 @@ with get_output_file(FS_SIMULATION_PARAMS_FILE) as fs_params_file:
         "SEQ_FILE_NAME reads.bed",
         "FASTA YES",
         "READ_NUMBER " + READ_NUMBER_PLACEHOLDER,
-        "READ_LENGTH " + str(READ_LENGTH)
+        "READ_LENGTH " + str(options[READ_LENGTH])
     ])
 
 # Write shell script to run quantification analysis
@@ -193,12 +198,12 @@ with get_output_file(RUN_SCRIPT) as script:
         "# Calculate the number of reads required to give (approximately)",
         "# a read depth of {depth} across the transcriptome, given a read".
         format(depth=options[READ_DEPTH]),
-        "# length of {length}.".format(length=READ_LENGTH),
+        "# length of {length}.".format(length=options[READ_LENGTH]),
         "READS=$(python {s} {t} {e} {l} {d})".
         format(s=CALC_READ_DEPTH_SCRIPT,
                t=options[TRANSCRIPT_GTF_FILE],
                e=FS_PRO_FILE,
-               l=READ_LENGTH,
+               l=options[READ_LENGTH],
                d=options[READ_DEPTH])
     ])
 
