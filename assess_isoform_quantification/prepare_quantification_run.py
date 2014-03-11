@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """Usage:
-    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-dir=<run-dir] [--input-dir=<input-dir> | [[--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>] [--errors]]] [--paired-end] <transcript-gtf-file> <genome-fasta-dir>
+    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-dir=<run-dir] [--input-dir=<input-dir> | [[--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>]x ]] [--errors] [--paired-end] <transcript-gtf-file> <genome-fasta-dir>
 
 -h --help                           Show this message.
 -v --version                        Show version.
@@ -257,14 +257,15 @@ with get_output_file(RUN_SCRIPT) as script:
         if options[PAIRED_END]:
             left_reads_tmp = "lr.tmp"
             right_reads_tmp = "rr.tmp"
+            paste_spec = "paste " + "- - - -" if options[ERRORS] else "- -"
 
             add_script_section(script_lines, [
                 "# We've produced paired-end reads - split the Flux",
                 "# Simulator output into files containing left and right",
                 "# reads.",
-                "paste - - < " + reads_file + " | awk " +
-                "'/\/1/ {print $0 > \"" + left_reads_tmp + "\"} " +
-                "/\/2/ {print $0 > \"" + right_reads_tmp + "\"}'",
+                paste_spec + " < " + reads_file + " | awk -F '\t' " +
+                "'$1~/\/1/ {print $0 > \"" + left_reads_tmp + "\"} " +
+                "$1~/\/2/ {print $0 > \"" + right_reads_tmp + "\"}'",
                 "tr '\\t' '\\n' < " + left_reads_tmp +
                 " > " + left_reads_file,
                 "tr '\\t' '\\n' < " + right_reads_tmp +
