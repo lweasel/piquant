@@ -47,7 +47,7 @@ GENOME_FASTA_DIR = "<genome-fasta-dir>"
 FS_EXPRESSION_PARAMS_FILE = "flux_simulator_expression.par"
 FS_SIMULATION_PARAMS_FILE = "flux_simulator_simulation.par"
 FRAGMENTS_PER_MOLECULE = 13.2
-ERROR_MODEL_SHORT = 36
+ERROR_MODEL_SHORT = 35
 ERROR_MODEL_LONG = 76
 
 RUN_SCRIPT = "run_quantification.sh"
@@ -181,9 +181,10 @@ logger.info("Creating shell script to run quantification analysis.")
 
 script_path = None
 
-reads_file = "{f}.fasta".format(f=SIMULATED_READS_PREFIX)
-left_reads_file = "{f}.1.fasta".format(f=SIMULATED_READS_PREFIX)
-right_reads_file = "{f}.2.fasta".format(f=SIMULATED_READS_PREFIX)
+reads_suffix = ".fastq" if options[ERRORS] else ".fasta"
+reads_file = SIMULATED_READS_PREFIX + reads_suffix
+left_reads_file = SIMULATED_READS_PREFIX + ".1" + reads_suffix
+right_reads_file = SIMULATED_READS_PREFIX + ".2" + reads_suffix
 
 
 def add_script_section(script_lines, lines):
@@ -284,6 +285,8 @@ with get_output_file(RUN_SCRIPT) as script:
     else:
         options[PARAMS_SPEC][qs.SIMULATED_READS] = \
             reads_file_dir + os.path.sep + reads_file
+
+    options[PARAMS_SPEC][qs.FASTQ_READS] = options[ERRORS]
 
     add_script_section(
         script_lines,

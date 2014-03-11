@@ -13,6 +13,7 @@ BOWTIE_INDEX = "BOWTIE_INDEX"
 SIMULATED_READS = "SIMULATED_READS"
 LEFT_SIMULATED_READS = "LEFT_SIMULATED_READS"
 RIGHT_SIMULATED_READS = "RIGHT_SIMULATED_READS"
+FASTQ_READS = "FASTQ_READS"
 
 PARAM_DESCRIPTIONS = {
     TRANSCRIPT_REFERENCE: "name of RSEM transcript reference",
@@ -138,7 +139,10 @@ class RSEM:
             else "--paired-end " + params[LEFT_SIMULATED_READS] + \
             " " + params[RIGHT_SIMULATED_READS]
 
-        return "rsem-calculate-expression --time --no-qualities --p 32 " + \
+        qualities_spec = "" if params[FASTQ_READS] else "--no-qualities"
+
+        return "rsem-calculate-expression --time {q} --p 32 ".\
+            format(q=qualities_spec) + \
             "--output-genome-bam {r} {ref} {s}".format(
                 r=reads_spec,
                 ref=params[TRANSCRIPT_REFERENCE],
