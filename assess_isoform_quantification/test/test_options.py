@@ -60,6 +60,15 @@ def test_validate_dir_option_raises_exception_for_existing_dir_if_dir_should_not
     os.rmdir(dir_path)
 
 
+def test_validate_dir_option_raises_exception_for_none_if_nullable_not_specified():
+    with pytest.raises(SchemaError):
+        validate_dir_option(None, "dummy")
+
+
+def test_validate_dir_option_does_not_raise_exception_for_none_if_nullable_specified():
+    validate_dir_option(None, "dummy", nullable=True)
+
+
 def test_validate_dir_option_exception_message_contains_correct_info():
     dir_path = mkdtemp()
     os.rmdir(dir_path)

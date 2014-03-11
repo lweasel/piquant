@@ -8,10 +8,12 @@ def validate_file_option(file_option, msg):
     Schema(open, error=msg).validate(file_option)
 
 
-def validate_dir_option(dir_option, msg, should_exist=True):
+def validate_dir_option(dir_option, msg, should_exist=True, nullable=False):
     msg = "{msg}: '{dir}'.".format(msg=msg, dir=dir_option)
     validator = os.path.isdir if should_exist else \
         lambda f: not os.path.exists(f)
+    if nullable:
+        validator = Or(validator, None)
     Schema(validator, error=msg).validate(dir_option)
 
 
