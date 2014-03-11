@@ -11,6 +11,8 @@ TRANSCRIPT_REFERENCE = "TRANSCRIPT_REFERENCE"
 GENOME_FASTA_DIR = "GENOME_FASTA_DIR"
 BOWTIE_INDEX = "BOWTIE_INDEX"
 SIMULATED_READS = "SIMULATED_READS"
+LEFT_SIMULATED_READS = "LEFT_SIMULATED_READS"
+RIGHT_SIMULATED_READS = "RIGHT_SIMULATED_READS"
 
 PARAM_DESCRIPTIONS = {
     TRANSCRIPT_REFERENCE: "name of RSEM transcript reference",
@@ -75,12 +77,16 @@ class Cufflinks:
             if transcript_id in self.abundances.index else 0
 
     def get_preparatory_commands(self, params):
+        reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
+            else params[LEFT_SIMULATED_READS] + \
+            " " + params[RIGHT_SIMULATED_READS]
+
         return [
             "# Map simulated reads to the genome with TopHat",
-            "tophat --library-type fr-unstranded --no-coverage-search -p 8 " +
-            "-o {tho} {b} {r}".format(tho=Cufflinks.TOPHAT_OUTPUT_DIR,
-                                      b=params[BOWTIE_INDEX],
-                                      r=params[SIMULATED_READS])
+            "tophat --library-type fr-unstranded --no-coverage-search " +
+            "-p 8 -o {tho} {b} {r}".format(tho=Cufflinks.TOPHAT_OUTPUT_DIR,
+                                           b=params[BOWTIE_INDEX],
+                                           r=reads_spec)
         ]
 
     def get_command(self, params):
@@ -128,9 +134,13 @@ class RSEM:
         ]
 
     def get_command(self, params):
+        reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
+            else "--paired-end " + params[LEFT_SIMULATED_READS] + \
+            " " + params[RIGHT_SIMULATED_READS]
+
         return "rsem-calculate-expression --time --no-qualities --p 32 " + \
             "--output-genome-bam {r} {ref} {s}".format(
-                r=params[SIMULATED_READS],
+                r=reads_spec,
                 ref=params[TRANSCRIPT_REFERENCE],
                 s=RSEM.SAMPLE_NAME)
 

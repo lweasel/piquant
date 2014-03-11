@@ -181,6 +181,10 @@ logger.info("Creating shell script to run quantification analysis.")
 
 script_path = None
 
+reads_file = "{f}.fasta".format(f=SIMULATED_READS_PREFIX)
+left_reads_file = "{f}.1.fasta".format(f=SIMULATED_READS_PREFIX)
+right_reads_file = "{f}.2.fasta".format(f=SIMULATED_READS_PREFIX)
+
 
 def add_script_section(script_lines, lines):
     script_lines += lines
@@ -247,13 +251,39 @@ with get_output_file(RUN_SCRIPT) as script:
             format(f=FS_SIMULATION_PARAMS_FILE),
         ])
 
+        # If we've specified paired end reads, split the FASTA/Q file output by
+        # Flux Simulator into separate files for forward and reverse reads
+        if options[PAIRED_END]:
+            left_reads_tmp = "lr.tmp"
+            right_reads_tmp = "rr.tmp"
+
+            add_script_section(script_lines, [
+                "# We've produced paired-end reads - split the Flux",
+                "# Simulator output into files containing left and right",
+                "# reads.",
+                "paste - - < " + reads_file + " | awk " +
+                "'/\/1/ {print $0 > \"" + left_reads_tmp + "\"} " +
+                "/\/2/ {print $0 > \"" + right_reads_tmp + "\"}'",
+                "tr '\\t' '\\n' < " + left_reads_tmp +
+                " > " + left_reads_file,
+                "tr '\\t' '\\n' < " + right_reads_tmp +
+                " > " + right_reads_file,
+            ])
+
     # Perform preparatory tasks required by a particular quantification method
     # prior to calculating abundances; for example, this might include mapping
     # reads to the genome with TopHat
     reads_file_dir = options[INPUT_DIRECTORY] \
         if options[INPUT_DIRECTORY] else "."
-    options[PARAMS_SPEC][qs.SIMULATED_READS] = reads_file_dir + os.path.sep + \
-        "{f}.fasta".format(f=SIMULATED_READS_PREFIX)
+
+    if options[PAIRED_END]:
+        options[PARAMS_SPEC][qs.LEFT_SIMULATED_READS] = \
+            reads_file_dir + os.path.sep + left_reads_file
+        options[PARAMS_SPEC][qs.RIGHT_SIMULATED_READS] = \
+            reads_file_dir + os.path.sep + right_reads_file
+    else:
+        options[PARAMS_SPEC][qs.SIMULATED_READS] = \
+            reads_file_dir + os.path.sep + reads_file
 
     add_script_section(
         script_lines,
