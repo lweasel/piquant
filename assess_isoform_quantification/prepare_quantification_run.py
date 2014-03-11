@@ -8,7 +8,7 @@
 #
 
 """Usage:
-    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-directory=<run-directory] [--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>] [--paired-end] <transcript-gtf-file> <genome-fasta-dir>
+    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-directory=<run-directory] [--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>] [--paired-end] [--errors] <transcript-gtf-file> <genome-fasta-dir>
 
 -h --help                           Show this message.
 -v --version                        Show version.
@@ -20,6 +20,7 @@
 --read-depth=<read-depth>           The approximate depth of reads required across the expressed transcriptomei [default: 30].
 --read-length=<read-length>         The length of sequence reads [default: 50].
 --paired-end                        If specified, create paired-end sequence reads.
+--errors                            If specified, Flux Simulator will use a position-dependent error model to simulate sequencing errors.
 <transcript-gtf-file>               GTF formatted file describing the transcripts to be simulated.
 <genome-fasta-dir>                  Directory containing per-chromosome sequences as FASTA files.
 """
@@ -44,6 +45,7 @@ NUM_FRAGMENTS = "--num-fragments"
 READ_DEPTH = "--read-depth"
 READ_LENGTH = "--read-length"
 PAIRED_END = "--paired-end"
+ERRORS = "--errors"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
@@ -51,6 +53,8 @@ FS_EXPRESSION_PARAMS_FILE = "flux_simulator_expression.par"
 FS_SIMULATION_PARAMS_FILE = "flux_simulator_simulation.par"
 FS_PRO_FILE = FS_EXPRESSION_PARAMS_FILE.replace("par", "pro")
 FRAGMENTS_PER_MOLECULE = 13.2
+ERROR_MODEL_SHORT = 36
+ERROR_MODEL_LONG = 76
 
 RUN_SCRIPT = "run_quantification.sh"
 TOPHAT_OUTPUT_DIR = "tho"
@@ -155,6 +159,12 @@ simulation_fs_params_file_lines = common_fs_params_file_lines + [
 
 if options[PAIRED_END]:
     simulation_fs_params_file_lines += ["PAIRED_END YES", "UNIQUE_IDS YES"]
+
+if options[ERRORS]:
+    error_model = ERROR_MODEL_LONG if \
+        options[READ_LENGTH] > 0.5 * (ERROR_MODEL_SHORT + ERROR_MODEL_LONG) \
+        else ERROR_MODEL_SHORT
+    simulation_fs_params_file_lines += ["ERR_FILE " + str(error_model)]
 
 with get_output_file(FS_SIMULATION_PARAMS_FILE) as fs_params_file:
     write_lines(fs_params_file, simulation_fs_params_file_lines)
