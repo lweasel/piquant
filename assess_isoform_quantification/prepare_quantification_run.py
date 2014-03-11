@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """Usage:
-    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-dir=<run-dir] [--input-dir=<input-dir> | [[--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>] [--paired-end] [--errors]]] <transcript-gtf-file> <genome-fasta-dir>
+    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-dir=<run-dir] [--input-dir=<input-dir> | [[--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>] [--errors]]] [--paired-end] <transcript-gtf-file> <genome-fasta-dir>
 
 -h --help                           Show this message.
 -v --version                        Show version.
@@ -13,7 +13,7 @@
 --num-fragments=<num-fragments>     Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
 --read-depth=<read-depth>           The approximate depth of reads required across the expressed transcriptomei [default: 30].
 --read-length=<read-length>         The length of sequence reads [default: 50].
---paired-end                        If specified, create paired-end sequence reads.
+--paired-end                        If specified, create and use paired-end sequence reads (note: option must still be specified even if pre-created reads are being used).
 --errors                            If specified, Flux Simulator will use a position-dependent error model to simulate sequencing errors.
 <transcript-gtf-file>               GTF formatted file describing the transcripts to be simulated.
 <genome-fasta-dir>                  Directory containing per-chromosome sequences as FASTA files.
