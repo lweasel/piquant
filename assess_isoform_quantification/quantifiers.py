@@ -122,11 +122,13 @@ class RSEM:
 
     def get_preparatory_commands(self, params):
         return [
-            "# Prepare the RSEM transcript reference if it doesn't already",
-            "# exist. This needs doing only once for a particular set of ",
-            "# transcripts.",
-            "if [ ! -e {f} ]; then".format(
-                f=params[TRANSCRIPT_REFERENCE] + ".transcripts.fa"),
+            "# Prepare the transcript reference if it doesn't already exist.",
+            "# For convenience, we create the transcript reference using a",
+            "# tool from the RSEM package. Note that this step needs doing",
+            "# only once for a particular set of transcripts.",
+            "REF_DIR=$(dirname {f})".format(f=params[TRANSCRIPT_REFERENCE]),
+            "if [ ! -d $REF_DIR ]; then",
+            "   mkdir $REF_DIR",
             "   rsem-prepare-reference --gtf {gtf} {fasta} {ref}".format(
                 gtf=params[TRANSCRIPT_GTF_FILE],
                 fasta=params[GENOME_FASTA_DIR],
@@ -153,3 +155,62 @@ class RSEM:
 
     def get_fpkm_file(self):
         return RSEM.SAMPLE_NAME + ".isoforms.results"
+
+
+@Quantifier
+class Express:
+    MAPPED_READS_FILE = "hits.bam"
+
+    @classmethod
+    def get_required_params(cls):
+        return [TRANSCRIPT_REFERENCE]
+
+    def calculate_transcript_abundances(self, quant_file):
+        self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
+                                      index_col="target_id")
+
+    def get_transcript_abundance(self, transcript_id):
+        return self.abundances.ix[transcript_id]["fpkm"] \
+            if transcript_id in self.abundances.index else 0
+
+    def get_preparatory_commands(self, params):
+        prepare_ref = [
+            "# Prepare the transcript reference if it doesn't already exist.",
+            "# For convenience, we create the transcript reference using a",
+            "# tool from the RSEM package. Note that this step needs doing",
+            "# only once for a particular set of transcripts.",
+            "REF_DIR=$(dirname {f})".format(f=params[TRANSCRIPT_REFERENCE]),
+            "if [ ! -d $REF_DIR ]; then",
+            "   mkdir $REF_DIR",
+            "   rsem-prepare-reference --gtf {gtf} {fasta} {ref}".format(
+                gtf=params[TRANSCRIPT_GTF_FILE],
+                fasta=params[GENOME_FASTA_DIR],
+                ref=params[TRANSCRIPT_REFERENCE]),
+            "fi", "",
+
+        ]
+
+        reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
+            else "-1 " + params[LEFT_SIMULATED_READS] + \
+            " -2 " + params[RIGHT_SIMULATED_READS]
+
+        qualities_spec = "-q" if params[FASTQ_READS] else "-f"
+
+        map_reads = [
+            "# Map simulated reads to the transcriptome with Bowtie",
+            "bowtie " + qualities_spec + " -S -m 200 -p 32 " +
+            params[TRANSCRIPT_REFERENCE] + " " + reads_spec +
+            " | samtools view -Sb - > " + Express.MAPPED_READS_FILE
+        ]
+
+        return prepare_ref + map_reads
+
+    def get_command(self, params):
+        return "express " + params[TRANSCRIPT_REFERENCE] + \
+            ".transcripts.fa " + Express.MAPPED_READS_FILE
+
+    def get_mapped_reads_file(self):
+        return Express.MAPPED_READS_FILE
+
+    def get_fpkm_file(self):
+        return "results.xprs"
