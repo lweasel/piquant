@@ -43,6 +43,9 @@ REAL_FPKM_COL = 'Real FPKM'
 CALCULATED_FPKM_COL = 'Calculated FPKM'
 TRANSCRIPT_COUNT_COL = 'Num transcripts for gene'
 
+SORTED_PREFIX = "sorted"
+SORTED_BAM_FILE = SORTED_PREFIX + ".bam"
+
 # Read in command-line options
 __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
 options = docopt(__doc__, version="assemble_quantification_data v0.1")
@@ -76,25 +79,28 @@ logger.info("Reading mapped reads...")
 unique_read_ids = {}
 transcript_info = {}
 
-pysam.index(options[READ_FILE])
-read_bam = pysam.Samfile(options[READ_FILE], "rb")
+pysam.sort(options[READ_FILE], SORTED_PREFIX)
+pysam.index(SORTED_BAM_FILE)
+read_bam = pysam.Samfile(SORTED_BAM_FILE, "rb")
 count = 0
 
-for read in read_bam.fetch():
+for read in read_bam.fetch(until_eof=True):
+    rid_elems = fs.get_read_identifier_elems(read.qname)
+
     # Make sure that we only count each originating fragment for paired-end
     # reads once.
-    unique_id = fs.strip_orientation_info(read.qname)
+    unique_id = fs.strip_orientation_info(rid_elems)
     if unique_id in unique_read_ids:
         continue
 
     unique_read_ids[unique_id] = True
 
-    transcript_id = fs.get_transcript_id(read.qname)
+    transcript_id = fs.get_transcript_id(rid_elems)
     if transcript_id in transcript_info:
         info = transcript_info[transcript_id]
         info[1] += 1
     else:
-        info = [fs.get_transcript_length(read.qname), 1]
+        info = [fs.get_transcript_length(rid_elems), 1]
         transcript_info[transcript_id] = info
     count += 1
     if count % 100000 == 0:

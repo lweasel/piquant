@@ -18,6 +18,11 @@ PRO_FILE_FRAC_COL = 4
 PRO_FILE_NUM_COL = 5
 PRO_FILE_LIBRARY_FRAC_COL = 6
 PRO_FILE_LIBRARY_NUM_COL = 7
+PRO_FILE_SEQ_FRAC_COL = 8
+PRO_FILE_SEQ_NUM_COL = 9
+PRO_FILE_COV_FRAC_COL = 10
+PRO_FILE_CHI_SQR_COL = 11
+PRO_FILE_VAR_COEFF_COL = 12
 
 PRO_FILE_COLS = [
     PRO_FILE_LOCUS_COL,
@@ -27,7 +32,12 @@ PRO_FILE_COLS = [
     PRO_FILE_FRAC_COL,
     PRO_FILE_NUM_COL,
     PRO_FILE_LIBRARY_FRAC_COL,
-    PRO_FILE_LIBRARY_NUM_COL
+    PRO_FILE_LIBRARY_NUM_COL,
+    PRO_FILE_SEQ_FRAC_COL,
+    PRO_FILE_SEQ_NUM_COL,
+    PRO_FILE_COV_FRAC_COL,
+    PRO_FILE_CHI_SQR_COL,
+    PRO_FILE_VAR_COEFF_COL
 ]
 
 REGION_READ_ELEMENT = 0
@@ -45,25 +55,22 @@ def read_expression_profiles(pro_file):
     return profiles
 
 
-def _get_read_identifier_elems(read_identifier):
+def get_read_identifier_elems(read_identifier):
     return read_identifier.split(":")
 
 
-def strip_orientation_info(read_identifier):
+def strip_orientation_info(rid_elems):
     """Return read identifier minus the orientation information."""
-    rid_elems = _get_read_identifier_elems(read_identifier)
     return ":".join(rid_elems[:-1])
 
 
-def get_transcript_id(read_identifier):
+def get_transcript_id(rid_elems):
     """Return originating transcript ID for a Flux Simulator read."""
-    rid_elems = _get_read_identifier_elems(read_identifier)
     return rid_elems[TRANSCRIPT_ID_READ_ELEMENT]
 
 
-def get_transcript_length(read_identifier):
+def get_transcript_length(rid_elems):
     """Return the processed length of the originating transcript of a read"""
-    rid_elems = _get_read_identifier_elems(read_identifier)
     return int(rid_elems[LENGTH_READ_ELEMENT])
 
 
@@ -73,7 +80,7 @@ def get_transcript_bounds(read_identifier):
     Along with the region of the originating transcript, this function
     will return (in 0-based, half-open co-ordinates) the start and end
     positions of the read's originating transcript."""
-    rid_elems = _get_read_identifier_elems(read_identifier)
+    rid_elems = get_read_identifier_elems(read_identifier)
     region = rid_elems[REGION_READ_ELEMENT]
     start_str, end_str = rid_elems[LOCUS_READ_ELEMENT][:-1].split("-")
     return region, int(start_str) - 1, int(end_str)
@@ -90,7 +97,7 @@ def get_fragment_bounds(read_identifier):
         end of the transcript (i.e. end pos >= len), in which case the bounds
         will be extended at the end to accommodate this.
     """
-    rid_elems = _get_read_identifier_elems(read_identifier)
+    rid_elems = get_read_identifier_elems(read_identifier)
     region = rid_elems[REGION_READ_ELEMENT]
 
     t_start_str, t_end_str = rid_elems[LOCUS_READ_ELEMENT][:-1].split("-")
