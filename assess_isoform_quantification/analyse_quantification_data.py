@@ -85,7 +85,7 @@ with open(options[OUT_FILE_BASENAME] + "_stats.txt", "w") as out_file:
 
     grouped = filtered.groupby(TRANSCRIPT_COUNT_COL)
     summary = grouped.describe()
-    log_ratio_stats = summary["Log ratio"].unstack()
+    log_ratio_stats = summary[LOG2_RATIO_COL].unstack()
     log_ratio_stats = log_ratio_stats.drop(["min", "25%", "75%", "max"], 1)
     log_ratio_stats = log_ratio_stats.rename(columns={"50%": "median"})
 
