@@ -18,6 +18,7 @@
 from docopt import docopt
 from schema import SchemaError
 
+import analyse_quantification_data as aqd
 import flux_simulator as fs
 import log
 import options as opt
@@ -38,10 +39,7 @@ COUNT_FILE = "<transcript-count-file>"
 COUNTS_TRANSCRIPT_COL = "transcript"
 COUNTS_COUNT_COL = "transcript_count"
 
-TRANSCRIPT_COL = 'Transcript'
-REAL_FPKM_COL = 'Real FPKM'
-CALCULATED_FPKM_COL = 'Calculated FPKM'
-TRANSCRIPT_COUNT_COL = 'Num transcripts for gene'
+TRANSCRIPT_COL = 'transcript'
 
 SORTED_PREFIX = "sorted"
 SORTED_BAM_FILE = SORTED_PREFIX + ".bam"
@@ -125,7 +123,7 @@ def fpkm_calc(t_id):
     return t_info[1] / (t_kb * m_r_millons)
 
 profiles = fs.read_expression_profiles(options[PRO_FILE])
-profiles[REAL_FPKM_COL] = \
+profiles[aqd.REAL_FPKM] = \
     profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].map(fpkm_calc)
 
 # Read calculated FPKM values for each transcript produced by a particular
@@ -136,7 +134,7 @@ logger.info("Reading calculated FPKMs...")
 quant_method = options[QUANT_METHOD]()
 quant_method.calculate_transcript_abundances(options[QUANT_FILE])
 
-profiles[CALCULATED_FPKM_COL] = profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].\
+profiles[aqd.CALCULATED_FPKM] = profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].\
     map(quant_method.get_transcript_abundance)
 
 # Read per-gene transcript counts
@@ -151,7 +149,7 @@ set_transcript_count = lambda t_id: \
     transcript_counts.ix[t_id][COUNTS_COUNT_COL] \
     if t_id in transcript_counts.index else 0
 
-profiles[TRANSCRIPT_COUNT_COL] = \
+profiles[aqd.TRANSCRIPT_COUNT] = \
     profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].map(set_transcript_count)
 
 # Write FPKMs and other relevant data to output file
@@ -161,5 +159,5 @@ logger.info("Writing FPKMs to file {out}".format(out=options[OUT_FILE]))
 profiles.rename(columns={1: TRANSCRIPT_COL}, inplace=True)
 
 profiles.to_csv(options[OUT_FILE], index=False,
-                cols=[TRANSCRIPT_COL, TRANSCRIPT_COUNT_COL,
-                      REAL_FPKM_COL, CALCULATED_FPKM_COL])
+                cols=[TRANSCRIPT_COL, aqd.TRANSCRIPT_COUNT,
+                      aqd.REAL_FPKM, aqd.CALCULATED_FPKM])
