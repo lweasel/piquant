@@ -7,20 +7,28 @@ import os.path
 # abundances are instance methods
 
 TRANSCRIPT_GTF_FILE = "TRANSCRIPT_GTF_FILE"
-TRANSCRIPT_REFERENCE = "TRANSCRIPT_REFERENCE"
 GENOME_FASTA_DIR = "GENOME_FASTA_DIR"
-BOWTIE_INDEX = "BOWTIE_INDEX"
 SIMULATED_READS = "SIMULATED_READS"
 LEFT_SIMULATED_READS = "LEFT_SIMULATED_READS"
 RIGHT_SIMULATED_READS = "RIGHT_SIMULATED_READS"
 FASTQ_READS = "FASTQ_READS"
 
+TOPHAT_OUTPUT_DIR = "tho"
+TOPHAT_MAPPED_READS = TOPHAT_OUTPUT_DIR + os.path.sep + "accepted_hits.bam"
+
+# Parameters required by particular quantification methods
+
+TRANSCRIPT_REFERENCE = "TRANSCRIPT_REFERENCE"
+BOWTIE_INDEX = "BOWTIE_INDEX"
+IRECKON_JAR = "IRECKON_JAR"
+GTF2GFF_SCRIPT = "GTF2GFF_SCRIPT"
+
 PARAM_DESCRIPTIONS = {
     TRANSCRIPT_REFERENCE: "name of RSEM transcript reference",
-    BOWTIE_INDEX: "name of Bowtie index used when TopHat maps reads to genome"
+    BOWTIE_INDEX: "name of Bowtie index used when TopHat maps reads to genome",
+    IRECKON_JAR: "location of the iReckon .jar file",
+    GTF2GFF_SCRIPT: "Perl script to transform GTF to GFF format"
 }
-
-QUANT_METHODS = {}
 
 
 class ParamsValidator:
@@ -45,6 +53,9 @@ class ParamsValidator:
         return params
 
 
+QUANT_METHODS = {}
+
+
 # Hmm...
 def Quantifier(cls):
     method_name = cls.__name__
@@ -62,8 +73,6 @@ def Quantifier(cls):
 
 @Quantifier
 class Cufflinks:
-    TOPHAT_OUTPUT_DIR = "tho"
-    TOPHAT_MAPPED_READS = TOPHAT_OUTPUT_DIR + os.path.sep + "accepted_hits.bam"
 
     @classmethod
     def get_required_params(cls):
@@ -85,7 +94,7 @@ class Cufflinks:
         return [
             "# Map simulated reads to the genome with TopHat",
             "tophat --library-type fr-unstranded --no-coverage-search " +
-            "-p 8 -o {tho} {b} {r}".format(tho=Cufflinks.TOPHAT_OUTPUT_DIR,
+            "-p 8 -o {tho} {b} {r}".format(tho=TOPHAT_OUTPUT_DIR,
                                            b=params[BOWTIE_INDEX],
                                            r=reads_spec)
         ]
@@ -98,10 +107,13 @@ class Cufflinks:
                    m=self.get_mapped_reads_file())
 
     def get_mapped_reads_file(self):
-        return Cufflinks.TOPHAT_MAPPED_READS
+        return TOPHAT_MAPPED_READS
 
     def get_fpkm_file(self):
         return "transcriptome/isoforms.fpkm_tracking"
+
+    def requires_paired_end_reads(self):
+        return False
 
 
 @Quantifier
@@ -156,6 +168,9 @@ class RSEM:
     def get_fpkm_file(self):
         return RSEM.SAMPLE_NAME + ".isoforms.results"
 
+    def requires_paired_end_reads(self):
+        return False
+
 
 @Quantifier
 class Express:
@@ -187,7 +202,6 @@ class Express:
                 fasta=params[GENOME_FASTA_DIR],
                 ref=params[TRANSCRIPT_REFERENCE]),
             "fi", "",
-
         ]
 
         reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
@@ -214,3 +228,80 @@ class Express:
 
     def get_fpkm_file(self):
         return "results.xprs"
+
+    def requires_paired_end_reads(self):
+        return False
+
+
+@Quantifier
+class IReckon:
+    OUTPUT_DIR = "ireckon_out"
+
+    @classmethod
+    def get_required_params(cls):
+        return [BOWTIE_INDEX, IRECKON_JAR, GTF2GFF_SCRIPT]
+
+    def calculate_transcript_abundances(self, quant_file):
+        pass
+
+    def get_transcript_abundance(self, transcript_id):
+        return 0
+
+    def get_preparatory_commands(self, params):
+        self.gff_file = os.path.splitext(params[TRANSCRIPT_GTF_FILE])[0] \
+            + ".gff"
+
+        gtf2gff_command = params[GTF2GFF_SCRIPT] + " " + \
+            params[TRANSCRIPT_GTF_FILE]
+        awk_command = "awk '$3 ~ /mRNA|exon|CDS/'"
+        sed_command = "sed 's/Name=\(.*\)-\(.*\);/Name=\\1-\\2;Alias=\\1;/'"
+        pipe = " | "
+
+        prepare_gff_command = gtf2gff_command + pipe + awk_command + pipe + \
+            sed_command + " > " + self.gff_file
+
+        prepare_gff = [
+            "# Prepare a transcript file in GFF format if it doesn't already",
+            "# exist. This needs doing only once for a particular set of",
+            "# transcripts.",
+            "if [ ! -e {gff} ]; then ".format(gff=self.gff_file),
+            "    " + prepare_gff_command,
+            "fi", ""
+        ]
+
+        reads_spec = params[LEFT_SIMULATED_READS] + \
+            " " + params[RIGHT_SIMULATED_READS]
+
+        map_reads = [
+            "# Map simulated reads to the genome with TopHat",
+            "tophat --library-type fr-unstranded --no-coverage-search " +
+            "-p 8 -o {tho} {b} {r}".format(tho=TOPHAT_OUTPUT_DIR,
+                                           b=params[BOWTIE_INDEX],
+                                           r=reads_spec),
+            "", "# Index the mapped reads",
+            "samtools index " + TOPHAT_MAPPED_READS, ""
+        ]
+
+        prepare_output_dir = [
+            "# Create IReckon output directory",
+            "mkdir " + IReckon.OUTPUT_DIR
+        ]
+
+        return prepare_gff + map_reads + prepare_output_dir
+
+    def get_command(self, params):
+        return "java -Xmx15000M -jar " + params[IRECKON_JAR] + " " \
+            + self.get_mapped_reads_file() + " " + params[BOWTIE_INDEX] \
+            + ".fa " + self.gff_file + " -1 " \
+            + params[LEFT_SIMULATED_READS] + " -2 " \
+            + params[RIGHT_SIMULATED_READS] + " -o " + IReckon.OUTPUT_DIR \
+            + " -novel 0 -n 8 > logs.txt"
+
+    def get_mapped_reads_file(self):
+        return TOPHAT_MAPPED_READS
+
+    def get_fpkm_file(self):
+        return None
+
+    def requires_paired_end_reads(self):
+        return True

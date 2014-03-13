@@ -115,6 +115,11 @@ try:
 except SchemaError as exc:
     exit("Exiting. " + exc.code)
 
+if options[QUANT_METHOD].requires_paired_end_reads() \
+        and not options[PAIRED_END]:
+    exit("Exiting. Quantification method {m} ".format(m=quant_method_name)
+         + "does not support single end reads.")
+
 # Create directory for run files
 
 logger = log.getLogger(sys.stderr, options[LOG_LEVEL])
@@ -257,7 +262,7 @@ with get_output_file(RUN_SCRIPT) as script:
         if options[PAIRED_END]:
             left_reads_tmp = "lr.tmp"
             right_reads_tmp = "rr.tmp"
-            paste_spec = "paste " + "- - - -" if options[ERRORS] else "- -"
+            paste_spec = "paste " + ("- - - -" if options[ERRORS] else "- -")
 
             add_script_section(script_lines, [
                 "# We've produced paired-end reads - split the Flux",
