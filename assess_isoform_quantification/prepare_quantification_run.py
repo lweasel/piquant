@@ -11,7 +11,7 @@
 -p --params=<param-values>          Comma-separated list of key=value parameters required by the specified quantification method.
 --input-dir=<input-dir>             Directory containing pre-created Flux Simulator parameters files and simulated reads.
 --num-fragments=<num-fragments>     Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
---read-depth=<read-depth>           The approximate depth of reads required across the expressed transcriptomei [default: 30].
+--read-depth=<read-depth>           The approximate depth of reads required across the expressed transcriptome [default: 30].
 --read-length=<read-length>         The length of sequence reads [default: 50].
 --paired-end                        If specified, create and use paired-end sequence reads (note: option must still be specified even if pre-created reads are being used).
 --errors                            If specified, Flux Simulator will use a position-dependent error model to simulate sequencing errors.
@@ -196,6 +196,10 @@ def add_script_section(script_lines, lines):
     script_lines += lines
     script_lines.append("")
 
+
+def create_command(elements):
+    return " ".join([str(e) for e in elements])
+
 with get_output_file(RUN_SCRIPT) as script:
     script_lines = []
 
@@ -334,8 +338,10 @@ with get_output_file(RUN_SCRIPT) as script:
     # Finally perform analysis on the calculated FPKMs
     add_script_section(script_lines, [
         "# Perform analysis on calculated FPKMs",
-        "python {s} {f} {out}".format(
-            s=ANALYSE_DATA_SCRIPT, f=DATA_FILE, out="results")
+        create_command(["python", ANALYSE_DATA_SCRIPT,
+                        quant_method_name, options[READ_LENGTH],
+                        options[READ_DEPTH], bool(options[PAIRED_END]),
+                        bool(options[ERRORS]), DATA_FILE, "results"])
     ])
 
     write_lines(script, script_lines)
