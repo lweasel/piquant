@@ -31,18 +31,28 @@ READ_LENGTH = "read-length"
 PAIRED_END = "paired-end"
 ERRORS = "errors"
 NUM_FPKMS = "num-fpkms"
+TP_NUM_FPKMS = "tp-num-fpkms"
+TP_COUNT = "tp-count"
 REAL_FPKM = "real-fpkm"
 LOG2_REAL_FPKM = "log2-real-fpkm"
 CALCULATED_FPKM = "calc-fpkm"
 LOG2_CALCULATED_FPKM = "log2-calc-fpkm"
 LOG2_RATIO = "log-ratio"
-LOG2_RATIO_MEAN = "log-ratio-mean"
-LOG2_RATIO_STD = "log-ratio-std"
-LOG2_RATIO_MEDIAN = "log-ratio-med"
-LOG2_RATIO_SPEARMAN_RHO = "log-ratio-rho"
+TP_LOG2_RATIO_MEAN = "tp-log-ratio-mean"
+TP_LOG2_RATIO_STD = "tp-log-ratio-std"
+TP_LOG2_RATIO_MEDIAN = "tp-log-ratio-med"
+TP_LOG2_FPKM_RHO = "tp-log-fpkm-rho"
 TRANSCRIPT_COUNT = "num-transcripts"
 PERCENT_ERROR = "percent-error"
-MEDIAN_PERCENT_ERROR = "median-percent-error"
+TP_MEDIAN_PERCENT_ERROR = "tp-median-percent-error"
+FALSE_POSITIVE = "false-pos"
+FALSE_NEGATIVE = "false-neg"
+TRUE_POSITIVE = "true-pos"
+TRUE_NEGATIVE = "true-neg"
+SENSITIVITY = "sensitivity"
+SPECIFICITY = "specificity"
+
+NOT_PRESENT_CUTOFF = 0.1
 
 opt_string = lambda x: "<{x}>".format(x=x)
 
@@ -76,9 +86,30 @@ except SchemaError as exc:
 
 fpkms = pd.read_csv(options[FPKM_FILE])
 
-# Keep only transcripts for which both real and calculated FPKM are non-zero
-fpkms = fpkms[fpkms[REAL_FPKM] > 0]
-fpkms = fpkms[fpkms[CALCULATED_FPKM] > 0]
+# Determine whether each FPKM measurement is a true/false positive/negative.
+# For our purposes, marking an FPKM as positive or negative is determined
+# by whether it is greater or less than an "isoform not present" cutoff value.
+
+fpkms[FALSE_NEGATIVE] = (fpkms[REAL_FPKM] > NOT_PRESENT_CUTOFF) & \
+                        (fpkms[CALCULATED_FPKM] <= NOT_PRESENT_CUTOFF)
+fpkms[FALSE_POSITIVE] = (fpkms[CALCULATED_FPKM] > NOT_PRESENT_CUTOFF) & \
+                        (fpkms[REAL_FPKM] <= NOT_PRESENT_CUTOFF)
+fpkms[TRUE_NEGATIVE] = (fpkms[REAL_FPKM] <= NOT_PRESENT_CUTOFF) & \
+                       (fpkms[CALCULATED_FPKM] <= NOT_PRESENT_CUTOFF)
+fpkms[TRUE_POSITIVE] = (fpkms[REAL_FPKM] > NOT_PRESENT_CUTOFF) & \
+                       (fpkms[CALCULATED_FPKM] > NOT_PRESENT_CUTOFF)
+
+
+def get_sensitivity(fpkms):
+    num_tp = len(fpkms[fpkms[TRUE_POSITIVE]])
+    num_fn = len(fpkms[fpkms[FALSE_NEGATIVE]])
+    return float(num_tp) / (num_tp + num_fn)
+
+
+def get_specificity(fpkms):
+    num_fp = len(fpkms[fpkms[FALSE_POSITIVE]])
+    num_tn = len(fpkms[fpkms[TRUE_NEGATIVE]])
+    return float(num_tn) / (num_tn + num_fp)
 
 # Calculate the percent error (positive or negative) of the calculated FPKM
 # values from the real values
@@ -91,27 +122,18 @@ fpkms[LOG2_CALCULATED_FPKM] = np.log2(fpkms[CALCULATED_FPKM])
 fpkms[LOG2_RATIO] = \
     fpkms[LOG2_CALCULATED_FPKM] - fpkms[LOG2_REAL_FPKM]
 
-# Group transcripts by the number of transcripts for their originating gene,
-# and discard those groups with fewer than 100 members
-grouped = fpkms.groupby(TRANSCRIPT_COUNT)
-filtered = grouped.filter(lambda x: len(x[REAL_FPKM]) > 100)
+tp_fpkms = fpkms[fpkms[TRUE_POSITIVE]]
 
 # Write log ratio summary statistics stratified by the number of transcripts
 # per originating gene
 with open(options[OUT_FILE_BASENAME] + "_stats.csv", "w") as out_file:
-
-    #out_file.write(",".join([
-        #QUANT_METHOD, READ_LENGTH, READ_DEPTH, PAIRED_END,
-        #ERRORS, NUM_FPKMS, LOG2_RATIO_SPEARMAN_RHO, MEDIAN_PERCENT_ERROR
-    #]) + "\n")
-
     # Spearman correlation coefficient between real and calculated FPKMs.
-    rho = fpkms[LOG2_CALCULATED_FPKM].corr(
-        fpkms[LOG2_REAL_FPKM], method='spearman')
+    rho = tp_fpkms[LOG2_CALCULATED_FPKM].corr(
+        tp_fpkms[LOG2_REAL_FPKM], method='spearman')
 
     # The median percent error - i.e. the median of the percent errors of
     # the calculated values from the real ones
-    mpe = fpkms[PERCENT_ERROR].median()
+    tp_mpe = tp_fpkms[PERCENT_ERROR].median()
 
     stats_dict = {
         QUANT_METHOD: options[QUANT_METHOD_OPT],
@@ -120,45 +142,59 @@ with open(options[OUT_FILE_BASENAME] + "_stats.csv", "w") as out_file:
         PAIRED_END: options[PAIRED_END_OPT],
         ERRORS: options[ERRORS_OPT],
         NUM_FPKMS: len(fpkms),
-        LOG2_RATIO_SPEARMAN_RHO: rho,
-        MEDIAN_PERCENT_ERROR: mpe
+        TP_NUM_FPKMS: len(tp_fpkms),
+        TP_LOG2_FPKM_RHO: rho,
+        TP_MEDIAN_PERCENT_ERROR: tp_mpe,
+        SENSITIVITY: get_sensitivity(fpkms),
+        SPECIFICITY: get_specificity(fpkms)
     }
 
     stats = pd.DataFrame([stats_dict])
     stats.to_csv(out_file, float_format="%.5f", index=False)
 
-    #out_file.write(','.join([str(x) for x in [
-        #options[QUANT_METHOD_OPT], options[READ_LENGTH_OPT],
-        #options[READ_DEPTH_OPT], options[PAIRED_END_OPT],
-        #options[ERRORS_OPT], len(fpkms), rho, mpe]]) + "\n")
+# Group transcripts by the number of transcripts for their originating gene,
+# and discard those groups with fewer than 100 members
+grouped = fpkms.groupby(TRANSCRIPT_COUNT)
+tp_grouped = tp_fpkms.groupby(TRANSCRIPT_COUNT)
 
 with open(options[OUT_FILE_BASENAME] +
           "_stats_by_num_transcripts_per_gene.csv", "w") as out_file:
 
-    grouped = filtered.groupby(TRANSCRIPT_COUNT)
     summary = grouped.describe()
-    log_ratio_stats = summary[LOG2_RATIO].unstack()
-    log_ratio_stats = log_ratio_stats.drop(["min", "25%", "75%", "max"], 1)
-    log_ratio_stats = log_ratio_stats.rename(columns={
-        "mean": LOG2_RATIO_MEAN,
-        "std": LOG2_RATIO_STD,
-        "50%": LOG2_RATIO_MEDIAN})
+    main_stats = summary[REAL_FPKM].unstack()
+    main_stats = main_stats.drop(
+        ["mean", "std", "min", "25%", "50%", "75%", "max"], 1)
 
-    log_ratio_stats[LOG2_RATIO_SPEARMAN_RHO] = grouped.apply(
+    main_stats[SENSITIVITY] = grouped.apply(get_sensitivity)
+    main_stats[SPECIFICITY] = grouped.apply(get_specificity)
+
+    tp_summary = tp_grouped.describe()
+    tp_stats = tp_summary[LOG2_RATIO].unstack()
+    tp_stats = tp_stats.drop(["min", "25%", "75%", "max"], 1)
+    tp_stats = tp_stats.rename(columns={
+        "count": TP_COUNT,
+        "mean": TP_LOG2_RATIO_MEAN,
+        "std": TP_LOG2_RATIO_STD,
+        "50%": TP_LOG2_RATIO_MEDIAN})
+
+    tp_stats[TP_LOG2_FPKM_RHO] = tp_grouped.apply(
         lambda x: x[LOG2_CALCULATED_FPKM].corr(x[LOG2_REAL_FPKM],
                                                method="spearman"))
 
-    pe_stats = summary[PERCENT_ERROR].unstack()
-    log_ratio_stats[MEDIAN_PERCENT_ERROR] = pe_stats["50%"]
+    pe_stats = tp_summary[PERCENT_ERROR].unstack()
+    tp_stats[TP_MEDIAN_PERCENT_ERROR] = pe_stats["50%"]
 
-    log_ratio_stats[QUANT_METHOD] = options[QUANT_METHOD_OPT]
-    log_ratio_stats[READ_LENGTH] = options[READ_LENGTH_OPT]
-    log_ratio_stats[READ_DEPTH] = options[READ_DEPTH_OPT]
-    log_ratio_stats[PAIRED_END] = options[PAIRED_END_OPT]
-    log_ratio_stats[ERRORS] = options[ERRORS_OPT]
-    log_ratio_stats[NUM_FPKMS] = len(fpkms)
+    output_stats = pd.concat([main_stats, tp_stats], axis=1)
+    output_stats[QUANT_METHOD] = options[QUANT_METHOD_OPT]
+    output_stats[READ_LENGTH] = options[READ_LENGTH_OPT]
+    output_stats[READ_DEPTH] = options[READ_DEPTH_OPT]
+    output_stats[PAIRED_END] = options[PAIRED_END_OPT]
+    output_stats[ERRORS] = options[ERRORS_OPT]
+    output_stats[TP_NUM_FPKMS] = len(fpkms)
+    output_stats.to_csv(out_file, float_format="%.5f")
 
-    log_ratio_stats.to_csv(out_file, float_format="%.5f")
+filtered = grouped.filter(lambda x: len(x[REAL_FPKM]) > 100)
+tp_filtered = tp_grouped.filter(lambda x: len(x[REAL_FPKM]) > 100)
 
 # Make a scatter plot of calculated vs real FPKMs
 plt.figure()
