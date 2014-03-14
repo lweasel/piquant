@@ -51,6 +51,7 @@ TRUE_POSITIVE = "true-pos"
 TRUE_NEGATIVE = "true-neg"
 SENSITIVITY = "sensitivity"
 SPECIFICITY = "specificity"
+TP_ERROR_FRACTION = "tp-error-frac"
 
 NOT_PRESENT_CUTOFF = 0.1
 
@@ -116,6 +117,11 @@ def get_specificity(fpkms):
 fpkms[PERCENT_ERROR] = \
     100 * (fpkms[CALCULATED_FPKM] - fpkms[REAL_FPKM]) / fpkms[REAL_FPKM]
 
+
+def get_error_fraction(fpkms, error_percent):
+    num_errors = len(fpkms[abs(fpkms[PERCENT_ERROR]) > error_percent])
+    return float(num_errors) / len(fpkms)
+
 # Calculate log ratio of calculated and real FPKMs
 fpkms[LOG2_REAL_FPKM] = np.log2(fpkms[REAL_FPKM])
 fpkms[LOG2_CALCULATED_FPKM] = np.log2(fpkms[CALCULATED_FPKM])
@@ -146,7 +152,8 @@ with open(options[OUT_FILE_BASENAME] + "_stats.csv", "w") as out_file:
         TP_LOG2_FPKM_RHO: rho,
         TP_MEDIAN_PERCENT_ERROR: tp_mpe,
         SENSITIVITY: get_sensitivity(fpkms),
-        SPECIFICITY: get_specificity(fpkms)
+        SPECIFICITY: get_specificity(fpkms),
+        TP_ERROR_FRACTION: get_error_fraction(tp_fpkms, 10)
     }
 
     stats = pd.DataFrame([stats_dict])
@@ -183,6 +190,9 @@ with open(options[OUT_FILE_BASENAME] +
 
     pe_stats = tp_summary[PERCENT_ERROR].unstack()
     tp_stats[TP_MEDIAN_PERCENT_ERROR] = pe_stats["50%"]
+
+    tp_stats[TP_ERROR_FRACTION] = tp_grouped.apply(
+        get_error_fraction, 10)
 
     output_stats = pd.concat([main_stats, tp_stats], axis=1)
     output_stats[QUANT_METHOD] = options[QUANT_METHOD_OPT]
