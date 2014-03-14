@@ -6,8 +6,8 @@
 -h --help                                  Show this message.
 -v --version                               Show version.
 --scatter-max=<scatter-max-val>            Maximum x and y values for scatter plot; a value of 0 means do not impose a maximum [default: 0].
---log2-scatter-min=<log2-scatter-min-val>  Minimum x and y values for log2 scatter plot; a value of 0 means do not impose a minimum [default: -10].
---log2-scatter-max=<log2-scatter-max-val>  Maximum x and y values for log2 scatter plot; a value of 0 means do not impose a maximum [default: 15].
+--log2-scatter-min=<log2-scatter-min-val>  Minimum x and y values for log2 scatter plot; a value of 0 means do not impose a minimum [default: 0].
+--log2-scatter-max=<log2-scatter-max-val>  Maximum x and y values for log2 scatter plot; a value of 0 means do not impose a maximum [default: 0].
 <quant-method>                             Method used to quantify transcript abundances.
 <read-length>                              The length of sequence reads.
 <read-depth>                               The depth of reads sequenced across the transcriptome.
@@ -52,6 +52,12 @@ TRUE_NEGATIVE = "true-neg"
 SENSITIVITY = "sensitivity"
 SPECIFICITY = "specificity"
 TP_ERROR_FRACTION = "tp-error-frac"
+
+TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
+TRUE_POSITIVES_LABEL = "true positives"
+NON_ZERO_LABEL = "non zero"
+ALL_LABEL = "all"
+NO_FILTER_LABEL = "no filter"
 
 NOT_PRESENT_CUTOFF = 0.1
 
@@ -203,48 +209,83 @@ with open(options[OUT_FILE_BASENAME] +
     output_stats[TP_NUM_FPKMS] = len(fpkms)
     output_stats.to_csv(out_file, float_format="%.5f")
 
-filtered = grouped.filter(lambda x: len(x[REAL_FPKM]) > 100)
-tp_filtered = tp_grouped.filter(lambda x: len(x[REAL_FPKM]) > 100)
+# Make scatter plots of calculated vs real FPKMs
 
-# Make a scatter plot of calculated vs real FPKMs
-plt.figure()
-scatter = plt.scatter(
-    fpkms[REAL_FPKM].values,
-    fpkms[CALCULATED_FPKM].values)
-plt.suptitle("Scatter plot of calculated vs real FPKMs")
-plt.xlabel("Real FPKM")
-plt.ylabel("Calculated FPKM")
-plt.xlim(xmin=0)
-plt.ylim(ymin=0)
-if options[SCATTER_MAX] != 0:
-    plt.xlim(xmax=options[SCATTER_MAX])
-    plt.ylim(ymax=options[SCATTER_MAX])
+space_to_underscore = lambda x: x.replace(' ', '_')
 
-plt.savefig(options[OUT_FILE_BASENAME] + "_scatter.pdf", format="pdf")
+
+def fpkm_scatter_plot(name, fpkms, max_val):
+    plt.figure()
+    plt.scatter(fpkms[REAL_FPKM].values, fpkms[CALCULATED_FPKM].values)
+    name = options[QUANT_METHOD_OPT] + " " + name
+    plt.suptitle("Scatter plot of calculated vs real FPKMs: " + name)
+    plt.xlabel("Real FPKM")
+    plt.ylabel("Calculated FPKM")
+    plt.xlim(xmin=0)
+    plt.ylim(ymin=0)
+    if max_val != 0:
+        plt.xlim(xmax=max_val)
+        plt.ylim(ymax=max_val)
+    plt.savefig(options[OUT_FILE_BASENAME] + "_" + space_to_underscore(name) +
+                "_scatter.pdf", format="pdf")
+
+
+fpkm_scatter_plot(ALL_LABEL, fpkms, options[SCATTER_MAX])
+fpkm_scatter_plot(TRUE_POSITIVES_LABEL, tp_fpkms, options[SCATTER_MAX])
 
 # Make a scatter plot of log transformed calculated vs real FPKMs
-plt.figure()
-scatter = plt.scatter(
-    fpkms[LOG2_REAL_FPKM].values,
-    fpkms[LOG2_CALCULATED_FPKM].values)
-plt.suptitle("Scatter plot of log transformed calculated vs real FPKMs")
-plt.xlabel("Log2 real FPKM")
-plt.ylabel("Log2 calculated FPKM")
-if options[LOG2_SCATTER_MIN] != 0:
-    plt.xlim(xmin=options[LOG2_SCATTER_MIN])
-    plt.ylim(ymin=options[LOG2_SCATTER_MIN])
-if options[LOG2_SCATTER_MAX] != 0:
-    plt.xlim(xmax=options[LOG2_SCATTER_MAX])
-    plt.ylim(ymax=options[LOG2_SCATTER_MAX])
 
-plt.savefig(options[OUT_FILE_BASENAME] + "_log2_scatter.pdf", format="pdf")
 
-# Make a boxplot of log ratios stratified by the number of transcripts per
+def log_fpkm_scatter_plot(name, fpkms, min_val, max_val):
+    plt.figure()
+    plt.scatter(fpkms[LOG2_REAL_FPKM].values,
+                fpkms[LOG2_CALCULATED_FPKM].values)
+    name = options[QUANT_METHOD_OPT] + " " + name
+    plt.suptitle("Scatter plot of log calculated vs real FPKMs: " + name)
+    plt.xlabel("Log2 real FPKM")
+    plt.ylabel("Log2 calculated FPKM")
+    if min_val == 0:
+        min_val = np.log2(NOT_PRESENT_CUTOFF)
+    plt.xlim(xmin=min_val)
+    plt.ylim(ymin=min_val)
+    if max_val != 0:
+        plt.xlim(xmax=max_val)
+        plt.ylim(ymax=max_val)
+    plt.savefig(options[OUT_FILE_BASENAME] + "_" + space_to_underscore(name) +
+                "_log2_scatter.pdf", format="pdf")
+
+log_fpkm_scatter_plot(TRUE_POSITIVES_LABEL, tp_fpkms,
+                      options[LOG2_SCATTER_MIN], options[LOG2_SCATTER_MAX])
+
+# Make boxplots of log ratios stratified by the number of transcripts per
 # originating gene.
-bp = filtered.boxplot(column=LOG2_RATIO, by=TRANSCRIPT_COUNT, sym="")
-bp.set_title("")
-plt.suptitle("Distribution of log ratios of calculated to real FPKMs")
-plt.xlabel("No. transcripts per gene")
-plt.ylabel("Log ratio (calculated/real FPKM)")
 
-plt.savefig(options[OUT_FILE_BASENAME] + "_boxplot.pdf", format="pdf")
+
+def log_ratio_boxplot(name_elements, grouping_label, fpkms, filter=None):
+    if filter:
+        grouped_fpkms = fpkms.groupby(filter[0])
+        fpkms = grouped_fpkms.filter(filter[1])
+    bp = fpkms.boxplot(column=LOG2_RATIO, by=TRANSCRIPT_COUNT, sym="")
+    bp.set_title("")
+
+    name = " ".join([options[QUANT_METHOD_OPT]] + name_elements)
+    plt.suptitle("Log ratios of calculated to real FPKMs:" + name)
+
+    plt.xlabel(grouping_label)
+    plt.ylabel("Log ratio (calculated/real FPKM)")
+    plt.savefig(options[OUT_FILE_BASENAME] + "_" + space_to_underscore(name) +
+                "_boxplot.pdf", format="pdf")
+
+more_than_100_filter = lambda x: len(x[REAL_FPKM]) > 100
+
+non_zero = fpkms[(fpkms[REAL_FPKM] > 0) & (fpkms[CALCULATED_FPKM] > 0)]
+log_ratio_boxplot([NON_ZERO_LABEL, NO_FILTER_LABEL],
+                  TRANSCRIPT_COUNT_LABEL, non_zero)
+log_ratio_boxplot([NON_ZERO_LABEL], TRANSCRIPT_COUNT_LABEL, non_zero,
+                  filter=(TRANSCRIPT_COUNT, more_than_100_filter))
+
+log_ratio_boxplot([TRUE_POSITIVES_LABEL, NO_FILTER_LABEL],
+                  TRANSCRIPT_COUNT_LABEL, tp_fpkms)
+log_ratio_boxplot([TRUE_POSITIVES_LABEL],
+                  TRANSCRIPT_COUNT_LABEL, tp_fpkms,
+                  filter=(TRANSCRIPT_COUNT, more_than_100_filter))
