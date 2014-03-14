@@ -71,6 +71,16 @@ def Quantifier(cls):
     return cls
 
 
+# e.g.
+# python prepare_quantification_run.py
+#   -d cufflinks_30x_50b_se
+#   -m Cufflinks
+#   --read-depth=30
+#   --read-length=50
+#   -p BOWTIE_INDEX=~/data/genome/mouse/mm10/bowtie-index/mm10
+#   ~/data/genome/mouse/mm10/Mus_musculus.protein_coding.gtf
+#   ~/data/genome/mouse/mm10/top_level_per_contig
+
 @Quantifier
 class Cufflinks:
 
