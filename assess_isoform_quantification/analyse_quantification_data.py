@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import options as opt
 import pandas as pd
+import seaborn as sb
 
 QUANT_METHOD = "quant-method"
 READ_DEPTH = "read-depth"
@@ -217,21 +218,20 @@ space_to_underscore = lambda x: x.replace(' ', '_')
 def fpkm_scatter_plot(name, fpkms, max_val):
     plt.figure()
     plt.scatter(fpkms[REAL_FPKM].values, fpkms[CALCULATED_FPKM].values)
+
     name = options[QUANT_METHOD_OPT] + " " + name
     plt.suptitle("Scatter plot of calculated vs real FPKMs: " + name)
     plt.xlabel("Real FPKM")
     plt.ylabel("Calculated FPKM")
+
     plt.xlim(xmin=0)
     plt.ylim(ymin=0)
     if max_val != 0:
         plt.xlim(xmax=max_val)
         plt.ylim(ymax=max_val)
+
     plt.savefig(options[OUT_FILE_BASENAME] + "_" + space_to_underscore(name) +
                 "_scatter.pdf", format="pdf")
-
-
-fpkm_scatter_plot(ALL_LABEL, fpkms, options[SCATTER_MAX])
-fpkm_scatter_plot(TRUE_POSITIVES_LABEL, tp_fpkms, options[SCATTER_MAX])
 
 # Make a scatter plot of log transformed calculated vs real FPKMs
 
@@ -239,18 +239,22 @@ fpkm_scatter_plot(TRUE_POSITIVES_LABEL, tp_fpkms, options[SCATTER_MAX])
 def log_fpkm_scatter_plot(name, fpkms, min_val, max_val):
     plt.figure()
     plt.scatter(fpkms[LOG2_REAL_FPKM].values,
-                fpkms[LOG2_CALCULATED_FPKM].values)
+                fpkms[LOG2_CALCULATED_FPKM].values,
+                c="lightblue", alpha=0.4)
+
     name = options[QUANT_METHOD_OPT] + " " + name
     plt.suptitle("Scatter plot of log calculated vs real FPKMs: " + name)
     plt.xlabel("Log2 real FPKM")
     plt.ylabel("Log2 calculated FPKM")
+
     if min_val == 0:
-        min_val = np.log2(NOT_PRESENT_CUTOFF)
+        min_val = np.log2(NOT_PRESENT_CUTOFF) - 0.2
     plt.xlim(xmin=min_val)
     plt.ylim(ymin=min_val)
     if max_val != 0:
         plt.xlim(xmax=max_val)
         plt.ylim(ymax=max_val)
+
     plt.savefig(options[OUT_FILE_BASENAME] + "_" + space_to_underscore(name) +
                 "_log2_scatter.pdf", format="pdf")
 
@@ -265,8 +269,12 @@ def log_ratio_boxplot(name_elements, grouping_label, fpkms, filter=None):
     if filter:
         grouped_fpkms = fpkms.groupby(filter[0])
         fpkms = grouped_fpkms.filter(filter[1])
-    bp = fpkms.boxplot(column=LOG2_RATIO, by=TRANSCRIPT_COUNT, sym="")
-    bp.set_title("")
+    #bp = fpkms.boxplot(column=LOG2_RATIO, by=TRANSCRIPT_COUNT, sym="")
+    #bp.set_title("")
+
+    plt.figure()
+    sb.boxplot(fpkms[LOG2_RATIO], groupby=fpkms[TRANSCRIPT_COUNT],
+               sym='', color='lightblue')
 
     name = " ".join([options[QUANT_METHOD_OPT]] + name_elements)
     plt.suptitle("Log ratios of calculated to real FPKMs:" + name)
