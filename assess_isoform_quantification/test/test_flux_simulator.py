@@ -13,14 +13,16 @@ def _get_read_identifier(t_region=1, t_start=1000, t_end=2000,
 def test_get_transcript_id_returns_correct_identifier():
     t_id = "abc"
     rid = _get_read_identifier(t_id=t_id)
-    identifier = fs.get_transcript_id(rid)
+    elems = fs.get_read_identifier_elems(rid)
+    identifier = fs.get_transcript_id(elems)
     assert identifier == t_id
 
 
 def test_get_transcript_length_returns_correct_value():
     t_len = 123
     rid = _get_read_identifier(t_len=t_len)
-    length = fs.get_transcript_length(rid)
+    elems = fs.get_read_identifier_elems(rid)
+    length = fs.get_transcript_length(elems)
     assert length == t_len
 
 
