@@ -8,18 +8,32 @@ import pytest
 import os
 
 
-def test_validate_file_option_does_not_raise_exception_for_file_that_exists():
+def test_validate_file_option_does_not_raise_exception_for_existing_file_if_file_should_exist():
     file = NamedTemporaryFile()
     file_name = file.name
     validate_file_option(file_name, "dummy")
 
 
-def test_validate_file_option_raises_exception_for_non_existing_file():
+def test_validate_file_option_does_not_raise_exception_for_non_existing_file_if_file_should_not_exist():
+    file = NamedTemporaryFile()
+    file_name = file.name
+    file.close()
+    validate_file_option(file_name, "dummy", should_exist=False)
+
+
+def test_validate_file_option_raises_exception_for_non_existing_file_if_file_should_exist():
     file = NamedTemporaryFile()
     file_name = file.name
     file.close()
     with pytest.raises(SchemaError):
         validate_file_option(file_name, "dummy")
+
+
+def test_validate_file_option_raises_exception_for_existing_file_if_file_should_not_exist():
+    file = NamedTemporaryFile()
+    file_name = file.name
+    with pytest.raises(SchemaError):
+        validate_file_option(file_name, "dummy", should_exist=False)
 
 
 def test_validate_file_option_exception_message_contains_correct_info():

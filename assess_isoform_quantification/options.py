@@ -3,9 +3,11 @@ from schema import And, Or, Schema, Use
 import os.path
 
 
-def validate_file_option(file_option, msg):
+def validate_file_option(file_option, msg, should_exist=True):
     msg = "{msg}: '{file}'.".format(msg=msg, file=file_option)
-    Schema(open, error=msg).validate(file_option)
+    validator = open if should_exist else \
+        lambda f: not os.path.exists(f)
+    Schema(validator, error=msg).validate(file_option)
 
 
 def validate_dir_option(dir_option, msg, should_exist=True, nullable=False):
