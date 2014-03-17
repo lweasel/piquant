@@ -20,6 +20,7 @@
 from docopt import docopt
 from schema import SchemaError
 
+import fpkms as f
 import matplotlib.pyplot as plt
 import numpy as np
 import options as opt
@@ -34,16 +35,13 @@ ERRORS = "errors"
 NUM_FPKMS = "num-fpkms"
 TP_NUM_FPKMS = "tp-num-fpkms"
 TP_COUNT = "tp-count"
-REAL_FPKM = "real-fpkm"
 LOG2_REAL_FPKM = "log2-real-fpkm"
-CALCULATED_FPKM = "calc-fpkm"
 LOG2_CALCULATED_FPKM = "log2-calc-fpkm"
 LOG2_RATIO = "log-ratio"
 TP_LOG2_RATIO_MEAN = "tp-log-ratio-mean"
 TP_LOG2_RATIO_STD = "tp-log-ratio-std"
 TP_LOG2_RATIO_MEDIAN = "tp-log-ratio-med"
 TP_LOG2_FPKM_RHO = "tp-log-fpkm-rho"
-TRANSCRIPT_COUNT = "num-transcripts"
 PERCENT_ERROR = "percent-error"
 TP_MEDIAN_PERCENT_ERROR = "tp-median-percent-error"
 FALSE_POSITIVE = "false-pos"
@@ -98,14 +96,14 @@ fpkms = pd.read_csv(options[FPKM_FILE])
 # For our purposes, marking an FPKM as positive or negative is determined
 # by whether it is greater or less than an "isoform not present" cutoff value.
 
-fpkms[FALSE_NEGATIVE] = (fpkms[REAL_FPKM] > NOT_PRESENT_CUTOFF) & \
-                        (fpkms[CALCULATED_FPKM] <= NOT_PRESENT_CUTOFF)
-fpkms[FALSE_POSITIVE] = (fpkms[CALCULATED_FPKM] > NOT_PRESENT_CUTOFF) & \
-                        (fpkms[REAL_FPKM] <= NOT_PRESENT_CUTOFF)
-fpkms[TRUE_NEGATIVE] = (fpkms[REAL_FPKM] <= NOT_PRESENT_CUTOFF) & \
-                       (fpkms[CALCULATED_FPKM] <= NOT_PRESENT_CUTOFF)
-fpkms[TRUE_POSITIVE] = (fpkms[REAL_FPKM] > NOT_PRESENT_CUTOFF) & \
-                       (fpkms[CALCULATED_FPKM] > NOT_PRESENT_CUTOFF)
+fpkms[FALSE_NEGATIVE] = (fpkms[f.REAL_FPKM] > NOT_PRESENT_CUTOFF) & \
+                        (fpkms[f.CALCULATED_FPKM] <= NOT_PRESENT_CUTOFF)
+fpkms[FALSE_POSITIVE] = (fpkms[f.CALCULATED_FPKM] > NOT_PRESENT_CUTOFF) & \
+                        (fpkms[f.REAL_FPKM] <= NOT_PRESENT_CUTOFF)
+fpkms[TRUE_NEGATIVE] = (fpkms[f.REAL_FPKM] <= NOT_PRESENT_CUTOFF) & \
+                       (fpkms[f.CALCULATED_FPKM] <= NOT_PRESENT_CUTOFF)
+fpkms[TRUE_POSITIVE] = (fpkms[f.REAL_FPKM] > NOT_PRESENT_CUTOFF) & \
+                       (fpkms[f.CALCULATED_FPKM] > NOT_PRESENT_CUTOFF)
 
 
 def get_sensitivity(fpkms):
@@ -122,7 +120,7 @@ def get_specificity(fpkms):
 # Calculate the percent error (positive or negative) of the calculated FPKM
 # values from the real values
 fpkms[PERCENT_ERROR] = \
-    100 * (fpkms[CALCULATED_FPKM] - fpkms[REAL_FPKM]) / fpkms[REAL_FPKM]
+    100 * (fpkms[f.CALCULATED_FPKM] - fpkms[f.REAL_FPKM]) / fpkms[f.REAL_FPKM]
 
 
 def get_error_fraction(fpkms, error_percent):
@@ -130,8 +128,8 @@ def get_error_fraction(fpkms, error_percent):
     return float(num_errors) / len(fpkms)
 
 # Calculate log ratio of calculated and real FPKMs
-fpkms[LOG2_REAL_FPKM] = np.log2(fpkms[REAL_FPKM])
-fpkms[LOG2_CALCULATED_FPKM] = np.log2(fpkms[CALCULATED_FPKM])
+fpkms[LOG2_REAL_FPKM] = np.log2(fpkms[f.REAL_FPKM])
+fpkms[LOG2_CALCULATED_FPKM] = np.log2(fpkms[f.CALCULATED_FPKM])
 fpkms[LOG2_RATIO] = \
     fpkms[LOG2_CALCULATED_FPKM] - fpkms[LOG2_REAL_FPKM]
 
@@ -168,14 +166,14 @@ with open(options[OUT_FILE_BASENAME] + "_stats.csv", "w") as out_file:
 
 # Group transcripts by the number of transcripts for their originating gene,
 # and discard those groups with fewer than 100 members
-grouped = fpkms.groupby(TRANSCRIPT_COUNT)
-tp_grouped = tp_fpkms.groupby(TRANSCRIPT_COUNT)
+grouped = fpkms.groupby(f.TRANSCRIPT_COUNT)
+tp_grouped = tp_fpkms.groupby(f.TRANSCRIPT_COUNT)
 
 with open(options[OUT_FILE_BASENAME] +
           "_stats_by_num_transcripts_per_gene.csv", "w") as out_file:
 
     summary = grouped.describe()
-    main_stats = summary[REAL_FPKM].unstack()
+    main_stats = summary[f.REAL_FPKM].unstack()
     main_stats = main_stats.drop(
         ["mean", "std", "min", "25%", "50%", "75%", "max"], 1)
 
@@ -217,7 +215,7 @@ space_to_underscore = lambda x: x.replace(' ', '_')
 
 def fpkm_scatter_plot(name, fpkms, max_val):
     plt.figure()
-    plt.scatter(fpkms[REAL_FPKM].values, fpkms[CALCULATED_FPKM].values)
+    plt.scatter(fpkms[f.REAL_FPKM].values, fpkms[f.CALCULATED_FPKM].values)
 
     name = options[QUANT_METHOD_OPT] + " " + name
     plt.suptitle("Scatter plot of calculated vs real FPKMs: " + name)
@@ -273,7 +271,7 @@ def log_ratio_boxplot(name_elements, grouping_label, fpkms, filter=None):
     #bp.set_title("")
 
     plt.figure()
-    sb.boxplot(fpkms[LOG2_RATIO], groupby=fpkms[TRANSCRIPT_COUNT],
+    sb.boxplot(fpkms[LOG2_RATIO], groupby=fpkms[f.TRANSCRIPT_COUNT],
                sym='', color='lightblue')
 
     name = " ".join([options[QUANT_METHOD_OPT]] + name_elements)
@@ -284,16 +282,16 @@ def log_ratio_boxplot(name_elements, grouping_label, fpkms, filter=None):
     plt.savefig(options[OUT_FILE_BASENAME] + "_" + space_to_underscore(name) +
                 "_boxplot.pdf", format="pdf")
 
-more_than_100_filter = lambda x: len(x[REAL_FPKM]) > 100
+more_than_100_filter = lambda x: len(x[f.REAL_FPKM]) > 100
 
-non_zero = fpkms[(fpkms[REAL_FPKM] > 0) & (fpkms[CALCULATED_FPKM] > 0)]
+non_zero = fpkms[(fpkms[f.REAL_FPKM] > 0) & (fpkms[f.CALCULATED_FPKM] > 0)]
 log_ratio_boxplot([NON_ZERO_LABEL, NO_FILTER_LABEL],
                   TRANSCRIPT_COUNT_LABEL, non_zero)
 log_ratio_boxplot([NON_ZERO_LABEL], TRANSCRIPT_COUNT_LABEL, non_zero,
-                  filter=(TRANSCRIPT_COUNT, more_than_100_filter))
+                  filter=(f.TRANSCRIPT_COUNT, more_than_100_filter))
 
 log_ratio_boxplot([TRUE_POSITIVES_LABEL, NO_FILTER_LABEL],
                   TRANSCRIPT_COUNT_LABEL, tp_fpkms)
 log_ratio_boxplot([TRUE_POSITIVES_LABEL],
                   TRANSCRIPT_COUNT_LABEL, tp_fpkms,
-                  filter=(TRANSCRIPT_COUNT, more_than_100_filter))
+                  filter=(f.TRANSCRIPT_COUNT, more_than_100_filter))

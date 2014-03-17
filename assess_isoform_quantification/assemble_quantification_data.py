@@ -18,8 +18,8 @@
 from docopt import docopt
 from schema import SchemaError
 
-import analyse_quantification_data as aqd
 import flux_simulator as fs
+import fpkms
 import log
 import options as opt
 import pandas
@@ -123,7 +123,7 @@ def fpkm_calc(t_id):
     return t_info[1] / (t_kb * m_r_millons)
 
 profiles = fs.read_expression_profiles(options[PRO_FILE])
-profiles[aqd.REAL_FPKM] = \
+profiles[fpkms.REAL_FPKM] = \
     profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].map(fpkm_calc)
 
 # Read calculated FPKM values for each transcript produced by a particular
@@ -134,7 +134,7 @@ logger.info("Reading calculated FPKMs...")
 quant_method = options[QUANT_METHOD]()
 quant_method.calculate_transcript_abundances(options[QUANT_FILE])
 
-profiles[aqd.CALCULATED_FPKM] = profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].\
+profiles[fpkms.CALCULATED_FPKM] = profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].\
     map(quant_method.get_transcript_abundance)
 
 # Read per-gene transcript counts
@@ -149,7 +149,7 @@ set_transcript_count = lambda t_id: \
     transcript_counts.ix[t_id][COUNTS_COUNT_COL] \
     if t_id in transcript_counts.index else 0
 
-profiles[aqd.TRANSCRIPT_COUNT] = \
+profiles[fpkms.TRANSCRIPT_COUNT] = \
     profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].map(set_transcript_count)
 
 # Write FPKMs and other relevant data to output file
@@ -159,5 +159,5 @@ logger.info("Writing FPKMs to file {out}".format(out=options[OUT_FILE]))
 profiles.rename(columns={1: TRANSCRIPT_COL}, inplace=True)
 
 profiles.to_csv(options[OUT_FILE], index=False,
-                cols=[TRANSCRIPT_COL, aqd.TRANSCRIPT_COUNT,
-                      aqd.REAL_FPKM, aqd.CALCULATED_FPKM])
+                cols=[TRANSCRIPT_COL, fpkms.TRANSCRIPT_COUNT,
+                      fpkms.REAL_FPKM, fpkms.CALCULATED_FPKM])
