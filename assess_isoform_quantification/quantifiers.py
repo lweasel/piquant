@@ -80,7 +80,6 @@ def Quantifier(cls):
 #   -p BOWTIE_INDEX=~/data/genome/mouse/mm10/bowtie-index/mm10
 #   ~/data/genome/mouse/mm10/Mus_musculus.protein_coding.gtf
 #   ~/data/genome/mouse/mm10/top_level_per_contig
-
 @Quantifier
 class Cufflinks:
 
@@ -126,6 +125,15 @@ class Cufflinks:
         return False
 
 
+# e.g.
+# python prepare_quantification_run.py
+#   -d test_run
+#   -m RSEM
+#   --read-depth=30
+#   --read-length=50
+#   -p TRANSCRIPT_REFERENCE=~/data/genome/mouse/mm10/rsem/mm10-protein-coding
+#   ~/data/genome/mouse/mm10/Mus_musculus.protein_coding.gtf
+#   ~/data/genome/mouse/mm10/top_level_per_contig
 @Quantifier
 class RSEM:
     SAMPLE_NAME = "rsem_sample"
@@ -182,6 +190,15 @@ class RSEM:
         return False
 
 
+# e.g.
+# python prepare_quantification_run.py
+#   -d express_30x_50b_se
+#   -m Express
+#   --read-depth=30
+#   --read-length=50
+#   -p TRANSCRIPT_REFERENCE=~/data/genome/mouse/mm10/rsem/mm10-protein-coding
+#   ~/data/genome/mouse/mm10/Mus_musculus.protein_coding.gtf
+#   ~/data/genome/mouse/mm10/top_level_per_contig
 @Quantifier
 class Express:
     MAPPED_READS_FILE = "hits.bam"

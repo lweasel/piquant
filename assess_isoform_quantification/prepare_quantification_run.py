@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """Usage:
-    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-dir=<run-dir] [--input-dir=<input-dir> | [[--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>]x ]] [--errors] [--paired-end] <transcript-gtf-file> <genome-fasta-dir>
+    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-dir=<run-dir] [--input-dir=<input-dir> | [[--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>]]] [--errors] [--paired-end] <transcript-gtf-file> <genome-fasta-dir>
 
 -h --help                           Show this message.
 -v --version                        Show version.
@@ -341,7 +341,8 @@ with get_output_file(RUN_SCRIPT) as script:
         create_command(["python", ANALYSE_DATA_SCRIPT,
                         quant_method_name, options[READ_LENGTH],
                         options[READ_DEPTH], bool(options[PAIRED_END]),
-                        bool(options[ERRORS]), DATA_FILE, "results"])
+                        bool(options[ERRORS]), DATA_FILE,
+                        options[RUN_DIRECTORY]])
     ])
 
     write_lines(script, script_lines)
