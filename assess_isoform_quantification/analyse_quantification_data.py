@@ -95,15 +95,38 @@ STRATIFIERS = []
 
 def Stratifier(cls):
     STRATIFIERS.append(cls())
+    return cls
 
 
 @Stratifier
-class GeneTranscriptNumber:
+class GeneTranscriptNumberStratifier:
     def get_column_name(self):
         return "gene transcript number"
 
     def get_stratification_value(self, row):
         return row[f.TRANSCRIPT_COUNT]
+
+    def get_level_names(self, num_levels):
+        return range(1, num_levels + 1)
+
+
+@Stratifier
+class RealAbundanceStratifier:
+    LEVELS = [0, 0.5, 1, 1.5]
+    LEVEL_NAMES = ["< " + str(l) for l in LEVELS] + ["> " + str(LEVELS[-1])]
+
+    def get_column_name(self):
+        return "log10 real FPKM"
+
+    def get_stratification_value(self, row):
+        log10_real_fpkm = row[LOG10_REAL_FPKM]
+        for i, level in enumerate(RealAbundanceStratifier.LEVELS):
+            if log10_real_fpkm < level:
+                return i
+        return len(RealAbundanceStratifier.LEVELS)
+
+    def get_level_names(self, num_levels):
+        return RealAbundanceStratifier.LEVEL_NAMES[:num_levels]
 
 fpkms = pd.read_csv(options[FPKM_FILE])
 
@@ -124,12 +147,16 @@ fpkms[TRUE_POSITIVE] = (fpkms[f.REAL_FPKM] > NOT_PRESENT_CUTOFF) & \
 def get_sensitivity(fpkms):
     num_tp = len(fpkms[fpkms[TRUE_POSITIVE]])
     num_fn = len(fpkms[fpkms[FALSE_NEGATIVE]])
+    if num_tp + num_fn == 0:
+        return 1
     return float(num_tp) / (num_tp + num_fn)
 
 
 def get_specificity(fpkms):
     num_fp = len(fpkms[fpkms[FALSE_POSITIVE]])
     num_tn = len(fpkms[fpkms[TRUE_NEGATIVE]])
+    if num_fp + num_tn == 0:
+        return 1
     return float(num_tn) / (num_tn + num_fp)
 
 # Calculate the percent error (positive or negative) of the calculated FPKM
@@ -284,7 +311,8 @@ log_fpkm_scatter_plot(TRUE_POSITIVES_LABEL, tp_fpkms,
 # (e.g. the number of transcripts per-originating gene of each transcript)
 
 
-def log_ratio_boxplot(name_elements, grouping_column, fpkms, filter=None):
+def log_ratio_boxplot(name_elements, stratifier, fpkms, filter=None):
+    grouping_column = stratifier.get_column_name()
     if filter:
         grouped_fpkms = fpkms.groupby(grouping_column)
         fpkms = grouped_fpkms.filter(filter)
@@ -296,8 +324,11 @@ def log_ratio_boxplot(name_elements, grouping_column, fpkms, filter=None):
     plt.suptitle("Log ratios of calculated to real FPKMs: " +
                  ", ".join([options[QUANT_METHOD_OPT]] + name_elements))
 
-    plt.xlabel(grouping_column.capitalize())
+    plt.xlabel(grouping_column[:1].upper() + grouping_column[1:])
     plt.ylabel("Log ratio (calculated/real FPKM)")
+
+    locs, labels = plt.xticks()
+    plt.xticks(locs, stratifier.get_level_names(len(labels)))
 
     filename = options[OUT_FILE_BASENAME] + "_" \
         + space_to_underscore(" ".join([grouping_column] + name_elements)) \
@@ -309,16 +340,13 @@ more_than_100_filter = lambda x: len(x[f.REAL_FPKM]) > 100
 non_zero = fpkms[(fpkms[f.REAL_FPKM] > 0) & (fpkms[f.CALCULATED_FPKM] > 0)]
 
 for stratifier in STRATIFIERS:
-    column_name = stratifier.get_column_name()
-
     log_ratio_boxplot([NON_ZERO_LABEL, NO_FILTER_LABEL],
-                      column_name, non_zero)
-    log_ratio_boxplot([NON_ZERO_LABEL],
-                      column_name, non_zero,
+                      stratifier, non_zero)
+    log_ratio_boxplot([NON_ZERO_LABEL], stratifier, non_zero,
                       filter=more_than_100_filter)
 
     log_ratio_boxplot([TRUE_POSITIVES_LABEL, NO_FILTER_LABEL],
-                      column_name, tp_fpkms)
+                      stratifier, tp_fpkms)
     log_ratio_boxplot([TRUE_POSITIVES_LABEL],
-                      column_name, tp_fpkms,
+                      stratifier, tp_fpkms,
                       filter=more_than_100_filter)
