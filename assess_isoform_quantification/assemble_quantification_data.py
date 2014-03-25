@@ -156,8 +156,13 @@ profiles[fpkms.TRANSCRIPT_COUNT] = \
 
 logger.info("Writing FPKMs to file {out}".format(out=options[OUT_FILE]))
 
-profiles.rename(columns={1: TRANSCRIPT_COL}, inplace=True)
+profiles.rename(
+    columns={
+        fs.PRO_FILE_TRANSCRIPT_ID_COL: TRANSCRIPT_COL,
+        fs.PRO_FILE_LENGTH_COL: fpkms.LENGTH
+    },
+    inplace=True)
 
 profiles.to_csv(options[OUT_FILE], index=False,
-                cols=[TRANSCRIPT_COL, fpkms.TRANSCRIPT_COUNT,
+                cols=[TRANSCRIPT_COL, fpkms.LENGTH, fpkms.TRANSCRIPT_COUNT,
                       fpkms.REAL_FPKM, fpkms.CALCULATED_FPKM])

@@ -26,6 +26,7 @@ import numpy as np
 import options as opt
 import pandas as pd
 import seaborn as sb
+import stratifiers
 
 QUANT_METHOD = "quant-method"
 READ_DEPTH = "read-depth"
@@ -35,9 +36,6 @@ ERRORS = "errors"
 NUM_FPKMS = "num-fpkms"
 TP_NUM_FPKMS = "tp-num-fpkms"
 TP_COUNT = "tp-count"
-LOG10_REAL_FPKM = "log10-real-fpkm"
-LOG10_CALCULATED_FPKM = "log10-calc-fpkm"
-LOG10_RATIO = "log-ratio"
 TP_LOG10_RATIO_MEAN = "tp-log-ratio-mean"
 TP_LOG10_RATIO_STD = "tp-log-ratio-std"
 TP_LOG10_RATIO_MEDIAN = "tp-log-ratio-med"
@@ -90,44 +88,6 @@ try:
 except SchemaError as exc:
     exit(exc.code)
 
-STRATIFIERS = []
-
-
-def Stratifier(cls):
-    STRATIFIERS.append(cls())
-    return cls
-
-
-@Stratifier
-class GeneTranscriptNumberStratifier:
-    def get_column_name(self):
-        return "gene transcript number"
-
-    def get_stratification_value(self, row):
-        return row[f.TRANSCRIPT_COUNT]
-
-    def get_level_names(self, num_levels):
-        return range(1, num_levels + 1)
-
-
-@Stratifier
-class RealAbundanceStratifier:
-    LEVELS = [0, 0.5, 1, 1.5]
-    LEVEL_NAMES = ["< " + str(l) for l in LEVELS] + ["> " + str(LEVELS[-1])]
-
-    def get_column_name(self):
-        return "log10 real FPKM"
-
-    def get_stratification_value(self, row):
-        log10_real_fpkm = row[LOG10_REAL_FPKM]
-        for i, level in enumerate(RealAbundanceStratifier.LEVELS):
-            if log10_real_fpkm < level:
-                return i
-        return len(RealAbundanceStratifier.LEVELS)
-
-    def get_level_names(self, num_levels):
-        return RealAbundanceStratifier.LEVEL_NAMES[:num_levels]
-
 fpkms = pd.read_csv(options[FPKM_FILE])
 
 # Determine whether each FPKM measurement is a true/false positive/negative.
@@ -170,12 +130,14 @@ def get_error_fraction(fpkms, error_percent):
     return float(num_errors) / len(fpkms)
 
 # Calculate log ratio of calculated and real FPKMs
-fpkms[LOG10_REAL_FPKM] = np.log10(fpkms[f.REAL_FPKM])
-fpkms[LOG10_CALCULATED_FPKM] = np.log10(fpkms[f.CALCULATED_FPKM])
-fpkms[LOG10_RATIO] = \
-    fpkms[LOG10_CALCULATED_FPKM] - fpkms[LOG10_REAL_FPKM]
+fpkms[f.LOG10_REAL_FPKM] = np.log10(fpkms[f.REAL_FPKM])
+fpkms[f.LOG10_CALCULATED_FPKM] = np.log10(fpkms[f.CALCULATED_FPKM])
+fpkms[f.LOG10_RATIO] = \
+    fpkms[f.LOG10_CALCULATED_FPKM] - fpkms[f.LOG10_REAL_FPKM]
 
-for stratifier in STRATIFIERS:
+strats = [s() for s in stratifiers.STRATIFIERS]
+
+for stratifier in strats:
     column_name = stratifier.get_column_name()
     fpkms[column_name] = fpkms.apply(
         stratifier.get_stratification_value, axis=1)
@@ -185,8 +147,8 @@ tp_fpkms = fpkms[fpkms[TRUE_POSITIVE]]
 # Write statistics pertaining to the set of quantified transcripts as a whole.
 with open(options[OUT_FILE_BASENAME] + "_stats.csv", "w") as out_file:
     # Spearman correlation coefficient between real and calculated FPKMs.
-    rho = tp_fpkms[LOG10_CALCULATED_FPKM].corr(
-        tp_fpkms[LOG10_REAL_FPKM], method='spearman')
+    rho = tp_fpkms[f.LOG10_CALCULATED_FPKM].corr(
+        tp_fpkms[f.LOG10_REAL_FPKM], method='spearman')
 
     # The median percent error - i.e. the median of the percent errors of
     # the calculated values from the real ones
@@ -214,7 +176,7 @@ space_to_underscore = lambda x: x.replace(' ', '_')
 
 # Write statistics for FPKMS stratified by various stratification measures
 
-for stratifier in STRATIFIERS:
+for stratifier in strats:
     column_name = stratifier.get_column_name()
     grouped = fpkms.groupby(column_name)
     tp_grouped = tp_fpkms.groupby(column_name)
@@ -232,7 +194,7 @@ for stratifier in STRATIFIERS:
         main_stats[SPECIFICITY] = grouped.apply(get_specificity)
 
         tp_summary = tp_grouped.describe()
-        tp_stats = tp_summary[LOG10_RATIO].unstack()
+        tp_stats = tp_summary[f.LOG10_RATIO].unstack()
         tp_stats = tp_stats.drop(["min", "25%", "75%", "max"], 1)
         tp_stats = tp_stats.rename(columns={
             "count": TP_COUNT,
@@ -241,8 +203,8 @@ for stratifier in STRATIFIERS:
             "50%": TP_LOG10_RATIO_MEDIAN})
 
         tp_stats[TP_LOG10_FPKM_RHO] = tp_grouped.apply(
-            lambda x: x[LOG10_CALCULATED_FPKM].corr(x[LOG10_REAL_FPKM],
-                                                   method="spearman"))
+            lambda x: x[f.LOG10_CALCULATED_FPKM].corr(
+                x[f.LOG10_REAL_FPKM], method="spearman"))
 
         pe_stats = tp_summary[PERCENT_ERROR].unstack()
         tp_stats[TP_MEDIAN_PERCENT_ERROR] = pe_stats["50%"]
@@ -260,6 +222,7 @@ for stratifier in STRATIFIERS:
         output_stats.to_csv(out_file, float_format="%.5f")
 
 # Make scatter plots of calculated vs real FPKMs
+
 
 def fpkm_scatter_plot(name, fpkms, max_val):
     plt.figure()
@@ -284,8 +247,8 @@ def fpkm_scatter_plot(name, fpkms, max_val):
 
 def log_fpkm_scatter_plot(name, fpkms, min_val, max_val):
     plt.figure()
-    plt.scatter(fpkms[LOG10_REAL_FPKM].values,
-                fpkms[LOG10_CALCULATED_FPKM].values,
+    plt.scatter(fpkms[f.LOG10_REAL_FPKM].values,
+                fpkms[f.LOG10_CALCULATED_FPKM].values,
                 c="lightblue", alpha=0.4)
 
     plt.suptitle("Scatter plot of log calculated vs real FPKMs: " +
@@ -318,7 +281,7 @@ def log_ratio_boxplot(name_elements, stratifier, fpkms, filter=None):
         fpkms = grouped_fpkms.filter(filter)
 
     plt.figure()
-    sb.boxplot(fpkms[LOG10_RATIO], groupby=fpkms[grouping_column],
+    sb.boxplot(fpkms[f.LOG10_RATIO], groupby=fpkms[grouping_column],
                sym='', color='lightblue')
 
     plt.suptitle("Log ratios of calculated to real FPKMs: " +
@@ -328,7 +291,7 @@ def log_ratio_boxplot(name_elements, stratifier, fpkms, filter=None):
     plt.ylabel("Log ratio (calculated/real FPKM)")
 
     locs, labels = plt.xticks()
-    plt.xticks(locs, stratifier.get_level_names(len(labels)))
+    plt.xticks(locs, stratifier.get_value_labels(len(labels)))
 
     filename = options[OUT_FILE_BASENAME] + "_" \
         + space_to_underscore(" ".join([grouping_column] + name_elements)) \
@@ -339,7 +302,7 @@ more_than_100_filter = lambda x: len(x[f.REAL_FPKM]) > 100
 
 non_zero = fpkms[(fpkms[f.REAL_FPKM] > 0) & (fpkms[f.CALCULATED_FPKM] > 0)]
 
-for stratifier in STRATIFIERS:
+for stratifier in strats:
     log_ratio_boxplot([NON_ZERO_LABEL, NO_FILTER_LABEL],
                       stratifier, non_zero)
     log_ratio_boxplot([NON_ZERO_LABEL], stratifier, non_zero,
