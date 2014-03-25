@@ -212,7 +212,7 @@ with get_output_file(RUN_SCRIPT) as script:
         add_script_section(script_lines, [
             "# Run Flux Simulator to create expression profiles " +
             "then simulate reads",
-            "flux-simulator -t simulator --threads 32 -x -p {f}".
+            "flux-simulator -t simulator -x -p {f}".
             format(f=FS_EXPRESSION_PARAMS_FILE),
         ])
 
@@ -257,7 +257,7 @@ with get_output_file(RUN_SCRIPT) as script:
 
         # Now use Flux Simulator to simulate reads
         add_script_section(script_lines, [
-            "flux-simulator -t simulator --threads 32 -l -s -p {f}".
+            "flux-simulator -t simulator -l -s -p {f}".
             format(f=FS_SIMULATION_PARAMS_FILE),
         ])
 
