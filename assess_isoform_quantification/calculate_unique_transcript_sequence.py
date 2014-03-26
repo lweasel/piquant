@@ -68,7 +68,9 @@ exon_info_list = zip(
 Exon = namedtuple('Exon', ['sequence', 'start', 'end', 'strand'])
 ExonAndTranscript = namedtuple('ExonAndTranscript', ['exon', 'transcript'])
 exon_transcript_pairs = \
-    [ExonAndTranscript(Exon(*ei[:-1]), ei[-1]) for ei in exon_info_list]
+    [ExonAndTranscript(
+        Exon(str(ei[0]), int(ei[1]), int(ei[2]), str(ei[3])), ei[-1])
+        for ei in exon_info_list]
 
 logger.info("Read {c} exon + transcripts pairs.".
             format(c=len(exon_transcript_pairs)))
