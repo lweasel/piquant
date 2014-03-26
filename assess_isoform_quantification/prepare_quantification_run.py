@@ -58,6 +58,8 @@ SIMULATED_READS_PREFIX = "reads"
 PYTHON_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__)) + os.path.sep
 CLEAN_READS_SCRIPT = PYTHON_SCRIPT_DIR + "clean_mapped_reads.py"
 TRANSCRIPT_COUNTS_SCRIPT = PYTHON_SCRIPT_DIR + "count_transcripts_for_genes.py"
+UNIQUE_SEQUENCE_SCRIPT = PYTHON_SCRIPT_DIR + \
+    "calculate_unique_transcript_sequence.py"
 ASSEMBLE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "assemble_quantification_data.py"
 ANALYSE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "analyse_quantification_data.py"
 CALC_READ_DEPTH_SCRIPT = PYTHON_SCRIPT_DIR + "calculate_reads_for_depth.py"
@@ -311,12 +313,30 @@ with get_output_file(RUN_SCRIPT) as script:
     ])
 
     # Calculate the number of transcripts per gene and write to a file
-    TRANSCRIPT_COUNTS = "transcript_counts.csv"
+    GTF_DIRECTORY = os.path.abspath(
+        os.path.dirname(options[TRANSCRIPT_GTF_FILE]))
+    TRANSCRIPT_COUNTS = GTF_DIRECTORY + os.path.sep + "transcript_counts.csv"
+
     add_script_section(script_lines, [
         "# Calculate the number of transcripts per gene",
-        "python {s} {t} > {out}".format(
+        "if [ ! -f {f} ]; then".format(f=TRANSCRIPT_COUNTS),
+        "   python {s} {t} > {out}".format(
             s=TRANSCRIPT_COUNTS_SCRIPT, t=options[TRANSCRIPT_GTF_FILE],
-            out=TRANSCRIPT_COUNTS)
+            out=TRANSCRIPT_COUNTS),
+        "fi"
+    ])
+
+    # Calculate the length of unique sequence per transcript and write to a
+    # file.
+    UNIQUE_SEQUENCE = GTF_DIRECTORY + os.path.sep + "unique_sequence.csv"
+
+    add_script_section(script_lines, [
+        "# Calculate the length of unique sequence per transcript",
+        "if [! -f {f} ]; then".format(f=UNIQUE_SEQUENCE),
+        "   python {s} {t} > {out}".format(
+            s=UNIQUE_SEQUENCE_SCRIPT, t=options[TRANSCRIPT_GTF_FILE],
+            out=UNIQUE_SEQUENCE),
+        "fi"
     ])
 
     # Now assemble data required for analysis of quantification performance
@@ -342,7 +362,7 @@ with get_output_file(RUN_SCRIPT) as script:
                         quant_method_name, options[READ_LENGTH],
                         options[READ_DEPTH], bool(options[PAIRED_END]),
                         bool(options[ERRORS]), DATA_FILE,
-                        options[RUN_DIRECTORY]])
+                        os.path.basename(options[RUN_DIRECTORY])])
     ])
 
     write_lines(script, script_lines)

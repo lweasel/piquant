@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """Usage:
-    assemble_quantification_data [--log-level=<log-level>] --method=<quantification-method> --out=<output-file> <pro-file> <read-file> <quantification-file> <transcript-count-file>
+    assemble_quantification_data [--log-level=<log-level>] --method=<quantification-method> --out=<output-file> <pro-file> <read-file> <quantification-file> <transcript-count-file> <unique-sequence-file>
 
 -h --help                    Show this message.
 -v --version                 Show version.
@@ -13,6 +13,7 @@
 <read-file>                  BAM file containing mapped reads used as input to transcript quantifier
 <quantification-file>        Output file from transcript quantifier from which abundances will be read.
 <transcript-count-file>      File containing per-gene transcript counts.
+<unique-sequence-file>       File containing unique sequence lengths per-transcript.
 """
 
 from docopt import docopt
@@ -35,11 +36,11 @@ PRO_FILE = "<pro-file>"
 READ_FILE = "<read-file>"
 QUANT_FILE = "<quantification-file>"
 COUNT_FILE = "<transcript-count-file>"
+UNIQUE_SEQ_FILE = "<unique-sequence-file>"
 
-COUNTS_TRANSCRIPT_COL = "transcript"
-COUNTS_COUNT_COL = "transcript_count"
-
-TRANSCRIPT_COL = 'transcript'
+TRANSCRIPT_COL = "transcript"
+COUNT_COL = "transcript_count"
+UNIQUE_SEQ_LENGTH_COL = "unique-length"
 
 SORTED_PREFIX = "sorted"
 SORTED_BAM_FILE = SORTED_PREFIX + ".bam"
@@ -60,6 +61,9 @@ try:
         options[READ_FILE], "Could not open BAM file containing reads")
     opt.validate_file_option(
         options[COUNT_FILE], "Could not open transcript count file")
+    opt.validate_file_option(
+        options[UNIQUE_SEQ_FILE],
+        "Could not open unique sequence lengths file")
     options[QUANT_METHOD] = opt.validate_dict_option(
         options[QUANT_METHOD], qs.QUANT_METHODS,
         "Unknown quantification method")
@@ -142,15 +146,30 @@ profiles[fpkms.CALCULATED_FPKM] = profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].\
 logger.info("Reading per-gene transcript counts...")
 
 transcript_counts = pandas.read_csv(
-    options[COUNT_FILE], index_col=COUNTS_TRANSCRIPT_COL)
+    options[COUNT_FILE], index_col=TRANSCRIPT_COL)
 
 
 set_transcript_count = lambda t_id: \
-    transcript_counts.ix[t_id][COUNTS_COUNT_COL] \
+    transcript_counts.ix[t_id][COUNT_COL] \
     if t_id in transcript_counts.index else 0
 
 profiles[fpkms.TRANSCRIPT_COUNT] = \
     profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].map(set_transcript_count)
+
+# Read unique sequence lengths per-transcript
+
+logger.info("Reading unique sequence lengths per-transcript")
+
+unique_seqs = pandas.read_csv(
+    options[UNIQUE_SEQ_FILE], index_col=TRANSCRIPT_COL)
+
+
+set_unique_length = lambda t_id: \
+    unique_seqs.ix[t_id][UNIQUE_SEQ_LENGTH_COL] \
+    if t_id in unique_seqs.index else 0
+
+profiles[fpkms.UNIQUE_SEQ_LENGTH] = \
+    profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].map(set_unique_length)
 
 # Write FPKMs and other relevant data to output file
 
@@ -164,5 +183,6 @@ profiles.rename(
     inplace=True)
 
 profiles.to_csv(options[OUT_FILE], index=False,
-                cols=[TRANSCRIPT_COL, fpkms.LENGTH, fpkms.TRANSCRIPT_COUNT,
-                      fpkms.REAL_FPKM, fpkms.CALCULATED_FPKM])
+                cols=[TRANSCRIPT_COL, fpkms.LENGTH, fpkms.UNIQUE_SEQ_LENGTH,
+                      fpkms.TRANSCRIPT_COUNT, fpkms.REAL_FPKM,
+                      fpkms.CALCULATED_FPKM])
