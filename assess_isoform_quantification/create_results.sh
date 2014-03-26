@@ -25,9 +25,10 @@ do
         do
             for errors in $ERRORS;
             do
-                RUN_NAME="output/${CUFFLINKS_METHOD}_${depth}x_${length}b_${ends}_${errors}"
+                RUN_NAME="${CUFFLINKS_METHOD}_${depth}x_${length}b_${ends}_${errors}"
+                RUN_DIR="output/$RUN_NAME"
                 COMMAND="prepare_quantification_run.py"
-                COMMAND="$COMMAND -d $RUN_NAME"
+                COMMAND="$COMMAND -d $RUN_DIR"
                 COMMAND="$COMMAND -m $CUFFLINKS_METHOD"
                 COMMAND="$COMMAND --read-depth=$depth"
                 COMMAND="$COMMAND --read-length=$length"
@@ -45,8 +46,8 @@ do
 
                 python $COMMAND
 
-                pushd $RUN_NAME
-                ./run_quantification.sh
+                pushd $RUN_DIR
+                nohup ./run_quantification.sh &> ${RUN_NAME}.out &
                 popd
             done
         done
