@@ -47,7 +47,7 @@ do
                 python $COMMAND
 
                 pushd $RUN_DIR
-                nohup ./run_quantification.sh &> ${RUN_NAME}.out &
+                nohup ./run_quantification.sh -rqa &> ${RUN_NAME}.out &
                 popd
             done
         done

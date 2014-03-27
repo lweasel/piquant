@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# TODO: Fix horrid way of dealing with indentation of sections.
+
 """Usage:
     prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-dir=<run-dir] [--input-dir=<input-dir> | [[--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>]]] [--errors] [--paired-end] <transcript-gtf-file> <genome-fasta-dir>
 
@@ -209,12 +211,42 @@ with get_output_file(RUN_SCRIPT) as script:
         "#!/bin/bash"
     ])
 
+    # Process command line options - these allow us to subsequenctly re-run
+    # just part of the analysis
+
+    clo_lines = [
+        "# Process command line options",
+        "while getopts \":{o}\" opt; do".
+        format(o="qa" if options[INPUT_DIRECTORY] else "rqa"),
+        "\tcase $opt in"
+    ]
+
     if not options[INPUT_DIRECTORY]:
-        # Run Flux Simulator to create expression profiles
+        clo_lines += [
+            "\t\tr)", "\t\t\tCREATE_READS=1", "\t\t\t;;"
+        ]
+
+    clo_lines += [
+        "\t\tq)", "\t\t\tQUANTIFY_TRANSCRIPTS=1", "\t\t\t;;",
+        "\t\ta)", "\t\t\tANALYSE_RESULTS=1", "\t\t\t;;",
+        "\t\t\?)", "\t\t\techo \"Invalid option: -$OPTARG\" >&2",
+        "\t\t\texit 1", "\t\t\t;;",
+        "\tesac", "done",
+    ]
+
+    add_script_section(script_lines, clo_lines)
+
+    # If pre-existing reads have not been specified, use Flux Simulator to
+    # create a new set of simulated reads.
+    if not options[INPUT_DIRECTORY]:
         add_script_section(script_lines, [
-            "# Run Flux Simulator to create expression profiles " +
-            "then simulate reads",
-            "flux-simulator -t simulator -x -p {f}".
+            "if [ -n \"$CREATE_READS\" ]; then"
+        ])
+
+        add_script_section(script_lines, [
+            "\t# Run Flux Simulator to create expression profiles " +
+            "\tthen simulate reads",
+            "\tflux-simulator -t simulator -x -p {f}".
             format(f=FS_EXPRESSION_PARAMS_FILE),
         ])
 
@@ -223,26 +255,29 @@ with get_output_file(RUN_SCRIPT) as script:
         # causes read simulation to barf. The following hack will remove the
         # offending transcript(s).
         add_script_section(script_lines, [
-            "# (this is a hack - Flux Simulator seems to sometimes " +
-            "incorrectly output",
-            "# transcripts with zero length)",
-            "ZERO_LENGTH_COUNT=$(awk 'BEGIN {i=0} $4 == 0 {i++;} " +
-            "END{print i}'" + " {f})".format(f=fs_pro_file),
-            "echo",
-            "echo Removing $ZERO_LENGTH_COUNT transcripts with zero length...",
-            "echo",
-            "awk '$4 > 0' {f} > tmp; mv tmp {f}".format(f=fs_pro_file),
+            "\t# (this is a hack - Flux Simulator seems to sometimes " +
+            "\tincorrectly output",
+            "\t# transcripts with zero length)",
+            "\tZERO_LENGTH_COUNT=$(awk 'BEGIN {i=0} $4 == 0 {i++;} " +
+            "\tEND{print i}'" + " {f})".format(f=fs_pro_file),
+            "\techo",
+            "\techo Removing $ZERO_LENGTH_COUNT transcripts with zero " +
+            "length...",
+            "\techo",
+            "\tawk '$4 > 0' {f} > tmp; mv tmp {f}".format(f=fs_pro_file),
         ])
 
         # Given the expression profile created, calculate the number of reads
         # required to give the (approximate) read depth specified. Then edit
         # the Flux Simulator parameter file to specify this number of reads.
         add_script_section(script_lines, [
-            "# Calculate the number of reads required to give (approximately)",
-            "# a read depth of {depth} across the transcriptome, given a read".
+            "\t# Calculate the number of reads required to give " +
+            "(approximately)",
+            "\t# a read depth of {depth} across the transcriptome, given " +
+            "a read".
             format(depth=options[READ_DEPTH]),
-            "# length of {length}.".format(length=options[READ_LENGTH]),
-            "READS=$(python {s} {t} {e} {l} {d})".
+            "\t# length of {length}.".format(length=options[READ_LENGTH]),
+            "\tREADS=$(python {s} {t} {e} {l} {d})".
             format(s=CALC_READ_DEPTH_SCRIPT,
                    t=options[TRANSCRIPT_GTF_FILE],
                    e=fs_pro_file,
@@ -251,15 +286,15 @@ with get_output_file(RUN_SCRIPT) as script:
         ])
 
         add_script_section(script_lines, [
-            "# Update the Flux Simulator parameters file with this number",
-            "# of reads.",
-            "sed -i \"s/{p}/$READS/\" {f}".
+            "\t# Update the Flux Simulator parameters file with this number",
+            "\t# of reads.",
+            "\tsed -i \"s/{p}/$READS/\" {f}".
             format(p=READ_NUMBER_PLACEHOLDER, f=FS_SIMULATION_PARAMS_FILE)
         ])
 
         # Now use Flux Simulator to simulate reads
         add_script_section(script_lines, [
-            "flux-simulator -t simulator -l -s -p {f}".
+            "\tflux-simulator -t simulator -l -s -p {f}".
             format(f=FS_SIMULATION_PARAMS_FILE),
         ])
 
@@ -271,21 +306,27 @@ with get_output_file(RUN_SCRIPT) as script:
             paste_spec = "paste " + ("- - - -" if options[ERRORS] else "- -")
 
             add_script_section(script_lines, [
-                "# We've produced paired-end reads - split the Flux",
-                "# Simulator output into files containing left and right",
-                "# reads.",
-                paste_spec + " < " + reads_file + " | awk -F '\t' " +
+                "\t# We've produced paired-end reads - split the Flux",
+                "\t# Simulator output into files containing left and right",
+                "\t# reads.",
+                "\t" + paste_spec + " < " + reads_file + " | awk -F '\t' " +
                 "'$1~/\/1/ {print $0 > \"" + left_reads_tmp + "\"} " +
                 "$1~/\/2/ {print $0 > \"" + right_reads_tmp + "\"}'",
-                "tr '\\t' '\\n' < " + left_reads_tmp +
+                "\ttr '\\t' '\\n' < " + left_reads_tmp +
                 " > " + left_reads_file,
-                "tr '\\t' '\\n' < " + right_reads_tmp +
+                "\ttr '\\t' '\\n' < " + right_reads_tmp +
                 " > " + right_reads_file,
             ])
+
+        add_script_section(script_lines, ["fi"])
 
     # Perform preparatory tasks required by a particular quantification method
     # prior to calculating abundances; for example, this might include mapping
     # reads to the genome with TopHat
+    add_script_section(script_lines, [
+        "if [ -n \"$QUANTIFY_TRANSCRIPTS\" ]; then"
+    ])
+
     reads_file_dir = options[INPUT_DIRECTORY] \
         if options[INPUT_DIRECTORY] else "."
 
@@ -300,30 +341,40 @@ with get_output_file(RUN_SCRIPT) as script:
 
     options[PARAMS_SPEC][qs.FASTQ_READS] = options[ERRORS]
 
-    add_script_section(
-        script_lines,
-        options[QUANT_METHOD].get_preparatory_commands(options[PARAMS_SPEC]))
+    prep_lines = options[QUANT_METHOD].get_preparatory_commands(
+        options[PARAMS_SPEC])
+    prep_lines = ["\t" + l for l in prep_lines]
+
+    add_script_section(script_lines, prep_lines)
 
     # Use the specified quantification method to calculate per-transcript FPKMs
+    quant_line = "\t" + options[QUANT_METHOD].get_command(options[PARAMS_SPEC])
+
     add_script_section(script_lines, [
-        "# Use {m} to calculate per-transcript FPKMs".
+        "\t# Use {m} to calculate per-transcript FPKMs".
         format(m=options[QUANT_METHOD].__class__.__name__),
-        options[QUANT_METHOD].get_command(options[PARAMS_SPEC])
+        quant_line
 
     ])
 
+    add_script_section(script_lines, ["fi"])
+
     # Calculate the number of transcripts per gene and write to a file
+    add_script_section(script_lines, [
+        "if [ -n \"$ANALYSE_RESULTS\" ]; then"
+    ])
+
     GTF_DIRECTORY = os.path.abspath(
         os.path.dirname(options[TRANSCRIPT_GTF_FILE]))
     TRANSCRIPT_COUNTS = GTF_DIRECTORY + os.path.sep + "transcript_counts.csv"
 
     add_script_section(script_lines, [
-        "# Calculate the number of transcripts per gene",
-        "if [ ! -f {f} ]; then".format(f=TRANSCRIPT_COUNTS),
-        "   python {s} {t} > {out}".format(
+        "\t# Calculate the number of transcripts per gene",
+        "\tif [ ! -f {f} ]; then".format(f=TRANSCRIPT_COUNTS),
+        "\t\tpython {s} {t} > {out}".format(
             s=TRANSCRIPT_COUNTS_SCRIPT, t=options[TRANSCRIPT_GTF_FILE],
             out=TRANSCRIPT_COUNTS),
-        "fi"
+        "\tfi"
     ])
 
     # Calculate the length of unique sequence per transcript and write to a
@@ -331,12 +382,12 @@ with get_output_file(RUN_SCRIPT) as script:
     UNIQUE_SEQUENCE = GTF_DIRECTORY + os.path.sep + "unique_sequence.csv"
 
     add_script_section(script_lines, [
-        "# Calculate the length of unique sequence per transcript",
-        "if [ ! -f {f} ]; then".format(f=UNIQUE_SEQUENCE),
-        "   python {s} {t} {out}".format(
+        "\t# Calculate the length of unique sequence per transcript",
+        "\tif [ ! -f {f} ]; then".format(f=UNIQUE_SEQUENCE),
+        "\t\tpython {s} {t} {out}".format(
             s=UNIQUE_SEQUENCE_SCRIPT, t=options[TRANSCRIPT_GTF_FILE],
             out=UNIQUE_SEQUENCE),
-        "fi"
+        "\tfi"
     ])
 
     # Now assemble data required for analysis of quantification performance
@@ -345,25 +396,29 @@ with get_output_file(RUN_SCRIPT) as script:
     calculated_fpkms = options[QUANT_METHOD].get_fpkm_file()
 
     add_script_section(script_lines, [
-        "# Assemble data required for analysis of quantification performance",
-        "# into one file",
-        "python {s} --method={m} --out={out} {p} {r} {q} {t}".format(
+        "\t# Assemble data required for analysis of quantification " +
+        "performance",
+        "\t# into one file",
+        "\tpython {s} --method={m} --out={out} {p} {r} {q} {t} {u}".format(
             s=ASSEMBLE_DATA_SCRIPT, m=quant_method_name,
             out=DATA_FILE, p=fs_pro_file,
             r=options[QUANT_METHOD].get_mapped_reads_file(),
             q=calculated_fpkms,
-            t=TRANSCRIPT_COUNTS)
+            t=TRANSCRIPT_COUNTS,
+            u=UNIQUE_SEQUENCE)
     ])
 
     # Finally perform analysis on the calculated FPKMs
     add_script_section(script_lines, [
-        "# Perform analysis on calculated FPKMs",
+        "\t# Perform analysis on calculated FPKMs",
         create_command(["python", ANALYSE_DATA_SCRIPT,
                         quant_method_name, options[READ_LENGTH],
                         options[READ_DEPTH], bool(options[PAIRED_END]),
                         bool(options[ERRORS]), DATA_FILE,
                         os.path.basename(options[RUN_DIRECTORY])])
     ])
+
+    add_script_section(script_lines, ["fi"])
 
     write_lines(script, script_lines)
 
