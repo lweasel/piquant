@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
-#TODO: Add logging
+# TODO: Add logging
+# TODO: Make consistent with transcript count calculator re: output file vs
+# standard out.
 
 """Usage:
     calculate_unique_transcript_sequence [--log-level=<log-level>] <gtf-file> <out-file>
@@ -107,7 +109,8 @@ for e_and_t in unique_exon_transcript_list:
 
 logger.info("Removing overlaps between exons...")
 
-exon_bases = {e_and_t.exon: set(range(e_and_t.exon.start, e_and_t.exon.end))
+exon_bases = {e_and_t.exon:
+              set(range(e_and_t.exon.start, e_and_t.exon.end + 1))
               for e_and_t in unique_exon_transcript_list}
 
 transcript_lengths = defaultdict(int)
