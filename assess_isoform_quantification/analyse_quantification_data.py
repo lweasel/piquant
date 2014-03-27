@@ -19,6 +19,7 @@
 <out-file>                                 Basename for output graph and data files.
 """
 
+from contextlib import contextmanager
 from docopt import docopt
 from schema import SchemaError
 
@@ -136,28 +137,36 @@ if options[OUT_FILE_BASENAME]:
 # Make a scatter plot of log transformed calculated vs real FPKMs
 
 
+class NewPlot:
+    def __enter__(self):
+        plt.figure()
+
+    def __exit__(self, type, value, traceback):
+        plt.close()
+
+
 def log_fpkm_scatter_plot(name, fpkms, min_val, max_val):
-    plt.figure()
-    plt.scatter(fpkms[f.LOG10_REAL_FPKM].values,
-                fpkms[f.LOG10_CALCULATED_FPKM].values,
-                c="lightblue", alpha=0.4)
+    with NewPlot():
+        plt.scatter(fpkms[f.LOG10_REAL_FPKM].values,
+                    fpkms[f.LOG10_CALCULATED_FPKM].values,
+                    c="lightblue", alpha=0.4)
 
-    plt.suptitle("Scatter plot of log calculated vs real FPKMs: " +
-                 options[QUANT_METHOD_OPT] + " " + name)
-    plt.xlabel("Log10 real FPKM")
-    plt.ylabel("Log10 calculated FPKM")
+        plt.suptitle("Scatter plot of log calculated vs real FPKMs: " +
+                     options[QUANT_METHOD_OPT] + " " + name)
+        plt.xlabel("Log10 real FPKM")
+        plt.ylabel("Log10 calculated FPKM")
 
-    if min_val == 0:
-        min_val = np.log10(NOT_PRESENT_CUTOFF) - 0.2
-    plt.xlim(xmin=min_val)
-    plt.ylim(ymin=min_val)
-    if max_val != 0:
-        plt.xlim(xmax=max_val)
-        plt.ylim(ymax=max_val)
+        if min_val == 0:
+            min_val = np.log10(NOT_PRESENT_CUTOFF) - 0.2
+        plt.xlim(xmin=min_val)
+        plt.ylim(ymin=min_val)
+        if max_val != 0:
+            plt.xlim(xmax=max_val)
+            plt.ylim(ymax=max_val)
 
-    plt.savefig(options[OUT_FILE_BASENAME] + "_" + space_to_underscore(name) +
-                "_log10_scatter.pdf", format="pdf")
-    plt.close()
+        plt.savefig(options[OUT_FILE_BASENAME] + "_" +
+                    space_to_underscore(name) +
+                    "_log10_scatter.pdf", format="pdf")
 
 if options[OUT_FILE_BASENAME]:
     log_fpkm_scatter_plot(TRUE_POSITIVES_LABEL, tp_fpkms,
@@ -174,24 +183,24 @@ def log_ratio_boxplot(name_elements, classifier, fpkms, filter=None):
         grouped_fpkms = fpkms.groupby(grouping_column)
         fpkms = grouped_fpkms.filter(filter)
 
-    plt.figure()
-    sb.boxplot(fpkms[f.LOG10_RATIO], groupby=fpkms[grouping_column],
-               sym='', color='lightblue')
+    with NewPlot():
+        sb.boxplot(fpkms[f.LOG10_RATIO], groupby=fpkms[grouping_column],
+                   sym='', color='lightblue')
 
-    plt.suptitle("Log ratios of calculated to real FPKMs: " +
-                 ", ".join([options[QUANT_METHOD_OPT]] + name_elements))
+        plt.suptitle("Log ratios of calculated to real FPKMs: " +
+                     ", ".join([options[QUANT_METHOD_OPT]] + name_elements))
 
-    plt.xlabel(grouping_column[:1].upper() + grouping_column[1:])
-    plt.ylabel("Log ratio (calculated/real FPKM)")
+        plt.xlabel(grouping_column[:1].upper() + grouping_column[1:])
+        plt.ylabel("Log ratio (calculated/real FPKM)")
 
-    locs, labels = plt.xticks()
-    plt.xticks(locs, classifier.get_value_labels(len(labels)))
+        locs, labels = plt.xticks()
+        plt.xticks(locs, classifier.get_value_labels(len(labels)))
 
-    filename = options[OUT_FILE_BASENAME] + "_" \
-        + space_to_underscore(" ".join([grouping_column] + name_elements)) \
-        + "_boxplot.pdf"
-    plt.savefig(filename, format="pdf")
-    plt.close()
+        filename = options[OUT_FILE_BASENAME] + "_" \
+            + space_to_underscore(
+                " ".join([grouping_column] + name_elements)) \
+            + "_boxplot.pdf"
+        plt.savefig(filename, format="pdf")
 
 more_than_100_filter = lambda x: len(x[f.REAL_FPKM]) > 100
 
@@ -230,28 +239,28 @@ def plot_cumulative_transcript_distribution(
     yvals = [100 * len(values[values < x if ascending else values > x]) / size
              for x in xvals]
 
-    plt.figure()
-    plt.plot(xvals, yvals, '-o')
+    with NewPlot():
+        plt.plot(xvals, yvals, '-o')
 
-    plt.ylim(ymin=-2.5, ymax=102.5)
+        plt.ylim(ymin=-2.5, ymax=102.5)
 
-    xmargin = (xbounds[1] - xbounds[0]) / 40.0
-    plt.xlim(xmin=xbounds[0]-xmargin, xmax=xbounds[1]+xmargin)
+        xmargin = (xbounds[1] - xbounds[0]) / 40.0
+        plt.xlim(xmin=xbounds[0]-xmargin, xmax=xbounds[1]+xmargin)
 
-    grouping_column = classifier.get_column_name()
-    capitalized = grouping_column[:1].upper() + grouping_column[1:]
-    plt.xlabel(capitalized)
-    plt.ylabel("Percentage of isoforms " +
-               ("less" if ascending else "greater") + " than threshold")
+        grouping_column = classifier.get_column_name()
+        capitalized = grouping_column[:1].upper() + grouping_column[1:]
+        plt.xlabel(capitalized)
+        plt.ylabel("Percentage of isoforms " +
+                   ("less" if ascending else "greater") + " than threshold")
 
-    plt.suptitle(capitalized + " threshold: " +
-                 ", ".join([options[QUANT_METHOD_OPT]] + name_elements))
+        plt.suptitle(capitalized + " threshold: " +
+                     ", ".join([options[QUANT_METHOD_OPT]] + name_elements))
 
-    filename = options[OUT_FILE_BASENAME] + "_" \
-        + space_to_underscore(" ".join([grouping_column] + name_elements)) \
-        + "_" + ("asc" if ascending else "desc") + "_distribution.pdf"
-    plt.savefig(filename, format="pdf")
-    plt.close()
+        filename = options[OUT_FILE_BASENAME] + "_" \
+            + space_to_underscore(
+                " ".join([grouping_column] + name_elements)) \
+            + "_" + ("asc" if ascending else "desc") + "_distribution.pdf"
+        plt.savefig(filename, format="pdf")
 
 if options[OUT_FILE_BASENAME]:
     for classifier in [c for c in clsfrs if c.produces_distribution_plots()]:
