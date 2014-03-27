@@ -65,7 +65,7 @@ class TranscriptLengthStratifier(LevelsStratifier):
 
     def __init__(self):
         LevelsStratifier.__init__(
-            self, TranscriptLengthStratifier.LEVELS, i
+            self, TranscriptLengthStratifier.LEVELS,
             lambda x: x[f.LENGTH], False)
 
     def get_column_name(self):
