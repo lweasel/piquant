@@ -11,17 +11,26 @@ def Stratifier(cls):
 class BaseStratifier():
     def __init__(self, value_extractor):
         self.value_extractor = value_extractor
-        self.box_plots = True
+        self.grouped_stats = True
         self.distribution_plots = True
 
     def get_value(self, row):
         return self.value_extractor(row)
 
-    def produces_box_plots(self):
-        return self.box_plots
+    def get_stratification_value(self, row):
+        return self.get_value(row)
+
+    def produces_grouped_stats(self):
+        return self.grouped_stats
 
     def produces_distribution_plots(self):
         return self.distribution_plots
+
+    def get_distribution_plot_range(self):
+        return None
+
+    def get_value_labels(self, num_labels):
+        return range(1, num_labels + 1)
 
 
 @Stratifier
@@ -33,11 +42,18 @@ class GeneTranscriptNumberStratifier(BaseStratifier):
     def get_column_name(self):
         return "gene transcript number"
 
-    def get_stratification_value(self, row):
-        return self.get_value(row)
 
-    def get_value_labels(self, num_labels):
-        return range(1, num_labels + 1)
+@Stratifier
+class PercentErrorStratifier(BaseStratifier):
+    def __init__(self):
+        BaseStratifier.__init__(self, lambda x: abs(x[f.PERCENT_ERROR]))
+        self.grouped_stats = False
+
+    def get_column_name(self):
+        return "absolute percent error"
+
+    def get_distribution_plot_range(self):
+        return (0, 100)
 
 
 class LevelsStratifier(BaseStratifier):
@@ -55,7 +71,7 @@ class LevelsStratifier(BaseStratifier):
                 + ["> " + str(levels[-1])]
 
     def get_stratification_value(self, row):
-        row_value = self.get_value(row)
+        row_value = BaseStratifier.get_stratification_value(self, row)
         for i, level in enumerate(self.levels):
             if row_value <= level:
                 return i

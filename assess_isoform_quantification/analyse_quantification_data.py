@@ -40,7 +40,6 @@ TP_LOG10_RATIO_MEAN = "tp-log-ratio-mean"
 TP_LOG10_RATIO_STD = "tp-log-ratio-std"
 TP_LOG10_RATIO_MEDIAN = "tp-log-ratio-med"
 TP_LOG10_FPKM_RHO = "tp-log-fpkm-rho"
-PERCENT_ERROR = "percent-error"
 TP_MEDIAN_PERCENT_ERROR = "tp-median-percent-error"
 FALSE_POSITIVE = "false-pos"
 FALSE_NEGATIVE = "false-neg"
@@ -122,12 +121,12 @@ def get_specificity(fpkms):
 
 # Calculate the percent error (positive or negative) of the calculated FPKM
 # values from the real values
-fpkms[PERCENT_ERROR] = \
+fpkms[f.PERCENT_ERROR] = \
     100 * (fpkms[f.CALCULATED_FPKM] - fpkms[f.REAL_FPKM]) / fpkms[f.REAL_FPKM]
 
 
 def get_error_fraction(fpkms, error_percent):
-    num_errors = len(fpkms[abs(fpkms[PERCENT_ERROR]) > error_percent])
+    num_errors = len(fpkms[abs(fpkms[f.PERCENT_ERROR]) > error_percent])
     return float(num_errors) / len(fpkms)
 
 # Calculate log ratio of calculated and real FPKMs
@@ -154,7 +153,7 @@ if options[OUT_FILE_BASENAME]:
 
         # The median percent error - i.e. the median of the percent errors of
         # the calculated values from the real ones
-        tp_mpe = tp_fpkms[PERCENT_ERROR].median()
+        tp_mpe = tp_fpkms[f.PERCENT_ERROR].median()
 
         stats_dict = {
             QUANT_METHOD: options[QUANT_METHOD_OPT],
@@ -179,7 +178,7 @@ space_to_underscore = lambda x: x.replace(' ', '_')
 # Write statistics for FPKMS stratified by various stratification measures
 
 if options[OUT_FILE_BASENAME]:
-    for stratifier in strats:
+    for stratifier in [s for s in strats if s.produces_grouped_stats()]:
         column_name = stratifier.get_column_name()
         grouped = fpkms.groupby(column_name)
         tp_grouped = tp_fpkms.groupby(column_name)
@@ -209,7 +208,7 @@ if options[OUT_FILE_BASENAME]:
                 lambda x: x[f.LOG10_CALCULATED_FPKM].corr(
                     x[f.LOG10_REAL_FPKM], method="spearman"))
 
-            pe_stats = tp_summary[PERCENT_ERROR].unstack()
+            pe_stats = tp_summary[f.PERCENT_ERROR].unstack()
             tp_stats[TP_MEDIAN_PERCENT_ERROR] = pe_stats["50%"]
 
             tp_stats[TP_ERROR_FRACTION] = tp_grouped.apply(
@@ -289,7 +288,7 @@ more_than_100_filter = lambda x: len(x[f.REAL_FPKM]) > 100
 non_zero = fpkms[(fpkms[f.REAL_FPKM] > 0) & (fpkms[f.CALCULATED_FPKM] > 0)]
 
 if options[OUT_FILE_BASENAME]:
-    for stratifier in [s for s in strats if s.produces_box_plots()]:
+    for stratifier in [s for s in strats if s.produces_grouped_stats()]:
         log_ratio_boxplot([NON_ZERO_LABEL, NO_FILTER_LABEL],
                           stratifier, non_zero)
         log_ratio_boxplot([NON_ZERO_LABEL], stratifier, non_zero,
@@ -311,9 +310,11 @@ def plot_cumulative_transcript_distribution(
     values = fpkms.apply(stratifier.get_value, axis=1)
     values.sort(ascending=ascending)
 
-    xmin = values.min()
-    xmax = values.max()
-    xvals = np.linspace(xmin, xmax, CUMULATIVE_DISTRIBUTION_POINTS)
+    xbounds = stratifier.get_distribution_plot_range()
+    if xbounds is None:
+        xbounds = (values.min(), values.max())
+
+    xvals = np.linspace(xbounds[0], xbounds[1], CUMULATIVE_DISTRIBUTION_POINTS)
 
     size = float(len(values))
     yvals = [100 * len(values[values < x if ascending else values > x]) / size
@@ -324,8 +325,8 @@ def plot_cumulative_transcript_distribution(
 
     plt.ylim(ymin=-2.5, ymax=102.5)
 
-    xmargin = (xmax - xmin) / 40.0
-    plt.xlim(xmin=xmin-xmargin, xmax=xmax+xmargin)
+    xmargin = (xbounds[1] - xbounds[0]) / 40.0
+    plt.xlim(xmin=xbounds[0]-xmargin, xmax=xbounds[1]+xmargin)
 
     grouping_column = stratifier.get_column_name()
     capitalized = grouping_column[:1].upper() + grouping_column[1:]

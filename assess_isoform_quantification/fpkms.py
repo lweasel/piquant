@@ -6,6 +6,7 @@ LOG10_RATIO = "log-ratio"
 TRANSCRIPT_COUNT = "num-transcripts"
 LENGTH = "length"
 UNIQUE_SEQ_LENGTH = "unique-length"
+PERCENT_ERROR = "percent-error"
 
 # TODO: move all stuff to do with manipulating the FPKMS CSV file from
 # analyse_quantification_data.py to here.
