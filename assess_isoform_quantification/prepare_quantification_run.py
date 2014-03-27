@@ -332,7 +332,7 @@ with get_output_file(RUN_SCRIPT) as script:
 
     add_script_section(script_lines, [
         "# Calculate the length of unique sequence per transcript",
-        "if [! -f {f} ]; then".format(f=UNIQUE_SEQUENCE),
+        "if [ ! -f {f} ]; then".format(f=UNIQUE_SEQUENCE),
         "   python {s} {t} {out}".format(
             s=UNIQUE_SEQUENCE_SCRIPT, t=options[TRANSCRIPT_GTF_FILE],
             out=UNIQUE_SEQUENCE),
