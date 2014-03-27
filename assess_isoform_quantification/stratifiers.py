@@ -8,24 +8,36 @@ def Stratifier(cls):
     return cls
 
 
+class BaseStratifier():
+    def __init__(self, value_extractor):
+        self.value_extractor = value_extractor
+
+    def get_value(self, row):
+        return self.value_extractor(row)
+
+
 @Stratifier
-class GeneTranscriptNumberStratifier:
+class GeneTranscriptNumberStratifier(BaseStratifier):
+    def __init__(self):
+        BaseStratifier.__init__(self, lambda x: x[f.TRANSCRIPT_COUNT])
+
     def get_column_name(self):
         return "gene transcript number"
 
     def get_stratification_value(self, row):
-        return row[f.TRANSCRIPT_COUNT]
+        return self.get_value(row)
 
     def get_value_labels(self, num_labels):
         return range(1, num_labels + 1)
 
 
-class LevelsStratifier:
+class LevelsStratifier(BaseStratifier):
     def __init__(self, levels, value_extractor, closed):
-        self.levels = levels
-        self.value_extractor = value_extractor
+        BaseStratifier.__init__(self, value_extractor)
 
+        self.levels = levels
         self.closed = closed
+
         if self.closed:
             self.level_names = ["<= " + str(l) for l in levels]
         else:
@@ -33,13 +45,10 @@ class LevelsStratifier:
                 + ["> " + str(levels[-1])]
 
     def get_stratification_value(self, row):
-        row_value = self.value_extractor(row)
+        row_value = self.get_value(row)
         for i, level in enumerate(self.levels):
             if row_value <= level:
                 return i
-        if self.closed:
-            # TODO: remove when sure this is working
-            raise Exception("Shouldn't have got here!")
         return len(self.levels)
 
     def get_value_labels(self, num_labels):

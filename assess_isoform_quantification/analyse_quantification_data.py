@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """Usage:
-    analyse_quantification_data [--scatter-max=<scatter-max-val>] [--log10-scatter-min=<log10-scatter-min-val>] [--log10-scatter-max=<log10-scatter-max-val>] <quant-method> <read-length> <read-depth> <paired-end> <errors> <fpkm-file> <out-file>
+    analyse_quantification_data [--scatter-max=<scatter-max-val>] [--log10-scatter-min=<log10-scatter-min-val>] [--log10-scatter-max=<log10-scatter-max-val>] <quant-method> <read-length> <read-depth> <paired-end> <errors> <fpkm-file> [<out-file>]
 
 -h --help                                  Show this message.
 -v --version                               Show version.
@@ -57,6 +57,7 @@ ALL_LABEL = "all"
 NO_FILTER_LABEL = "no filter"
 
 NOT_PRESENT_CUTOFF = 0.1
+CUMULATIVE_DISTRIBUTION_POINTS = 20
 
 opt_string = lambda x: "<{x}>".format(x=x)
 
@@ -145,102 +146,83 @@ for stratifier in strats:
 tp_fpkms = fpkms[fpkms[TRUE_POSITIVE]]
 
 # Write statistics pertaining to the set of quantified transcripts as a whole.
-with open(options[OUT_FILE_BASENAME] + "_stats.csv", "w") as out_file:
-    # Spearman correlation coefficient between real and calculated FPKMs.
-    rho = tp_fpkms[f.LOG10_CALCULATED_FPKM].corr(
-        tp_fpkms[f.LOG10_REAL_FPKM], method='spearman')
+if options[OUT_FILE_BASENAME]:
+    with open(options[OUT_FILE_BASENAME] + "_stats.csv", "w") as out_file:
+        # Spearman correlation coefficient between real and calculated FPKMs.
+        rho = tp_fpkms[f.LOG10_CALCULATED_FPKM].corr(
+            tp_fpkms[f.LOG10_REAL_FPKM], method='spearman')
 
-    # The median percent error - i.e. the median of the percent errors of
-    # the calculated values from the real ones
-    tp_mpe = tp_fpkms[PERCENT_ERROR].median()
+        # The median percent error - i.e. the median of the percent errors of
+        # the calculated values from the real ones
+        tp_mpe = tp_fpkms[PERCENT_ERROR].median()
 
-    stats_dict = {
-        QUANT_METHOD: options[QUANT_METHOD_OPT],
-        READ_LENGTH: options[READ_LENGTH_OPT],
-        READ_DEPTH: options[READ_DEPTH_OPT],
-        PAIRED_END: options[PAIRED_END_OPT],
-        ERRORS: options[ERRORS_OPT],
-        NUM_FPKMS: len(fpkms),
-        TP_NUM_FPKMS: len(tp_fpkms),
-        TP_LOG10_FPKM_RHO: rho,
-        TP_MEDIAN_PERCENT_ERROR: tp_mpe,
-        SENSITIVITY: get_sensitivity(fpkms),
-        SPECIFICITY: get_specificity(fpkms),
-        TP_ERROR_FRACTION: get_error_fraction(tp_fpkms, 10)
-    }
+        stats_dict = {
+            QUANT_METHOD: options[QUANT_METHOD_OPT],
+            READ_LENGTH: options[READ_LENGTH_OPT],
+            READ_DEPTH: options[READ_DEPTH_OPT],
+            PAIRED_END: options[PAIRED_END_OPT],
+            ERRORS: options[ERRORS_OPT],
+            NUM_FPKMS: len(fpkms),
+            TP_NUM_FPKMS: len(tp_fpkms),
+            TP_LOG10_FPKM_RHO: rho,
+            TP_MEDIAN_PERCENT_ERROR: tp_mpe,
+            SENSITIVITY: get_sensitivity(fpkms),
+            SPECIFICITY: get_specificity(fpkms),
+            TP_ERROR_FRACTION: get_error_fraction(tp_fpkms, 10)
+        }
 
-    stats = pd.DataFrame([stats_dict])
-    stats.to_csv(out_file, float_format="%.5f", index=False)
+        stats = pd.DataFrame([stats_dict])
+        stats.to_csv(out_file, float_format="%.5f", index=False)
 
 space_to_underscore = lambda x: x.replace(' ', '_')
 
 # Write statistics for FPKMS stratified by various stratification measures
 
-for stratifier in strats:
-    column_name = stratifier.get_column_name()
-    grouped = fpkms.groupby(column_name)
-    tp_grouped = tp_fpkms.groupby(column_name)
+if options[OUT_FILE_BASENAME]:
+    for stratifier in strats:
+        column_name = stratifier.get_column_name()
+        grouped = fpkms.groupby(column_name)
+        tp_grouped = tp_fpkms.groupby(column_name)
 
-    stats_file_name = options[OUT_FILE_BASENAME] + "_stats_by_" + \
-        space_to_underscore(column_name) + ".csv"
+        stats_file_name = options[OUT_FILE_BASENAME] + "_stats_by_" + \
+            space_to_underscore(column_name) + ".csv"
 
-    with open(stats_file_name, "w") as out_file:
-        summary = grouped.describe()
-        main_stats = summary[f.REAL_FPKM].unstack()
-        main_stats = main_stats.drop(
-            ["mean", "std", "min", "25%", "50%", "75%", "max"], 1)
+        with open(stats_file_name, "w") as out_file:
+            summary = grouped.describe()
+            main_stats = summary[f.REAL_FPKM].unstack()
+            main_stats = main_stats.drop(
+                ["mean", "std", "min", "25%", "50%", "75%", "max"], 1)
 
-        main_stats[SENSITIVITY] = grouped.apply(get_sensitivity)
-        main_stats[SPECIFICITY] = grouped.apply(get_specificity)
+            main_stats[SENSITIVITY] = grouped.apply(get_sensitivity)
+            main_stats[SPECIFICITY] = grouped.apply(get_specificity)
 
-        tp_summary = tp_grouped.describe()
-        tp_stats = tp_summary[f.LOG10_RATIO].unstack()
-        tp_stats = tp_stats.drop(["min", "25%", "75%", "max"], 1)
-        tp_stats = tp_stats.rename(columns={
-            "count": TP_COUNT,
-            "mean": TP_LOG10_RATIO_MEAN,
-            "std": TP_LOG10_RATIO_STD,
-            "50%": TP_LOG10_RATIO_MEDIAN})
+            tp_summary = tp_grouped.describe()
+            tp_stats = tp_summary[f.LOG10_RATIO].unstack()
+            tp_stats = tp_stats.drop(["min", "25%", "75%", "max"], 1)
+            tp_stats = tp_stats.rename(columns={
+                "count": TP_COUNT,
+                "mean": TP_LOG10_RATIO_MEAN,
+                "std": TP_LOG10_RATIO_STD,
+                "50%": TP_LOG10_RATIO_MEDIAN})
 
-        tp_stats[TP_LOG10_FPKM_RHO] = tp_grouped.apply(
-            lambda x: x[f.LOG10_CALCULATED_FPKM].corr(
-                x[f.LOG10_REAL_FPKM], method="spearman"))
+            tp_stats[TP_LOG10_FPKM_RHO] = tp_grouped.apply(
+                lambda x: x[f.LOG10_CALCULATED_FPKM].corr(
+                    x[f.LOG10_REAL_FPKM], method="spearman"))
 
-        pe_stats = tp_summary[PERCENT_ERROR].unstack()
-        tp_stats[TP_MEDIAN_PERCENT_ERROR] = pe_stats["50%"]
+            pe_stats = tp_summary[PERCENT_ERROR].unstack()
+            tp_stats[TP_MEDIAN_PERCENT_ERROR] = pe_stats["50%"]
 
-        tp_stats[TP_ERROR_FRACTION] = tp_grouped.apply(
-            get_error_fraction, 10)
+            tp_stats[TP_ERROR_FRACTION] = tp_grouped.apply(
+                get_error_fraction, 10)
 
-        output_stats = pd.concat([main_stats, tp_stats], axis=1)
-        output_stats[QUANT_METHOD] = options[QUANT_METHOD_OPT]
-        output_stats[READ_LENGTH] = options[READ_LENGTH_OPT]
-        output_stats[READ_DEPTH] = options[READ_DEPTH_OPT]
-        output_stats[PAIRED_END] = options[PAIRED_END_OPT]
-        output_stats[ERRORS] = options[ERRORS_OPT]
-        output_stats[TP_NUM_FPKMS] = len(fpkms)
-        output_stats.to_csv(out_file, float_format="%.5f")
-
-# Make scatter plots of calculated vs real FPKMs
-
-
-def fpkm_scatter_plot(name, fpkms, max_val):
-    plt.figure()
-    plt.scatter(fpkms[f.REAL_FPKM].values, fpkms[f.CALCULATED_FPKM].values)
-
-    name = options[QUANT_METHOD_OPT] + " " + name
-    plt.suptitle("Scatter plot of calculated vs real FPKMs: " + name)
-    plt.xlabel("Real FPKM")
-    plt.ylabel("Calculated FPKM")
-
-    plt.xlim(xmin=0)
-    plt.ylim(ymin=0)
-    if max_val != 0:
-        plt.xlim(xmax=max_val)
-        plt.ylim(ymax=max_val)
-
-    plt.savefig(options[OUT_FILE_BASENAME] + "_" + space_to_underscore(name) +
-                "_scatter.pdf", format="pdf")
+            output_stats = pd.concat([main_stats, tp_stats], axis=1)
+            output_stats[QUANT_METHOD] = options[QUANT_METHOD_OPT]
+            output_stats[READ_LENGTH] = options[READ_LENGTH_OPT]
+            output_stats[READ_DEPTH] = options[READ_DEPTH_OPT]
+            output_stats[PAIRED_END] = options[PAIRED_END_OPT]
+            output_stats[ERRORS] = options[ERRORS_OPT]
+            output_stats[TP_NUM_FPKMS] = len(fpkms)
+            output_stats.to_csv(out_file, float_format="%.5f")
 
 # Make a scatter plot of log transformed calculated vs real FPKMs
 
@@ -266,9 +248,12 @@ def log_fpkm_scatter_plot(name, fpkms, min_val, max_val):
 
     plt.savefig(options[OUT_FILE_BASENAME] + "_" + space_to_underscore(name) +
                 "_log10_scatter.pdf", format="pdf")
+    plt.close()
 
-log_fpkm_scatter_plot(TRUE_POSITIVES_LABEL, tp_fpkms,
-                      options[LOG10_SCATTER_MIN], options[LOG10_SCATTER_MAX])
+if options[OUT_FILE_BASENAME]:
+    log_fpkm_scatter_plot(TRUE_POSITIVES_LABEL, tp_fpkms,
+                          options[LOG10_SCATTER_MIN],
+                          options[LOG10_SCATTER_MAX])
 
 # Make boxplots of log ratios stratified by various stratification measures
 # (e.g. the number of transcripts per-originating gene of each transcript)
@@ -297,19 +282,70 @@ def log_ratio_boxplot(name_elements, stratifier, fpkms, filter=None):
         + space_to_underscore(" ".join([grouping_column] + name_elements)) \
         + "_boxplot.pdf"
     plt.savefig(filename, format="pdf")
+    plt.close()
 
 more_than_100_filter = lambda x: len(x[f.REAL_FPKM]) > 100
 
 non_zero = fpkms[(fpkms[f.REAL_FPKM] > 0) & (fpkms[f.CALCULATED_FPKM] > 0)]
 
-for stratifier in strats:
-    log_ratio_boxplot([NON_ZERO_LABEL, NO_FILTER_LABEL],
-                      stratifier, non_zero)
-    log_ratio_boxplot([NON_ZERO_LABEL], stratifier, non_zero,
-                      filter=more_than_100_filter)
+if options[OUT_FILE_BASENAME]:
+    for stratifier in strats:
+        log_ratio_boxplot([NON_ZERO_LABEL, NO_FILTER_LABEL],
+                          stratifier, non_zero)
+        log_ratio_boxplot([NON_ZERO_LABEL], stratifier, non_zero,
+                          filter=more_than_100_filter)
 
-    log_ratio_boxplot([TRUE_POSITIVES_LABEL, NO_FILTER_LABEL],
-                      stratifier, tp_fpkms)
-    log_ratio_boxplot([TRUE_POSITIVES_LABEL],
-                      stratifier, tp_fpkms,
-                      filter=more_than_100_filter)
+        log_ratio_boxplot([TRUE_POSITIVES_LABEL, NO_FILTER_LABEL],
+                          stratifier, tp_fpkms)
+        log_ratio_boxplot([TRUE_POSITIVES_LABEL],
+                          stratifier, tp_fpkms,
+                          filter=more_than_100_filter)
+
+# Make plots showing the percentage of isoforms above or below threshold values
+# according to various stratification measures
+
+
+def plot_cumulative_transcript_distribution(
+        name_elements, fpkms, stratifier, ascending):
+
+    values = fpkms.apply(stratifier.get_value, axis=1)
+    values.sort(ascending=ascending)
+
+    xmin = values.min()
+    xmax = values.max()
+    xvals = np.linspace(xmin, xmax, CUMULATIVE_DISTRIBUTION_POINTS)
+
+    size = float(len(values))
+    yvals = [100 * len(values[values < x if ascending else values > x]) / size
+             for x in xvals]
+
+    plt.figure()
+    plt.plot(xvals, yvals, '-o')
+
+    plt.ylim(ymin=-2.5, ymax=102.5)
+
+    xmargin = (xmax - xmin) / 40.0
+    plt.xlim(xmin=xmin-xmargin, xmax=xmax+xmargin)
+
+    grouping_column = stratifier.get_column_name()
+    capitalized = grouping_column[:1].upper() + grouping_column[1:]
+    plt.xlabel(capitalized)
+    plt.ylabel("Percentage of isoforms " +
+               ("less" if ascending else "greater") + " than threshold")
+
+    plt.suptitle(capitalized + " threshold: " +
+                 ", ".join([options[QUANT_METHOD_OPT]] + name_elements))
+
+    filename = options[OUT_FILE_BASENAME] + "_" \
+        + space_to_underscore(" ".join([grouping_column] + name_elements)) \
+        + "_" + ("asc" if ascending else "desc") + "_distribution.pdf"
+    plt.savefig(filename, format="pdf")
+    plt.close()
+
+if options[OUT_FILE_BASENAME]:
+    for stratifier in strats:
+        for ascending in [True, False]:
+            plot_cumulative_transcript_distribution(
+                [NON_ZERO_LABEL], non_zero, stratifier, ascending)
+            plot_cumulative_transcript_distribution(
+                [TRUE_POSITIVES_LABEL], tp_fpkms, stratifier, ascending)
