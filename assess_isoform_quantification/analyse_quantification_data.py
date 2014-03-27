@@ -103,31 +103,10 @@ fpkms[TRUE_NEGATIVE] = (fpkms[f.REAL_FPKM] <= NOT_PRESENT_CUTOFF) & \
 fpkms[TRUE_POSITIVE] = (fpkms[f.REAL_FPKM] > NOT_PRESENT_CUTOFF) & \
                        (fpkms[f.CALCULATED_FPKM] > NOT_PRESENT_CUTOFF)
 
-
-def get_sensitivity(fpkms):
-    num_tp = len(fpkms[fpkms[TRUE_POSITIVE]])
-    num_fn = len(fpkms[fpkms[FALSE_NEGATIVE]])
-    if num_tp + num_fn == 0:
-        return 1
-    return float(num_tp) / (num_tp + num_fn)
-
-
-def get_specificity(fpkms):
-    num_fp = len(fpkms[fpkms[FALSE_POSITIVE]])
-    num_tn = len(fpkms[fpkms[TRUE_NEGATIVE]])
-    if num_fp + num_tn == 0:
-        return 1
-    return float(num_tn) / (num_tn + num_fp)
-
 # Calculate the percent error (positive or negative) of the calculated FPKM
 # values from the real values
 fpkms[f.PERCENT_ERROR] = \
     100 * (fpkms[f.CALCULATED_FPKM] - fpkms[f.REAL_FPKM]) / fpkms[f.REAL_FPKM]
-
-
-def get_error_fraction(fpkms, error_percent):
-    num_errors = len(fpkms[abs(fpkms[f.PERCENT_ERROR]) > error_percent])
-    return float(num_errors) / len(fpkms)
 
 # Calculate log ratio of calculated and real FPKMs
 fpkms[f.LOG10_REAL_FPKM] = np.log10(fpkms[f.REAL_FPKM])
@@ -144,33 +123,23 @@ for classifier in cfrs:
 
 tp_fpkms = fpkms[fpkms[TRUE_POSITIVE]]
 
+
+def add_overall_stats(stats, fpkms, tp_fpkms):
+    stats[QUANT_METHOD] = options[QUANT_METHOD_OPT]
+    stats[READ_LENGTH] = options[READ_LENGTH_OPT]
+    stats[READ_DEPTH] = options[READ_DEPTH_OPT]
+    stats[PAIRED_END] = options[PAIRED_END_OPT]
+    stats[ERRORS] = options[ERRORS_OPT]
+    stats[NUM_FPKMS] = len(fpkms)
+    stats[TP_NUM_FPKMS] = len(tp_fpkms)
+
+
 # Write statistics pertaining to the set of quantified transcripts as a whole.
 if options[OUT_FILE_BASENAME]:
+    stats = f.get_stats(fpkms, tp_fpkms)
+    add_overall_stats(stats, fpkms, tp_fpkms)
+
     with open(options[OUT_FILE_BASENAME] + "_stats.csv", "w") as out_file:
-        # Spearman correlation coefficient between real and calculated FPKMs.
-        rho = tp_fpkms[f.LOG10_CALCULATED_FPKM].corr(
-            tp_fpkms[f.LOG10_REAL_FPKM], method='spearman')
-
-        # The median percent error - i.e. the median of the percent errors of
-        # the calculated values from the real ones
-        tp_mpe = tp_fpkms[f.PERCENT_ERROR].median()
-
-        stats_dict = {
-            QUANT_METHOD: options[QUANT_METHOD_OPT],
-            READ_LENGTH: options[READ_LENGTH_OPT],
-            READ_DEPTH: options[READ_DEPTH_OPT],
-            PAIRED_END: options[PAIRED_END_OPT],
-            ERRORS: options[ERRORS_OPT],
-            NUM_FPKMS: len(fpkms),
-            TP_NUM_FPKMS: len(tp_fpkms),
-            TP_LOG10_FPKM_RHO: rho,
-            TP_MEDIAN_PERCENT_ERROR: tp_mpe,
-            SENSITIVITY: get_sensitivity(fpkms),
-            SPECIFICITY: get_specificity(fpkms),
-            TP_ERROR_FRACTION: get_error_fraction(tp_fpkms, 10)
-        }
-
-        stats = pd.DataFrame([stats_dict])
         stats.to_csv(out_file, float_format="%.5f", index=False)
 
 space_to_underscore = lambda x: x.replace(' ', '_')
@@ -180,48 +149,14 @@ space_to_underscore = lambda x: x.replace(' ', '_')
 if options[OUT_FILE_BASENAME]:
     for classifier in [c for c in cfrs if c.produces_grouped_stats()]:
         column_name = classifier.get_column_name()
-        grouped = fpkms.groupby(column_name)
-        tp_grouped = tp_fpkms.groupby(column_name)
+        stats = f.get_grouped_stats(fpkms, tp_fpkms, column_name)
+        add_overall_stats(stats, fpkms, tp_fpkms)
 
         stats_file_name = options[OUT_FILE_BASENAME] + "_stats_by_" + \
             space_to_underscore(column_name) + ".csv"
 
         with open(stats_file_name, "w") as out_file:
-            summary = grouped.describe()
-            main_stats = summary[f.REAL_FPKM].unstack()
-            main_stats = main_stats.drop(
-                ["mean", "std", "min", "25%", "50%", "75%", "max"], 1)
-
-            main_stats[SENSITIVITY] = grouped.apply(get_sensitivity)
-            main_stats[SPECIFICITY] = grouped.apply(get_specificity)
-
-            tp_summary = tp_grouped.describe()
-            tp_stats = tp_summary[f.LOG10_RATIO].unstack()
-            tp_stats = tp_stats.drop(["min", "25%", "75%", "max"], 1)
-            tp_stats = tp_stats.rename(columns={
-                "count": TP_COUNT,
-                "mean": TP_LOG10_RATIO_MEAN,
-                "std": TP_LOG10_RATIO_STD,
-                "50%": TP_LOG10_RATIO_MEDIAN})
-
-            tp_stats[TP_LOG10_FPKM_RHO] = tp_grouped.apply(
-                lambda x: x[f.LOG10_CALCULATED_FPKM].corr(
-                    x[f.LOG10_REAL_FPKM], method="spearman"))
-
-            pe_stats = tp_summary[f.PERCENT_ERROR].unstack()
-            tp_stats[TP_MEDIAN_PERCENT_ERROR] = pe_stats["50%"]
-
-            tp_stats[TP_ERROR_FRACTION] = tp_grouped.apply(
-                get_error_fraction, 10)
-
-            output_stats = pd.concat([main_stats, tp_stats], axis=1)
-            output_stats[QUANT_METHOD] = options[QUANT_METHOD_OPT]
-            output_stats[READ_LENGTH] = options[READ_LENGTH_OPT]
-            output_stats[READ_DEPTH] = options[READ_DEPTH_OPT]
-            output_stats[PAIRED_END] = options[PAIRED_END_OPT]
-            output_stats[ERRORS] = options[ERRORS_OPT]
-            output_stats[TP_NUM_FPKMS] = len(fpkms)
-            output_stats.to_csv(out_file, float_format="%.5f")
+            stats.to_csv(out_file, float_format="%.5f")
 
 # Make a scatter plot of log transformed calculated vs real FPKMs
 
