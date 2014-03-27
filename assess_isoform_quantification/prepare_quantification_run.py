@@ -58,7 +58,6 @@ READ_NUMBER_PLACEHOLDER = "READ_NUMBER_PLACEHOLDER"
 SIMULATED_READS_PREFIX = "reads"
 
 PYTHON_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__)) + os.path.sep
-CLEAN_READS_SCRIPT = PYTHON_SCRIPT_DIR + "clean_mapped_reads.py"
 TRANSCRIPT_COUNTS_SCRIPT = PYTHON_SCRIPT_DIR + "count_transcripts_for_genes.py"
 UNIQUE_SEQUENCE_SCRIPT = PYTHON_SCRIPT_DIR + \
     "calculate_unique_transcript_sequence.py"
