@@ -26,7 +26,7 @@ import numpy as np
 import options as opt
 import pandas as pd
 import seaborn as sb
-import stratifiers
+import classifiers
 
 QUANT_METHOD = "quant-method"
 READ_DEPTH = "read-depth"
@@ -135,12 +135,12 @@ fpkms[f.LOG10_CALCULATED_FPKM] = np.log10(fpkms[f.CALCULATED_FPKM])
 fpkms[f.LOG10_RATIO] = \
     fpkms[f.LOG10_CALCULATED_FPKM] - fpkms[f.LOG10_REAL_FPKM]
 
-strats = [s() for s in stratifiers.STRATIFIERS]
+cfrs = [s() for s in classifiers.CLASSIFIERS]
 
-for stratifier in strats:
-    column_name = stratifier.get_column_name()
+for classifier in cfrs:
+    column_name = classifier.get_column_name()
     fpkms[column_name] = fpkms.apply(
-        stratifier.get_stratification_value, axis=1)
+        classifier.get_classification_value, axis=1)
 
 tp_fpkms = fpkms[fpkms[TRUE_POSITIVE]]
 
@@ -175,11 +175,11 @@ if options[OUT_FILE_BASENAME]:
 
 space_to_underscore = lambda x: x.replace(' ', '_')
 
-# Write statistics for FPKMS stratified by various stratification measures
+# Write statistics for FPKMS stratified by various classification measures
 
 if options[OUT_FILE_BASENAME]:
-    for stratifier in [s for s in strats if s.produces_grouped_stats()]:
-        column_name = stratifier.get_column_name()
+    for classifier in [c for c in cfrs if c.produces_grouped_stats()]:
+        column_name = classifier.get_column_name()
         grouped = fpkms.groupby(column_name)
         tp_grouped = tp_fpkms.groupby(column_name)
 
@@ -254,12 +254,12 @@ if options[OUT_FILE_BASENAME]:
                           options[LOG10_SCATTER_MIN],
                           options[LOG10_SCATTER_MAX])
 
-# Make boxplots of log ratios stratified by various stratification measures
+# Make boxplots of log ratios stratified by various classification measures
 # (e.g. the number of transcripts per-originating gene of each transcript)
 
 
-def log_ratio_boxplot(name_elements, stratifier, fpkms, filter=None):
-    grouping_column = stratifier.get_column_name()
+def log_ratio_boxplot(name_elements, classifier, fpkms, filter=None):
+    grouping_column = classifier.get_column_name()
     if filter:
         grouped_fpkms = fpkms.groupby(grouping_column)
         fpkms = grouped_fpkms.filter(filter)
@@ -275,7 +275,7 @@ def log_ratio_boxplot(name_elements, stratifier, fpkms, filter=None):
     plt.ylabel("Log ratio (calculated/real FPKM)")
 
     locs, labels = plt.xticks()
-    plt.xticks(locs, stratifier.get_value_labels(len(labels)))
+    plt.xticks(locs, classifier.get_value_labels(len(labels)))
 
     filename = options[OUT_FILE_BASENAME] + "_" \
         + space_to_underscore(" ".join([grouping_column] + name_elements)) \
@@ -288,29 +288,29 @@ more_than_100_filter = lambda x: len(x[f.REAL_FPKM]) > 100
 non_zero = fpkms[(fpkms[f.REAL_FPKM] > 0) & (fpkms[f.CALCULATED_FPKM] > 0)]
 
 if options[OUT_FILE_BASENAME]:
-    for stratifier in [s for s in strats if s.produces_grouped_stats()]:
+    for classifier in [c for c in cfrs if c.produces_grouped_stats()]:
         log_ratio_boxplot([NON_ZERO_LABEL, NO_FILTER_LABEL],
-                          stratifier, non_zero)
-        log_ratio_boxplot([NON_ZERO_LABEL], stratifier, non_zero,
+                          classifier, non_zero)
+        log_ratio_boxplot([NON_ZERO_LABEL], classifier, non_zero,
                           filter=more_than_100_filter)
 
         log_ratio_boxplot([TRUE_POSITIVES_LABEL, NO_FILTER_LABEL],
-                          stratifier, tp_fpkms)
+                          classifier, tp_fpkms)
         log_ratio_boxplot([TRUE_POSITIVES_LABEL],
-                          stratifier, tp_fpkms,
+                          classifier, tp_fpkms,
                           filter=more_than_100_filter)
 
 # Make plots showing the percentage of isoforms above or below threshold values
-# according to various stratification measures
+# according to various classification measures
 
 
 def plot_cumulative_transcript_distribution(
-        name_elements, fpkms, stratifier, ascending):
+        name_elements, fpkms, classifier, ascending):
 
-    values = fpkms.apply(stratifier.get_value, axis=1)
+    values = fpkms.apply(classifier.get_value, axis=1)
     values.sort(ascending=ascending)
 
-    xbounds = stratifier.get_distribution_plot_range()
+    xbounds = classifier.get_distribution_plot_range()
     if xbounds is None:
         xbounds = (values.min(), values.max())
 
@@ -328,7 +328,7 @@ def plot_cumulative_transcript_distribution(
     xmargin = (xbounds[1] - xbounds[0]) / 40.0
     plt.xlim(xmin=xbounds[0]-xmargin, xmax=xbounds[1]+xmargin)
 
-    grouping_column = stratifier.get_column_name()
+    grouping_column = classifier.get_column_name()
     capitalized = grouping_column[:1].upper() + grouping_column[1:]
     plt.xlabel(capitalized)
     plt.ylabel("Percentage of isoforms " +
@@ -344,9 +344,9 @@ def plot_cumulative_transcript_distribution(
     plt.close()
 
 if options[OUT_FILE_BASENAME]:
-    for stratifier in [s for s in strats if s.produces_distribution_plots()]:
+    for classifier in [s for s in cfrs if s.produces_distribution_plots()]:
         for ascending in [True, False]:
             plot_cumulative_transcript_distribution(
-                [NON_ZERO_LABEL], non_zero, stratifier, ascending)
+                [NON_ZERO_LABEL], non_zero, classifier, ascending)
             plot_cumulative_transcript_distribution(
-                [TRUE_POSITIVES_LABEL], tp_fpkms, stratifier, ascending)
+                [TRUE_POSITIVES_LABEL], tp_fpkms, classifier, ascending)

@@ -1,14 +1,14 @@
 import fpkms as f
 
-STRATIFIERS = []
+CLASSIFIERS = []
 
 
-def Stratifier(cls):
-    STRATIFIERS.append(cls)
+def Classifier(cls):
+    CLASSIFIERS.append(cls)
     return cls
 
 
-class BaseStratifier():
+class BaseClassifier():
     def __init__(self, value_extractor):
         self.value_extractor = value_extractor
         self.grouped_stats = True
@@ -17,7 +17,7 @@ class BaseStratifier():
     def get_value(self, row):
         return self.value_extractor(row)
 
-    def get_stratification_value(self, row):
+    def get_classification_value(self, row):
         return self.get_value(row)
 
     def produces_grouped_stats(self):
@@ -33,20 +33,20 @@ class BaseStratifier():
         return range(1, num_labels + 1)
 
 
-@Stratifier
-class GeneTranscriptNumberStratifier(BaseStratifier):
+@Classifier
+class GeneTranscriptNumberClassifier(BaseClassifier):
     def __init__(self):
-        BaseStratifier.__init__(self, lambda x: x[f.TRANSCRIPT_COUNT])
+        BaseClassifier.__init__(self, lambda x: x[f.TRANSCRIPT_COUNT])
         self.distribution_plots = False
 
     def get_column_name(self):
         return "gene transcript number"
 
 
-@Stratifier
-class PercentErrorStratifier(BaseStratifier):
+@Classifier
+class PercentErrorClassifier(BaseClassifier):
     def __init__(self):
-        BaseStratifier.__init__(self, lambda x: abs(x[f.PERCENT_ERROR]))
+        BaseClassifier.__init__(self, lambda x: abs(x[f.PERCENT_ERROR]))
         self.grouped_stats = False
 
     def get_column_name(self):
@@ -56,9 +56,9 @@ class PercentErrorStratifier(BaseStratifier):
         return (0, 100)
 
 
-class LevelsStratifier(BaseStratifier):
+class LevelsClassifier(BaseClassifier):
     def __init__(self, levels, value_extractor, closed):
-        BaseStratifier.__init__(self, value_extractor)
+        BaseClassifier.__init__(self, value_extractor)
 
         self.levels = levels
         self.closed = closed
@@ -70,8 +70,8 @@ class LevelsStratifier(BaseStratifier):
             self.level_names = ["<= " + str(l) for l in levels] \
                 + ["> " + str(levels[-1])]
 
-    def get_stratification_value(self, row):
-        row_value = BaseStratifier.get_stratification_value(self, row)
+    def get_classification_value(self, row):
+        row_value = BaseClassifier.get_classification_value(self, row)
         for i, level in enumerate(self.levels):
             if row_value <= level:
                 return i
@@ -81,39 +81,39 @@ class LevelsStratifier(BaseStratifier):
         return self.level_names[:num_labels]
 
 
-@Stratifier
-class RealAbundanceStratifier(LevelsStratifier):
+@Classifier
+class RealAbundanceClassifier(LevelsClassifier):
     LEVELS = [0, 0.5, 1, 1.5]
 
     def __init__(self):
-        LevelsStratifier.__init__(
-            self, RealAbundanceStratifier.LEVELS,
+        LevelsClassifier.__init__(
+            self, RealAbundanceClassifier.LEVELS,
             lambda x: x[f.LOG10_REAL_FPKM], False)
 
     def get_column_name(self):
         return "log10 real FPKM"
 
 
-@Stratifier
-class TranscriptLengthStratifier(LevelsStratifier):
+@Classifier
+class TranscriptLengthClassifier(LevelsClassifier):
     LEVELS = [1000, 3162]
 
     def __init__(self):
-        LevelsStratifier.__init__(
-            self, TranscriptLengthStratifier.LEVELS,
+        LevelsClassifier.__init__(
+            self, TranscriptLengthClassifier.LEVELS,
             lambda x: x[f.LENGTH], False)
 
     def get_column_name(self):
         return "transcript length"
 
 
-@Stratifier
-class UniqueSequencePercentageStratifier(LevelsStratifier):
+@Classifier
+class UniqueSequencePercentageClassifier(LevelsClassifier):
     LEVELS = [20, 40, 60, 80, 100]
 
     def __init__(self):
-        LevelsStratifier.__init__(
-            self, UniqueSequencePercentageStratifier.LEVELS,
+        LevelsClassifier.__init__(
+            self, UniqueSequencePercentageClassifier.LEVELS,
             lambda x: 100 * float(x[f.UNIQUE_SEQ_LENGTH]) / x[f.LENGTH],
             True)
 
