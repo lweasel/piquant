@@ -289,7 +289,7 @@ more_than_100_filter = lambda x: len(x[f.REAL_FPKM]) > 100
 non_zero = fpkms[(fpkms[f.REAL_FPKM] > 0) & (fpkms[f.CALCULATED_FPKM] > 0)]
 
 if options[OUT_FILE_BASENAME]:
-    for stratifier in strats:
+    for stratifier in [s for s in strats if s.produces_box_plots()]:
         log_ratio_boxplot([NON_ZERO_LABEL, NO_FILTER_LABEL],
                           stratifier, non_zero)
         log_ratio_boxplot([NON_ZERO_LABEL], stratifier, non_zero,
@@ -343,7 +343,7 @@ def plot_cumulative_transcript_distribution(
     plt.close()
 
 if options[OUT_FILE_BASENAME]:
-    for stratifier in strats:
+    for stratifier in [s for s in strats if s.produces_distribution_plots()]:
         for ascending in [True, False]:
             plot_cumulative_transcript_distribution(
                 [NON_ZERO_LABEL], non_zero, stratifier, ascending)

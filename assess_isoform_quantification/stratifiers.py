@@ -11,15 +11,24 @@ def Stratifier(cls):
 class BaseStratifier():
     def __init__(self, value_extractor):
         self.value_extractor = value_extractor
+        self.box_plots = True
+        self.distribution_plots = True
 
     def get_value(self, row):
         return self.value_extractor(row)
+
+    def produces_box_plots(self):
+        return self.box_plots
+
+    def produces_distribution_plots(self):
+        return self.distribution_plots
 
 
 @Stratifier
 class GeneTranscriptNumberStratifier(BaseStratifier):
     def __init__(self):
         BaseStratifier.__init__(self, lambda x: x[f.TRANSCRIPT_COUNT])
+        self.distribution_plots = False
 
     def get_column_name(self):
         return "gene transcript number"
@@ -37,6 +46,7 @@ class LevelsStratifier(BaseStratifier):
 
         self.levels = levels
         self.closed = closed
+        self.distribution_plots = False
 
         if self.closed:
             self.level_names = ["<= " + str(l) for l in levels]
