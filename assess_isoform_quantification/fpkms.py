@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 NUM_FPKMS = "num-fpkms"
 TP_NUM_FPKMS = "tp-num-fpkms"
@@ -29,6 +30,40 @@ SPECIFICITY = "specificity"
 
 # TODO: move all stuff to do with manipulating the FPKMS CSV file from
 # analyse_quantification_data.py to here.
+
+
+def mark_positives_and_negatives(fpkms, cutoff):
+    fpkms[FALSE_NEGATIVE] = \
+        (fpkms[REAL_FPKM] > cutoff) & (fpkms[CALCULATED_FPKM] <= cutoff)
+    fpkms[FALSE_POSITIVE] = \
+        (fpkms[CALCULATED_FPKM] > cutoff) & (fpkms[REAL_FPKM] <= cutoff)
+    fpkms[TRUE_NEGATIVE] = \
+        (fpkms[REAL_FPKM] <= cutoff) & (fpkms[CALCULATED_FPKM] <= cutoff)
+    fpkms[TRUE_POSITIVE] = \
+        (fpkms[REAL_FPKM] > cutoff) & (fpkms[CALCULATED_FPKM] > cutoff)
+
+
+def get_true_positives(fpkms):
+    return fpkms[fpkms[TRUE_POSITIVE]]
+
+
+def calculate_percent_error(fpkms):
+    fpkms[PERCENT_ERROR] = \
+        100 * (fpkms[CALCULATED_FPKM] - fpkms[REAL_FPKM]) / fpkms[REAL_FPKM]
+
+
+def calculate_log_ratios(fpkms):
+    fpkms[LOG10_REAL_FPKM] = np.log10(fpkms[REAL_FPKM])
+    fpkms[LOG10_CALCULATED_FPKM] = np.log10(fpkms[CALCULATED_FPKM])
+    fpkms[LOG10_RATIO] = \
+        fpkms[LOG10_CALCULATED_FPKM] - fpkms[LOG10_REAL_FPKM]
+
+
+def apply_classifiers(fpkms, clsfrs):
+    for classifier in clsfrs:
+        column_name = classifier.get_column_name()
+        fpkms[column_name] = fpkms.apply(
+            classifier.get_classification_value, axis=1)
 
 
 def get_sensitivity(fpkms):

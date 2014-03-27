@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# TODO: add logging
+
 """Usage:
     analyse_quantification_data [--scatter-max=<scatter-max-val>] [--log10-scatter-min=<log10-scatter-min-val>] [--log10-scatter-max=<log10-scatter-max-val>] <quant-method> <read-length> <read-depth> <paired-end> <errors> <fpkm-file> [<out-file>]
 
@@ -35,19 +37,6 @@ PAIRED_END = "paired-end"
 ERRORS = "errors"
 NUM_FPKMS = "num-fpkms"
 TP_NUM_FPKMS = "tp-num-fpkms"
-TP_COUNT = "tp-count"
-TP_LOG10_RATIO_MEAN = "tp-log-ratio-mean"
-TP_LOG10_RATIO_STD = "tp-log-ratio-std"
-TP_LOG10_RATIO_MEDIAN = "tp-log-ratio-med"
-TP_LOG10_FPKM_RHO = "tp-log-fpkm-rho"
-TP_MEDIAN_PERCENT_ERROR = "tp-median-percent-error"
-FALSE_POSITIVE = "false-pos"
-FALSE_NEGATIVE = "false-neg"
-TRUE_POSITIVE = "true-pos"
-TRUE_NEGATIVE = "true-neg"
-SENSITIVITY = "sensitivity"
-SPECIFICITY = "specificity"
-TP_ERROR_FRACTION = "tp-error-frac"
 
 TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
 TRUE_POSITIVES_LABEL = "true positives"
@@ -88,40 +77,29 @@ try:
 except SchemaError as exc:
     exit(exc.code)
 
+# Read FPKMs into a data frame
 fpkms = pd.read_csv(options[FPKM_FILE])
 
 # Determine whether each FPKM measurement is a true/false positive/negative.
 # For our purposes, marking an FPKM as positive or negative is determined
 # by whether it is greater or less than an "isoform not present" cutoff value.
-
-fpkms[FALSE_NEGATIVE] = (fpkms[f.REAL_FPKM] > NOT_PRESENT_CUTOFF) & \
-                        (fpkms[f.CALCULATED_FPKM] <= NOT_PRESENT_CUTOFF)
-fpkms[FALSE_POSITIVE] = (fpkms[f.CALCULATED_FPKM] > NOT_PRESENT_CUTOFF) & \
-                        (fpkms[f.REAL_FPKM] <= NOT_PRESENT_CUTOFF)
-fpkms[TRUE_NEGATIVE] = (fpkms[f.REAL_FPKM] <= NOT_PRESENT_CUTOFF) & \
-                       (fpkms[f.CALCULATED_FPKM] <= NOT_PRESENT_CUTOFF)
-fpkms[TRUE_POSITIVE] = (fpkms[f.REAL_FPKM] > NOT_PRESENT_CUTOFF) & \
-                       (fpkms[f.CALCULATED_FPKM] > NOT_PRESENT_CUTOFF)
+f.mark_positives_and_negatives(fpkms, NOT_PRESENT_CUTOFF)
 
 # Calculate the percent error (positive or negative) of the calculated FPKM
 # values from the real values
-fpkms[f.PERCENT_ERROR] = \
-    100 * (fpkms[f.CALCULATED_FPKM] - fpkms[f.REAL_FPKM]) / fpkms[f.REAL_FPKM]
+f.calculate_percent_error(fpkms)
 
 # Calculate log ratio of calculated and real FPKMs
-fpkms[f.LOG10_REAL_FPKM] = np.log10(fpkms[f.REAL_FPKM])
-fpkms[f.LOG10_CALCULATED_FPKM] = np.log10(fpkms[f.CALCULATED_FPKM])
-fpkms[f.LOG10_RATIO] = \
-    fpkms[f.LOG10_CALCULATED_FPKM] - fpkms[f.LOG10_REAL_FPKM]
+f.calculate_log_ratios(fpkms)
 
-cfrs = [s() for s in classifiers.CLASSIFIERS]
+# Apply various classification measures to the FPKM data
+clsfrs = classifiers.get_classifiers()
+f.apply_classifiers(fpkms, clsfrs)
 
-for classifier in cfrs:
-    column_name = classifier.get_column_name()
-    fpkms[column_name] = fpkms.apply(
-        classifier.get_classification_value, axis=1)
+# Get a data frame containing only true positive FPKMs
+tp_fpkms = f.get_true_positives(fpkms)
 
-tp_fpkms = fpkms[fpkms[TRUE_POSITIVE]]
+# Write statistics pertaining to the set of quantified transcripts as a whole.
 
 
 def add_overall_stats(stats, fpkms, tp_fpkms):
@@ -133,8 +111,6 @@ def add_overall_stats(stats, fpkms, tp_fpkms):
     stats[NUM_FPKMS] = len(fpkms)
     stats[TP_NUM_FPKMS] = len(tp_fpkms)
 
-
-# Write statistics pertaining to the set of quantified transcripts as a whole.
 if options[OUT_FILE_BASENAME]:
     stats = f.get_stats(fpkms, tp_fpkms)
     add_overall_stats(stats, fpkms, tp_fpkms)
@@ -142,12 +118,11 @@ if options[OUT_FILE_BASENAME]:
     with open(options[OUT_FILE_BASENAME] + "_stats.csv", "w") as out_file:
         stats.to_csv(out_file, float_format="%.5f", index=False)
 
+# Write statistics for FPKMS stratified by various classification measures
 space_to_underscore = lambda x: x.replace(' ', '_')
 
-# Write statistics for FPKMS stratified by various classification measures
-
 if options[OUT_FILE_BASENAME]:
-    for classifier in [c for c in cfrs if c.produces_grouped_stats()]:
+    for classifier in [c for c in clsfrs if c.produces_grouped_stats()]:
         column_name = classifier.get_column_name()
         stats = f.get_grouped_stats(fpkms, tp_fpkms, column_name)
         add_overall_stats(stats, fpkms, tp_fpkms)
@@ -223,7 +198,7 @@ more_than_100_filter = lambda x: len(x[f.REAL_FPKM]) > 100
 non_zero = fpkms[(fpkms[f.REAL_FPKM] > 0) & (fpkms[f.CALCULATED_FPKM] > 0)]
 
 if options[OUT_FILE_BASENAME]:
-    for classifier in [c for c in cfrs if c.produces_grouped_stats()]:
+    for classifier in [c for c in clsfrs if c.produces_grouped_stats()]:
         log_ratio_boxplot([NON_ZERO_LABEL, NO_FILTER_LABEL],
                           classifier, non_zero)
         log_ratio_boxplot([NON_ZERO_LABEL], classifier, non_zero,
@@ -279,7 +254,7 @@ def plot_cumulative_transcript_distribution(
     plt.close()
 
 if options[OUT_FILE_BASENAME]:
-    for classifier in [s for s in cfrs if s.produces_distribution_plots()]:
+    for classifier in [c for c in clsfrs if c.produces_distribution_plots()]:
         for ascending in [True, False]:
             plot_cumulative_transcript_distribution(
                 [NON_ZERO_LABEL], non_zero, classifier, ascending)

@@ -3,6 +3,10 @@ import fpkms as f
 CLASSIFIERS = []
 
 
+def get_classifiers():
+    return [c() for c in CLASSIFIERS]
+
+
 def Classifier(cls):
     CLASSIFIERS.append(cls)
     return cls
