@@ -65,7 +65,7 @@ do
                     python $COMMAND
 
                     pushd $RUN_DIR
-                    echo nohup ./run_quantification.sh ${RUN_PARAMS} &> ${RUN_NAME}.out &
+                    nohup ./run_quantification.sh ${RUN_PARAMS} &> ${RUN_NAME}.out &
                     popd
                 done
             done
