@@ -109,7 +109,7 @@ class Cufflinks:
         ]
 
     def get_command(self, params):
-        return ("cufflinks -o transcriptome -b {b}.fa -p 8 " +
+        return ("cufflinks -o transcriptome -u -b {b}.fa -p 8 " +
                 "--library-type fr-unstranded -G {t} {m}").\
             format(b=params[BOWTIE_INDEX],
                    t=params[TRANSCRIPT_GTF_FILE],
