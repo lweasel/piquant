@@ -28,19 +28,22 @@ TP_COUNT = "tp-count"
 SENSITIVITY = "sensitivity"
 SPECIFICITY = "specificity"
 
-# TODO: move all stuff to do with manipulating the FPKMS CSV file from
-# analyse_quantification_data.py to here.
+NOT_PRESENT_CUTOFF = 0.1
 
 
-def mark_positives_and_negatives(fpkms, cutoff):
+def mark_positives_and_negatives(fpkms):
     fpkms[FALSE_NEGATIVE] = \
-        (fpkms[REAL_FPKM] > cutoff) & (fpkms[CALCULATED_FPKM] <= cutoff)
+        (fpkms[REAL_FPKM] > NOT_PRESENT_CUTOFF) & \
+        (fpkms[CALCULATED_FPKM] <= NOT_PRESENT_CUTOFF)
     fpkms[FALSE_POSITIVE] = \
-        (fpkms[CALCULATED_FPKM] > cutoff) & (fpkms[REAL_FPKM] <= cutoff)
+        (fpkms[CALCULATED_FPKM] > NOT_PRESENT_CUTOFF) & \
+        (fpkms[REAL_FPKM] <= NOT_PRESENT_CUTOFF)
     fpkms[TRUE_NEGATIVE] = \
-        (fpkms[REAL_FPKM] <= cutoff) & (fpkms[CALCULATED_FPKM] <= cutoff)
+        (fpkms[REAL_FPKM] <= NOT_PRESENT_CUTOFF) & \
+        (fpkms[CALCULATED_FPKM] <= NOT_PRESENT_CUTOFF)
     fpkms[TRUE_POSITIVE] = \
-        (fpkms[REAL_FPKM] > cutoff) & (fpkms[CALCULATED_FPKM] > cutoff)
+        (fpkms[REAL_FPKM] > NOT_PRESENT_CUTOFF) & \
+        (fpkms[CALCULATED_FPKM] > NOT_PRESENT_CUTOFF)
 
 
 def get_true_positives(fpkms):

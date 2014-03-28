@@ -19,16 +19,13 @@
 <out-file>                                 Basename for output graph and data files.
 """
 
-from contextlib import contextmanager
 from docopt import docopt
 from schema import SchemaError
 
 import fpkms as f
-import matplotlib.pyplot as plt
-import numpy as np
+import fpkms_plotting as plot
 import options as opt
 import pandas as pd
-import seaborn as sb
 import classifiers
 
 QUANT_METHOD = "quant-method"
@@ -43,10 +40,6 @@ TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
 TRUE_POSITIVES_LABEL = "true positives"
 NON_ZERO_LABEL = "non-zero"
 ALL_LABEL = "all"
-NO_FILTER_LABEL = "no filter"
-
-NOT_PRESENT_CUTOFF = 0.1
-CUMULATIVE_DISTRIBUTION_POINTS = 20
 
 opt_string = lambda x: "<{x}>".format(x=x)
 
@@ -84,7 +77,7 @@ fpkms = pd.read_csv(options[FPKM_FILE])
 # Determine whether each FPKM measurement is a true/false positive/negative.
 # For our purposes, marking an FPKM as positive or negative is determined
 # by whether it is greater or less than an "isoform not present" cutoff value.
-f.mark_positives_and_negatives(fpkms, NOT_PRESENT_CUTOFF)
+f.mark_positives_and_negatives(fpkms)
 
 # Calculate the percent error (positive or negative) of the calculated FPKM
 # values from the real values
@@ -135,137 +128,43 @@ if options[OUT_FILE_BASENAME]:
             stats.to_csv(out_file, float_format="%.5f")
 
 # Make a scatter plot of log transformed calculated vs real FPKMs
-
-
-class NewPlot:
-    def __enter__(self):
-        plt.figure()
-
-    def __exit__(self, type, value, traceback):
-        plt.close()
-
-
-def log_fpkm_scatter_plot(name, fpkms, min_val, max_val):
-    with NewPlot():
-        plt.scatter(fpkms[f.LOG10_REAL_FPKM].values,
-                    fpkms[f.LOG10_CALCULATED_FPKM].values,
-                    c="lightblue", alpha=0.4)
-
-        plt.suptitle("Scatter plot of log calculated vs real FPKMs: " +
-                     options[QUANT_METHOD_OPT] + " " + name)
-        plt.xlabel("Log10 real FPKM")
-        plt.ylabel("Log10 calculated FPKM")
-
-        if min_val == 0:
-            min_val = np.log10(NOT_PRESENT_CUTOFF) - 0.2
-        plt.xlim(xmin=min_val)
-        plt.ylim(ymin=min_val)
-        if max_val != 0:
-            plt.xlim(xmax=max_val)
-            plt.ylim(ymax=max_val)
-
-        plt.savefig(options[OUT_FILE_BASENAME] + "_" +
-                    space_to_underscore(name) +
-                    "_log10_scatter.pdf", format="pdf")
+TP_PLOT_OPTIONS = plot.PlotOptions(
+    options[QUANT_METHOD_OPT], TRUE_POSITIVES_LABEL,
+    options[OUT_FILE_BASENAME])
 
 if options[OUT_FILE_BASENAME]:
-    log_fpkm_scatter_plot(TRUE_POSITIVES_LABEL, tp_fpkms,
-                          options[LOG10_SCATTER_MIN],
-                          options[LOG10_SCATTER_MAX])
+    plot.log_fpkm_scatter_plot(tp_fpkms, TP_PLOT_OPTIONS)
 
 # Make boxplots of log ratios stratified by various classification measures
 # (e.g. the number of transcripts per-originating gene of each transcript)
-
-
-def log_ratio_boxplot(name_elements, classifier, fpkms, filter=None):
-    grouping_column = classifier.get_column_name()
-    if filter:
-        grouped_fpkms = fpkms.groupby(grouping_column)
-        fpkms = grouped_fpkms.filter(filter)
-
-    with NewPlot():
-        sb.boxplot(fpkms[f.LOG10_RATIO], groupby=fpkms[grouping_column],
-                   sym='', color='lightblue')
-
-        plt.suptitle("Log ratios of calculated to real FPKMs: " +
-                     ", ".join([options[QUANT_METHOD_OPT]] + name_elements))
-
-        plt.xlabel(grouping_column[:1].upper() + grouping_column[1:])
-        plt.ylabel("Log ratio (calculated/real FPKM)")
-
-        locs, labels = plt.xticks()
-        plt.xticks(locs, classifier.get_value_labels(len(labels)))
-
-        filename = options[OUT_FILE_BASENAME] + "_" \
-            + space_to_underscore(
-                " ".join([grouping_column] + name_elements)) \
-            + "_boxplot.pdf"
-        plt.savefig(filename, format="pdf")
-
 more_than_100_filter = lambda x: len(x[f.REAL_FPKM]) > 100
 
 non_zero = fpkms[(fpkms[f.REAL_FPKM] > 0) & (fpkms[f.CALCULATED_FPKM] > 0)]
 
+NON_ZERO_PLOT_OPTIONS = plot.PlotOptions(
+    options[QUANT_METHOD_OPT], NON_ZERO_LABEL,
+    options[OUT_FILE_BASENAME])
+
 if options[OUT_FILE_BASENAME]:
     for classifier in [c for c in clsfrs if c.produces_grouped_stats()]:
-        log_ratio_boxplot([NON_ZERO_LABEL, NO_FILTER_LABEL],
-                          classifier, non_zero)
-        log_ratio_boxplot([NON_ZERO_LABEL], classifier, non_zero,
-                          filter=more_than_100_filter)
+        plot.log_ratio_boxplot(
+            non_zero, NON_ZERO_PLOT_OPTIONS, classifier)
+        plot.log_ratio_boxplot(
+            non_zero, NON_ZERO_PLOT_OPTIONS, classifier,
+            filter=more_than_100_filter)
 
-        log_ratio_boxplot([TRUE_POSITIVES_LABEL, NO_FILTER_LABEL],
-                          classifier, tp_fpkms)
-        log_ratio_boxplot([TRUE_POSITIVES_LABEL],
-                          classifier, tp_fpkms,
-                          filter=more_than_100_filter)
+        plot.log_ratio_boxplot(
+            tp_fpkms, TP_PLOT_OPTIONS, classifier)
+        plot.log_ratio_boxplot(
+            tp_fpkms, TP_PLOT_OPTIONS, classifier,
+            filter=more_than_100_filter)
 
 # Make plots showing the percentage of isoforms above or below threshold values
 # according to various classification measures
-
-
-def plot_cumulative_transcript_distribution(
-        name_elements, fpkms, classifier, ascending):
-
-    values = fpkms.apply(classifier.get_value, axis=1)
-    values.sort(ascending=ascending)
-
-    xbounds = classifier.get_distribution_plot_range()
-    if xbounds is None:
-        xbounds = (values.min(), values.max())
-
-    xvals = np.linspace(xbounds[0], xbounds[1], CUMULATIVE_DISTRIBUTION_POINTS)
-
-    size = float(len(values))
-    yvals = [100 * len(values[values < x if ascending else values > x]) / size
-             for x in xvals]
-
-    with NewPlot():
-        plt.plot(xvals, yvals, '-o')
-
-        plt.ylim(ymin=-2.5, ymax=102.5)
-
-        xmargin = (xbounds[1] - xbounds[0]) / 40.0
-        plt.xlim(xmin=xbounds[0]-xmargin, xmax=xbounds[1]+xmargin)
-
-        grouping_column = classifier.get_column_name()
-        capitalized = grouping_column[:1].upper() + grouping_column[1:]
-        plt.xlabel(capitalized)
-        plt.ylabel("Percentage of isoforms " +
-                   ("less" if ascending else "greater") + " than threshold")
-
-        plt.suptitle(capitalized + " threshold: " +
-                     ", ".join([options[QUANT_METHOD_OPT]] + name_elements))
-
-        filename = options[OUT_FILE_BASENAME] + "_" \
-            + space_to_underscore(
-                " ".join([grouping_column] + name_elements)) \
-            + "_" + ("asc" if ascending else "desc") + "_distribution.pdf"
-        plt.savefig(filename, format="pdf")
-
 if options[OUT_FILE_BASENAME]:
     for classifier in [c for c in clsfrs if c.produces_distribution_plots()]:
         for ascending in [True, False]:
-            plot_cumulative_transcript_distribution(
-                [NON_ZERO_LABEL], non_zero, classifier, ascending)
-            plot_cumulative_transcript_distribution(
-                [TRUE_POSITIVES_LABEL], tp_fpkms, classifier, ascending)
+            plot.plot_cumulative_transcript_distribution(
+                non_zero, NON_ZERO_PLOT_OPTIONS, classifier, ascending)
+            plot.plot_cumulative_transcript_distribution(
+                tp_fpkms, TP_PLOT_OPTIONS, classifier, ascending)
