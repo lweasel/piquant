@@ -24,7 +24,7 @@ from schema import SchemaError
 
 import fpkms as f
 import fpkms_plotting as plot
-import options as opt
+import ordutils.options as opt
 import pandas as pd
 import classifiers
 

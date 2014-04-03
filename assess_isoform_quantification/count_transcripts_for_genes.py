@@ -11,7 +11,7 @@
 from docopt import docopt
 from schema import SchemaError
 
-import options as opt
+import ordutils.options as opt
 import pandas as pd
 
 GTF_FILE = "<gtf-file>"

@@ -14,8 +14,8 @@
 
 import docopt
 import flux_simulator as fs
-import log
-import options as opt
+import ordutils.log as log
+import ordutils.options as opt
 import pandas as pd
 import read_gtf
 import schema

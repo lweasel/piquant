@@ -24,8 +24,8 @@
 from docopt import docopt
 from schema import Schema, SchemaError
 
-import log
-import options as opt
+import ordutils.log as log
+import ordutils.options as opt
 import os
 import os.path
 import quantifiers as qs

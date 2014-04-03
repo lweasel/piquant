@@ -21,8 +21,8 @@ from schema import SchemaError
 
 import flux_simulator as fs
 import fpkms
-import log
-import options as opt
+import ordutils.log as log
+import ordutils.options as opt
 import pandas
 import pysam
 import quantifiers as qs

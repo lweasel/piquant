@@ -16,8 +16,8 @@
 
 import docopt
 import gtf
-import log
-import options as opt
+import ordutils.log as log
+import ordutils.options as opt
 import pandas as pd
 import schema
 import sys
