@@ -70,7 +70,7 @@ try:
 except SchemaError as exc:
     exit(exc.code)
 
-logger = log.getLogger(sys.stderr, options[LOG_LEVEL])
+logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
 # Read in mapped reads and record transcript length and number of
 # mapped reads per transcript, and also the total number of millions

@@ -44,7 +44,7 @@ except schema.SchemaError as exc:
 
 # Set up logger
 
-logger = log.getLogger(sys.stderr, options[LOG_LEVEL])
+logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
 # Read exon lines information from GTF file and extract transcript ID from GTF
 # attributes.

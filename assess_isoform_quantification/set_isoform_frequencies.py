@@ -20,7 +20,7 @@
 from abundances import ABUNDANCE_METHODS
 from docopt import docopt
 from itertools import chain
-from log import getLogger, LEVELS
+from log import get_logger, LEVELS
 from options import \
     validate_file_option, validate_dict_option, validate_int_option
 from pandas import read_csv
@@ -97,7 +97,7 @@ if options[SEED] is None:
     options[SEED] = random.randint(0, sys.maxint)
 random.seed(options[SEED])
 
-logger = getLogger(sys.stderr, options[LOG_LEVEL])
+logger = get_logger(sys.stderr, options[LOG_LEVEL])
 logger.info("Using random seed {seed}".format(seed=options[SEED]))
 
 logger.info("Reading transcript abundances from expression profile file...")

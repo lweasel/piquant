@@ -125,7 +125,7 @@ if options[QUANT_METHOD].requires_paired_end_reads() \
 
 # Create directory for run files
 
-logger = log.getLogger(sys.stderr, options[LOG_LEVEL])
+logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
 logger.info("Creating run directory '{dir}'.".
             format(dir=options[RUN_DIRECTORY]))

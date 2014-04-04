@@ -54,7 +54,7 @@ try:
 except schema.SchemaError as exc:
     exit("Exiting. " + exc.code)
 
-logger = log.getLogger(sys.stderr, options[LOG_LEVEL])
+logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
 # Read in Flux Simulator expression profiles
 
