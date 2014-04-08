@@ -148,8 +148,8 @@ def write_lines(f, lines):
 fs_pro_file = FS_EXPRESSION_PARAMS_FILE.replace("par", "pro")
 
 if options[INPUT_DIRECTORY]:
-    fs_pro_file = options[INPUT_DIRECTORY] + os.path.sep + fs_pro_file
     options[INPUT_DIRECTORY] = os.path.abspath(options[INPUT_DIRECTORY])
+    fs_pro_file = options[INPUT_DIRECTORY] + os.path.sep + fs_pro_file
 else:
     num_molecules = int(options[NUM_FRAGMENTS] / FRAGMENTS_PER_MOLECULE)
 
