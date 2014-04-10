@@ -18,6 +18,7 @@ import ordutils.options as opt
 import pandas as pd
 import parameters as params
 import schema
+import statistics as stats
 import sys
 
 LOG_LEVEL = "--log-level"
@@ -80,12 +81,13 @@ for param in params.PARAMETERS:
         fixed_param_values_sets = [v for v in itertools.product(*[param_values[p] for p in fixed_params])]
 
         for fixed_param_values_set in fixed_param_values_sets:
-            stats = overall_stats
+            stats_df = overall_stats
             fixed_param_values = {}
             for i, fp in enumerate(fixed_params):
                 fp_value = fixed_param_values_set[i]
-                stats = stats[stats[fp.name] == fp_value]
+                stats_df = stats_df[stats_df[fp.name] == fp_value]
                 fixed_param_values[fp] = fp_value
 
             opts = plot.PlotOptions("dummy", "this is the label", options[STATS_PREFIX])
-            plot.plot_statistic(stats, opts, "sensitivity", param, numerical_param, fixed_param_values)
+            for stat in stats.get_statistics():
+                plot.plot_statistic(stats_df, opts, stat, param, numerical_param, fixed_param_values)

@@ -119,15 +119,15 @@ def plot_cumulative_transcript_distribution(
                  suffix="distribution")
 
 
-def plot_statistic(fpkms, plot_options, statistic, group_param, varying_param, fixed_param_values):
+def plot_statistic(stats, plot_options, statistic, group_param, varying_param, fixed_param_values):
     with NewPlot():
-        group_param_values = fpkms[group_param.name].value_counts().index.tolist()
+        group_param_values = stats[group_param.name].value_counts().index.tolist()
 
         for group_param_value in group_param_values:
-            group_fpkms = fpkms[fpkms[group_param.name] == group_param_value]
-            group_fpkms.sort(columns=varying_param.name, axis=0, inplace=True)
-            xvals = group_fpkms[varying_param.name]
-            yvals = group_fpkms[statistic]
+            group_stats = stats[stats[group_param.name] == group_param_value]
+            group_stats.sort(columns=varying_param.name, axis=0, inplace=True)
+            xvals = group_stats[varying_param.name]
+            yvals = group_stats[statistic.name]
             plt.plot(xvals, yvals, '-o', label=str(group_param_value))
 
         plt.legend(title=group_param.title, loc=4)
@@ -135,4 +135,4 @@ def plot_statistic(fpkms, plot_options, statistic, group_param, varying_param, f
         name_elements = [k.get_value_name(v) for k, v in fixed_param_values.items()]
 
         _savefig(plot_options.out_file_base,
-                 [statistic, "vs", varying_param.name, "per", group_param.title.lower()] + name_elements)
+                 [statistic.name, "vs", varying_param.name, "per", group_param.title.lower()] + name_elements)
