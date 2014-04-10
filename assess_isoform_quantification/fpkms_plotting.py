@@ -128,7 +128,8 @@ def plot_statistic(stats, plot_options, statistic, group_param, varying_param, f
             group_stats.sort(columns=varying_param.name, axis=0, inplace=True)
             xvals = group_stats[varying_param.name]
             yvals = group_stats[statistic.name]
-            plt.plot(xvals, yvals, '-o', label=str(group_param_value))
+            plt.plot(xvals, yvals, '-o',
+                     label=group_param.get_value_name(group_param_value))
 
         plt.legend(title=group_param.title, loc=4)
 
