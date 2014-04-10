@@ -61,6 +61,23 @@ class SpearmanCorrelation(BaseStatistic):
 
 
 @Statistic
+class TruePositiveErrorFraction(BaseStatistic):
+    def __init__(self):
+        BaseStatistic.__init__(self, "tp-error-frac")
+
+    @staticmethod
+    def _calculate(fpkms, error_percent):
+        num_errors = len(fpkms[abs(fpkms[f.PERCENT_ERROR]) > error_percent])
+        return float(num_errors) / len(fpkms)
+
+    def calculate(self, fpkms, tp_fpkms):
+        return TruePositiveErrorFraction._calculate(tp_fpkms, 10)
+
+    def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
+        return tp_grouped.apply(TruePositiveErrorFraction._calculate, 10)
+
+
+@Statistic
 class MedianPercentError(BaseStatistic):
     # The median of the percent errors of the calculated FPKMS from the real
     # ones
