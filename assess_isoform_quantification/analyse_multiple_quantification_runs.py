@@ -89,5 +89,5 @@ for param in params.PARAMETERS:
                 fixed_param_values[fp] = fp_value
 
             opts = plot.PlotOptions("dummy", "this is the label", options[STATS_PREFIX])
-            for stat in stats.get_statistics():
+            for stat in [s for s in stats.get_statistics() if s.graphable]:
                 plot.plot_statistic(stats_df, opts, stat, param, numerical_param, fixed_param_values)

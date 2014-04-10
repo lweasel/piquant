@@ -13,19 +13,21 @@ def Statistic(cls):
 
 
 class BaseStatistic():
-    def __init__(self, name):
+    def __init__(self, name, graphable=True):
         self.name = name
+        self.graphable = graphable
 
 
 @Statistic
 class NumberOfFPKMs(BaseStatistic):
     def __init__(self):
-        BaseStatistic.__init__(self, "num-fpkms")
+        BaseStatistic.__init__(self, "num-fpkms", graphable=False)
 
     def calculate(self, fpkms, tp_fpkms):
         return len(fpkms)
 
-    def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
+    def calculate_grouped(
+            self, grouped, grp_summary, tp_grouped, tp_grp_summary):
         stats = grp_summary[f.REAL_FPKM].unstack()
         return stats["count"]
 
@@ -38,7 +40,8 @@ class NumberOfTruePositiveFPKMs(BaseStatistic):
     def calculate(self, fpkms, tp_fpkms):
         return len(tp_fpkms)
 
-    def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
+    def calculate_grouped(
+            self, grouped, grp_summary, tp_grouped, tp_grp_summary):
         stats = tp_grp_summary[f.LOG10_RATIO].unstack()
         return stats["count"]
 
@@ -56,7 +59,8 @@ class SpearmanCorrelation(BaseStatistic):
     def calculate(self, fpkms, tp_fpkms):
         return SpearmanCorrelation._calculate(tp_fpkms)
 
-    def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
+    def calculate_grouped(
+            self, grouped, grp_summary, tp_grouped, tp_grp_summary):
         return tp_grouped.apply(SpearmanCorrelation._calculate)
 
 
@@ -73,7 +77,8 @@ class TruePositiveErrorFraction(BaseStatistic):
     def calculate(self, fpkms, tp_fpkms):
         return TruePositiveErrorFraction._calculate(tp_fpkms, 10)
 
-    def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
+    def calculate_grouped(
+            self, grouped, grp_summary, tp_grouped, tp_grp_summary):
         return tp_grouped.apply(TruePositiveErrorFraction._calculate, 10)
 
 
@@ -87,7 +92,8 @@ class MedianPercentError(BaseStatistic):
     def calculate(self, fpkms, tp_fpkms):
         return tp_fpkms[f.PERCENT_ERROR].median()
 
-    def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
+    def calculate_grouped(
+            self, grouped, grp_summary, tp_grouped, tp_grp_summary):
         stats = tp_grp_summary[f.PERCENT_ERROR].unstack()
         return stats["50%"]
 
@@ -108,7 +114,8 @@ class Sensitivity(BaseStatistic):
     def calculate(self, fpkms, tp_fpkms):
         return Sensitivity._calculate(fpkms)
 
-    def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
+    def calculate_grouped(
+            self, grouped, grp_summary, tp_grouped, tp_grp_summary):
         return grouped.apply(Sensitivity._calculate)
 
 
@@ -128,5 +135,6 @@ class Specificity(BaseStatistic):
     def calculate(self, fpkms, tp_fpkms):
         return Specificity._calculate(fpkms)
 
-    def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
+    def calculate_grouped(
+            self, grouped, grp_summary, tp_grouped, tp_grp_summary):
         return grouped.apply(Specificity._calculate)
