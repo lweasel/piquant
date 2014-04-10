@@ -97,15 +97,10 @@ def get_stats(fpkms, tp_fpkms):
     for stat in stats.get_statistics():
         stats_dict[stat.name] = stat.calculate(fpkms, tp_fpkms)
 
-    # Spearman correlation coefficient between real and calculated FPKMs.
-    rho = tp_fpkms[LOG10_CALCULATED_FPKM].corr(
-        tp_fpkms[LOG10_REAL_FPKM], method='spearman')
-
     # The median percent error - i.e. the median of the percent errors of
     # the calculated values from the real ones
     tp_mpe = tp_fpkms[PERCENT_ERROR].median()
 
-    stats_dict[TP_LOG10_FPKM_RHO] = rho
     stats_dict[TP_MEDIAN_PERCENT_ERROR] = tp_mpe
     stats_dict[SENSITIVITY] = get_sensitivity(fpkms)
     stats_dict[SPECIFICITY] = get_specificity(fpkms)
@@ -139,10 +134,6 @@ def get_grouped_stats(fpkms, tp_fpkms, column_name):
             "mean": TP_LOG10_RATIO_MEAN,
             "std": TP_LOG10_RATIO_STD,
             "50%": TP_LOG10_RATIO_MEDIAN})
-
-        tp_stats[TP_LOG10_FPKM_RHO] = tp_grouped.apply(
-            lambda x: x[LOG10_CALCULATED_FPKM].corr(
-                x[LOG10_REAL_FPKM], method="spearman"))
 
         pe_stats = tp_summary[PERCENT_ERROR].unstack()
         tp_stats[TP_MEDIAN_PERCENT_ERROR] = pe_stats["50%"]
