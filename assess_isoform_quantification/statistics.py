@@ -25,8 +25,9 @@ class NumberOfFPKMs(BaseStatistic):
     def calculate(self, fpkms, tp_fpkms):
         return len(fpkms)
 
-    def calculate_grouped(self, grouped, grp_stats, tp_grouped, tp_grp_stats):
-        return grp_stats["count"]
+    def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
+        stats = grp_summary[f.REAL_FPKM].unstack()
+        return stats["count"]
 
 
 @Statistic
@@ -37,8 +38,9 @@ class NumberOfTruePositiveFPKMs(BaseStatistic):
     def calculate(self, fpkms, tp_fpkms):
         return len(tp_fpkms)
 
-    def calculate_grouped(self, grouped, grp_stats, tp_grouped, tp_grp_stats):
-        return tp_grp_stats["count"]
+    def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
+        stats = tp_grp_summary[f.LOG10_RATIO].unstack()
+        return stats["count"]
 
 
 @Statistic
@@ -54,5 +56,20 @@ class SpearmanCorrelation(BaseStatistic):
     def calculate(self, fpkms, tp_fpkms):
         return SpearmanCorrelation._calculate(tp_fpkms)
 
-    def calculate_grouped(self, grouped, grp_stats, tp_grouped, tp_grp_stats):
+    def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
         return tp_grouped.apply(SpearmanCorrelation._calculate)
+
+
+@Statistic
+class MedianPercentError(BaseStatistic):
+    # The median of the percent errors of the calculated FPKMS from the real
+    # ones
+    def __init__(self):
+        BaseStatistic.__init__(self, "tp-median-percent-error")
+
+    def calculate(self, fpkms, tp_fpkms):
+        return tp_fpkms[f.PERCENT_ERROR].median()
+
+    def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
+        stats = tp_grp_summary[f.PERCENT_ERROR].unstack()
+        return stats["50%"]
