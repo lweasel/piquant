@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import statistics as stats
 
 NUM_FPKMS = "num-fpkms"
 TP_NUM_FPKMS = "tp-num-fpkms"
@@ -91,6 +92,11 @@ def get_error_fraction(fpkms, error_percent):
 
 
 def get_stats(fpkms, tp_fpkms):
+    stats_dict = {}
+
+    for stat in stats.get_statistics():
+        stats_dict[stat.name] = stat.calculate(fpkms, tp_fpkms)
+
     # Spearman correlation coefficient between real and calculated FPKMs.
     rho = tp_fpkms[LOG10_CALCULATED_FPKM].corr(
         tp_fpkms[LOG10_REAL_FPKM], method='spearman')
@@ -99,13 +105,11 @@ def get_stats(fpkms, tp_fpkms):
     # the calculated values from the real ones
     tp_mpe = tp_fpkms[PERCENT_ERROR].median()
 
-    stats_dict = {
-        TP_LOG10_FPKM_RHO: rho,
-        TP_MEDIAN_PERCENT_ERROR: tp_mpe,
-        SENSITIVITY: get_sensitivity(fpkms),
-        SPECIFICITY: get_specificity(fpkms),
-        TP_ERROR_FRACTION: get_error_fraction(tp_fpkms, 10)
-    }
+    stats_dict[TP_LOG10_FPKM_RHO] = rho
+    stats_dict[TP_MEDIAN_PERCENT_ERROR] = tp_mpe
+    stats_dict[SENSITIVITY] = get_sensitivity(fpkms)
+    stats_dict[SPECIFICITY] = get_specificity(fpkms)
+    stats_dict[TP_ERROR_FRACTION] = get_error_fraction(tp_fpkms, 10)
 
     return pd.DataFrame([stats_dict])
 
@@ -119,6 +123,7 @@ def get_grouped_stats(fpkms, tp_fpkms, column_name):
         main_stats = main_stats.drop(
             ["mean", "std", "min", "25%", "50%", "75%", "max"], 1)
 
+        print(main_stats)
         main_stats[SENSITIVITY] = grouped.apply(get_sensitivity)
         main_stats[SPECIFICITY] = grouped.apply(get_specificity)
 
@@ -140,4 +145,10 @@ def get_grouped_stats(fpkms, tp_fpkms, column_name):
 
         tp_stats[TP_ERROR_FRACTION] = tp_grouped.apply(get_error_fraction, 10)
 
-        return pd.concat([main_stats, tp_stats], axis=1)
+        stats_dict = {}
+        for stat in stats.get_statistics():
+            stats_dict[stat.name] = stat.calculate_grouped(grouped, main_stats, tp_grouped, tp_stats)
+
+        stats_df = pd.DataFrame.from_dict(stats_dict)
+
+        return pd.concat([main_stats, tp_stats, stats_df], axis=1)
