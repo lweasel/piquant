@@ -21,10 +21,14 @@ PlotOptions = namedtuple(
     'PlotOptions', ['quant_method', 'label', 'out_file_base'])
 
 
-def _savefig(base_name, name_elements, suffix):
-    name = "_".join([base_name] + name_elements + [suffix]) + ".pdf"
+def _savefig(base_name, name_elements, suffix=None):
+    elements = [base_name] + name_elements
+    if suffix:
+        elements += [suffix]
+    name = "_".join(elements) + ".pdf"
     name = name.replace(' ', '_')
     plt.savefig(name, format="pdf")
+
 
 def log_fpkm_scatter_plot(fpkms, plot_options):
     with NewPlot():
@@ -44,7 +48,7 @@ def log_fpkm_scatter_plot(fpkms, plot_options):
 
         _savefig(plot_options.out_file_base,
                  [plot_options.label],
-                 "log10 scatter")
+                 suffix="log10 scatter")
 
 
 def log_ratio_boxplot(fpkms, plot_options, classifier, filter=None):
@@ -72,27 +76,7 @@ def log_ratio_boxplot(fpkms, plot_options, classifier, filter=None):
 
         _savefig(plot_options.out_file_base,
                  [grouping_column] + name_elements,
-                 "boxplot")
-
-
-def plot_statistic(fpkms, plot_options, statistic, group_param, varying_param, fixed_param_values):
-    with NewPlot():
-        group_param_values = fpkms[group_param.name].value_counts().index.tolist()
-
-        for group_param_value in group_param_values:
-            group_fpkms = fpkms[fpkms[group_param.name] == group_param_value]
-            group_fpkms.sort(columns=varying_param.name, axis=0, inplace=True)
-            xvals = group_fpkms[varying_param.name]
-            yvals = group_fpkms[statistic]
-            plt.plot(xvals, yvals, '-o', label=str(group_param_value))
-
-        plt.legend(title=group_param.title, loc=4)
-
-        name_elements = ["".join([k, str(v)]) for k, v in fixed_param_values.items()]
-
-        _savefig(plot_options.out_file_base,
-                 [group_param.name, varying_param.name] + name_elements,
-                 statistic)
+                 suffix="boxplot")
 
 
 def plot_cumulative_transcript_distribution(
@@ -132,4 +116,23 @@ def plot_cumulative_transcript_distribution(
         _savefig(plot_options.out_file_base,
                  [grouping_column, plot_options.label,
                   ("asc" if ascending else "desc")],
-                 "distribution")
+                 suffix="distribution")
+
+
+def plot_statistic(fpkms, plot_options, statistic, group_param, varying_param, fixed_param_values):
+    with NewPlot():
+        group_param_values = fpkms[group_param.name].value_counts().index.tolist()
+
+        for group_param_value in group_param_values:
+            group_fpkms = fpkms[fpkms[group_param.name] == group_param_value]
+            group_fpkms.sort(columns=varying_param.name, axis=0, inplace=True)
+            xvals = group_fpkms[varying_param.name]
+            yvals = group_fpkms[statistic]
+            plt.plot(xvals, yvals, '-o', label=str(group_param_value))
+
+        plt.legend(title=group_param.title, loc=4)
+
+        name_elements = [k.get_value_name(v) for k, v in fixed_param_values.items()]
+
+        _savefig(plot_options.out_file_base,
+                 [statistic, "vs", varying_param.name, "per", group_param.title.lower()] + name_elements)

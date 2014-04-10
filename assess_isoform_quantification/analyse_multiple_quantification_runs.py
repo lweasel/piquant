@@ -85,7 +85,7 @@ for param in params.PARAMETERS:
             for i, fp in enumerate(fixed_params):
                 fp_value = fixed_param_values_set[i]
                 stats = stats[stats[fp.name] == fp_value]
-                fixed_param_values[fp.name] = fp_value
+                fixed_param_values[fp] = fp_value
 
             opts = plot.PlotOptions("dummy", "this is the label", options[STATS_PREFIX])
             plot.plot_statistic(stats, opts, "sensitivity", param, numerical_param, fixed_param_values)

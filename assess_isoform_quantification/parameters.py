@@ -13,9 +13,13 @@ class _Parameter:
 
 PARAMETERS.append(_Parameter("quant-method", "Method"))
 
-PARAMETERS.append(_Parameter("paired-end", "Ends"))
+PARAMETERS.append(_Parameter(
+    "paired-end", "End type",
+    value_namer=lambda x: "paired-end" if x else "single-end"))
 
-PARAMETERS.append(_Parameter("errors", "Errors"))
+PARAMETERS.append(_Parameter(
+    "errors", "Error type",
+    value_namer=lambda x: "errors" if x else "no errors"))
 
 PARAMETERS.append(_Parameter(
     "read-length", "Read length", is_numeric=True,
