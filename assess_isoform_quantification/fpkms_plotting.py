@@ -26,7 +26,6 @@ def _savefig(base_name, name_elements, suffix):
     name = name.replace(' ', '_')
     plt.savefig(name, format="pdf")
 
-
 def log_fpkm_scatter_plot(fpkms, plot_options):
     with NewPlot():
         plt.scatter(fpkms[f.LOG10_REAL_FPKM].values,
@@ -74,6 +73,26 @@ def log_ratio_boxplot(fpkms, plot_options, classifier, filter=None):
         _savefig(plot_options.out_file_base,
                  [grouping_column] + name_elements,
                  "boxplot")
+
+
+def plot_statistic(fpkms, plot_options, statistic, group_param, varying_param, fixed_param_values):
+    with NewPlot():
+        group_param_values = fpkms[group_param.name].value_counts().index.tolist()
+
+        for group_param_value in group_param_values:
+            group_fpkms = fpkms[fpkms[group_param.name] == group_param_value]
+            group_fpkms.sort(columns=varying_param.name, axis=0, inplace=True)
+            xvals = group_fpkms[varying_param.name]
+            yvals = group_fpkms[statistic]
+            plt.plot(xvals, yvals, '-o', label=str(group_param_value))
+
+        plt.legend(title=group_param.title, loc=4)
+
+        name_elements = ["".join([k, str(v)]) for k, v in fixed_param_values.items()]
+
+        _savefig(plot_options.out_file_base,
+                 [group_param.name, varying_param.name] + name_elements,
+                 statistic)
 
 
 def plot_cumulative_transcript_distribution(

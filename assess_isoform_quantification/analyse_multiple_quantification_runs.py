@@ -11,31 +11,18 @@
 
 import classifiers
 import docopt
+import fpkms_plotting as plot
+import itertools
 import ordutils.log as log
 import ordutils.options as opt
+import pandas as pd
+import parameters as params
 import schema
 import sys
 
 LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
 STATS_PREFIX = "<stats-prefix>"
-
-QUANTIFICATION_METHOD_PARAM = "quant-method"
-READ_LENGTH_PARAM = "read-length"
-READ_DEPTH_PARAM = "read-depth"
-PAIRED_END_PARAM = "paired-end"
-ERRORS_PARAM = "errors"
-
-NUMERICAL_PARAMS = [
-    READ_LENGTH_PARAM,
-    READ_DEPTH_PARAM
-]
-
-GROUPING_PARAMS = [
-    QUANTIFICATION_METHOD_PARAM,
-    PAIRED_END_PARAM,
-    ERRORS_PARAM
-]
 
 # Read in command-line options
 __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
@@ -49,6 +36,8 @@ space_to_underscore = lambda x: x.replace(' ', '_')
 STATS_FILES = [""] + ["_by_" + space_to_underscore(c.get_column_name())
                       for c in clsfrs if c.produces_grouped_stats()]
 STATS_FILES = [options[STATS_PREFIX] + t + ".csv" for t in STATS_FILES]
+
+OVERALL_STATS_FILE = STATS_FILES[0]
 
 # Validate command-line options
 try:
@@ -66,3 +55,37 @@ except schema.SchemaError as exc:
 logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
 # Read in overall statistics
+
+overall_stats = pd.read_csv(OVERALL_STATS_FILE)
+
+# Create graphs based on overall statistics
+# TODO: better description!
+
+param_values = {}
+
+NUMERICAL_PARAMS = set([p for p in params.PARAMETERS if p.is_numeric])
+
+for param in params.PARAMETERS:
+    param_values[param] = overall_stats[param.name].value_counts().index.tolist()
+
+for param in params.PARAMETERS:
+    if len(param_values[param]) <= 1:
+        continue
+
+    for numerical_param in NUMERICAL_PARAMS - set([param]):
+        if len(param_values[numerical_param]) <= 1:
+            continue
+
+        fixed_params = [p for p in (set(params.PARAMETERS) - set([param, numerical_param])) if len(param_values[p]) > 1]
+        fixed_param_values_sets = [v for v in itertools.product(*[param_values[p] for p in fixed_params])]
+
+        for fixed_param_values_set in fixed_param_values_sets:
+            stats = overall_stats
+            fixed_param_values = {}
+            for i, fp in enumerate(fixed_params):
+                fp_value = fixed_param_values_set[i]
+                stats = stats[stats[fp.name] == fp_value]
+                fixed_param_values[fp.name] = fp_value
+
+            opts = plot.PlotOptions("dummy", "this is the label", options[STATS_PREFIX])
+            plot.plot_statistic(stats, opts, "sensitivity", param, numerical_param, fixed_param_values)
