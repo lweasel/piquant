@@ -25,3 +25,15 @@ class NumberOfFPKMs(BaseStatistic):
 
     def calculate_grouped(self, grouped, grp_stats, tp_grouped, tp_grp_stats):
         return grp_stats["count"]
+
+
+@Statistic
+class NumberOfTruePositiveFPKMs(BaseStatistic):
+    def __init__(self):
+        BaseStatistic.__init__(self, "tp-num-fpkms")
+
+    def calculate(self, fpkms, tp_fpkms):
+        return len(tp_fpkms)
+
+    def calculate_grouped(self, grouped, grp_stats, tp_grouped, tp_grp_stats):
+        return tp_grp_stats["count"]

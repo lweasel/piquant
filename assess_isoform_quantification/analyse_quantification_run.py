@@ -33,7 +33,6 @@ READ_DEPTH = "read-depth"
 READ_LENGTH = "read-length"
 PAIRED_END = "paired-end"
 ERRORS = "errors"
-TP_NUM_FPKMS = "tp-num-fpkms"
 
 TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
 TRUE_POSITIVES_LABEL = "true positives"
@@ -101,7 +100,6 @@ def add_overall_stats(stats, fpkms, tp_fpkms):
     stats[READ_DEPTH] = options[READ_DEPTH_OPT]
     stats[PAIRED_END] = options[PAIRED_END_OPT]
     stats[ERRORS] = options[ERRORS_OPT]
-    stats[TP_NUM_FPKMS] = len(tp_fpkms)
 
 if options[OUT_FILE_BASENAME]:
     stats = f.get_stats(fpkms, tp_fpkms)

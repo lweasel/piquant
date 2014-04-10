@@ -123,13 +123,17 @@ def get_grouped_stats(fpkms, tp_fpkms, column_name):
         main_stats = main_stats.drop(
             ["mean", "std", "min", "25%", "50%", "75%", "max"], 1)
 
-        print(main_stats)
         main_stats[SENSITIVITY] = grouped.apply(get_sensitivity)
         main_stats[SPECIFICITY] = grouped.apply(get_specificity)
 
         tp_summary = tp_grouped.describe()
         tp_stats = tp_summary[LOG10_RATIO].unstack()
+
+        stats_dict = {}
+        for stat in stats.get_statistics():
+            stats_dict[stat.name] = stat.calculate_grouped(grouped, main_stats, tp_grouped, tp_stats)
         tp_stats = tp_stats.drop(["min", "25%", "75%", "max"], 1)
+
         tp_stats = tp_stats.rename(columns={
             "count": TP_COUNT,
             "mean": TP_LOG10_RATIO_MEAN,
@@ -144,10 +148,6 @@ def get_grouped_stats(fpkms, tp_fpkms, column_name):
         tp_stats[TP_MEDIAN_PERCENT_ERROR] = pe_stats["50%"]
 
         tp_stats[TP_ERROR_FRACTION] = tp_grouped.apply(get_error_fraction, 10)
-
-        stats_dict = {}
-        for stat in stats.get_statistics():
-            stats_dict[stat.name] = stat.calculate_grouped(grouped, main_stats, tp_grouped, tp_stats)
 
         stats_df = pd.DataFrame.from_dict(stats_dict)
 
