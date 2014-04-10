@@ -13,15 +13,17 @@ def Statistic(cls):
 
 
 class BaseStatistic():
-    def __init__(self, name, graphable=True):
+    def __init__(self, name, title, graphable=True):
         self.name = name
+        self.title = title
         self.graphable = graphable
 
 
 @Statistic
 class NumberOfFPKMs(BaseStatistic):
     def __init__(self):
-        BaseStatistic.__init__(self, "num-fpkms", graphable=False)
+        BaseStatistic.__init__(
+            self, "num-fpkms", "No. FPKMs", graphable=False)
 
     def calculate(self, fpkms, tp_fpkms):
         return len(fpkms)
@@ -35,7 +37,8 @@ class NumberOfFPKMs(BaseStatistic):
 @Statistic
 class NumberOfTruePositiveFPKMs(BaseStatistic):
     def __init__(self):
-        BaseStatistic.__init__(self, "tp-num-fpkms")
+        BaseStatistic.__init__(
+            self, "tp-num-fpkms", "No. true pos. FPKMs")
 
     def calculate(self, fpkms, tp_fpkms):
         return len(tp_fpkms)
@@ -49,7 +52,8 @@ class NumberOfTruePositiveFPKMs(BaseStatistic):
 @Statistic
 class SpearmanCorrelation(BaseStatistic):
     def __init__(self):
-        BaseStatistic.__init__(self, "tp-log-fpkm-rho")
+        BaseStatistic.__init__(
+            self, "tp-log-fpkm-rho", "Spearman's rho")
 
     @staticmethod
     def _calculate(fpkms):
@@ -67,7 +71,8 @@ class SpearmanCorrelation(BaseStatistic):
 @Statistic
 class TruePositiveErrorFraction(BaseStatistic):
     def __init__(self):
-        BaseStatistic.__init__(self, "tp-error-frac")
+        BaseStatistic.__init__(
+            self, "tp-error-frac", "True pos. error fraction")
 
     @staticmethod
     def _calculate(fpkms, error_percent):
@@ -87,7 +92,8 @@ class MedianPercentError(BaseStatistic):
     # The median of the percent errors of the calculated FPKMS from the real
     # ones
     def __init__(self):
-        BaseStatistic.__init__(self, "tp-median-percent-error")
+        BaseStatistic.__init__(
+            self, "tp-median-percent-error", "True pos. median % error")
 
     def calculate(self, fpkms, tp_fpkms):
         return tp_fpkms[f.PERCENT_ERROR].median()
@@ -101,7 +107,7 @@ class MedianPercentError(BaseStatistic):
 @Statistic
 class Sensitivity(BaseStatistic):
     def __init__(self):
-        BaseStatistic.__init__(self, "sensitivity")
+        BaseStatistic.__init__(self, "sensitivity", "Sensitivity")
 
     @staticmethod
     def _calculate(fpkms):
@@ -122,7 +128,7 @@ class Sensitivity(BaseStatistic):
 @Statistic
 class Specificity(BaseStatistic):
     def __init__(self):
-        BaseStatistic.__init__(self, "specificity")
+        BaseStatistic.__init__(self, "specificity", "Specificity")
 
     @staticmethod
     def _calculate(fpkms):

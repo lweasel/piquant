@@ -119,9 +119,13 @@ def plot_cumulative_transcript_distribution(
                  suffix="distribution")
 
 
-def plot_statistic(stats, plot_options, statistic, group_param, varying_param, fixed_param_values):
+def plot_statistic(stats, plot_options, statistic,
+                   group_param, varying_param, fixed_param_values):
+
+    group_param_values = stats[group_param.name].value_counts().index.tolist()
+    group_param_values.sort()
+
     with NewPlot():
-        group_param_values = stats[group_param.name].value_counts().index.tolist()
 
         for group_param_value in group_param_values:
             group_stats = stats[stats[group_param.name] == group_param_value]
@@ -131,9 +135,22 @@ def plot_statistic(stats, plot_options, statistic, group_param, varying_param, f
             plt.plot(xvals, yvals, '-o',
                      label=group_param.get_value_name(group_param_value))
 
+        plt.xlabel(varying_param.title)
+        plt.ylabel(statistic.title)
         plt.legend(title=group_param.title, loc=4)
 
-        name_elements = [k.get_value_name(v) for k, v in fixed_param_values.items()]
+        fixed_param_info = [k.get_value_name(v) for k, v
+                            in fixed_param_values.items()]
+
+        title = " ".join([statistic.title, "vs",
+                          varying_param.title.lower(), "per",
+                          group_param.title.lower()]) \
+                + ": " + ", ".join(fixed_param_info)
+
+        plt.suptitle(title)
 
         _savefig(plot_options.out_file_base,
-                 [statistic.name, "vs", varying_param.name, "per", group_param.title.lower()] + name_elements)
+                 [statistic.name, "vs",
+                  varying_param.name, "per",
+                  group_param.title.lower()]
+                 + fixed_param_info)

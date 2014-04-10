@@ -19,7 +19,7 @@ PARAMETERS.append(_Parameter(
 
 PARAMETERS.append(_Parameter(
     "errors", "Error type",
-    value_namer=lambda x: "errors" if x else "no errors"))
+    value_namer=lambda x: "with errors" if x else "no errors"))
 
 PARAMETERS.append(_Parameter(
     "read-length", "Read length", is_numeric=True,
