@@ -2,6 +2,8 @@ import fpkms as f
 
 CLASSIFIERS = []
 
+# TODO: Should be the only thing exported by the module
+
 
 def get_classifiers():
     return [c() for c in CLASSIFIERS]
@@ -37,6 +39,8 @@ class BaseClassifier():
         return range(1, num_labels + 1)
 
 
+# TODO: think this should be an instance of BaseClassifier rather than a class
+# in its own right; ditto for everything else marked @Classifier.
 @Classifier
 class GeneTranscriptNumberClassifier(BaseClassifier):
     def __init__(self):
