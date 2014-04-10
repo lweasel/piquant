@@ -25,7 +25,6 @@ TRUE_POSITIVE = "true-pos"
 TRUE_NEGATIVE = "true-neg"
 TP_COUNT = "tp-count"
 
-SENSITIVITY = "sensitivity"
 SPECIFICITY = "specificity"
 
 NOT_PRESENT_CUTOFF = 0.1
@@ -69,22 +68,6 @@ def apply_classifiers(fpkms, clsfrs):
             classifier.get_classification_value, axis=1)
 
 
-def get_sensitivity(fpkms):
-    num_tp = len(fpkms[fpkms[TRUE_POSITIVE]])
-    num_fn = len(fpkms[fpkms[FALSE_NEGATIVE]])
-    if num_tp + num_fn == 0:
-        return 1
-    return float(num_tp) / (num_tp + num_fn)
-
-
-def get_specificity(fpkms):
-    num_fp = len(fpkms[fpkms[FALSE_POSITIVE]])
-    num_tn = len(fpkms[fpkms[TRUE_NEGATIVE]])
-    if num_fp + num_tn == 0:
-        return 1
-    return float(num_tn) / (num_tn + num_fp)
-
-
 def get_error_fraction(fpkms, error_percent):
     num_errors = len(fpkms[abs(fpkms[PERCENT_ERROR]) > error_percent])
     return float(num_errors) / len(fpkms)
@@ -96,12 +79,6 @@ def get_stats(fpkms, tp_fpkms):
     for stat in stats.get_statistics():
         stats_dict[stat.name] = stat.calculate(fpkms, tp_fpkms)
 
-    # The median percent error - i.e. the median of the percent errors of
-    # the calculated values from the real ones
-    tp_mpe = tp_fpkms[PERCENT_ERROR].median()
-
-    stats_dict[SENSITIVITY] = get_sensitivity(fpkms)
-    stats_dict[SPECIFICITY] = get_specificity(fpkms)
     stats_dict[TP_ERROR_FRACTION] = get_error_fraction(tp_fpkms, 10)
 
     return pd.DataFrame([stats_dict])
@@ -112,12 +89,6 @@ def get_grouped_stats(fpkms, tp_fpkms, column_name):
         tp_grouped = tp_fpkms.groupby(column_name)
 
         summary = grouped.describe()
-        main_stats = summary[REAL_FPKM].unstack()
-        main_stats = main_stats.drop(
-            ["mean", "std", "min", "25%", "50%", "75%", "max"], 1)
-
-        main_stats[SENSITIVITY] = grouped.apply(get_sensitivity)
-        main_stats[SPECIFICITY] = grouped.apply(get_specificity)
 
         tp_summary = tp_grouped.describe()
         tp_stats = tp_summary[LOG10_RATIO].unstack()

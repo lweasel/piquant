@@ -73,3 +73,43 @@ class MedianPercentError(BaseStatistic):
     def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
         stats = tp_grp_summary[f.PERCENT_ERROR].unstack()
         return stats["50%"]
+
+
+@Statistic
+class Sensitivity(BaseStatistic):
+    def __init__(self):
+        BaseStatistic.__init__(self, "sensitivity")
+
+    @staticmethod
+    def _calculate(fpkms):
+        num_tp = len(fpkms[fpkms[f.TRUE_POSITIVE]])
+        num_fn = len(fpkms[fpkms[f.FALSE_NEGATIVE]])
+        if num_tp + num_fn == 0:
+            return 1
+        return float(num_tp) / (num_tp + num_fn)
+
+    def calculate(self, fpkms, tp_fpkms):
+        return Sensitivity._calculate(fpkms)
+
+    def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
+        grouped.apply(Sensitivity._calculate)
+
+
+@Statistic
+class Specificity(BaseStatistic):
+    def __init__(self):
+        BaseStatistic.__init__(self, "specificity")
+
+    @staticmethod
+    def _calculate(fpkms):
+        num_fp = len(fpkms[fpkms[f.FALSE_POSITIVE]])
+        num_tn = len(fpkms[fpkms[f.TRUE_NEGATIVE]])
+        if num_fp + num_tn == 0:
+            return 1
+        return float(num_tn) / (num_tn + num_fp)
+
+    def calculate(self, fpkms, tp_fpkms):
+        return Specificity._calculate(fpkms)
+
+    def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
+        grouped.apply(Specificity._calculate)
