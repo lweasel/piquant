@@ -92,7 +92,7 @@ class Sensitivity(BaseStatistic):
         return Sensitivity._calculate(fpkms)
 
     def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
-        grouped.apply(Sensitivity._calculate)
+        return grouped.apply(Sensitivity._calculate)
 
 
 @Statistic
@@ -112,4 +112,4 @@ class Specificity(BaseStatistic):
         return Specificity._calculate(fpkms)
 
     def calculate_grouped(self, grouped, grp_summary, tp_grouped, tp_grp_summary):
-        grouped.apply(Specificity._calculate)
+        return grouped.apply(Specificity._calculate)
