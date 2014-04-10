@@ -13,17 +13,19 @@ def Statistic(cls):
 
 
 class BaseStatistic():
-    def __init__(self, name, title, graphable=True):
+    def __init__(self, name, title, graphable=True, stat_range=None):
         self.name = name
         self.title = title
         self.graphable = graphable
+        self.stat_range = stat_range
 
 
 @Statistic
 class NumberOfFPKMs(BaseStatistic):
     def __init__(self):
         BaseStatistic.__init__(
-            self, "num-fpkms", "No. FPKMs", graphable=False)
+            self, "num-fpkms", "No. FPKMs",
+            graphable=False, stat_range=(0, None))
 
     def calculate(self, fpkms, tp_fpkms):
         return len(fpkms)
@@ -38,7 +40,8 @@ class NumberOfFPKMs(BaseStatistic):
 class NumberOfTruePositiveFPKMs(BaseStatistic):
     def __init__(self):
         BaseStatistic.__init__(
-            self, "tp-num-fpkms", "No. true pos. FPKMs")
+            self, "tp-num-fpkms", "No. true pos. FPKMs",
+            stat_range=(0, None))
 
     def calculate(self, fpkms, tp_fpkms):
         return len(tp_fpkms)
@@ -53,7 +56,7 @@ class NumberOfTruePositiveFPKMs(BaseStatistic):
 class SpearmanCorrelation(BaseStatistic):
     def __init__(self):
         BaseStatistic.__init__(
-            self, "tp-log-fpkm-rho", "Spearman's rho")
+            self, "tp-log-fpkm-rho", "Spearman's rho", stat_range=(0, 1))
 
     @staticmethod
     def _calculate(fpkms):
@@ -72,7 +75,8 @@ class SpearmanCorrelation(BaseStatistic):
 class TruePositiveErrorFraction(BaseStatistic):
     def __init__(self):
         BaseStatistic.__init__(
-            self, "tp-error-frac", "True pos. error fraction")
+            self, "tp-error-frac", "True pos. error fraction",
+            stat_range=(0, 1))
 
     @staticmethod
     def _calculate(fpkms, error_percent):
@@ -107,7 +111,8 @@ class MedianPercentError(BaseStatistic):
 @Statistic
 class Sensitivity(BaseStatistic):
     def __init__(self):
-        BaseStatistic.__init__(self, "sensitivity", "Sensitivity")
+        BaseStatistic.__init__(self, "sensitivity", "Sensitivity",
+                               stat_range=(0, 1))
 
     @staticmethod
     def _calculate(fpkms):
@@ -128,7 +133,8 @@ class Sensitivity(BaseStatistic):
 @Statistic
 class Specificity(BaseStatistic):
     def __init__(self):
-        BaseStatistic.__init__(self, "specificity", "Specificity")
+        BaseStatistic.__init__(self, "specificity", "Specificity",
+                               stat_range=(0, 1))
 
     @staticmethod
     def _calculate(fpkms):

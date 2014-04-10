@@ -139,6 +139,15 @@ def plot_statistic(stats, plot_options, statistic,
         plt.ylabel(statistic.title)
         plt.legend(title=group_param.title, loc=4)
 
+        stat_range = statistic.stat_range
+        if stat_range is not None:
+            min_val = stat_range[0]
+            max_val = stat_range[1]
+            if min_val is not None:
+                plt.ylim(ymin=min_val)
+            if max_val is not None:
+                plt.ylim(ymax=max_val)
+
         fixed_param_info = [k.get_value_name(v) for k, v
                             in fixed_param_values.items()]
 
