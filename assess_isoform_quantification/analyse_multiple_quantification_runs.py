@@ -29,23 +29,27 @@ STATS_PREFIX = "<stats-prefix>"
 __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
 options = docopt.docopt(__doc__, version="analyse_multiple_quantification_runs v0.1")
 
-clsfrs = classifiers.get_classifiers()
+# Validate command-line options
+clsfrs = [c for c in classifiers.get_classifiers() if c.produces_grouped_stats()]
 
 # TODO: duplicate from analyse_run_quantification.py
 space_to_underscore = lambda x: x.replace(' ', '_')
 
-STATS_FILES = [""] + ["_by_" + space_to_underscore(c.get_column_name())
-                      for c in clsfrs if c.produces_grouped_stats()]
-STATS_FILES = [options[STATS_PREFIX] + t + ".csv" for t in STATS_FILES]
 
-OVERALL_STATS_FILE = STATS_FILES[0]
+def get_stats_file(stats_type):
+    ret = options[STATS_PREFIX]
+    if stats_type is not None:
+        ret += "_by_" + space_to_underscore(stats_type)
+    return ret + ".csv"
 
-# Validate command-line options
+OVERALL_STATS_FILE = get_stats_file(None)
+
 try:
-    opt.validate_dict_option(
-        options[LOG_LEVEL], log.LEVELS, "Invalid log level")
+    opt.validate_dict_option(options[LOG_LEVEL], log.LEVELS, "Invalid log level")
 
-    for stats_file in STATS_FILES:
+    stats_files = [OVERALL_STATS_FILE] + \
+        [get_stats_file(c.get_column_name()) for c in clsfrs]
+    for stats_file in stats_files:
         opt.validate_file_option(
             stats_file, "Statistics file should exist")
 except schema.SchemaError as exc:
@@ -91,3 +95,33 @@ for param in params.PARAMETERS:
             opts = plot.PlotOptions("dummy", "this is the label", options[STATS_PREFIX])
             for stat in [s for s in stats.get_statistics() if s.graphable]:
                 plot.plot_statistic(stats_df, opts, stat, param, numerical_param, fixed_param_values)
+
+# Create graphs based on statistics stratified by classifier
+
+more_than_100_filter = lambda x: x["count"] > 100
+
+for clsfr in clsfrs:
+    stats_file = get_stats_file(clsfr.get_column_name())
+    clsfr_stats = pd.read_csv(stats_file)
+
+    for param in params.PARAMETERS:
+        if len(param_values[param]) <= 1:
+            continue
+
+        fixed_params = [p for p in (set(params.PARAMETERS) - set([param])) if len(param_values[p]) > 1]
+        fixed_param_values_sets = [v for v in itertools.product(*[param_values[p] for p in fixed_params])]
+
+        for fixed_param_values_set in fixed_param_values_sets:
+            stats_df = clsfr_stats
+            fixed_param_values = {}
+            for i, fp in enumerate(fixed_params):
+                fp_value = fixed_param_values_set[i]
+                stats_df = stats_df[stats_df[fp.name] == fp_value]
+                fixed_param_values[fp] = fp_value
+
+            opts = plot.PlotOptions("dummy", "this is the label", options[STATS_PREFIX])
+
+            for stat in [s for s in stats.get_statistics() if s.graphable_by_classifier]:
+                plot.plot_statistic_by_classifier(
+                    stats_df, opts, stat, param,
+                    clsfr, more_than_100_filter, fixed_param_values)

@@ -51,7 +51,8 @@ def log_fpkm_scatter_plot(fpkms, plot_options):
                  suffix="log10 scatter")
 
 
-def log_ratio_boxplot(fpkms, plot_options, classifier, filter=None):
+def log_ratio_boxplot(fpkms, plot_options, classifier,
+                      filter=None, save_to_file=True):
 
     grouping_column = classifier.get_column_name()
     name_elements = [plot_options.label]
@@ -74,9 +75,10 @@ def log_ratio_boxplot(fpkms, plot_options, classifier, filter=None):
         locs, labels = plt.xticks()
         plt.xticks(locs, classifier.get_value_labels(len(labels)))
 
-        _savefig(plot_options.out_file_base,
-                 [grouping_column] + name_elements,
-                 suffix="boxplot")
+        if save_to_file:
+            _savefig(plot_options.out_file_base,
+                     [grouping_column] + name_elements,
+                     suffix="boxplot")
 
 
 def plot_cumulative_transcript_distribution(
@@ -161,5 +163,64 @@ def plot_statistic(stats, plot_options, statistic,
         _savefig(plot_options.out_file_base,
                  [statistic.name, "vs",
                   varying_param.name, "per",
+                  group_param.title.lower()]
+                 + fixed_param_info)
+
+
+def plot_statistic_by_classifier(
+        stats, plot_options, statistic, group_param,
+        classifier, filter, fixed_param_values):
+
+    clsfr_col = classifier.get_column_name()
+
+    group_param_values = stats[group_param.name].value_counts().index.tolist()
+    group_param_values.sort()
+
+    if filter:
+        stats = stats[filter(stats)]
+
+    with NewPlot():
+        for group_param_value in group_param_values:
+            group_stats = stats[stats[group_param.name] == group_param_value]
+            group_stats.sort(columns=clsfr_col, axis=0, inplace=True)
+            xvals = group_stats[clsfr_col]
+            yvals = group_stats[statistic.name]
+            plt.plot(xvals, yvals, '-o',
+                     label=group_param.get_value_name(group_param_value))
+
+        plt.xlabel(clsfr_col[:1].upper() + clsfr_col[1:])
+        plt.ylabel(statistic.title)
+        plt.legend(title=group_param.title, loc=4)
+
+        stat_range = statistic.stat_range
+        if stat_range is not None:
+            min_val = stat_range[0]
+            max_val = stat_range[1]
+            if min_val is not None:
+                plt.ylim(ymin=min_val)
+            if max_val is not None:
+                plt.ylim(ymax=max_val)
+
+        min_xval = group_stats[clsfr_col].min()
+        max_xval = group_stats[clsfr_col].max()
+        plt.xlim(xmin=min_xval, xmax=max_xval)
+
+        tick_range = np.arange(min_xval, max_xval + 1)
+        plt.xticks(np.arange(min_xval, max_xval + 1),
+                   classifier.get_value_labels(len(tick_range)))
+
+        fixed_param_info = [k.get_value_name(v) for k, v
+                            in fixed_param_values.items()]
+
+        title = " ".join([statistic.title, "vs",
+                          clsfr_col.lower(), "per",
+                          group_param.title.lower()]) \
+                + ": " + ", ".join(fixed_param_info)
+
+        plt.suptitle(title)
+
+        _savefig(plot_options.out_file_base,
+                 [statistic.name, "vs",
+                  clsfr_col, "per",
                   group_param.title.lower()]
                  + fixed_param_info)
