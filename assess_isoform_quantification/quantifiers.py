@@ -239,7 +239,8 @@ class Express:
 
         map_reads = [
             "# Map simulated reads to the transcriptome with Bowtie",
-            "bowtie " + qualities_spec + " -S -m 200 -p 32 " +
+            "bowtie " + qualities_spec +
+            " -e 99999999 -l 25 -I 1 -X 1000 -a -S -m 200 -p 32 " +
             params[TRANSCRIPT_REFERENCE] + " " + reads_spec +
             " | samtools view -Sb - > " + Express.MAPPED_READS_FILE
         ]
@@ -247,7 +248,7 @@ class Express:
         return prepare_ref + map_reads
 
     def get_command(self, params):
-        return "express " + params[TRANSCRIPT_REFERENCE] + \
+        return "express --fr-stranded " + params[TRANSCRIPT_REFERENCE] + \
             ".transcripts.fa " + Express.MAPPED_READS_FILE
 
     def get_mapped_reads_file(self):
