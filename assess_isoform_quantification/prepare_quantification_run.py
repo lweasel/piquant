@@ -297,6 +297,23 @@ with get_output_file(RUN_SCRIPT) as script:
             format(f=FS_SIMULATION_PARAMS_FILE),
         ])
 
+        # Some isoform quantifiers (e.g. eXpress) require reads to be presented
+        # in a random order, but the reads output by Flux Simulator do have an
+        # order - hence we shuffle them.
+        reads_tmp = "reads.tmp"
+
+        lines_per_fragment = 2
+        if options[ERRORS]:
+            lines_per_fragment *= 2
+        if options[PAIRED_END]:
+            lines_per_fragment *= 2
+
+        add_script_section(script_lines, [
+            "\tpaste " + ("_ " * lines_per_fragment) + "< " +
+            reads_file + " | shuf | tr '\t' '\n' > " + reads_tmp,
+            "\tmv " + reads_tmp + " " + reads_file
+        ])
+
         # If we've specified paired end reads, split the FASTA/Q file output by
         # Flux Simulator into separate files for forward and reverse reads
         if options[PAIRED_END]:
