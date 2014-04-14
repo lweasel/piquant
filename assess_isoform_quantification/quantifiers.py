@@ -248,7 +248,8 @@ class Express:
         return prepare_ref + map_reads
 
     def get_command(self, params):
-        return "express --fr-stranded " + params[TRANSCRIPT_REFERENCE] + \
+        stranded_spec = "--fr-stranded " if SIMULATED_READS in params else ""
+        return "express " + stranded_spec + params[TRANSCRIPT_REFERENCE] + \
             ".transcripts.fa " + Express.MAPPED_READS_FILE
 
     def get_mapped_reads_file(self):
