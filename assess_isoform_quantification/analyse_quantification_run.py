@@ -15,6 +15,7 @@
 <read-depth>                               The depth of reads sequenced across the transcriptome.
 <paired-end>                               Whether paired-end sequence reads were used.
 <errors>                                   Whether the reads contain sequencing errors.
+<bias>                                     Whether the reads contain sequence bias.
 <fpkm-file>                                File containing real and calculated FPKMs.
 <out-file>                                 Basename for output graph and data files.
 """
@@ -34,6 +35,7 @@ READ_DEPTH = "read-depth"
 READ_LENGTH = "read-length"
 PAIRED_END = "paired-end"
 ERRORS = "errors"
+BIAS = "bias"
 
 TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
 TRUE_POSITIVES_LABEL = "true positives"
@@ -52,6 +54,7 @@ READ_DEPTH_OPT = opt_string(READ_DEPTH)
 READ_LENGTH_OPT = opt_string(READ_LENGTH)
 PAIRED_END_OPT = opt_string(PAIRED_END)
 ERRORS_OPT = opt_string(ERRORS)
+BIAS_OPT = opt_string(BIAS)
 
 # Read in command-line options
 options = docopt(__doc__, version="assemble_quantification_data v0.1")
@@ -101,6 +104,7 @@ def add_overall_stats(stats):
     stats[READ_DEPTH] = options[READ_DEPTH_OPT]
     stats[PAIRED_END] = options[PAIRED_END_OPT]
     stats[ERRORS] = options[ERRORS_OPT]
+    stats[BIAS] = options[BIAS_OPT]
 
 if options[OUT_FILE_BASENAME]:
     stats = f.get_stats(fpkms, tp_fpkms)

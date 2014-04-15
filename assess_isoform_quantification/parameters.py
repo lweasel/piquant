@@ -29,4 +29,8 @@ _PARAMETERS.append(_Parameter(
     "read-depth", "Read depth", is_numeric=True,
     value_namer=lambda x: "{d}x".format(d=x)))
 
+_PARAMETERS.append(_Parameter(
+    "bias", "Bias",
+    value_namer=lambda x: "with bias" if x else "no bias"))
+
 PARAMETERS = set(_PARAMETERS)

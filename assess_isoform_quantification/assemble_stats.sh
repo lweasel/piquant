@@ -2,7 +2,7 @@
 
 source definitions.sh
 
-STRATIFICATION_VARIABLES="methods depths lengths ends errors"
+STRATIFICATION_VARIABLES="methods depths lengths ends errors bias"
 
 STATS_DIR="output/overall_stats"
 mkdir -p $STATS_DIR
@@ -17,9 +17,11 @@ for type in $STATS_TYPES; do
             for length in $LENGTHS; do
                 for end in $ENDS; do
                     for error in $ERRORS; do
-                        RUN_NAME="${method}_${depth}x_${length}b_${end}_${error}"
-                        RUN_DIR="output/$RUN_NAME"
-                        FILES_TO_ASSEMBLE="${FILES_TO_ASSEMBLE} ${RUN_DIR}/${RUN_NAME}${type}.csv "
+                        for bias in $BIAS; do
+                            RUN_NAME="${method}_${depth}x_${length}b_${end}_${error}_${bias}"
+                            RUN_DIR="output/$RUN_NAME"
+                            FILES_TO_ASSEMBLE="${FILES_TO_ASSEMBLE} ${RUN_DIR}/${RUN_NAME}${type}.csv "
+                        done
                     done
                 done
             done

@@ -17,6 +17,7 @@
 --read-length=<read-length>         The length of sequence reads [default: 50].
 --paired-end                        If specified, create and use paired-end sequence reads (note: option must still be specified even if pre-created reads are being used).
 --errors                            If specified, Flux Simulator will use a position-dependent error model to simulate sequencing errors.
+--bias                              If specified, Flux Simulator will introduce sequence bias into the RNA fragmentation process.
 <transcript-gtf-file>               GTF formatted file describing the transcripts to be simulated.
 <genome-fasta-dir>                  Directory containing per-chromosome sequences as FASTA files.
 """
@@ -43,6 +44,7 @@ READ_DEPTH = "--read-depth"
 READ_LENGTH = "--read-length"
 PAIRED_END = "--paired-end"
 ERRORS = "--errors"
+BIAS = "--bias"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
@@ -179,6 +181,9 @@ else:
             options[READ_LENGTH] > 0.5*(ERROR_MODEL_SHORT + ERROR_MODEL_LONG) \
             else ERROR_MODEL_SHORT
         simulation_fs_params_file_lines += ["ERR_FILE " + str(error_model)]
+
+    if options[BIAS]:
+        simulation_fs_params_file_lines += ["RT_MOTIF default"]
 
     with get_output_file(FS_SIMULATION_PARAMS_FILE) as fs_params_file:
         write_lines(fs_params_file, simulation_fs_params_file_lines)
@@ -430,7 +435,7 @@ with get_output_file(RUN_SCRIPT) as script:
         create_command(["python", ANALYSE_DATA_SCRIPT,
                         quant_method_name, options[READ_LENGTH],
                         options[READ_DEPTH], bool(options[PAIRED_END]),
-                        bool(options[ERRORS]), DATA_FILE,
+                        bool(options[ERRORS]), bool(options[BIAS]), DATA_FILE,
                         os.path.basename(options[RUN_DIRECTORY])])
     ])
 

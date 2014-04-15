@@ -12,41 +12,48 @@ do
             do
                 for errors in $ERRORS;
                 do
-                    RUN_NAME="${method}_${depth}x_${length}b_${ends}_${errors}"
-                    RUN_DIR="output/$RUN_NAME"
-                    COMMAND="prepare_quantification_run.py"
-                    COMMAND="$COMMAND -d $RUN_DIR"
-                    COMMAND="$COMMAND -m $method"
-                    COMMAND="$COMMAND --read-depth=$depth"
-                    COMMAND="$COMMAND --read-length=$length"
+                    for bias in $BIAS;
+                    do
+                        RUN_NAME="${method}_${depth}x_${length}b_${ends}_${errors}_${bias}"
+                        RUN_DIR="output/$RUN_NAME"
+                        COMMAND="prepare_quantification_run.py"
+                        COMMAND="$COMMAND -d $RUN_DIR"
+                        COMMAND="$COMMAND -m $method"
+                        COMMAND="$COMMAND --read-depth=$depth"
+                        COMMAND="$COMMAND --read-length=$length"
 
-                    if [ "$ends" == "$PAIRED_END" ]; then
-                        COMMAND="$COMMAND --paired-end"
-                    fi
+                        if [ "$ends" == "$PAIRED_END" ]; then
+                            COMMAND="$COMMAND --paired-end"
+                        fi
 
-                    if [ "$errors" == "$WITH_ERRORS" ]; then
-                        COMMAND="$COMMAND --errors"
-                    fi
+                        if [ "$errors" == "$WITH_ERRORS" ]; then
+                            COMMAND="$COMMAND --errors"
+                        fi
 
-                    PARAMS_VAR=${method^^}_PARAMS
-                    COMMAND="$COMMAND -p ${!PARAMS_VAR}"
+                        if ["$bias" == "$WITH_BIAS" ]; then
+                            COMMAND="$COMMAND --bias"
+                        fi
 
-                    if [ "$method" == "$CUFFLINKS_METHOD" ]; then
-                        RUN_PARAMS="-rqa"
-                    else
-                        RUN_PARAMS="-qa"
-                        READS_RUN_NAME="${CUFFLINKS_METHOD}_${depth}x_${length}b_${ends}_${errors}"
-                        READS_RUN_DIR="output/$READS_RUN_NAME"
-                        COMMAND="$COMMAND --input-dir=$READS_RUN_DIR"
-                    fi
+                        PARAMS_VAR=${method^^}_PARAMS
+                        COMMAND="$COMMAND -p ${!PARAMS_VAR}"
 
-                    COMMAND="$COMMAND $TRANSCRIPTS_GTF $GENOME_FASTA_DIR"
+                        if [ "$method" == "$CUFFLINKS_METHOD" ]; then
+                            RUN_PARAMS="-rqa"
+                        else
+                            RUN_PARAMS="-qa"
+                            READS_RUN_NAME="${CUFFLINKS_METHOD}_${depth}x_${length}b_${ends}_${errors}_${bias}"
+                            READS_RUN_DIR="output/$READS_RUN_NAME"
+                            COMMAND="$COMMAND --input-dir=$READS_RUN_DIR"
+                        fi
 
-                    python $COMMAND
+                        COMMAND="$COMMAND $TRANSCRIPTS_GTF $GENOME_FASTA_DIR"
 
-                    pushd $RUN_DIR
-                    nohup ./run_quantification.sh ${RUN_PARAMS} &> ${RUN_NAME}.out &
-                    popd
+                        python $COMMAND
+
+                        pushd $RUN_DIR
+                        nohup ./run_quantification.sh ${RUN_PARAMS} &> ${RUN_NAME}.out &
+                        popd
+                    done
                 done
             done
         done
