@@ -94,7 +94,7 @@ tp_fpkms = f.get_true_positives(fpkms)
 # Write statistics pertaining to the set of quantified transcripts as a whole.
 
 
-def add_overall_stats(stats, fpkms, tp_fpkms):
+def add_overall_stats(stats):
     stats[QUANT_METHOD] = options[QUANT_METHOD_OPT]
     stats[READ_LENGTH] = options[READ_LENGTH_OPT]
     stats[READ_DEPTH] = options[READ_DEPTH_OPT]
@@ -103,7 +103,7 @@ def add_overall_stats(stats, fpkms, tp_fpkms):
 
 if options[OUT_FILE_BASENAME]:
     stats = f.get_stats(fpkms, tp_fpkms)
-    add_overall_stats(stats, fpkms, tp_fpkms)
+    add_overall_stats(stats)
 
     with open(options[OUT_FILE_BASENAME] + "_stats.csv", "w") as out_file:
         stats.to_csv(out_file, float_format="%.5f", index=False)
@@ -111,17 +111,33 @@ if options[OUT_FILE_BASENAME]:
 # Write statistics for FPKMS stratified by various classification measures
 space_to_underscore = lambda x: x.replace(' ', '_')
 
+non_zero = fpkms[(fpkms[f.REAL_FPKM] > 0) & (fpkms[f.CALCULATED_FPKM] > 0)]
+
 if options[OUT_FILE_BASENAME]:
     for classifier in [c for c in clsfrs if c.produces_grouped_stats()]:
         column_name = classifier.get_column_name()
         stats = f.get_grouped_stats(fpkms, tp_fpkms, column_name)
-        add_overall_stats(stats, fpkms, tp_fpkms)
+        add_overall_stats(stats)
 
         stats_file_name = options[OUT_FILE_BASENAME] + "_stats_by_" + \
             space_to_underscore(column_name) + ".csv"
 
         with open(stats_file_name, "w") as out_file:
             stats.to_csv(out_file, float_format="%.5f")
+
+    for classifier in [c for c in clsfrs if c.produces_distribution_plots()]:
+        for ascending in [True, False]:
+            stats = f.get_distribution_stats(
+                non_zero, tp_fpkms, classifier, ascending)
+            add_overall_stats(stats)
+
+            stats_file_name = options[OUT_FILE_BASENAME] + \
+                "_distribution_stats_" + ("asc" if ascending else "desc") + \
+                "_by_" + space_to_underscore(classifier.get_column_name()) + \
+                ".csv"
+
+            with open(stats_file_name, "w") as out_file:
+                stats.to_csv(out_file, float_format="%.5f")
 
 # Make a scatter plot of log transformed calculated vs real FPKMs
 TP_PLOT_OPTIONS = plot.PlotOptions(
@@ -134,8 +150,6 @@ if options[OUT_FILE_BASENAME]:
 # Make boxplots of log ratios stratified by various classification measures
 # (e.g. the number of transcripts per-originating gene of each transcript)
 more_than_100_filter = lambda x: len(x[f.REAL_FPKM]) > 100
-
-non_zero = fpkms[(fpkms[f.REAL_FPKM] > 0) & (fpkms[f.CALCULATED_FPKM] > 0)]
 
 NON_ZERO_PLOT_OPTIONS = plot.PlotOptions(
     options[QUANT_METHOD_OPT], NON_ZERO_LABEL,

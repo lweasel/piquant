@@ -7,7 +7,7 @@ STRATIFICATION_VARIABLES="methods depths lengths ends errors"
 STATS_DIR="output/overall_stats"
 mkdir -p $STATS_DIR
 
-STATS_TYPES="_stats _stats_by_gene_transcript_number _stats_by_log10_real_FPKM _stats_by_transcript_length _stats_by_unique_sequence_percentage"
+STATS_TYPES="_stats _stats_by_gene_transcript_number _stats_by_log10_real_FPKM _stats_by_transcript_length _stats_by_unique_sequence_percentage _distribution_stats_asc_by_absolute_percent_error _distribution_stats_desc_by_absolute_percent_error"
 
 for type in $STATS_TYPES; do
     FILES_TO_ASSEMBLE=""

@@ -6,7 +6,6 @@ import seaborn as sb
 from collections import namedtuple
 
 NO_FILTER_LABEL = "no filter"
-CUMULATIVE_DISTRIBUTION_POINTS = 20
 
 
 class NewPlot:
@@ -84,26 +83,17 @@ def log_ratio_boxplot(fpkms, plot_options, classifier,
 def plot_cumulative_transcript_distribution(
         fpkms, plot_options, classifier, ascending):
 
-    values = fpkms.apply(classifier.get_value, axis=1)
-    values.sort(ascending=ascending)
-
-    xbounds = classifier.get_distribution_plot_range()
-    if xbounds is None:
-        xbounds = (values.min(), values.max())
-
-    xvals = np.linspace(xbounds[0], xbounds[1], CUMULATIVE_DISTRIBUTION_POINTS)
-
-    size = float(len(values))
-    yvals = [100 * len(values[values < x if ascending else values > x]) / size
-             for x in xvals]
+    xvals, yvals = f.get_distribution(fpkms, classifier, ascending)
 
     with NewPlot():
         plt.plot(xvals, yvals, '-o')
 
         plt.ylim(ymin=-2.5, ymax=102.5)
 
-        xmargin = (xbounds[1] - xbounds[0]) / 40.0
-        plt.xlim(xmin=xbounds[0]-xmargin, xmax=xbounds[1]+xmargin)
+        xmin = xvals[0]
+        xmax = xvals[-1]
+        xmargin = (xmax - xmin) / 40.0
+        plt.xlim(xmin=xmin-xmargin, xmax=xmax+xmargin)
 
         grouping_column = classifier.get_column_name()
         capitalized = grouping_column[:1].upper() + grouping_column[1:]
