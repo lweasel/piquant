@@ -4,19 +4,19 @@ _STATISTICS = []
 
 
 def get_statistics():
-    return [s() for s in _STATISTICS]
+    return set(_STATISTICS)
 
 
 def get_graphable_statistics():
-    return [s for s in get_statistics() if s.graphable]
+    return set([s for s in get_statistics() if s.graphable])
 
 
 def get_graphable_by_classifier_statistics():
-    return [s for s in get_statistics() if s.graphable_by_classifier]
+    return set([s for s in get_statistics() if s.graphable_by_classifier])
 
 
 def Statistic(cls):
-    _STATISTICS.append(cls)
+    _STATISTICS.append(cls())
     return cls
 
 
