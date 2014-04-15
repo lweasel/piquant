@@ -112,7 +112,7 @@ def plot_cumulative_transcript_distribution(
                  suffix="distribution")
 
 
-def plot_statistic(stats, plot_options, statistic,
+def plot_statistic(stats, base_name, statistic,
                    group_param, varying_param, fixed_param_values):
 
     group_param_values = stats[group_param.name].value_counts().index.tolist()
@@ -151,7 +151,7 @@ def plot_statistic(stats, plot_options, statistic,
 
         plt.suptitle(title)
 
-        _savefig(plot_options.out_file_base,
+        _savefig(base_name,
                  [statistic.name, "vs",
                   varying_param.name, "per",
                   group_param.title.lower()]
@@ -159,7 +159,7 @@ def plot_statistic(stats, plot_options, statistic,
 
 
 def plot_statistic_by_classifier(
-        stats, plot_options, statistic, group_param,
+        stats, base_name, statistic, group_param,
         classifier, filter, fixed_param_values):
 
     clsfr_col = classifier.get_column_name()
@@ -210,7 +210,7 @@ def plot_statistic_by_classifier(
 
         plt.suptitle(title)
 
-        _savefig(plot_options.out_file_base,
+        _savefig(base_name,
                  [statistic.name, "vs",
                   clsfr_col, "per",
                   group_param.title.lower()]
@@ -218,7 +218,7 @@ def plot_statistic_by_classifier(
 
 
 def plot_cumulative_transcript_distribution_grouped(
-        stats, plot_options, group_param,
+        stats, base_name, group_param,
         classifier, ascending, fixed_param_values):
 
     clsfr_col = classifier.get_column_name()
@@ -259,7 +259,7 @@ def plot_cumulative_transcript_distribution_grouped(
 
         plt.suptitle(title)
 
-        _savefig(plot_options.out_file_base,
+        _savefig(base_name,
                  [clsfr_col, "per",
                   group_param.title.lower(),
                   utils.get_order_string(ascending)]
