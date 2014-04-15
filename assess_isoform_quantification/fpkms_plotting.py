@@ -2,6 +2,7 @@ import fpkms as f
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sb
+import utils
 
 from collections import namedtuple
 
@@ -107,7 +108,7 @@ def plot_cumulative_transcript_distribution(
 
         _savefig(plot_options.out_file_base,
                  [grouping_column, plot_options.label,
-                  ("asc" if ascending else "desc")],
+                  utils.get_order_string(ascending)],
                  suffix="distribution")
 
 
@@ -214,3 +215,53 @@ def plot_statistic_by_classifier(
                   clsfr_col, "per",
                   group_param.title.lower()]
                  + fixed_param_info)
+
+
+def plot_cumulative_transcript_distribution_grouped(
+        stats, plot_options, group_param,
+        classifier, ascending, fixed_param_values):
+
+    clsfr_col = classifier.get_column_name()
+
+    group_param_values = stats[group_param.name].value_counts().index.tolist()
+    group_param_values.sort()
+
+    with NewPlot():
+        for group_param_value in group_param_values:
+            group_stats = stats[stats[group_param.name] == group_param_value]
+            group_stats.sort(columns=clsfr_col, axis=0, inplace=True)
+            xvals = group_stats[clsfr_col]
+            yvals = group_stats[f.TRUE_POSITIVE_PERCENTAGE]
+
+            plt.plot(xvals, yvals, '-o',
+                     label=group_param.get_value_name(group_param_value))
+
+        plt.ylim(ymin=-2.5, ymax=102.5)
+
+        xmin = xvals.values[0]
+        xmax = xvals.values[-1]
+        xmargin = (xmax - xmin) / 40.0
+        plt.xlim(xmin=xmin-xmargin, xmax=xmax+xmargin)
+
+        capitalized = clsfr_col[:1].upper() + clsfr_col[1:]
+        plt.xlabel(capitalized)
+        plt.ylabel("Percentage of isoforms " +
+                   ("less" if ascending else "greater") + " than threshold")
+        plt.legend(title=group_param.title, loc=4)
+
+        fixed_param_info = [k.get_value_name(v) for k, v
+                            in fixed_param_values.items()]
+
+        title = " ".join([capitalized,
+                          "threshold per",
+                          group_param.title.lower()]) + \
+            ": " + ", ".join(fixed_param_info)
+
+        plt.suptitle(title)
+
+        _savefig(plot_options.out_file_base,
+                 [clsfr_col, "per",
+                  group_param.title.lower(),
+                  utils.get_order_string(ascending)]
+                 + fixed_param_info,
+                 suffix="distribution")

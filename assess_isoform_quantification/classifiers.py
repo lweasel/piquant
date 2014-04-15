@@ -9,6 +9,14 @@ def get_classifiers():
     return [c() for c in CLASSIFIERS]
 
 
+def get_grouped_stats_classifiers():
+    return [c for c in get_classifiers() if c.produces_grouped_stats()]
+
+
+def get_distribution_plot_classifiers():
+    return [c for c in get_classifiers() if c.produces_distribution_plots()]
+
+
 def Classifier(cls):
     CLASSIFIERS.append(cls)
     return cls

@@ -23,10 +23,11 @@ from docopt import docopt
 from schema import SchemaError
 
 import fpkms as f
+import classifiers
 import fpkms_plotting as plot
 import ordutils.options as opt
 import pandas as pd
-import classifiers
+import utils
 
 QUANT_METHOD = "quant-method"
 READ_DEPTH = "read-depth"
@@ -109,31 +110,32 @@ if options[OUT_FILE_BASENAME]:
         stats.to_csv(out_file, float_format="%.5f", index=False)
 
 # Write statistics for FPKMS stratified by various classification measures
-space_to_underscore = lambda x: x.replace(' ', '_')
-
 non_zero = fpkms[(fpkms[f.REAL_FPKM] > 0) & (fpkms[f.CALCULATED_FPKM] > 0)]
 
+grouped_stats_clsfrs = classifiers.get_grouped_stats_classifiers()
+distribution_plot_clsfrs = classifiers.get_distribution_plot_classifiers()
+
 if options[OUT_FILE_BASENAME]:
-    for classifier in [c for c in clsfrs if c.produces_grouped_stats()]:
+    for classifier in grouped_stats_clsfrs:
         column_name = classifier.get_column_name()
         stats = f.get_grouped_stats(fpkms, tp_fpkms, column_name)
         add_overall_stats(stats)
 
         stats_file_name = options[OUT_FILE_BASENAME] + "_stats_by_" + \
-            space_to_underscore(column_name) + ".csv"
+            utils.spaces_to_underscore(column_name) + ".csv"
 
         with open(stats_file_name, "w") as out_file:
             stats.to_csv(out_file, float_format="%.5f")
 
-    for classifier in [c for c in clsfrs if c.produces_distribution_plots()]:
+    for classifier in distribution_plot_clsfrs:
         for ascending in [True, False]:
             stats = f.get_distribution_stats(
                 non_zero, tp_fpkms, classifier, ascending)
             add_overall_stats(stats)
 
             stats_file_name = options[OUT_FILE_BASENAME] + \
-                "_distribution_stats_" + ("asc" if ascending else "desc") + \
-                "_by_" + space_to_underscore(classifier.get_column_name()) + \
+                "_distribution_stats_" + utils.get_order_string(ascending) + "_by_" \
+                + utils.spaces_to_underscore(classifier.get_column_name()) + \
                 ".csv"
 
             with open(stats_file_name, "w") as out_file:
@@ -156,7 +158,7 @@ NON_ZERO_PLOT_OPTIONS = plot.PlotOptions(
     options[OUT_FILE_BASENAME])
 
 if options[OUT_FILE_BASENAME]:
-    for classifier in [c for c in clsfrs if c.produces_grouped_stats()]:
+    for classifier in grouped_stats_clsfrs:
         plot.log_ratio_boxplot(
             non_zero, NON_ZERO_PLOT_OPTIONS, classifier)
         plot.log_ratio_boxplot(
@@ -172,7 +174,7 @@ if options[OUT_FILE_BASENAME]:
 # Make plots showing the percentage of isoforms above or below threshold values
 # according to various classification measures
 if options[OUT_FILE_BASENAME]:
-    for classifier in [c for c in clsfrs if c.produces_distribution_plots()]:
+    for classifier in distribution_plot_clsfrs:
         for ascending in [True, False]:
             plot.plot_cumulative_transcript_distribution(
                 non_zero, NON_ZERO_PLOT_OPTIONS, classifier, ascending)
