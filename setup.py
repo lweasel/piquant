@@ -1,19 +1,41 @@
-from setuptools import setup
+# Liberally adapted from:
+# "http://www.jeffknupp.com/blog/2013/08/16/open-sourcing-a-python-project-the-right-way/"
+
+import assess_isoform_quantification
+import sys
+
+from distutils.core import setup
+from setuptools.command.test import test as TestCommand
+
+
+class PyTest(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        import pytest
+        errcode = pytest.main(self.test_args)
+        sys.exit(errcode)
 
 setup(
     name='assess_isoform_quantification',
-    version=0.1,
+    version=assess_isoform_quantification.__version__,
+    description='Assessing performance of RNA-seq " + \
+        "isoform quantification tools.',
     author="Owen Dando",
+    author_email='owen.dando@ed.ac.uk',
+    packages=['assess_isoform_quantification'],
     install_requires=['docopt>=0.6.1',
                       'ez-setup>=0.9',
                       'gtf-to-genes>=1.09',
                       'py>=1.4.20',
                       'pytest>=2.5.2',
                       'schema>=0.2.0'],
-    author_email='owen.dando@ed.ac.uk',
-    description='Assessing performance of RNA-seq " +\
-        "isoform quantification tools.',
-    packages=['assess_isoform_quantification'],
-    include_package_data=True,
-    platforms='any'
+    tests_require=['pytest'],
+    cmdclass={'test': PyTest},
+    extras_require={
+        'testing': ['pytest']
+    }
 )
