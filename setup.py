@@ -22,8 +22,7 @@ class PyTest(TestCommand):
 setup(
     name='assess_isoform_quantification',
     version=assess_isoform_quantification.__version__,
-    description='Assessing performance of RNA-seq " + \
-        "isoform quantification tools.',
+    description='Pipeline for investigating the quantification of transcripts',
     author="Owen Dando",
     author_email='owen.dando@ed.ac.uk',
     packages=['assess_isoform_quantification'],
