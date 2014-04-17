@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats as scistats
 
-REAL_FPKMS_VALS = [0.05, 0.02, 15, 2, 10, 30, 25]
+REAL_FPKMS_VALS = [0.05, 0.02, 15, 2, 10, 30, 11]
 CALC_FPKMS_VALS = [0.03, 20, 3, 0.01, 5, 20, 10]
 GROUPS = [0, 1, 0, 1, 0, 1, 1]
 
@@ -18,15 +18,11 @@ def _get_test_fpkms():
         GROUP_TEST_COL: GROUPS
     })
 
-    fpkms[f.LOG10_REAL_FPKM] = np.log10(fpkms[f.REAL_FPKM])
-    fpkms[f.LOG10_CALCULATED_FPKM] = np.log10(fpkms[f.CALCULATED_FPKM])
+    f.calculate_log_ratios(fpkms)
+    f.calculate_percent_error(fpkms)
+    f.mark_positives_and_negatives(fpkms)
 
-    fpkms[f.TRUE_POSITIVE] = \
-        (fpkms[f.REAL_FPKM] > f.NOT_PRESENT_CUTOFF) & \
-        (fpkms[f.CALCULATED_FPKM] > f.NOT_PRESENT_CUTOFF)
-    tp_fpkms = fpkms[fpkms[f.TRUE_POSITIVE]]
-
-    return fpkms, tp_fpkms
+    return fpkms, f.get_true_positives(fpkms)
 
 
 def __get_test_grouped_fpkms():
@@ -40,35 +36,45 @@ def __get_test_grouped_fpkms():
     return grouped, summary, tp_grouped, tp_summary
 
 
-def _check_statistic_value(stat_class, correct_value):
-    fpkms, tp_fpkms = _get_test_fpkms()
-    stat = stat_class()
-    assert stat.calculate(fpkms, tp_fpkms) == correct_value
-
-
-def _check_grouped_statistic_values(stat_class, correct_value_calculator):
-    g, s, tp_g, tp_s = __get_test_grouped_fpkms()
-    stat = stat_class()
-    grouped_stats = stat.calculate_grouped(g, s, tp_g, tp_s)
-    group_count_test = \
-        lambda x: grouped_stats.ix[x] == correct_value_calculator(x)
-    assert all([group_count_test(gv) for gv in set(GROUPS)])
-
-
 def _true_positive(real_fpkm, calculated_fpkm):
     return real_fpkm > f.NOT_PRESENT_CUTOFF and \
         calculated_fpkm > f.NOT_PRESENT_CUTOFF
 
 
+def _fpkm_pairs(filter=lambda r, c: True):
+    return [(r, c) for r, c in zip(REAL_FPKMS_VALS, CALC_FPKMS_VALS) if
+            filter(r, c)]
+
+
 def _tp_fpkm_pairs():
-    return [(r, c) for r, c in zip(REAL_FPKMS_VALS, CALC_FPKMS_VALS)
-            if _true_positive(r, c)]
+    return _fpkm_pairs(lambda r, c: _true_positive(r, c))
+
+
+def _group_fpkm_pairs(group_val, filter=lambda r, c: True):
+    return [(r, c) for r, c, gv in
+            zip(REAL_FPKMS_VALS, CALC_FPKMS_VALS, GROUPS) if
+            (gv == group_val and filter(r, c))]
 
 
 def _group_tp_fpkm_pairs(group_val):
-    return [(r, c) for r, c, gv in
-            zip(REAL_FPKMS_VALS, CALC_FPKMS_VALS, GROUPS) if
-            (gv == group_val and _true_positive(r, c))]
+    return _group_fpkm_pairs(group_val, lambda r, c: _true_positive(r, c))
+
+
+def _check_statistic_value(stat_class, calculator, pair_func):
+    fpkms, tp_fpkms = _get_test_fpkms()
+    stat = stat_class()
+    correct_value = calculator(pair_func())
+    assert stat.calculate(fpkms, tp_fpkms) == correct_value
+
+
+def _check_grouped_statistic_values(stat_class, calculator, grouped_pair_func):
+    g, s, tp_g, tp_s = __get_test_grouped_fpkms()
+    stat = stat_class()
+    grouped_stats = stat.calculate_grouped(g, s, tp_g, tp_s)
+    correct_value_calculator = lambda x: calculator(grouped_pair_func(x))
+    group_count_test = \
+        lambda x: grouped_stats.ix[x] == correct_value_calculator(x)
+    assert all([group_count_test(gv) for gv in set(GROUPS)])
 
 
 def test_get_statistics_returns_statistics_instances():
@@ -98,25 +104,30 @@ def test_get_graphable_by_classifier_statistics_return_graphable_by_classifier_i
     assert all([s.graphable_by_classifier for s in g_stats])
 
 
+def _number_of_fpkms(fpkm_pairs):
+    return len(fpkm_pairs)
+
+
 def test_number_of_fpkms_statistic_calculates_correct_value():
-    cvc = len(REAL_FPKMS_VALS)
-    _check_statistic_value(statistics._NumberOfFPKMs, cvc)
+    _check_statistic_value(
+        statistics._NumberOfFPKMs, _number_of_fpkms, _fpkm_pairs)
 
 
 def test_number_of_fpkms_statistic_calculates_correct_grouped_values():
-    cvc = lambda x: len([gv for gv in GROUPS if gv == x])
-    _check_grouped_statistic_values(statistics._NumberOfFPKMs, cvc)
+    _check_grouped_statistic_values(
+        statistics._NumberOfFPKMs, _number_of_fpkms, _group_fpkm_pairs)
 
 
 def test_number_of_true_positive_fpkms_statistic_calculates_correct_value():
-    correct_value = len(_tp_fpkm_pairs())
     _check_statistic_value(
-        statistics._NumberOfTruePositiveFPKMs, correct_value)
+        statistics._NumberOfTruePositiveFPKMs,
+        _number_of_fpkms, _tp_fpkm_pairs)
 
 
 def test_number_of_true_positive_fpkms_statistic_calculates_correct_grouped_values():
-    cvc = lambda x: len(_group_tp_fpkm_pairs(x))
-    _check_grouped_statistic_values(statistics._NumberOfTruePositiveFPKMs, cvc)
+    _check_grouped_statistic_values(
+        statistics._NumberOfTruePositiveFPKMs,
+        _number_of_fpkms, _group_tp_fpkm_pairs)
 
 
 def _spearman(fpkm_pairs):
@@ -125,11 +136,49 @@ def _spearman(fpkm_pairs):
 
 
 def test_spearman_correlation_statistic_calculates_correct_value():
-    correct_value = _spearman(_tp_fpkm_pairs())
     _check_statistic_value(
-        statistics._SpearmanCorrelation, correct_value)
+        statistics._SpearmanCorrelation, _spearman, _tp_fpkm_pairs)
 
 
 def test_spearman_correlation_statistic_calculates_correct_grouped_values():
-    cvc = lambda x: _spearman(_group_tp_fpkm_pairs(x))
-    _check_grouped_statistic_values(statistics._SpearmanCorrelation, cvc)
+    _check_grouped_statistic_values(
+        statistics._SpearmanCorrelation, _spearman, _group_tp_fpkm_pairs)
+
+
+def _error_fraction(fpkm_pairs):
+    error_percent = lambda r, c: abs(100 * (c - r) / float(r))
+    above_threshold = \
+        [r for r, c in fpkm_pairs if
+         error_percent(r, c) >
+            statistics._TruePositiveErrorFraction.ERROR_PERCENTAGE_THRESHOLD]
+    return len(above_threshold) / float(len(fpkm_pairs))
+
+
+def test_true_positive_error_fraction_statistic_calculates_correct_value():
+    _check_statistic_value(
+        statistics._TruePositiveErrorFraction,
+        _error_fraction, _tp_fpkm_pairs)
+
+
+def test_true_positive_error_fraction_statistic_calculates_correct_grouped_values():
+    _check_grouped_statistic_values(
+        statistics._TruePositiveErrorFraction,
+        _error_fraction, _group_tp_fpkm_pairs)
+
+
+def _median_percent_error(fpkm_pairs):
+    error_percent = lambda r, c: 100 * (c - r) / float(r)
+    percent_errors = [error_percent(r, c) for r, c in fpkm_pairs]
+    return np.median(percent_errors)
+
+
+def test_median_percent_error_statistic_calculates_correct_value():
+    _check_statistic_value(
+        statistics._MedianPercentError,
+        _median_percent_error, _tp_fpkm_pairs)
+
+
+def test_median_percent_error_statistic_calculates_correct_grouped_values():
+    _check_grouped_statistic_values(
+        statistics._MedianPercentError,
+        _median_percent_error, _group_tp_fpkm_pairs)

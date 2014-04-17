@@ -164,7 +164,7 @@ class _SpearmanCorrelation(_BaseStatistic):
 @_Statistic
 class _TruePositiveErrorFraction(_BaseStatistic):
     # Calculates the percentage of 'true positive' transcript FPKMs (those for
-    # which both real and calculated FPKM were above a threshold value
+    # which both real and calculated FPKMs were above a threshold value
     # indicating 'presence' of the transcript) for which the calculated FPKM
     # was greater than a certain percentage above or below the real FPKM.
 
@@ -194,7 +194,9 @@ class _TruePositiveErrorFraction(_BaseStatistic):
 @_Statistic
 class _MedianPercentError(_BaseStatistic):
     # Calculates the median of the percent errors of the calculated compared to
-    # real transcript FPKMs.
+    # real FPKMs for 'true positive' transcript FPKMs (those for which both
+    # real and calculated FPKMs were above a threshold value indicating
+    # 'presence' of the transcript).
     def __init__(self):
         _BaseStatistic.__init__(
             self, "tp-median-percent-error", "True pos. median % error")
