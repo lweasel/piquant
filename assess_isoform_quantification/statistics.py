@@ -238,7 +238,7 @@ class _Sensitivity(_BaseStatistic):
 
 @_Statistic
 class _Specificity(_BaseStatistic):
-    # Calculates the "specififity" of the transcript quantification method -
+    # Calculates the "specificity" of the transcript quantification method -
     # that is, the fraction of all transcripts marked as 'not present' (their
     # calculated FPKM below a threshold value) which truly were 'not present'
     # (their real FPKM below a threshold value).
