@@ -41,6 +41,21 @@ def _true_positive(real_fpkm, calculated_fpkm):
         calculated_fpkm > f.NOT_PRESENT_CUTOFF
 
 
+def _true_negative(real_fpkm, calculated_fpkm):
+    return real_fpkm < f.NOT_PRESENT_CUTOFF and \
+        calculated_fpkm < f.NOT_PRESENT_CUTOFF
+
+
+def _false_negative(real_fpkm, calculated_fpkm):
+    return real_fpkm > f.NOT_PRESENT_CUTOFF and \
+        calculated_fpkm < f.NOT_PRESENT_CUTOFF
+
+
+def _false_positive(real_fpkm, calculated_fpkm):
+    return real_fpkm < f.NOT_PRESENT_CUTOFF and \
+        calculated_fpkm > f.NOT_PRESENT_CUTOFF
+
+
 def _fpkm_pairs(filter=lambda r, c: True):
     return [(r, c) for r, c in zip(REAL_FPKMS_VALS, CALC_FPKMS_VALS) if
             filter(r, c)]
@@ -182,3 +197,35 @@ def test_median_percent_error_statistic_calculates_correct_grouped_values():
     _check_grouped_statistic_values(
         statistics._MedianPercentError,
         _median_percent_error, _group_tp_fpkm_pairs)
+
+
+def _sensitivity(fpkm_pairs):
+    num_tp = sum([_true_positive(r, c) for r, c in fpkm_pairs])
+    num_fn = sum([_false_negative(r, c) for r, c in fpkm_pairs])
+    return float(num_tp) / (num_tp + num_fn)
+
+
+def test_sensitivity_statistic_calculates_correct_value():
+    _check_statistic_value(
+        statistics._Sensitivity, _sensitivity, _fpkm_pairs)
+
+
+def test_sensitivity_statistic_calculates_correct_grouped_values():
+    _check_grouped_statistic_values(
+        statistics._Sensitivity, _sensitivity, _group_fpkm_pairs)
+
+
+def _specificity(fpkm_pairs):
+    num_fp = sum([_false_positive(r, c) for r, c in fpkm_pairs])
+    num_tn = sum([_true_negative(r, c) for r, c in fpkm_pairs])
+    return float(num_tn) / (num_tn + num_fp)
+
+
+def test_specificity_statistic_calculates_correct_value():
+    _check_statistic_value(
+        statistics._Specificity, _specificity, _fpkm_pairs)
+
+
+def test_specificity_statistic_calculates_correct_grouped_values():
+    _check_grouped_statistic_values(
+        statistics._Specificity, _specificity, _group_fpkm_pairs)
