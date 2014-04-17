@@ -2,6 +2,19 @@
 
 source definitions.sh
 
+# Process command line options
+while getopts ":r" opt; do
+    case $opt in
+        r)
+            RUN_QUANTIFICATION=1
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >& 2
+            exit 1
+            ;;
+    esac
+done
+
 for method in $METHODS;
 do
     for depth in $DEPTHS; 
@@ -30,7 +43,7 @@ do
                             COMMAND="$COMMAND --errors"
                         fi
 
-                        if ["$bias" == "$WITH_BIAS" ]; then
+                        if [ "$bias" == "$WITH_BIAS" ]; then
                             COMMAND="$COMMAND --bias"
                         fi
 
@@ -50,9 +63,11 @@ do
 
                         python $COMMAND
 
-                        pushd $RUN_DIR
-                        nohup ./run_quantification.sh ${RUN_PARAMS} &> ${RUN_NAME}.out &
-                        popd
+                        if [ -n "$RUN_QUANTIFICATION" ]; then
+                            pushd $RUN_DIR
+                            nohup ./run_quantification.sh ${RUN_PARAMS} &> ${RUN_NAME}.out &
+                            popd
+                        fi
                     done
                 done
             done
