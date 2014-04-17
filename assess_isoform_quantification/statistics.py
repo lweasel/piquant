@@ -133,7 +133,7 @@ class _NumberOfTruePositiveFPKMs(_BaseStatistic):
 
     def calculate_grouped(
             self, grouped, grp_summary, tp_grouped, tp_grp_summary):
-        stats = tp_grp_summary[f.LOG10_RATIO].unstack()
+        stats = tp_grp_summary[f.REAL_FPKM].unstack()
         return stats[_SUMMARY_COUNT]
 
 

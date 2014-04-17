@@ -2,9 +2,9 @@ import assess_isoform_quantification.statistics as statistics
 import assess_isoform_quantification.fpkms as f
 import pandas as pd
 
-REAL_FPKMS_VALS = [0.5, 1, 2, 10, 30]
-CALC_FPKMS_VALS = [0.3, 3, 0.1, 5, 20]
-GROUPS = [0, 0, 1, 0, 1]
+REAL_FPKMS_VALS = [0.05, 0.02, 1, 2, 10, 30]
+CALC_FPKMS_VALS = [0.03, 20, 3, 0.01, 5, 20]
+GROUPS = [0, 1, 0, 1, 0, 1]
 
 GROUP_TEST_COL = "group_test"
 
@@ -35,9 +35,24 @@ def __get_test_grouped_fpkms():
     return grouped, summary, tp_grouped, tp_summary
 
 
+def _check_statistic_value(stat_class, correct_value):
+    fpkms, tp_fpkms = _get_test_fpkms()
+    stat = stat_class()
+    assert stat.calculate(fpkms, tp_fpkms) == correct_value
+
+
+def _check_grouped_statistic_values(stat_class, correct_value_calculator):
+    g, s, tp_g, tp_s = __get_test_grouped_fpkms()
+    stat = stat_class()
+    grouped_stats = stat.calculate_grouped(g, s, tp_g, tp_s)
+    group_count_test = \
+        lambda x: grouped_stats.ix[x] == correct_value_calculator(x)
+    assert all([group_count_test(gv) for gv in set(GROUPS)])
+
+
 def test_get_statistics_returns_statistics_instances():
     stats = statistics.get_statistics()
-    assert all([isinstance(s, statistics.BaseStatistic) for s in stats])
+    assert all([isinstance(s, statistics._BaseStatistic) for s in stats])
 
 
 def test_get_graphable_statistics_returns_subset_of_statistics():
@@ -64,16 +79,24 @@ def test_get_graphable_by_classifier_statistics_return_graphable_by_classifier_i
 
 def test_number_of_fpkms_statistic_calculates_correct_value():
     fpkms, tp_fpkms = _get_test_fpkms()
-    stat = statistics._NumberOfFPKMs()
-    assert stat.calculate(fpkms, tp_fpkms) == len(REAL_FPKMS_VALS)
+    correct_value = len(fpkms)
+    _check_statistic_value(statistics._NumberOfFPKMs, correct_value)
 
 
-def test_number_of_fpkms_statistic_calculates_correct_grouped_value():
-    grouped, summary, tp_grouped, tp_summary = __get_test_grouped_fpkms()
-    stat = statistics._NumberOfFPKMs()
-    grouped_stats = stat.calculate_grouped(
-        grouped, summary, tp_grouped, tp_summary)
+def test_number_of_fpkms_statistic_calculates_correct_grouped_values():
+    fpkms, tp_fpkms = _get_test_fpkms()
+    cvc = lambda x: len(fpkms[fpkms[GROUP_TEST_COL] == x])
+    _check_grouped_statistic_values(statistics._NumberOfFPKMs, cvc)
 
-    group_count = lambda x: len([v for v in GROUPS if v == x])
-    group_count_test = lambda x: grouped_stats.ix[x] == group_count(x)
-    assert all([group_count_test(gv) for gv in set(GROUPS)])
+
+def test_number_of_true_positive_fpkms_statistic_calculates_correct_value():
+    fpkms, tp_fpkms = _get_test_fpkms()
+    correct_value = len(tp_fpkms)
+    _check_statistic_value(
+        statistics._NumberOfTruePositiveFPKMs, correct_value)
+
+
+def test_number_of_true_positive_fpkms_statistic_calculates_correct_grouped_values():
+    fpkms, tp_fpkms = _get_test_fpkms()
+    cvc = lambda x: len(tp_fpkms[tp_fpkms[GROUP_TEST_COL] == x])
+    _check_grouped_statistic_values(statistics._NumberOfTruePositiveFPKMs, cvc)
