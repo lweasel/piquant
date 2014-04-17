@@ -64,13 +64,13 @@ def test_get_graphable_by_classifier_statistics_return_graphable_by_classifier_i
 
 def test_number_of_fpkms_statistic_calculates_correct_value():
     fpkms, tp_fpkms = _get_test_fpkms()
-    stat = statistics.NumberOfFPKMs()
+    stat = statistics._NumberOfFPKMs()
     assert stat.calculate(fpkms, tp_fpkms) == len(REAL_FPKMS_VALS)
 
 
 def test_number_of_fpkms_statistic_calculates_correct_grouped_value():
     grouped, summary, tp_grouped, tp_summary = __get_test_grouped_fpkms()
-    stat = statistics.NumberOfFPKMs()
+    stat = statistics._NumberOfFPKMs()
     grouped_stats = stat.calculate_grouped(
         grouped, summary, tp_grouped, tp_summary)
 
