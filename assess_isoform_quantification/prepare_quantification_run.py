@@ -233,7 +233,7 @@ writer = fw.BashScriptWriter(vars_dict)
 # Process command line options - these allow us to subsequently re-run
 # just part of the analysis
 
-writer.add_comment("Process command line options")
+writer.add_comment("Process command line options.")
 writer.start_while("getopts \":{run_options}\" opt")
 writer.start_case("$opt")
 
@@ -261,8 +261,9 @@ writer.add_break()
 if not options[INPUT_DIRECTORY]:
     writer.start_if("-n \"$CREATE_READS\"")
 
-    writer.add_comment("Run Flux Simulator to create expression profiles")
-    writer.add_comment("then simulate reads")
+    writer.add_comment(
+        "Run Flux Simulator to create expression profiles then " +
+        "simulate reads.")
     writer.add_line("flux-simulator -t simulator -x -p {fs_expr_params_file}")
     writer.add_break()
 
@@ -270,8 +271,9 @@ if not options[INPUT_DIRECTORY]:
     # to output (incorrectly) one transcript with zero length - which then
     # causes read simulation to barf. The following hack will remove the
     # offending transcript(s).
-    writer.add_comment("(this is a hack - Flux Simulator seems to sometimes")
-    writer.add_comment("incorrectly output transcripts with zero length")
+    writer.add_comment(
+        "(this is a hack - Flux Simulator seems to sometimes " +
+        "incorrectly output transcripts with zero length)")
     writer.add_line("ZERO_LENGTH_COUNT=$(awk 'BEGIN {{i=0}} $4 == 0 {{i++;}} END {{print i}}' {fs_pro_file})")
     writer.add_echo()
     writer.add_echo("Removing $ZERO_LENGTH_COUNT transcripts with zero length...")
@@ -282,14 +284,15 @@ if not options[INPUT_DIRECTORY]:
     # Given the expression profile created, calculate the number of reads
     # required to give the (approximate) read depth specified. Then edit
     # the Flux Simulator parameter file to specify this number of reads.
-    writer.add_comment("Calculate the number of reads required to give (approximately)")
-    writer.add_comment("a read depth of {depth} across the transcriptome, given a read")
-    writer.add_comment("length of {length}")
+    writer.add_comment(
+        "Calculate the number of reads required to give (approximately" +
+        ") a read depth of {depth} across the transcriptome, given a " +
+        "read length of {length}")
     writer.add_line("READS=$(python {calc_read_depth_script} {transcript_gtf_file} {fs_pro_file} {length} {depth})")
     writer.add_break()
 
-    writer.add_comment("Update the Flux Simulator parameters file with this number")
-    writer.add_comment("of reads.")
+    writer.add_comment(
+        "Update the Flux Simulator parameters file with this number of reads.")
     writer.add_line("sed -i \"s/{read_number_placeholder}/$READS/\" {fs_sim_params_file}")
     writer.add_break()
 
@@ -317,9 +320,9 @@ if not options[INPUT_DIRECTORY]:
         right_reads_tmp = "rr.tmp"
         paste_spec = "paste " + ("- - - -" if options[ERRORS] else "- -")
 
-        writer.add_comment("We've produced paired-end reads - split the Flux")
-        writer.add_comment("Simulator output into files containing left and right")
-        writer.add_comment("reads.")
+        writer.add_comment(
+            "We've produced paired-end reads - split the Flux Simulator " +
+            "output into files containing left and right reads.")
         writer.add_line(paste_spec + " < {reads_file} | awk -F '\\t' '$1~/\/1/ {{print $0 > \"{tmp_reads_file_left}\"}} $1~/\/2/ {{print $0 > \"{tmp_reads_file_right}\"}}'")
         writer.add_line("tr '\\t' '\\n' < {tmp_reads_file_left} > {reads_file_left}")
         writer.add_line("tr '\\t' '\\n' < {tmp_reads_file_right} > {reads_file_right}")
@@ -352,7 +355,7 @@ for line in options[QUANT_METHOD].get_preparatory_commands(options[PARAMS_SPEC])
 writer.add_break()
 
 # Use the specified quantification method to calculate per-transcript FPKMs
-writer.add_comment("Use {quant-method} to calculate per-transcript FPKMs")
+writer.add_comment("Use {quant-method} to calculate per-transcript FPKMs.")
 writer.add_line(options[QUANT_METHOD].get_command(options[PARAMS_SPEC]))
 writer.add_break()
 
@@ -362,7 +365,7 @@ writer.add_break()
 # Calculate the number of transcripts per gene and write to a file
 writer.start_if("-n \"$ANALYSE_RESULTS\"")
 
-writer.add_comment("Calculate the number of transcripts per gene")
+writer.add_comment("Calculate the number of transcripts per gene.")
 writer.start_if("! -f {transcript_counts}")
 writer.add_line("python {transcript_counts_script} {transcript_gtf_file} > {transcript_counts}")
 writer.end_block()
@@ -370,7 +373,7 @@ writer.add_break()
 
 # Calculate the length of unique sequence per transcript and write to a
 # file.
-writer.add_comment("Calculate the length of unique sequence per transcript")
+writer.add_comment("Calculate the length of unique sequence per transcript.")
 writer.start_if("! -f {unique_sequence}")
 writer.add_line("python {unique_sequence_script} {transcript_gtf_file} {unique_sequence}")
 writer.end_block()
@@ -378,13 +381,14 @@ writer.add_break()
 
 # Now assemble data required for analysis of quantification performance
 # into one file
-writer.add_comment("Assemble data required for analysis of quantification performance")
-writer.add_comment("into one file")
+writer.add_comment(
+    "Assemble data required for analysis of quantification performance " +
+    "into one file")
 writer.add_line("python {assemble_data_script} --method={quant-method} --out={fpkms_file} {fs_pro_file} {mapped_reads_file} {calculated_fpkms_file} {transcript_counts} {unique_sequence}")
 writer.add_break()
 
 # Finally perform analysis on the calculated FPKMs
-writer.add_comment("Perform analysis on calculated FPKMs")
+writer.add_comment("Perform analysis on calculated FPKMs.")
 writer.add_line("python {analyse_data_script} {quant-method} {length} {depth} {paired_end} {errors} {bias} {fpkms_file} {output_basename}")
 writer.end_block()
 

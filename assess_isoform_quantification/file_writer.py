@@ -1,6 +1,7 @@
 import os
 import os.path
 import stat
+import textwrap
 
 
 class _Writer:
@@ -24,6 +25,8 @@ class FluxSimulatorParamsWriter(_Writer):
 
 
 class BashScriptWriter(_Writer):
+    INDENT = '    '
+
     def __init__(self, vars_dict):
         self.vars_dict = vars_dict
         self.indent_level = 0
@@ -37,7 +40,7 @@ class BashScriptWriter(_Writer):
         self.indent_level -= 1
 
     def add_line(self, line_string):
-        line_string = '\t' * self.indent_level + \
+        line_string = BashScriptWriter.INDENT * self.indent_level + \
             line_string.format(**self.vars_dict)
         _Writer.add_line(self, line_string)
 
@@ -71,7 +74,11 @@ class BashScriptWriter(_Writer):
         self.start_block("", ")", ";;", option, predeindent=False)
 
     def add_comment(self, comment):
-        self.add_line("# {c}".format(c=comment))
+        lines = textwrap.wrap(
+            comment, initial_indent="# ", subsequent_indent="# ",
+            width=75 - self.indent_level * len(BashScriptWriter.INDENT))
+        for line in lines:
+            self.add_line(line)
 
     def add_echo(self, text=""):
         self.add_line("echo {t}".format(t=text))
