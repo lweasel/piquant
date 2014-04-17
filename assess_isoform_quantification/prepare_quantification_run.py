@@ -25,6 +25,7 @@
 from docopt import docopt
 from schema import Schema, SchemaError
 
+import file_writer as fw
 import ordutils.log as log
 import ordutils.options as opt
 import os
@@ -155,38 +156,35 @@ if options[INPUT_DIRECTORY]:
 else:
     num_molecules = int(options[NUM_FRAGMENTS] / FRAGMENTS_PER_MOLECULE)
 
-    common_fs_params_file_lines = [
-        "REF_FILE_NAME " + options[TRANSCRIPT_GTF_FILE],
-        "GEN_DIR " + options[PARAMS_SPEC][qs.GENOME_FASTA_DIR],
-        "NB_MOLECULES " + str(num_molecules),
-    ]
+    fs_params = {}
+    fs_params["REF_FILE_NAME"] = options[TRANSCRIPT_GTF_FILE]
+    fs_params["GEN_DIR"] = options[PARAMS_SPEC][qs.GENOME_FASTA_DIR]
+    fs_params["NB_MOLECULES"] = num_molecules
 
-    with get_output_file(FS_EXPRESSION_PARAMS_FILE) as fs_params_file:
-        write_lines(fs_params_file, common_fs_params_file_lines)
+    writer = fw.FluxSimulatorParamsWriter(fs_params)
+    writer.write_to_file(options[RUN_DIRECTORY], FS_EXPRESSION_PARAMS_FILE)
 
-    simulation_fs_params_file_lines = common_fs_params_file_lines + [
-        "SEQ_FILE_NAME " + SIMULATED_READS_PREFIX + ".bed",
-        "PRO_FILE_NAME " + fs_pro_file,
-        "FASTA YES",
-        "READ_NUMBER " + READ_NUMBER_PLACEHOLDER,
-        "READ_LENGTH " + str(options[READ_LENGTH]),
-        "PCR_DISTRIBUTION none"
-    ]
+    fs_params["SEQ_FILE_NAME"] = SIMULATED_READS_PREFIX + ".bed"
+    fs_params["PRO_FILE_NAME"] = fs_pro_file
+    fs_params["FASTA"] = "YES"
+    fs_params["READ_NUMBER"] = READ_NUMBER_PLACEHOLDER
+    fs_params["READ_LENGTH"] = options[READ_LENGTH]
+    fs_params["PCR_DISTRIBUTION"] = "none"
 
     if options[PAIRED_END]:
-        simulation_fs_params_file_lines += ["PAIRED_END YES", "UNIQUE_IDS YES"]
+        fs_params["PAIRED_END"] = "YES"
+        fs_params["UNIQUE_IDS"] = "YES"
 
     if options[ERRORS]:
-        error_model = ERROR_MODEL_LONG if \
+        fs_params["ERR_FILE"] = ERROR_MODEL_LONG if \
             options[READ_LENGTH] > 0.5*(ERROR_MODEL_SHORT + ERROR_MODEL_LONG) \
             else ERROR_MODEL_SHORT
-        simulation_fs_params_file_lines += ["ERR_FILE " + str(error_model)]
 
     if options[BIAS]:
-        simulation_fs_params_file_lines += ["RT_MOTIF default"]
+        fs_params["RT_MOTIF"] = "default"
 
-    with get_output_file(FS_SIMULATION_PARAMS_FILE) as fs_params_file:
-        write_lines(fs_params_file, simulation_fs_params_file_lines)
+    writer = fw.FluxSimulatorParamsWriter(fs_params)
+    writer.write_to_file(options[RUN_DIRECTORY], FS_SIMULATION_PARAMS_FILE)
 
 # Write shell script to run quantification analysis
 
@@ -207,6 +205,7 @@ def add_script_section(script_lines, lines):
 
 def create_command(elements):
     return " ".join([str(e) for e in elements])
+
 
 with get_output_file(RUN_SCRIPT) as script:
     script_lines = []
