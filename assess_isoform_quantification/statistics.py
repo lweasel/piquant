@@ -139,8 +139,10 @@ class _NumberOfTruePositiveFPKMs(_BaseStatistic):
 
 @_Statistic
 class _SpearmanCorrelation(_BaseStatistic):
-    # Calculates the Spearman rank correlation coefficient betwee calculated
-    # and real transcript FPKMs.
+    # Calculates the Spearman rank correlation coefficient between calculated
+    # and real FPKMs for 'true positive' transcript FPKMs (those for which both
+    # real and calculated FPKM were above a threshold value indicating
+    # 'presence' of the transcript).
     def __init__(self):
         _BaseStatistic.__init__(
             self, "tp-log-fpkm-rho", "Spearman's rho",
