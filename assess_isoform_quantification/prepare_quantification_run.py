@@ -3,7 +3,7 @@
 # TODO: Fix horrid way of dealing with indentation of sections.
 
 """Usage:
-    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-dir=<run-dir] [--input-dir=<input-dir] [--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>] [--errors] [--paired-end] <transcript-gtf-file> <genome-fasta-dir>
+    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-dir=<run-dir] [--input-dir=<input-dir] [--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>] [--errors] [--paired-end] [--bias] <transcript-gtf-file> <genome-fasta-dir>
 
 -h --help                           Show this message.
 -v --version                        Show version.
