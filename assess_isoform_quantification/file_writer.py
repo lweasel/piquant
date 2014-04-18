@@ -5,10 +5,10 @@ import textwrap
 
 
 class _Writer:
-    def __init__(self, initial_lines=[]):
-        self.lines = list(initial_lines)
+    def __init__(self):
+        self.lines = []
 
-    def add_line(self, line_string):
+    def _add_line(self, line_string):
         self.lines.append(line_string)
 
     def write_to_file(self, directory, filename):
@@ -19,19 +19,62 @@ class _Writer:
 
 class FluxSimulatorParamsWriter(_Writer):
     def __init__(self, vars_dict):
-        lines = ["{n} {v}".format(n=name, v=value)
-                 for name, value in vars_dict.items()]
-        _Writer.__init__(self, initial_lines=lines)
+        _Writer.__init__(self)
+
+        for name, value in vars_dict.items():
+            self._add_line("{n} {v}".format(n=name, v=value))
+
+
+class _BashSection:
+    def __init__(self, writer):
+        self.writer = writer
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.writer._add_line("")
+
+
+class _BashBlock:
+    def __init__(self, writer, start_prefix, start_suffix,
+                 details, end, predeindent):
+        self.writer = writer
+        self.start_prefix = start_prefix
+        self.start_suffix = start_suffix
+        self.details = details
+        self.end = end
+        self.predeindent = predeindent
+
+    def __enter__(self):
+        self.writer.add_line("{p}{d}{s}".format(
+            p=self.start_prefix, d=self.details, s=self.start_suffix))
+        self.writer.indent()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if self.predeindent:
+            self.writer.deindent()
+        self.writer.add_line(self.end)
+        if not self.predeindent:
+            self.writer.deindent()
 
 
 class BashScriptWriter(_Writer):
     INDENT = '    '
 
     def __init__(self, vars_dict):
+        _Writer.__init__(self)
+
         self.vars_dict = vars_dict
         self.indent_level = 0
         self.block_ends = []
-        _Writer.__init__(self, initial_lines=["#!/bin/bash", ""])
+
+        with self.section():
+            self.add_line("#!/bin/bash")
+        with self.section():
+            self.add_line("set -o nounset")
+            self.add_line("set -o errexit")
 
     def indent(self):
         self.indent_level += 1
@@ -42,36 +85,28 @@ class BashScriptWriter(_Writer):
     def add_line(self, line_string):
         line_string = BashScriptWriter.INDENT * self.indent_level + \
             line_string.format(**self.vars_dict)
-        _Writer.add_line(self, line_string)
+        _Writer._add_line(self, line_string)
 
-    def start_block(self, block_start_prefix, block_start_suffix,
-                    block_end, details, predeindent=True):
-        self.add_line("{p}{d}{s}".format(
-            p=block_start_prefix, d=details, s=block_start_suffix))
-        self.block_ends.append(block_end)
-        self.indent()
-        self.predeindent = predeindent
+    def section(self):
+        return _BashSection(self)
 
-    def end_block(self):
-        if self.predeindent:
-            self.deindent()
-        self.add_line(self.block_ends[-1])
-        self.block_ends = self.block_ends[:-1]
-        if not self.predeindent:
-            self.deindent()
-        self.predeindent = True
+    def block(self, block_start_prefix, block_start_suffix,
+              block_end, details, predeindent=True):
 
-    def start_if(self, details):
-        self.start_block("if [ ", " ]; then", "fi", details)
+        return _BashBlock(self, block_start_prefix, block_start_suffix,
+                          details, block_end, predeindent)
 
-    def start_while(self, details):
-        self.start_block("while ", "; do", "done", details)
+    def if_block(self, details):
+        return self.block("if [ ", " ]; then", "fi", details)
 
-    def start_case(self, details):
-        self.start_block("case ", "in", "esac", details)
+    def while_block(self, details):
+        return self.block("while ", "; do", "done", details)
 
-    def start_case_option(self, option):
-        self.start_block("", ")", ";;", option, predeindent=False)
+    def case_block(self, details):
+        return self.block("case ", " in", "esac", details)
+
+    def case_option_block(self, option):
+        return self.block("", ")", ";;", option, predeindent=False)
 
     def add_comment(self, comment):
         lines = textwrap.wrap(
@@ -82,9 +117,6 @@ class BashScriptWriter(_Writer):
 
     def add_echo(self, text=""):
         self.add_line("echo {t}".format(t=text))
-
-    def add_break(self):
-        _Writer.add_line(self, "")
 
     def write_to_file(self, directory, filename):
         _Writer.write_to_file(self, directory, filename)

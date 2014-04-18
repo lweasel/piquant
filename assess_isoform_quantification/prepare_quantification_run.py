@@ -188,8 +188,6 @@ else:
 
 logger.info("Creating shell script to run quantification analysis.")
 
-script_path = None
-
 reads_suffix = ".fastq" if options[ERRORS] else ".fasta"
 reads_file = SIMULATED_READS_PREFIX + reads_suffix
 left_reads_file = SIMULATED_READS_PREFIX + ".1" + reads_suffix
@@ -232,164 +230,144 @@ writer = fw.BashScriptWriter(vars_dict)
 
 # Process command line options - these allow us to subsequently re-run
 # just part of the analysis
-
 writer.add_comment("Process command line options.")
-writer.start_while("getopts \":{run_options}\" opt")
-writer.start_case("$opt")
 
-if not options[INPUT_DIRECTORY]:
-    writer.start_case_option("r")
-    writer.add_line("CREATE_READS=1")
-    writer.end_block()
+with writer.section():
+    with writer.while_block("getopts \":{run_options}\" opt"):
+        with writer.case_block("$opt"):
+            if not options[INPUT_DIRECTORY]:
+                with writer.case_option_block("r"):
+                    writer.add_line("CREATE_READS=1")
 
-writer.start_case_option("q")
-writer.add_line("QUANTIFY_TRANSCRIPTS=1")
-writer.end_block()
-writer.start_case_option("a")
-writer.add_line("ANALYSE_RESULTS=1")
-writer.end_block()
-writer.start_case_option("\?")
-writer.add_line("echo \"Invalid option: -$OPTARG\" >&2")
-writer.end_block()
-writer.end_block()
-writer.end_block()
-
-writer.add_break()
+            with writer.case_option_block("q"):
+                writer.add_line("QUANTIFY_TRANSCRIPTS=1")
+            with writer.case_option_block("a"):
+                writer.add_line("ANALYSE_RESULTS=1")
+            with writer.case_option_block("\?"):
+                writer.add_line("echo \"Invalid option: -$OPTARG\" >&2")
 
 # If pre-existing reads have not been specified, use Flux Simulator to
 # create a new set of simulated reads.
 if not options[INPUT_DIRECTORY]:
-    writer.start_if("-n \"$CREATE_READS\"")
+    with writer.section():
+        with writer.if_block("-n \"$CREATE_READS\""):
+            with writer.section():
+                writer.add_comment(
+                    "Run Flux Simulator to create expression profiles then " +
+                    "simulate reads.")
+                writer.add_line("flux-simulator -t simulator -x -p {fs_expr_params_file}")
 
-    writer.add_comment(
-        "Run Flux Simulator to create expression profiles then " +
-        "simulate reads.")
-    writer.add_line("flux-simulator -t simulator -x -p {fs_expr_params_file}")
-    writer.add_break()
+            # When creating expression profiles, Flux Simulator sometimes appears
+            # to output (incorrectly) one transcript with zero length - which then
+            # causes read simulation to barf. The following hack will remove the
+            # offending transcript(s).
+            with writer.section():
+                writer.add_comment(
+                    "(this is a hack - Flux Simulator seems to sometimes " +
+                    "incorrectly output transcripts with zero length)")
+                writer.add_line("ZERO_LENGTH_COUNT=$(awk 'BEGIN {{i=0}} $4 == 0 {{i++;}} END {{print i}}' {fs_pro_file})")
+                writer.add_echo()
+                writer.add_echo("Removing $ZERO_LENGTH_COUNT transcripts with zero length...")
+                writer.add_echo()
+                writer.add_line("awk '$4 > 0' {fs_pro_file} > tmp; mv tmp {fs_pro_file}")
 
-    # When creating expression profiles, Flux Simulator sometimes appears
-    # to output (incorrectly) one transcript with zero length - which then
-    # causes read simulation to barf. The following hack will remove the
-    # offending transcript(s).
-    writer.add_comment(
-        "(this is a hack - Flux Simulator seems to sometimes " +
-        "incorrectly output transcripts with zero length)")
-    writer.add_line("ZERO_LENGTH_COUNT=$(awk 'BEGIN {{i=0}} $4 == 0 {{i++;}} END {{print i}}' {fs_pro_file})")
-    writer.add_echo()
-    writer.add_echo("Removing $ZERO_LENGTH_COUNT transcripts with zero length...")
-    writer.add_echo()
-    writer.add_line("awk '$4 > 0' {fs_pro_file} > tmp; mv tmp {fs_pro_file}")
-    writer.add_break()
+            # Given the expression profile created, calculate the number of reads
+            # required to give the (approximate) read depth specified. Then edit
+            # the Flux Simulator parameter file to specify this number of reads.
+            with writer.section():
+                writer.add_comment(
+                    "Calculate the number of reads required to give (approximately" +
+                    ") a read depth of {depth} across the transcriptome, given a " +
+                    "read length of {length}")
+                writer.add_line("READS=$(python {calc_read_depth_script} {transcript_gtf_file} {fs_pro_file} {length} {depth})")
 
-    # Given the expression profile created, calculate the number of reads
-    # required to give the (approximate) read depth specified. Then edit
-    # the Flux Simulator parameter file to specify this number of reads.
-    writer.add_comment(
-        "Calculate the number of reads required to give (approximately" +
-        ") a read depth of {depth} across the transcriptome, given a " +
-        "read length of {length}")
-    writer.add_line("READS=$(python {calc_read_depth_script} {transcript_gtf_file} {fs_pro_file} {length} {depth})")
-    writer.add_break()
+            with writer.section():
+                writer.add_comment(
+                    "Update the Flux Simulator parameters file with this number of reads.")
+                writer.add_line("sed -i \"s/{read_number_placeholder}/$READS/\" {fs_sim_params_file}")
 
-    writer.add_comment(
-        "Update the Flux Simulator parameters file with this number of reads.")
-    writer.add_line("sed -i \"s/{read_number_placeholder}/$READS/\" {fs_sim_params_file}")
-    writer.add_break()
+            # Now use Flux Simulator to simulate reads
+            with writer.section():
+                writer.add_line("flux-simulator -t simulator -l -s -p {fs_sim_params_file}")
 
-    # Now use Flux Simulator to simulate reads
-    writer.add_line("flux-simulator -t simulator -l -s -p {fs_sim_params_file}")
-    writer.add_break()
+            # Some isoform quantifiers (e.g. eXpress) require reads to be presented
+            # in a random order, but the reads output by Flux Simulator do have an
+            # order - hence we shuffle them.
+            lines_per_fragment = 2
+            if options[ERRORS]:
+                lines_per_fragment *= 2
+            if options[PAIRED_END]:
+                lines_per_fragment *= 2
 
-    # Some isoform quantifiers (e.g. eXpress) require reads to be presented
-    # in a random order, but the reads output by Flux Simulator do have an
-    # order - hence we shuffle them.
-    lines_per_fragment = 2
-    if options[ERRORS]:
-        lines_per_fragment *= 2
-    if options[PAIRED_END]:
-        lines_per_fragment *= 2
+            with writer.section():
+                writer.add_line("paste " + ("- " * lines_per_fragment) + "< {reads_file} | shuf | tr '\\t' '\\n' > {tmp_reads_file}")
+                writer.add_line("mv {tmp_reads_file} {reads_file}")
 
-    writer.add_line("paste " + ("- " * lines_per_fragment) + "< {reads_file} | shuf | tr '\\t' '\\n' > {tmp_reads_file}")
-    writer.add_line("mv {tmp_reads_file} {reads_file}")
-    writer.add_break()
+            # If we've specified paired end reads, split the FASTA/Q file output by
+            # Flux Simulator into separate files for forward and reverse reads
+            if options[PAIRED_END]:
+                left_reads_tmp = "lr.tmp"
+                right_reads_tmp = "rr.tmp"
+                paste_spec = "paste " + ("- - - -" if options[ERRORS] else "- -")
 
-    # If we've specified paired end reads, split the FASTA/Q file output by
-    # Flux Simulator into separate files for forward and reverse reads
-    if options[PAIRED_END]:
-        left_reads_tmp = "lr.tmp"
-        right_reads_tmp = "rr.tmp"
-        paste_spec = "paste " + ("- - - -" if options[ERRORS] else "- -")
-
-        writer.add_comment(
-            "We've produced paired-end reads - split the Flux Simulator " +
-            "output into files containing left and right reads.")
-        writer.add_line(paste_spec + " < {reads_file} | awk -F '\\t' '$1~/\/1/ {{print $0 > \"{tmp_reads_file_left}\"}} $1~/\/2/ {{print $0 > \"{tmp_reads_file_right}\"}}'")
-        writer.add_line("tr '\\t' '\\n' < {tmp_reads_file_left} > {reads_file_left}")
-        writer.add_line("tr '\\t' '\\n' < {tmp_reads_file_right} > {reads_file_right}")
-
-    writer.end_block()
-    writer.add_break()
+                writer.add_comment(
+                    "We've produced paired-end reads - split the Flux Simulator " +
+                    "output into files containing left and right reads.")
+                writer.add_line(paste_spec + " < {reads_file} | awk -F '\\t' '$1~/\/1/ {{print $0 > \"{tmp_reads_file_left}\"}} $1~/\/2/ {{print $0 > \"{tmp_reads_file_right}\"}}'")
+                writer.add_line("tr '\\t' '\\n' < {tmp_reads_file_left} > {reads_file_left}")
+                writer.add_line("tr '\\t' '\\n' < {tmp_reads_file_right} > {reads_file_right}")
 
 # Perform preparatory tasks required by a particular quantification method
 # prior to calculating abundances; for example, this might include mapping
 # reads to the genome with TopHat
-writer.start_if("-n \"$QUANTIFY_TRANSCRIPTS\"")
+with writer.section():
+    with writer.if_block("-n \"$QUANTIFY_TRANSCRIPTS\""):
+        reads_file_dir = options[INPUT_DIRECTORY] \
+            if options[INPUT_DIRECTORY] else "."
 
-reads_file_dir = options[INPUT_DIRECTORY] \
-    if options[INPUT_DIRECTORY] else "."
+        if options[PAIRED_END]:
+            options[PARAMS_SPEC][qs.LEFT_SIMULATED_READS] = \
+                reads_file_dir + os.path.sep + left_reads_file
+            options[PARAMS_SPEC][qs.RIGHT_SIMULATED_READS] = \
+                reads_file_dir + os.path.sep + right_reads_file
+        else:
+            options[PARAMS_SPEC][qs.SIMULATED_READS] = \
+                reads_file_dir + os.path.sep + reads_file
 
-if options[PAIRED_END]:
-    options[PARAMS_SPEC][qs.LEFT_SIMULATED_READS] = \
-        reads_file_dir + os.path.sep + left_reads_file
-    options[PARAMS_SPEC][qs.RIGHT_SIMULATED_READS] = \
-        reads_file_dir + os.path.sep + right_reads_file
-else:
-    options[PARAMS_SPEC][qs.SIMULATED_READS] = \
-        reads_file_dir + os.path.sep + reads_file
+        options[PARAMS_SPEC][qs.FASTQ_READS] = options[ERRORS]
 
-options[PARAMS_SPEC][qs.FASTQ_READS] = options[ERRORS]
+        with writer.section():
+            for line in options[QUANT_METHOD].get_preparatory_commands(options[PARAMS_SPEC]):
+                writer.add_line(line)
 
-for line in options[QUANT_METHOD].get_preparatory_commands(options[PARAMS_SPEC]):
-    writer.add_line(line)
-
-writer.add_break()
-
-# Use the specified quantification method to calculate per-transcript FPKMs
-writer.add_comment("Use {quant-method} to calculate per-transcript FPKMs.")
-writer.add_line(options[QUANT_METHOD].get_command(options[PARAMS_SPEC]))
-writer.add_break()
-
-writer.end_block()
-writer.add_break()
+        # Use the specified quantification method to calculate per-transcript FPKMs
+        writer.add_comment("Use {quant-method} to calculate per-transcript FPKMs.")
+        writer.add_line(options[QUANT_METHOD].get_command(options[PARAMS_SPEC]))
 
 # Calculate the number of transcripts per gene and write to a file
-writer.start_if("-n \"$ANALYSE_RESULTS\"")
+with writer.if_block("-n \"$ANALYSE_RESULTS\""):
+    with writer.section():
+        writer.add_comment("Calculate the number of transcripts per gene.")
+        with writer.if_block("! -f {transcript_counts}"):
+            writer.add_line("python {transcript_counts_script} {transcript_gtf_file} > {transcript_counts}")
 
-writer.add_comment("Calculate the number of transcripts per gene.")
-writer.start_if("! -f {transcript_counts}")
-writer.add_line("python {transcript_counts_script} {transcript_gtf_file} > {transcript_counts}")
-writer.end_block()
-writer.add_break()
+    # Calculate the length of unique sequence per transcript and write to a
+    # file.
+    with writer.section():
+        writer.add_comment("Calculate the length of unique sequence per transcript.")
+        with writer.if_block("! -f {unique_sequence}"):
+            writer.add_line("python {unique_sequence_script} {transcript_gtf_file} {unique_sequence}")
 
-# Calculate the length of unique sequence per transcript and write to a
-# file.
-writer.add_comment("Calculate the length of unique sequence per transcript.")
-writer.start_if("! -f {unique_sequence}")
-writer.add_line("python {unique_sequence_script} {transcript_gtf_file} {unique_sequence}")
-writer.end_block()
-writer.add_break()
+    # Now assemble data required for analysis of quantification performance
+    # into one file
+    with writer.section():
+        writer.add_comment(
+            "Assemble data required for analysis of quantification performance " +
+            "into one file")
+        writer.add_line("python {assemble_data_script} --method={quant-method} --out={fpkms_file} {fs_pro_file} {mapped_reads_file} {calculated_fpkms_file} {transcript_counts} {unique_sequence}")
 
-# Now assemble data required for analysis of quantification performance
-# into one file
-writer.add_comment(
-    "Assemble data required for analysis of quantification performance " +
-    "into one file")
-writer.add_line("python {assemble_data_script} --method={quant-method} --out={fpkms_file} {fs_pro_file} {mapped_reads_file} {calculated_fpkms_file} {transcript_counts} {unique_sequence}")
-writer.add_break()
-
-# Finally perform analysis on the calculated FPKMs
-writer.add_comment("Perform analysis on calculated FPKMs.")
-writer.add_line("python {analyse_data_script} {quant-method} {length} {depth} {paired_end} {errors} {bias} {fpkms_file} {output_basename}")
-writer.end_block()
+    # Finally perform analysis on the calculated FPKMs
+    writer.add_comment("Perform analysis on calculated FPKMs.")
+    writer.add_line("python {analyse_data_script} {quant-method} {length} {depth} {paired_end} {errors} {bias} {fpkms_file} {output_basename}")
 
 writer.write_to_file(options[RUN_DIRECTORY], RUN_SCRIPT)
