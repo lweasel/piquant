@@ -20,18 +20,14 @@ TOPHAT_MAPPED_READS = TOPHAT_OUTPUT_DIR + os.path.sep + "accepted_hits.bam"
 
 TRANSCRIPT_REFERENCE = "TRANSCRIPT_REFERENCE"
 BOWTIE_INDEX = "BOWTIE_INDEX"
-IRECKON_JAR = "IRECKON_JAR"
-GTF2GFF_SCRIPT = "GTF2GFF_SCRIPT"
 
 PARAM_DESCRIPTIONS = {
     TRANSCRIPT_REFERENCE: "name of RSEM transcript reference",
     BOWTIE_INDEX: "name of Bowtie index used when TopHat maps reads to genome",
-    IRECKON_JAR: "location of the iReckon .jar file",
-    GTF2GFF_SCRIPT: "Perl script to transform GTF to GFF format"
 }
 
 
-class ParamsValidator:
+class _ParamsValidator:
     def __init__(self, method, required_params):
         self.method = method
         self.required_params = required_params
@@ -53,21 +49,17 @@ class ParamsValidator:
         return params
 
 
-QUANT_METHODS = {}
+_QUANT_METHODS = {}
 
 
-# Hmm...
-def Quantifier(cls):
-    method_name = cls.__name__
-    QUANT_METHODS[method_name] = cls
+def get_quantification_methods():
+    return _QUANT_METHODS
 
-    required_params = cls.get_required_params()
 
-    def get_params_validator(obj):
-        return ParamsValidator(method_name, required_params)
-
-    cls.get_params_validator = get_params_validator
-
+def _Quantifier(cls):
+    cls.get_params_validator = \
+        lambda x: _ParamsValidator(cls.get_name(), cls.get_required_params())
+    _QUANT_METHODS[cls.get_name()] = cls()
     return cls
 
 
@@ -80,12 +72,15 @@ def Quantifier(cls):
 #   -p BOWTIE_INDEX=~/data/genome/mouse/mm10/bowtie-index/mm10
 #   ~/data/genome/mouse/mm10/Mus_musculus.protein_coding.gtf
 #   ~/data/genome/mouse/mm10/top_level_per_contig
-@Quantifier
-class Cufflinks:
-
+@_Quantifier
+class _Cufflinks:
     @classmethod
     def get_required_params(cls):
         return [BOWTIE_INDEX]
+
+    @classmethod
+    def get_name(cls):
+        return "Cufflinks"
 
     def calculate_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
@@ -131,13 +126,17 @@ class Cufflinks:
 #   -p TRANSCRIPT_REFERENCE=~/data/genome/mouse/mm10/rsem/mm10-protein-coding
 #   ~/data/genome/mouse/mm10/Mus_musculus.protein_coding.gtf
 #   ~/data/genome/mouse/mm10/top_level_per_contig
-@Quantifier
-class RSEM:
+@_Quantifier
+class _RSEM:
     SAMPLE_NAME = "rsem_sample"
 
     @classmethod
     def get_required_params(cls):
         return [TRANSCRIPT_REFERENCE]
+
+    @classmethod
+    def get_name(cls):
+        return "RSEM"
 
     def calculate_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
@@ -173,13 +172,13 @@ class RSEM:
         writer.add_line(
             "rsem-calculate-expression --time " + qualities_spec +
             " --p 32 --output-genome-bam " + reads_spec + " " +
-            params[TRANSCRIPT_REFERENCE] + " " + RSEM.SAMPLE_NAME)
+            params[TRANSCRIPT_REFERENCE] + " " + _RSEM.SAMPLE_NAME)
 
     def get_mapped_reads_file(self):
-        return RSEM.SAMPLE_NAME + ".genome.sorted.bam"
+        return _RSEM.SAMPLE_NAME + ".genome.sorted.bam"
 
     def get_fpkm_file(self):
-        return RSEM.SAMPLE_NAME + ".isoforms.results"
+        return _RSEM.SAMPLE_NAME + ".isoforms.results"
 
     def requires_paired_end_reads(self):
         return False
@@ -194,13 +193,17 @@ class RSEM:
 #   -p TRANSCRIPT_REFERENCE=~/data/genome/mouse/mm10/rsem/mm10-protein-coding
 #   ~/data/genome/mouse/mm10/Mus_musculus.protein_coding.gtf
 #   ~/data/genome/mouse/mm10/top_level_per_contig
-@Quantifier
-class Express:
+@_Quantifier
+class _Express:
     MAPPED_READS_FILE = "hits.bam"
 
     @classmethod
     def get_required_params(cls):
         return [TRANSCRIPT_REFERENCE]
+
+    @classmethod
+    def get_name(cls):
+        return "Express"
 
     def calculate_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
@@ -214,7 +217,7 @@ class Express:
         # For convenience, we use a tool from the RSEM package to create the
         # transcript reference
         with writer.section():
-            RSEM().write_preparatory_commands(writer, params)
+            _RSEM().write_preparatory_commands(writer, params)
 
         qualities_spec = "-q" if params[FASTQ_READS] else "-f"
 
@@ -228,7 +231,7 @@ class Express:
             "bowtie " + qualities_spec +
             " -e 99999999 -l 25 -I 1 -X 1000 -a -S -m 200 -p 32 " +
             params[TRANSCRIPT_REFERENCE] + " " + reads_spec,
-            "samtools view -Sb - > " + Express.MAPPED_READS_FILE
+            "samtools view -Sb - > " + _Express.MAPPED_READS_FILE
         ])
 
     def write_quantification_commands(self, writer, params):
@@ -237,10 +240,10 @@ class Express:
 
         writer.add_line(
             "express " + stranded_spec + params[TRANSCRIPT_REFERENCE] +
-            ".transcripts.fa " + Express.MAPPED_READS_FILE)
+            ".transcripts.fa " + _Express.MAPPED_READS_FILE)
 
     def get_mapped_reads_file(self):
-        return Express.MAPPED_READS_FILE
+        return _Express.MAPPED_READS_FILE
 
     def get_fpkm_file(self):
         return "results.xprs"

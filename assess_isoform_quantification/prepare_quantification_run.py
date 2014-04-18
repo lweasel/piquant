@@ -157,7 +157,7 @@ def _add_preparatory_quantification_commands(
 
 def _add_quantification_commands(writer, quant_method, params_spec):
     # Use the specified quantification method to calculate per-transcript FPKMs
-    method_name = quant_method.__class__.__name__
+    method_name = quant_method.get_name()
     writer.add_comment(
         "Use " + method_name + " to calculate per-transcript FPKMs.")
     quant_method.write_quantification_commands(writer, params_spec)
@@ -196,7 +196,7 @@ def _add_assemble_quantification_data(
         "Assemble data required for analysis of quantification performance " +
         "into one file")
 
-    method_name = quant_method.__class__.__name__
+    method_name = quant_method.get_name()
     counts_file = _get_transcript_counts_file(transcript_gtf_file)
     unique_seq_file = _get_unique_sequence_file(transcript_gtf_file)
 
@@ -215,7 +215,7 @@ def _add_analyse_quantification_results(
     # Finally perform analysis on the calculated FPKMs
     writer.add_comment("Perform analysis on calculated FPKMs.")
 
-    method_name = quant_method.__class__.__name__
+    method_name = quant_method.get_name()
     writer.add_line(
         "python " + ANALYSE_DATA_SCRIPT + " " + method_name + " " +
         str(read_length) + " " + str(read_depth) + " " + str(paired_end) +

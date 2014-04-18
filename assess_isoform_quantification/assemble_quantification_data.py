@@ -65,7 +65,7 @@ try:
         options[UNIQUE_SEQ_FILE],
         "Could not open unique sequence lengths file")
     options[QUANT_METHOD] = opt.validate_dict_option(
-        options[QUANT_METHOD], qs.QUANT_METHODS,
+        options[QUANT_METHOD], qs.get_quantification_methods(),
         "Unknown quantification method")
 except SchemaError as exc:
     exit(exc.code)
@@ -135,11 +135,10 @@ profiles[fpkms.REAL_FPKM] = \
 
 logger.info("Reading calculated FPKMs...")
 
-quant_method = options[QUANT_METHOD]()
-quant_method.calculate_transcript_abundances(options[QUANT_FILE])
+options[QUANT_METHOD].calculate_transcript_abundances(options[QUANT_FILE])
 
 profiles[fpkms.CALCULATED_FPKM] = profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].\
-    map(quant_method.get_transcript_abundance)
+    map(options[QUANT_METHOD].get_transcript_abundance)
 
 # Read per-gene transcript counts
 

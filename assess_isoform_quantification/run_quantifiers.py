@@ -72,8 +72,8 @@ try:
         nullable=True)
 
     options[QUANT_METHOD] = opt.validate_dict_option(
-        options[QUANT_METHOD], qs.QUANT_METHODS,
-        "Unknown quantification method")()
+        options[QUANT_METHOD], qs.get_quantification_methods(),
+        "Unknown quantification method")
 
     options[PARAMS_SPEC] = Schema(
         options[QUANT_METHOD].get_params_validator()).\
