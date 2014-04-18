@@ -4,3 +4,4 @@ assess_isoform_quantification.egg-info
 assess_isoform_quantification/out/
 assess_isoform_quantification/tmp/
 .ipynb_checkpoints
+output
