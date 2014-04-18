@@ -118,6 +118,9 @@ class BashScriptWriter(_Writer):
     def add_echo(self, text=""):
         self.add_line("echo {t}".format(t=text))
 
+    def add_pipe(self, pipe_commands):
+        self.add_line(" | ".join(pipe_commands))
+
     def write_to_file(self, directory, filename):
         _Writer.write_to_file(self, directory, filename)
         path = os.path.abspath(directory + os.path.sep + filename)

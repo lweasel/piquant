@@ -253,8 +253,7 @@ if not options[INPUT_DIRECTORY]:
         with writer.if_block("-n \"$CREATE_READS\""):
             with writer.section():
                 writer.add_comment(
-                    "Run Flux Simulator to create expression profiles then " +
-                    "simulate reads.")
+                    "First run Flux Simulator to create expression profiles.")
                 writer.add_line("flux-simulator -t simulator -x -p {fs_expr_params_file}")
 
             # When creating expression profiles, Flux Simulator sometimes appears
@@ -288,6 +287,7 @@ if not options[INPUT_DIRECTORY]:
 
             # Now use Flux Simulator to simulate reads
             with writer.section():
+                writer.add_comment("Now use Flux Simulator to simulate reads.")
                 writer.add_line("flux-simulator -t simulator -l -s -p {fs_sim_params_file}")
 
             # Some isoform quantifiers (e.g. eXpress) require reads to be presented
@@ -300,7 +300,15 @@ if not options[INPUT_DIRECTORY]:
                 lines_per_fragment *= 2
 
             with writer.section():
-                writer.add_line("paste " + ("- " * lines_per_fragment) + "< {reads_file} | shuf | tr '\\t' '\\n' > {tmp_reads_file}")
+                writer.add_comment(
+                    "Some isoform quantifiers require reads to be " +
+                    "presented in a random order, hence we shuffle the " +
+                    "reads output by Flux Simulator.")
+                writer.add_pipe([
+                    "paste " + ("- " * lines_per_fragment) + "< {reads_file}",
+                    "shuf",
+                    "tr '\\t' '\\n' > {tmp_reads_file}"
+                ])
                 writer.add_line("mv {tmp_reads_file} {reads_file}")
 
             # If we've specified paired end reads, split the FASTA/Q file output by
@@ -313,7 +321,10 @@ if not options[INPUT_DIRECTORY]:
                 writer.add_comment(
                     "We've produced paired-end reads - split the Flux Simulator " +
                     "output into files containing left and right reads.")
-                writer.add_line(paste_spec + " < {reads_file} | awk -F '\\t' '$1~/\/1/ {{print $0 > \"{tmp_reads_file_left}\"}} $1~/\/2/ {{print $0 > \"{tmp_reads_file_right}\"}}'")
+                writer.add_pipe([
+                    paste_spec + " < {reads_file}",
+                    "awk -F '\\t' '$1~/\/1/ {{print $0 > \"{tmp_reads_file_left}\"}} $1~/\/2/ {{print $0 > \"{tmp_reads_file_right}\"}}'"
+                ])
                 writer.add_line("tr '\\t' '\\n' < {tmp_reads_file_left} > {reads_file_left}")
                 writer.add_line("tr '\\t' '\\n' < {tmp_reads_file_right} > {reads_file_right}")
 
