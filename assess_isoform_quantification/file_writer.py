@@ -63,10 +63,9 @@ class _BashBlock:
 class BashScriptWriter(_Writer):
     INDENT = '    '
 
-    def __init__(self, vars_dict):
+    def __init__(self):
         _Writer.__init__(self)
 
-        self.vars_dict = vars_dict
         self.indent_level = 0
         self.block_ends = []
 
@@ -83,8 +82,7 @@ class BashScriptWriter(_Writer):
         self.indent_level -= 1
 
     def add_line(self, line_string):
-        line_string = BashScriptWriter.INDENT * self.indent_level + \
-            line_string.format(**self.vars_dict)
+        line_string = BashScriptWriter.INDENT * self.indent_level + line_string
         _Writer._add_line(self, line_string)
 
     def section(self):

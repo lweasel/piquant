@@ -50,6 +50,7 @@ END_POS_READ_ELEMENT = 6
 
 EXPRESSION_PARAMS_FILE = "flux_simulator_expression.par"
 SIMULATION_PARAMS_FILE = "flux_simulator_simulation.par"
+SIMULATED_READS_PREFIX = "reads"
 READ_NUMBER_PLACEHOLDER = "READ_NUMBER_PLACEHOLDER"
 FRAGMENTS_PER_MOLECULE = 13.2
 ERROR_MODEL_SHORT = 35
@@ -146,13 +147,13 @@ def _write_flux_simulator_expression_params(
 
 def _write_flux_simulator_simulation_params(
         transcript_gtf_file, genome_fasta_dir, num_fragments,
-        reads_prefix, read_length, paired_end, errors, bias,
+        read_length, paired_end, errors, bias,
         fs_pro_file, output_dir):
 
     fs_params = _get_common_flux_simulator_params(
         transcript_gtf_file, genome_fasta_dir, num_fragments)
 
-    fs_params["SEQ_FILE_NAME"] = reads_prefix + ".bed"
+    fs_params["SEQ_FILE_NAME"] = SIMULATED_READS_PREFIX + ".bed"
     fs_params["PRO_FILE_NAME"] = fs_pro_file
     fs_params["FASTA"] = "YES"
     fs_params["READ_NUMBER"] = READ_NUMBER_PLACEHOLDER
@@ -177,7 +178,7 @@ def _write_flux_simulator_simulation_params(
 
 def write_flux_simulator_params_files(
         transcript_gtf_file, genome_fasta_dir, num_fragments,
-        reads_prefix, read_length, paired_end, errors, bias,
+        read_length, paired_end, errors, bias,
         fs_pro_file, output_dir):
 
     _write_flux_simulator_expression_params(
@@ -185,5 +186,5 @@ def write_flux_simulator_params_files(
         output_dir)
     _write_flux_simulator_simulation_params(
         transcript_gtf_file, genome_fasta_dir, num_fragments,
-        reads_prefix, read_length, paired_end, errors, bias,
+        read_length, paired_end, errors, bias,
         fs_pro_file, output_dir)

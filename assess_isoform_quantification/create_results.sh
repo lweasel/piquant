@@ -29,6 +29,7 @@ do
                     do
                         RUN_NAME="${method}_${depth}x_${length}b_${ends}_${errors}_${bias}"
                         RUN_DIR="output/$RUN_NAME"
+                        COMMAND="run_quantifiers.py"
                         COMMAND="prepare_quantification_run.py"
                         COMMAND="$COMMAND -d $RUN_DIR"
                         COMMAND="$COMMAND -m $method"
