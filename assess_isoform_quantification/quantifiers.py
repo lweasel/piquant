@@ -232,7 +232,8 @@ class Express:
         ])
 
     def write_quantification_commands(self, writer, params):
-        stranded_spec = "--fr-stranded " if SIMULATED_READS not in params else ""
+        stranded_spec = "--fr-stranded " \
+            if SIMULATED_READS not in params else ""
 
         writer.add_line(
             "express " + stranded_spec + params[TRANSCRIPT_REFERENCE] +
@@ -246,77 +247,3 @@ class Express:
 
     def requires_paired_end_reads(self):
         return False
-
-
-@Quantifier
-class IReckon:
-    OUTPUT_DIR = "ireckon_out"
-
-    @classmethod
-    def get_required_params(cls):
-        return [BOWTIE_INDEX, IRECKON_JAR, GTF2GFF_SCRIPT]
-
-    def calculate_transcript_abundances(self, quant_file):
-        pass
-
-    def get_transcript_abundance(self, transcript_id):
-        return 0
-
-    def get_preparatory_commands(self, params):
-        self.gff_file = os.path.splitext(params[TRANSCRIPT_GTF_FILE])[0] \
-            + ".gff"
-
-        gtf2gff_command = params[GTF2GFF_SCRIPT] + " " + \
-            params[TRANSCRIPT_GTF_FILE]
-        awk_command = "awk '$3 ~ /mRNA|exon|CDS/'"
-        sed_command = "sed 's/Name=\(.*\)-\(.*\);/Name=\\1-\\2;Alias=\\1;/'"
-        pipe = " | "
-
-        prepare_gff_command = gtf2gff_command + pipe + awk_command + pipe + \
-            sed_command + " > " + self.gff_file
-
-        prepare_gff = [
-            "# Prepare a transcript file in GFF format if it doesn't already",
-            "# exist. This needs doing only once for a particular set of",
-            "# transcripts.",
-            "if [ ! -e {gff} ]; then ".format(gff=self.gff_file),
-            "    " + prepare_gff_command,
-            "fi", ""
-        ]
-
-        reads_spec = params[LEFT_SIMULATED_READS] + \
-            " " + params[RIGHT_SIMULATED_READS]
-
-        map_reads = [
-            "# Map simulated reads to the genome with TopHat",
-            "tophat --library-type fr-unstranded --no-coverage-search " +
-            "-p 8 -o {tho} {b} {r}".format(tho=TOPHAT_OUTPUT_DIR,
-                                           b=params[BOWTIE_INDEX],
-                                           r=reads_spec),
-            "", "# Index the mapped reads",
-            "samtools index " + TOPHAT_MAPPED_READS, ""
-        ]
-
-        prepare_output_dir = [
-            "# Create IReckon output directory",
-            "mkdir " + IReckon.OUTPUT_DIR
-        ]
-
-        return prepare_gff + map_reads + prepare_output_dir
-
-    def get_command(self, params):
-        return "java -Xmx15000M -jar " + params[IRECKON_JAR] + " " \
-            + self.get_mapped_reads_file() + " " + params[BOWTIE_INDEX] \
-            + ".fa " + self.gff_file + " -1 " \
-            + params[LEFT_SIMULATED_READS] + " -2 " \
-            + params[RIGHT_SIMULATED_READS] + " -o " + IReckon.OUTPUT_DIR \
-            + " -novel 0 -n 8 > logs.txt"
-
-    def get_mapped_reads_file(self):
-        return TOPHAT_MAPPED_READS
-
-    def get_fpkm_file(self):
-        return None
-
-    def requires_paired_end_reads(self):
-        return True
