@@ -1,3 +1,4 @@
+import file_writer as fw
 import pandas as pd
 
 # n.b. a Flux Simulator read identifier takes a form like:
@@ -46,6 +47,13 @@ TRANSCRIPT_ID_READ_ELEMENT = 2
 LENGTH_READ_ELEMENT = 4
 START_POS_READ_ELEMENT = 5
 END_POS_READ_ELEMENT = 6
+
+EXPRESSION_PARAMS_FILE = "flux_simulator_expression.par"
+SIMULATION_PARAMS_FILE = "flux_simulator_simulation.par"
+READ_NUMBER_PLACEHOLDER = "READ_NUMBER_PLACEHOLDER"
+FRAGMENTS_PER_MOLECULE = 13.2
+ERROR_MODEL_SHORT = 35
+ERROR_MODEL_LONG = 76
 
 
 def read_expression_profiles(pro_file):
@@ -114,3 +122,68 @@ def get_fragment_bounds(read_identifier):
         t_end += f_end - t_len + 1
 
     return region, t_start, t_end
+
+
+def _get_common_flux_simulator_params(
+        transcript_gtf_file, genome_fasta_dir, num_fragments):
+
+    return {
+        "REF_FILE_NAME": transcript_gtf_file,
+        "GEN_DIR": genome_fasta_dir,
+        "NB_MOLECULES": int(num_fragments / FRAGMENTS_PER_MOLECULE)
+    }
+
+
+def _write_flux_simulator_expression_params(
+        transcript_gtf_file, genome_fasta_dir, num_fragments,
+        output_dir):
+
+    fs_params = _get_common_flux_simulator_params(
+        transcript_gtf_file, genome_fasta_dir, num_fragments)
+    writer = fw.FluxSimulatorParamsWriter(fs_params)
+    writer.write_to_file(output_dir, EXPRESSION_PARAMS_FILE)
+
+
+def _write_flux_simulator_simulation_params(
+        transcript_gtf_file, genome_fasta_dir, num_fragments,
+        reads_prefix, read_length, paired_end, errors, bias,
+        fs_pro_file, output_dir):
+
+    fs_params = _get_common_flux_simulator_params(
+        transcript_gtf_file, genome_fasta_dir, num_fragments)
+
+    fs_params["SEQ_FILE_NAME"] = reads_prefix + ".bed"
+    fs_params["PRO_FILE_NAME"] = fs_pro_file
+    fs_params["FASTA"] = "YES"
+    fs_params["READ_NUMBER"] = READ_NUMBER_PLACEHOLDER
+    fs_params["READ_LENGTH"] = read_length
+    fs_params["PCR_DISTRIBUTION"] = "none"
+
+    if paired_end:
+        fs_params["PAIRED_END"] = "YES"
+        fs_params["UNIQUE_IDS"] = "YES"
+
+    if errors:
+        fs_params["ERR_FILE"] = ERROR_MODEL_LONG if \
+            read_length > 0.5*(ERROR_MODEL_SHORT + ERROR_MODEL_LONG) \
+            else ERROR_MODEL_SHORT
+
+    if bias:
+        fs_params["RT_MOTIF"] = "default"
+
+    writer = fw.FluxSimulatorParamsWriter(fs_params)
+    writer.write_to_file(output_dir, SIMULATION_PARAMS_FILE)
+
+
+def write_flux_simulator_params_files(
+        transcript_gtf_file, genome_fasta_dir, num_fragments,
+        reads_prefix, read_length, paired_end, errors, bias,
+        fs_pro_file, output_dir):
+
+    _write_flux_simulator_expression_params(
+        transcript_gtf_file, genome_fasta_dir, num_fragments,
+        output_dir)
+    _write_flux_simulator_simulation_params(
+        transcript_gtf_file, genome_fasta_dir, num_fragments,
+        reads_prefix, read_length, paired_end, errors, bias,
+        fs_pro_file, output_dir)

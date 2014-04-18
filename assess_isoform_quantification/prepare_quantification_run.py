@@ -24,12 +24,12 @@ from docopt import docopt
 from schema import Schema, SchemaError
 
 import file_writer as fw
+import flux_simulator as fs
 import ordutils.log as log
 import ordutils.options as opt
 import os
 import os.path
 import quantifiers as qs
-import stat
 import sys
 
 LOG_LEVEL = "--log-level"
@@ -47,15 +47,8 @@ BIAS = "--bias"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
-FS_EXPRESSION_PARAMS_FILE = "flux_simulator_expression.par"
-FS_SIMULATION_PARAMS_FILE = "flux_simulator_simulation.par"
-FRAGMENTS_PER_MOLECULE = 13.2
-ERROR_MODEL_SHORT = 35
-ERROR_MODEL_LONG = 76
-
 RUN_SCRIPT = "run_quantification.sh"
 TOPHAT_OUTPUT_DIR = "tho"
-READ_NUMBER_PLACEHOLDER = "READ_NUMBER_PLACEHOLDER"
 SIMULATED_READS_PREFIX = "reads"
 
 PYTHON_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__)) + os.path.sep
@@ -123,68 +116,6 @@ if options[QUANT_METHOD].requires_paired_end_reads() \
         and not options[PAIRED_END]:
     exit("Exiting. Quantification method {m} ".format(m=quant_method_name)
          + "does not support single end reads.")
-
-# Create directory for run files
-
-logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
-
-logger.info("Creating run directory '{dir}'.".
-            format(dir=options[RUN_DIRECTORY]))
-
-os.mkdir(options[RUN_DIRECTORY])
-
-# Write Flux Simulator parameters files
-
-logger.info("Creating Flux Simulator parameters file.")
-
-
-def get_output_file(filename):
-    return open(options[RUN_DIRECTORY] + os.path.sep + filename, "w")
-
-
-def add_lines(f, lines):
-    f.write("\n".join(lines) + '\n')
-
-
-fs_pro_file = FS_EXPRESSION_PARAMS_FILE.replace("par", "pro")
-
-if options[INPUT_DIRECTORY]:
-    options[INPUT_DIRECTORY] = os.path.abspath(options[INPUT_DIRECTORY])
-    fs_pro_file = options[INPUT_DIRECTORY] + os.path.sep + fs_pro_file
-else:
-    num_molecules = int(options[NUM_FRAGMENTS] / FRAGMENTS_PER_MOLECULE)
-
-    fs_params = {}
-    fs_params["REF_FILE_NAME"] = options[TRANSCRIPT_GTF_FILE]
-    fs_params["GEN_DIR"] = options[PARAMS_SPEC][qs.GENOME_FASTA_DIR]
-    fs_params["NB_MOLECULES"] = num_molecules
-
-    writer = fw.FluxSimulatorParamsWriter(fs_params)
-    writer.write_to_file(options[RUN_DIRECTORY], FS_EXPRESSION_PARAMS_FILE)
-
-    fs_params["SEQ_FILE_NAME"] = SIMULATED_READS_PREFIX + ".bed"
-    fs_params["PRO_FILE_NAME"] = fs_pro_file
-    fs_params["FASTA"] = "YES"
-    fs_params["READ_NUMBER"] = READ_NUMBER_PLACEHOLDER
-    fs_params["READ_LENGTH"] = options[READ_LENGTH]
-    fs_params["PCR_DISTRIBUTION"] = "none"
-
-    if options[PAIRED_END]:
-        fs_params["PAIRED_END"] = "YES"
-        fs_params["UNIQUE_IDS"] = "YES"
-
-    if options[ERRORS]:
-        fs_params["ERR_FILE"] = ERROR_MODEL_LONG if \
-            options[READ_LENGTH] > 0.5*(ERROR_MODEL_SHORT + ERROR_MODEL_LONG) \
-            else ERROR_MODEL_SHORT
-
-    if options[BIAS]:
-        fs_params["RT_MOTIF"] = "default"
-
-    writer = fw.FluxSimulatorParamsWriter(fs_params)
-    writer.write_to_file(options[RUN_DIRECTORY], FS_SIMULATION_PARAMS_FILE)
-
-
 
 
 def add_create_expression_profiles(writer):
@@ -405,8 +336,8 @@ def write_run_quantification_script():
 
     vars_dict = {}
     vars_dict["run_options"] = "qa" if options[INPUT_DIRECTORY] else "rqa"
-    vars_dict["fs_expr_params_file"] = FS_EXPRESSION_PARAMS_FILE
-    vars_dict["fs_sim_params_file"] = FS_SIMULATION_PARAMS_FILE
+    vars_dict["fs_expr_params_file"] = fs.EXPRESSION_PARAMS_FILE
+    vars_dict["fs_sim_params_file"] = fs.SIMULATION_PARAMS_FILE
     vars_dict["fs_pro_file"] = fs_pro_file
     vars_dict["depth"] = options[READ_DEPTH]
     vars_dict["length"] = options[READ_LENGTH]
@@ -420,7 +351,7 @@ def write_run_quantification_script():
     vars_dict["assemble_data_script"] = ASSEMBLE_DATA_SCRIPT
     vars_dict["analyse_data_script"] = ANALYSE_DATA_SCRIPT
     vars_dict["transcript_gtf_file"] = options[TRANSCRIPT_GTF_FILE]
-    vars_dict["read_number_placeholder"] = READ_NUMBER_PLACEHOLDER
+    vars_dict["read_number_placeholder"] = fs.READ_NUMBER_PLACEHOLDER
     vars_dict["reads_file"] = reads_file
     vars_dict["reads_file_left"] = left_reads_file
     vars_dict["reads_file_right"] = right_reads_file
@@ -453,6 +384,37 @@ def write_run_quantification_script():
     add_analyse_results(writer)
 
     writer.write_to_file(options[RUN_DIRECTORY], RUN_SCRIPT)
+
+# Create directory for run files
+
+logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
+
+logger.info("Creating run directory '{dir}'.".
+            format(dir=options[RUN_DIRECTORY]))
+
+os.mkdir(options[RUN_DIRECTORY])
+
+# Write Flux Simulator parameters files
+
+logger.info("Creating Flux Simulator parameters file.")
+
+fs_pro_file = fs.EXPRESSION_PARAMS_FILE.replace("par", "pro")
+
+if options[INPUT_DIRECTORY]:
+    options[INPUT_DIRECTORY] = os.path.abspath(options[INPUT_DIRECTORY])
+    fs_pro_file = options[INPUT_DIRECTORY] + os.path.sep + fs_pro_file
+else:
+    fs.write_flux_simulator_params_files(
+        options[TRANSCRIPT_GTF_FILE],
+        options[PARAMS_SPEC][qs.GENOME_FASTA_DIR],
+        options[NUM_FRAGMENTS],
+        SIMULATED_READS_PREFIX,
+        options[READ_LENGTH],
+        options[PAIRED_END],
+        options[ERRORS],
+        options[BIAS],
+        fs_pro_file,
+        options[RUN_DIRECTORY])
 
 # Write shell script to run quantification analysis
 
