@@ -95,25 +95,22 @@ class Cufflinks:
         return self.abundances.ix[transcript_id]["FPKM"] \
             if transcript_id in self.abundances.index else 0
 
-    def get_preparatory_commands(self, params):
+    def write_preparatory_commands(self, writer, params):
         reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
             else params[LEFT_SIMULATED_READS] + \
             " " + params[RIGHT_SIMULATED_READS]
 
-        return [
-            "# Map simulated reads to the genome with TopHat",
+        writer.add_comment("Map simulated reads to the genome with TopHat.")
+        writer.add_line(
             "tophat --library-type fr-unstranded --no-coverage-search " +
-            "-p 8 -o {tho} {b} {r}".format(tho=TOPHAT_OUTPUT_DIR,
-                                           b=params[BOWTIE_INDEX],
-                                           r=reads_spec)
-        ]
+            "-p 8 -o " + TOPHAT_OUTPUT_DIR + " " + params[BOWTIE_INDEX] +
+            " " + reads_spec)
 
-    def get_command(self, params):
-        return ("cufflinks -o transcriptome -u -b {b}.fa -p 8 " +
-                "--library-type fr-unstranded -G {t} {m}").\
-            format(b=params[BOWTIE_INDEX],
-                   t=params[TRANSCRIPT_GTF_FILE],
-                   m=self.get_mapped_reads_file())
+    def write_quantification_commands(self, writer, params):
+        writer.add_line(
+            "cufflinks -o transcriptome -u -b " + params[BOWTIE_INDEX] +
+            ".fa -p 8 --library-type fr-unstranded -G " +
+            params[TRANSCRIPT_GTF_FILE] + " " + self.get_mapped_reads_file())
 
     def get_mapped_reads_file(self):
         return TOPHAT_MAPPED_READS
@@ -150,35 +147,33 @@ class RSEM:
         return self.abundances.ix[transcript_id]["FPKM"] \
             if transcript_id in self.abundances.index else 0
 
-    def get_preparatory_commands(self, params):
-        return [
-            "# Prepare the transcript reference if it doesn't already exist.",
-            "# For convenience, we create the transcript reference using a",
-            "# tool from the RSEM package. Note that this step needs doing",
-            "# only once for a particular set of transcripts.",
-            "REF_DIR=$(dirname {f})".format(f=params[TRANSCRIPT_REFERENCE]),
-            "if [ ! -d $REF_DIR ]; then",
-            "   mkdir $REF_DIR",
-            "   rsem-prepare-reference --gtf {gtf} {fasta} {ref}".format(
-                gtf=params[TRANSCRIPT_GTF_FILE],
-                fasta=params[GENOME_FASTA_DIR],
-                ref=params[TRANSCRIPT_REFERENCE]),
-            "fi"
-        ]
+    def write_preparatory_commands(self, writer, params):
+        writer.add_comment(
+            "Prepare the transcript reference if it doesn't already " +
+            "exist. We create the transcript reference using a tool " +
+            "from the RSEM package. Note that this step only needs to " +
+            "be done once for a particular set of transcripts.")
 
-    def get_command(self, params):
+        writer.add_line(
+            "REF_DIR=$(dirname " + params[TRANSCRIPT_REFERENCE] + ")")
+
+        with writer.if_block("! -d $REF_DIR"):
+            writer.add_line(
+                "rsem-prepare-reference --gtf " + params[TRANSCRIPT_GTF_FILE] +
+                " " + params[GENOME_FASTA_DIR] + " " +
+                params[TRANSCRIPT_REFERENCE])
+
+    def write_quantification_commands(self, writer, params):
+        qualities_spec = "" if params[FASTQ_READS] else "--no-qualities"
+
         reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
             else "--paired-end " + params[LEFT_SIMULATED_READS] + \
             " " + params[RIGHT_SIMULATED_READS]
 
-        qualities_spec = "" if params[FASTQ_READS] else "--no-qualities"
-
-        return "rsem-calculate-expression --time {q} --p 32 ".\
-            format(q=qualities_spec) + \
-            "--output-genome-bam {r} {ref} {s}".format(
-                r=reads_spec,
-                ref=params[TRANSCRIPT_REFERENCE],
-                s=RSEM.SAMPLE_NAME)
+        writer.add_line(
+            "rsem-calculate-expression --time " + qualities_spec +
+            " --p 32 --output-genome-bam " + reads_spec + " " +
+            params[TRANSCRIPT_REFERENCE] + " " + RSEM.SAMPLE_NAME)
 
     def get_mapped_reads_file(self):
         return RSEM.SAMPLE_NAME + ".genome.sorted.bam"
@@ -215,42 +210,33 @@ class Express:
         return self.abundances.ix[transcript_id]["fpkm"] \
             if transcript_id in self.abundances.index else 0
 
-    def get_preparatory_commands(self, params):
-        prepare_ref = [
-            "# Prepare the transcript reference if it doesn't already exist.",
-            "# For convenience, we create the transcript reference using a",
-            "# tool from the RSEM package. Note that this step needs doing",
-            "# only once for a particular set of transcripts.",
-            "REF_DIR=$(dirname {f})".format(f=params[TRANSCRIPT_REFERENCE]),
-            "if [ ! -d $REF_DIR ]; then",
-            "   mkdir $REF_DIR",
-            "   rsem-prepare-reference --gtf {gtf} {fasta} {ref}".format(
-                gtf=params[TRANSCRIPT_GTF_FILE],
-                fasta=params[GENOME_FASTA_DIR],
-                ref=params[TRANSCRIPT_REFERENCE]),
-            "fi", "",
-        ]
+    def write_preparatory_commands(self, writer, params):
+        # For convenience, we use a tool from the RSEM package to create the
+        # transcript reference
+        with writer.section():
+            RSEM().write_preparatory_commands(writer, params)
+
+        qualities_spec = "-q" if params[FASTQ_READS] else "-f"
 
         reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
             else "-1 " + params[LEFT_SIMULATED_READS] + \
             " -2 " + params[RIGHT_SIMULATED_READS]
 
-        qualities_spec = "-q" if params[FASTQ_READS] else "-f"
-
-        map_reads = [
-            "# Map simulated reads to the transcriptome with Bowtie",
+        writer.add_comment(
+            "Now map simulated reads to the transcriptome with Bowtie.")
+        writer.add_pipe([
             "bowtie " + qualities_spec +
             " -e 99999999 -l 25 -I 1 -X 1000 -a -S -m 200 -p 32 " +
-            params[TRANSCRIPT_REFERENCE] + " " + reads_spec +
-            " | samtools view -Sb - > " + Express.MAPPED_READS_FILE
-        ]
+            params[TRANSCRIPT_REFERENCE] + " " + reads_spec,
+            "samtools view -Sb - > " + Express.MAPPED_READS_FILE
+        ])
 
-        return prepare_ref + map_reads
+    def write_quantification_commands(self, writer, params):
+        stranded_spec = "--fr-stranded " if SIMULATED_READS not in params else ""
 
-    def get_command(self, params):
-        stranded_spec = "--fr-stranded " if SIMULATED_READS in params else ""
-        return "express " + stranded_spec + params[TRANSCRIPT_REFERENCE] + \
-            ".transcripts.fa " + Express.MAPPED_READS_FILE
+        writer.add_line(
+            "express " + stranded_spec + params[TRANSCRIPT_REFERENCE] +
+            ".transcripts.fa " + Express.MAPPED_READS_FILE)
 
     def get_mapped_reads_file(self):
         return Express.MAPPED_READS_FILE

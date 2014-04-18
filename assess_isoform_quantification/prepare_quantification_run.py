@@ -152,9 +152,7 @@ def _add_preparatory_quantification_commands(
     # Perform preparatory tasks required by a particular quantification method
     # prior to calculating abundances; for example, this might include mapping
     # reads to the genome with TopHat
-    for line in quant_method.\
-            get_preparatory_commands(params_spec):
-        writer.add_line(line)
+    quant_method.write_preparatory_commands(writer, params_spec)
 
 
 def _add_quantification_commands(writer, quant_method, params_spec):
@@ -162,7 +160,7 @@ def _add_quantification_commands(writer, quant_method, params_spec):
     method_name = quant_method.__class__.__name__
     writer.add_comment(
         "Use " + method_name + " to calculate per-transcript FPKMs.")
-    writer.add_line(quant_method.get_command(params_spec))
+    quant_method.write_quantification_commands(writer, params_spec)
 
 
 def _add_calculate_transcripts_per_gene(writer, transcript_gtf_file):
