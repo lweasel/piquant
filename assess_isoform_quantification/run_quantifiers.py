@@ -32,6 +32,7 @@ import os
 import os.path
 import prepare_quantification_run as prq
 import quantifiers as qs
+import subprocess
 import sys
 
 LOG_LEVEL = "--log-level"
@@ -152,5 +153,8 @@ if not options[RUN_ONLY]:
 # Execute the run quantification script
 if not options[PREPARE_ONLY]:
     logger.info("Executing shell script to run quantification analysis.")
-    # TODO
-    logger.error("TODO")
+    os.chdir(options[RUN_DIRECTORY])
+
+    run_params = "-" + ("" if options[INPUT_DIRECTORY] else "r") + "qa"
+    args = ['nohup', './run_quantification.sh', run_params]
+    subprocess.Popen(['nohup', './run_quantification.sh', run_params])
