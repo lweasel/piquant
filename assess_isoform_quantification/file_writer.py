@@ -119,6 +119,9 @@ class BashScriptWriter(_Writer):
     def add_pipe(self, pipe_commands):
         self.add_line(" | ".join(pipe_commands))
 
+    def set_variable(self, variable, value):
+        self.add_line("{var}={val}".format(var=variable, val=value))
+
     def write_to_file(self, directory, filename):
         _Writer.write_to_file(self, directory, filename)
         path = os.path.abspath(directory + os.path.sep + filename)

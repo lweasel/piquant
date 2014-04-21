@@ -13,6 +13,10 @@ ASSEMBLE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "assemble_quantification_data.py"
 ANALYSE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "analyse_quantification_run.py"
 CALC_READ_DEPTH_SCRIPT = PYTHON_SCRIPT_DIR + "calculate_reads_for_depth.py"
 
+CREATE_READS_VARIABLE = "CREATE_READS"
+QUANTIFY_TRANSCRIPTS_VARIABLE = "QUANTIFY_TRANSCRIPTS"
+ANALYSE_RESULTS_VARIABLE = "ANALYSE_RESULTS"
+
 TMP_READS_FILE = "reads.tmp"
 TMP_LEFT_READS_FILE = "lr.tmp"
 TMP_RIGHT_READS_FILE = "rr.tmp"
@@ -228,17 +232,22 @@ def _add_process_command_line_options(writer, input_dir):
     # part of the analysis
     writer.add_comment("Process command line options.")
 
+    with writer.section():
+        writer.set_variable(CREATE_READS_VARIABLE, "")
+        writer.set_variable(QUANTIFY_TRANSCRIPTS_VARIABLE, "")
+        writer.set_variable(ANALYSE_RESULTS_VARIABLE, "")
+
     opts = ("" if input_dir else "r") + "qa"
     with writer.while_block("getopts \":{o}\" opt".format(o=opts)):
         with writer.case_block("$opt"):
             if not input_dir:
                 with writer.case_option_block("r"):
-                    writer.add_line("CREATE_READS=1")
+                    writer.set_variable(CREATE_READS_VARIABLE, 1)
 
             with writer.case_option_block("q"):
-                writer.add_line("QUANTIFY_TRANSCRIPTS=1")
+                writer.set_variable(QUANTIFY_TRANSCRIPTS_VARIABLE, 1)
             with writer.case_option_block("a"):
-                writer.add_line("ANALYSE_RESULTS=1")
+                writer.set_variable(ANALYSE_RESULTS_VARIABLE, 1)
             with writer.case_option_block("\?"):
                 writer.add_line("echo \"Invalid option: -$OPTARG\" >&2")
 
