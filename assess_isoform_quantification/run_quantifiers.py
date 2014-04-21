@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """Usage:
-    prepare_quantification_run [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-dir=<run-dir] [--input-dir=<input-dir] [--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>] [--errors] [--paired-end] [--bias] <transcript-gtf-file> <genome-fasta-dir>
+    run_quantifiers [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-dir=<run-dir] [--input-dir=<input-dir] [--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>] [--errors] [--paired-end] [--bias] [--prepare-only|--run-only] <transcript-gtf-file> <genome-fasta-dir>
 
 -h --help                           Show this message.
 -v --version                        Show version.
@@ -13,9 +13,11 @@
 --num-fragments=<num-fragments>     Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
 --read-depth=<read-depth>           The approximate depth of reads required across the expressed transcriptome [default: 30].
 --read-length=<read-length>         The length of sequence reads [default: 50].
---paired-end                        If specified, create and use paired-end sequence reads (note: option must still be specified even if pre-created reads are being used).
---errors                            If specified, Flux Simulator will use a position-dependent error model to simulate sequencing errors.
---bias                              If specified, Flux Simulator will introduce sequence bias into the RNA fragmentation process.
+--paired-end                        Create and use paired-end sequence reads (note: option must still be specified even if pre-created reads are being used).
+--errors                            Flux Simulator will use a position-dependent error model to simulate sequencing errors.
+--bias                              Flux Simulator will introduce sequence bias into the RNA fragmentation process.
+--prepare-only                      Quantification run scripts will be created, but not run.
+--run-only                          Quantification run scripts will be run, but not created (they must already exist).
 <transcript-gtf-file>               GTF formatted file describing the transcripts to be simulated.
 <genome-fasta-dir>                  Directory containing per-chromosome sequences as FASTA files.
 """
@@ -44,6 +46,8 @@ READ_LENGTH = "--read-length"
 PAIRED_END = "--paired-end"
 ERRORS = "--errors"
 BIAS = "--bias"
+PREPARE_ONLY = "--prepare-only"
+RUN_ONLY = "--run-only"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
@@ -63,8 +67,9 @@ try:
 
     opt.validate_dir_option(
         options[RUN_DIRECTORY],
-        "Run directory should not already exist",
-        should_exist=False)
+        "Run directory should " + ("" if options[RUN_ONLY] else "not ") +
+        "already exist",
+        should_exist=options[RUN_ONLY])
 
     opt.validate_dir_option(
         options[INPUT_DIRECTORY],
@@ -107,39 +112,45 @@ if options[QUANT_METHOD].requires_paired_end_reads() \
     exit("Exiting. Quantification method {m} ".format(m=quant_method_name)
          + "does not support single end reads.")
 
-# Create directory for run files
-
+# Set up logger
 logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
-logger.info("Creating run directory '{dir}'.".
-            format(dir=options[RUN_DIRECTORY]))
-
-os.mkdir(options[RUN_DIRECTORY])
+# Create directory for run files
+if not options[RUN_ONLY]:
+    logger.info("Creating run directory '{dir}'.".
+                format(dir=options[RUN_DIRECTORY]))
+    os.mkdir(options[RUN_DIRECTORY])
 
 # Write Flux Simulator parameters files
+if not options[RUN_ONLY]:
+    logger.info("Creating Flux Simulator parameters files.")
 
-logger.info("Creating Flux Simulator parameters files.")
+    fs_pro_file = fs.EXPRESSION_PARAMS_FILE.replace("par", "pro")
 
-fs_pro_file = fs.EXPRESSION_PARAMS_FILE.replace("par", "pro")
-
-if options[INPUT_DIRECTORY]:
-    options[INPUT_DIRECTORY] = os.path.abspath(options[INPUT_DIRECTORY])
-    fs_pro_file = options[INPUT_DIRECTORY] + os.path.sep + fs_pro_file
-else:
-    fs.write_flux_simulator_params_files(
-        options[TRANSCRIPT_GTF_FILE],
-        options[PARAMS_SPEC][qs.GENOME_FASTA_DIR],
-        options[NUM_FRAGMENTS], options[READ_LENGTH], options[PAIRED_END],
-        options[ERRORS], options[BIAS], fs_pro_file,
-        options[RUN_DIRECTORY])
+    if options[INPUT_DIRECTORY]:
+        options[INPUT_DIRECTORY] = os.path.abspath(options[INPUT_DIRECTORY])
+        fs_pro_file = options[INPUT_DIRECTORY] + os.path.sep + fs_pro_file
+    else:
+        fs.write_flux_simulator_params_files(
+            options[TRANSCRIPT_GTF_FILE],
+            options[PARAMS_SPEC][qs.GENOME_FASTA_DIR],
+            options[NUM_FRAGMENTS], options[READ_LENGTH], options[PAIRED_END],
+            options[ERRORS], options[BIAS], fs_pro_file,
+            options[RUN_DIRECTORY])
 
 # Write shell script to run quantification analysis
+if not options[RUN_ONLY]:
+    logger.info("Creating shell script to run quantification analysis.")
 
-logger.info("Creating shell script to run quantification analysis.")
+    prq.write_run_quantification_script(
+        options[RUN_DIRECTORY], options[INPUT_DIRECTORY],
+        options[TRANSCRIPT_GTF_FILE], fs_pro_file,
+        options[QUANT_METHOD], options[READ_LENGTH], options[READ_DEPTH],
+        options[PAIRED_END], options[ERRORS], options[BIAS],
+        dict(options[PARAMS_SPEC]))
 
-prq.write_run_quantification_script(
-    options[RUN_DIRECTORY], options[INPUT_DIRECTORY],
-    options[TRANSCRIPT_GTF_FILE], fs_pro_file,
-    options[QUANT_METHOD], options[READ_LENGTH], options[READ_DEPTH],
-    options[PAIRED_END], options[ERRORS], options[BIAS],
-    dict(options[PARAMS_SPEC]))
+# Execute the run quantification script
+if not options[PREPARE_ONLY]:
+    logger.info("Executing shell script to run quantification analysis.")
+    # TODO
+    logger.error("TODO")
