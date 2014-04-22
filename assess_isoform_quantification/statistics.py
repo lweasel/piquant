@@ -10,6 +10,8 @@ graphing by a classifier.
 
 import fpkms as f
 
+NUM_FPKMS = "num-fpkms"
+
 _SUMMARY_COUNT = "count"
 _SUMMARY_MEDIAN = "50%"
 _ZERO_TO_ONE_STAT_RANGE = (-0.025, 1.025)
@@ -105,7 +107,7 @@ class _NumberOfFPKMs(_BaseStatistic):
     # Calculates the total number of transcript FPKMs in the results.
     def __init__(self):
         _BaseStatistic.__init__(
-            self, "num-fpkms", "No. FPKMs",
+            self, NUM_FPKMS, "No. FPKMs",
             graphable=False, graphable_by_classifier=False,
             stat_range=(0, None))
 

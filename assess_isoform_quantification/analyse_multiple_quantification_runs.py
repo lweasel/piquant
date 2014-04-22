@@ -87,7 +87,7 @@ non_degenerate_params = lambda x: [p for p in x if not degenerate_param(p)]
 
 def remove_from(parameters, to_remove):
     get_pset = lambda x: x if isinstance(x, set) \
-        else (set(x) if isinstance(x, list) else [x])
+        else (set(x) if isinstance(x, list) else set([x]))
     return get_pset(parameters) - get_pset(to_remove)
 
 
@@ -127,7 +127,7 @@ for param in non_degenerate_params(params.PARAMETERS):
 
 # Create graphs based on statistics stratified by classifier
 # TODO: better description!
-more_than_100_filter = lambda x: x["count"] > 100
+more_than_100_filter = lambda x: x[stats.NUM_FPKMS] > 100
 
 for clsfr in clsfrs:
     stats_file = get_stats_file(clsfr)
