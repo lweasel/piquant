@@ -369,7 +369,24 @@ def _add_script_sections(
         quant_method, read_length, read_depth, paired_end, errors, bias)
 
 
-def write_run_quantification_script(
+def _create_simulator_parameter_files(
+        input_dir, run_dir, transcript_gtf_file, genome_fasta_dir,
+        num_fragments, read_length, paired_end, errors, bias):
+
+    fs_pro_file = fs.EXPRESSION_PARAMS_FILE.replace("par", "pro")
+
+    if input_dir:
+        input_dir = os.path.abspath(input_dir)
+        fs_pro_file = input_dir + os.path.sep + fs_pro_file
+    else:
+        fs.write_flux_simulator_params_files(
+            transcript_gtf_file, genome_fasta_dir, num_fragments,
+            read_length, paired_end, errors, bias, fs_pro_file, run_dir)
+
+    return fs_pro_file
+
+
+def _write_run_quantification_script(
         run_dir, input_dir, transcript_gtf_file, fs_pro_file,
         quant_method, read_length, read_depth,
         paired_end, errors, bias,
@@ -383,3 +400,22 @@ def write_run_quantification_script(
         quant_method, read_length, read_depth,
         paired_end, errors, bias, params_spec)
     writer.write_to_file(run_dir, RUN_SCRIPT)
+
+
+def create_quantification_files(
+        input_dir, run_dir, transcript_gtf_file, genome_fasta_dir,
+        num_fragments, quant_method, read_length, read_depth,
+        paired_end, errors, bias, params_spec):
+
+    os.mkdir(run_dir)
+
+    # Write Flux Simulator parameters files
+    fs_pro_file = _create_simulator_parameter_files(
+        input_dir, run_dir, transcript_gtf_file, genome_fasta_dir,
+        num_fragments, read_length, paired_end, errors, bias)
+
+    # Write shell script to run quantification analysis
+    _write_run_quantification_script(
+        run_dir, input_dir, transcript_gtf_file, fs_pro_file,
+        quant_method, read_length, read_depth,
+        paired_end, errors, bias, dict(params_spec))

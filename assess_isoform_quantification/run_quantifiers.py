@@ -116,37 +116,12 @@ if options[QUANT_METHOD].requires_paired_end_reads() \
 # Set up logger
 logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
-# Create directory for run files
 if not options[RUN_ONLY]:
-    logger.info("Creating run directory '{dir}'.".
-                format(dir=options[RUN_DIRECTORY]))
-    os.mkdir(options[RUN_DIRECTORY])
-
-# Write Flux Simulator parameters files
-if not options[RUN_ONLY]:
-    logger.info("Creating Flux Simulator parameters files.")
-
-    fs_pro_file = fs.EXPRESSION_PARAMS_FILE.replace("par", "pro")
-
-    if options[INPUT_DIRECTORY]:
-        options[INPUT_DIRECTORY] = os.path.abspath(options[INPUT_DIRECTORY])
-        fs_pro_file = options[INPUT_DIRECTORY] + os.path.sep + fs_pro_file
-    else:
-        fs.write_flux_simulator_params_files(
-            options[TRANSCRIPT_GTF_FILE],
-            options[PARAMS_SPEC][qs.GENOME_FASTA_DIR],
-            options[NUM_FRAGMENTS], options[READ_LENGTH], options[PAIRED_END],
-            options[ERRORS], options[BIAS], fs_pro_file,
-            options[RUN_DIRECTORY])
-
-# Write shell script to run quantification analysis
-if not options[RUN_ONLY]:
-    logger.info("Creating shell script to run quantification analysis.")
-
-    prq.write_run_quantification_script(
-        options[RUN_DIRECTORY], options[INPUT_DIRECTORY],
-        options[TRANSCRIPT_GTF_FILE], fs_pro_file,
-        options[QUANT_METHOD], options[READ_LENGTH], options[READ_DEPTH],
+    prq.create_quantification_files(
+        options[INPUT_DIRECTORY], options[RUN_DIRECTORY],
+        options[TRANSCRIPT_GTF_FILE], options[GENOME_FASTA_DIR],
+        options[NUM_FRAGMENTS], options[QUANT_METHOD],
+        options[READ_LENGTH], options[READ_DEPTH],
         options[PAIRED_END], options[ERRORS], options[BIAS],
         dict(options[PARAMS_SPEC]))
 
