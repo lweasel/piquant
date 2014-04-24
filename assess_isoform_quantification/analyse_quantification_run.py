@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 # TODO: add logging
+# TODO: method of specifying options here (e.g. <bias>) is horrible
 
 """Usage:
     analyse_quantification_run [--scatter-max=<scatter-max-val>] [--log10-scatter-min=<log10-scatter-min-val>] [--log10-scatter-max=<log10-scatter-max-val>] <quant-method> <read-length> <read-depth> <paired-end> <errors> <bias> <fpkm-file> [<out-file>]
