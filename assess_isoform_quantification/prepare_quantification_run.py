@@ -12,6 +12,7 @@ UNIQUE_SEQUENCE_SCRIPT = PYTHON_SCRIPT_DIR + \
 ASSEMBLE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "assemble_quantification_data.py"
 ANALYSE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "analyse_quantification_run.py"
 CALC_READ_DEPTH_SCRIPT = PYTHON_SCRIPT_DIR + "calculate_reads_for_depth.py"
+SIMULATE_BIAS_SCRIPT = PYTHON_SCRIPT_DIR + "simulate_read_bias.py"
 
 CREATE_READS_VARIABLE = "CREATE_READS"
 QUANTIFY_TRANSCRIPTS_VARIABLE = "QUANTIFY_TRANSCRIPTS"
@@ -74,7 +75,8 @@ def _add_fix_zero_length_transcripts(writer, fs_pro_file):
 
 
 def _add_calculate_required_read_depth(
-        writer, transcript_gtf_file, fs_pro_file, read_length, read_depth):
+        writer, transcript_gtf_file, fs_pro_file,
+        read_length, read_depth, bias):
 
     # Given the expression profile created, calculate the number of reads
     # required to give the (approximate) read depth specified. Then edit the
@@ -84,10 +86,18 @@ def _add_calculate_required_read_depth(
         ") a read depth of " + str(read_depth) +
         " across the transcriptome, given a read length of " +
         str(read_length))
-    writer.add_line(
-        "READS=$(python " + CALC_READ_DEPTH_SCRIPT + " " +
+    writer.set_variable(
+        "READS", "$(python " + CALC_READ_DEPTH_SCRIPT + " " +
         transcript_gtf_file + " " + fs_pro_file + " " +
         str(read_length) + " " + str(read_depth) + ")")
+
+    if bias:
+        writer.add_comment(
+            "If we're simulating read bias, we'll generate twice the " +
+            "required number of reads, and later make a biased " +
+            "selection from these.")
+        writer.set_variable("FINAL_READS", "$READS")
+        writer.set_variable("READS", "echo \"2*$READS\" | bc")
 
 
 def _add_update_flux_simulator_parameters(writer):
@@ -126,6 +136,24 @@ def _add_shuffle_simulated_reads(writer, paired_end, errors):
         "tr '\\t' '\\n' > " + TMP_READS_FILE
     ])
     writer.add_line("mv " + TMP_READS_FILE + " " + reads_file)
+
+
+def _add_simulate_read_bias(writer, paired_end, errors, bias):
+    if bias:
+        # Use a position weight matrix to simulate sequence bias in the reads
+        writer.add_comment(
+            "Use a position weight matrix to simulate sequence bias in " +
+            "the reads.")
+
+        reads_file = _get_reads_file(errors)
+        out_prefix = "bias"
+        writer.add_line(
+            "python " + SIMULATE_BIAS_SCRIPT +
+            " -n $FINAL_READS --out-prefix=" + out_prefix + " " +
+            ("--paired-end" if paired_end else "") +
+            " bias_motif.pwm " + reads_file)
+        writer.add_line(
+            "mv " + out_prefix + "." + reads_file + " " + reads_file)
 
 
 def _add_separate_paired_end_reads(writer, paired_end, errors):
@@ -254,7 +282,7 @@ def _add_process_command_line_options(writer, input_dir):
 
 def _add_create_reads(
         writer, transcript_gtf_file, fs_pro_file,
-        read_length, read_depth, paired_end, errors):
+        read_length, read_depth, paired_end, errors, bias):
 
     with writer.if_block("-n \"$CREATE_READS\""):
         with writer.section():
@@ -264,13 +292,16 @@ def _add_create_reads(
         with writer.section():
             _add_calculate_required_read_depth(
                 writer, transcript_gtf_file, fs_pro_file,
-                read_length, read_depth)
+                read_length, read_depth, bias)
         with writer.section():
             _add_update_flux_simulator_parameters(writer)
         with writer.section():
             _add_simulate_reads(writer)
         with writer.section():
             _add_shuffle_simulated_reads(writer, paired_end, errors)
+        with writer.section():
+            _add_simulate_read_bias(writer, paired_end, errors, bias)
+
         _add_separate_paired_end_reads(writer, paired_end, errors)
 
 
@@ -328,7 +359,7 @@ def _add_script_sections(
         with writer.section():
             _add_create_reads(
                 writer, transcript_gtf_file, fs_pro_file,
-                read_length, read_depth, paired_end, errors)
+                read_length, read_depth, paired_end, errors, bias)
 
     with writer.section():
         _add_quantify_transcripts(writer, quant_method, params_spec)
