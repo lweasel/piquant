@@ -139,6 +139,8 @@ for length, depth, paired_end, error, bias in \
             length, depth, paired_end, error, bias)
 
     if not options[PREPARE_ONLY]:
+        cwd = os.getcwd()
         os.chdir(reads_dir)
         args = ['nohup', './run_simulation.sh']
         subprocess.Popen(args)
+        os.chdir(cwd)

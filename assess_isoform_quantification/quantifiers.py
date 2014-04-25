@@ -32,12 +32,7 @@ class _ParamsValidator:
         self.method = method
         self.required_params = required_params
 
-    def validate(self, params_str):
-        params = {}
-        for param_spec in params_str.split(","):
-            param, value = param_spec.split("=")
-            params[param] = value
-
+    def validate(self, params):
         for required_param in self.required_params:
             if required_param not in params:
                 msg = "{m} requires parameter {p} ({d}).".format(

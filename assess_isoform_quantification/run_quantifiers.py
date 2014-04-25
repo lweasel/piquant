@@ -1,23 +1,22 @@
 #!/usr/bin/python
 
 """Usage:
-    run_quantifiers [--log-level=<log-level>] --method=<quant-method> --params=<param-values> [--run-dir=<run-dir] [--input-dir=<input-dir] [--num-fragments=<num-fragments>] [--read-depth=<read-depth>] [--read-length=<read-length>] [--errors] [--paired-end] [--bias] [--prepare-only|--run-only] <transcript-gtf-file> <genome-fasta-dir>
+    run_quantifiers [--log-level=<log-level>] [--out-dir=<out-dir>] [--num-fragments=<num-fragments>] [--prepare-only|--run-only] --quant-methods=<quant-methods> --params=<param-values> --read-lengths=<read-lengths> --read-depths=<read-depths> --paired-ends=<paired-ends> --errors=<errors> --biases=<biases> <transcript-gtf-file> <genome-fasta-dir>
 
 -h --help                           Show this message.
 -v --version                        Show version.
 --log-level=<log-level>             Set logging level (one of {log_level_vals}) [default: info].
--d --run-dir=<run-dir>              Directory to create to which run files will be written [default: out].
--m --method=<quant-method>          Method used to quantify transcript abundances.
--p --params=<param-values>          Comma-separated list of key=value parameters required by the specified quantification method.
---input-dir=<input-dir>             Directory containing pre-created Flux Simulator parameters files and simulated reads.
+--out-dir=<out-dir>      Parent output directory to which quantification run directories will be written [default: output].
 --num-fragments=<num-fragments>     Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
---read-depth=<read-depth>           The approximate depth of reads required across the expressed transcriptome [default: 30].
---read-length=<read-length>         The length of sequence reads [default: 50].
---paired-end                        Create and use paired-end sequence reads (note: option must still be specified even if pre-created reads are being used).
---errors                            Flux Simulator will use a position-dependent error model to simulate sequencing errors.
---bias                              Flux Simulator will introduce sequence bias into the RNA fragmentation process.
 --prepare-only                      Quantification run scripts will be created, but not run.
 --run-only                          Quantification run scripts will be run, but not created (they must already exist).
+-q --quant-methods=<quant-methods>  Comma-separated list of quantification methods to run.
+-l --read-lengths=<read-lengths>  Comma-separated list of read-lengths to perform quantification for.
+-d --read-depths=<read-depths>    Comma-separated list of read-depths to perform quantification for.
+-p --paired-ends=<paired-ends>    Comma-separated list of True/False strings indicating whether quantification should be performed for single or paired-end reads.
+-e --errors=<errors>              Comma-separated list of True/False strings indicating whether quantification should be performed with or without read errors.
+-b --biases=<biases>              Comma-separated list of True/False strings indicating whether quantification should be performed with or without read sequence bias.
+--params=<param-values>          Comma-separated list of key=value parameters required by the specified quantification methods.
 <transcript-gtf-file>               GTF formatted file describing the transcripts to be simulated.
 <genome-fasta-dir>                  Directory containing per-chromosome sequences as FASTA files.
 """
@@ -25,34 +24,32 @@
 from docopt import docopt
 from schema import Schema, SchemaError
 
-import flux_simulator as fs
+import itertools
 import ordutils.log as log
 import ordutils.options as opt
 import os
 import os.path
 import prepare_quantification_run as prq
 import quantifiers as qs
+import schema
 import subprocess
 import sys
 
 LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
-RUN_DIRECTORY = "--run-dir"
-INPUT_DIRECTORY = "--input-dir"
-QUANT_METHOD = "--method"
-PARAMS_SPEC = "--params"
+OUTPUT_DIRECTORY = "--out-dir"
 NUM_FRAGMENTS = "--num-fragments"
-READ_DEPTH = "--read-depth"
-READ_LENGTH = "--read-length"
-PAIRED_END = "--paired-end"
-ERRORS = "--errors"
-BIAS = "--bias"
 PREPARE_ONLY = "--prepare-only"
 RUN_ONLY = "--run-only"
+QUANT_METHODS = "--quant-methods"
+READ_LENGTHS = "--read-lengths"
+READ_DEPTHS = "--read-depths"
+PAIRED_ENDS = "--paired-ends"
+ERRORS = "--errors"
+BIASES = "--biases"
+PARAMS_SPEC = "--params"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
-
-TOPHAT_OUTPUT_DIR = "tho"
 
 # Read in command-line options
 __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
@@ -60,30 +57,44 @@ options = docopt(__doc__, version="prepare_quantification_run v0.1")
 
 # Validate and process command-line options
 
-quant_method_name = options[QUANT_METHOD]
+
+def validate_list_option(option, item_validator, separator=','):
+    items = option.split(separator)
+    return [schema.Schema(
+        schema.Use(item_validator)).validate(i) for i in items]
+
+
+def check_boolean_value(data):
+    data = data.lower()
+    if data in ["true", "t", "yes", "y"]:
+        return True
+    elif data in ["false", "f", "no", "n"]:
+        return False
+    else:
+        raise Exception("Can't convert '{d}' to bool.".format(d=data))
+
+
+def check_quantification_method(data):
+    available_methods = qs.get_quantification_methods()
+    return available_methods[data]
 
 try:
     opt.validate_dict_option(
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
 
-    opt.validate_dir_option(
-        options[RUN_DIRECTORY],
-        "Run directory should " + ("" if options[RUN_ONLY] else "not ") +
-        "already exist",
-        should_exist=options[RUN_ONLY])
+    options[QUANT_METHODS] = validate_list_option(
+        options[QUANT_METHODS], check_quantification_method)
 
-    opt.validate_dir_option(
-        options[INPUT_DIRECTORY],
-        "Input directory should exist if specified",
-        nullable=True)
+    params = {}
+    for param_spec in options[PARAMS_SPEC].split(","):
+        param, value = param_spec.split("=")
+        params[param] = value
+    options[PARAMS_SPEC] = params
 
-    options[QUANT_METHOD] = opt.validate_dict_option(
-        options[QUANT_METHOD], qs.get_quantification_methods(),
-        "Unknown quantification method")
+    for quant_method in options[QUANT_METHODS]:
+        Schema(quant_method.get_params_validator()).\
+            validate(options[PARAMS_SPEC])
 
-    options[PARAMS_SPEC] = Schema(
-        options[QUANT_METHOD].get_params_validator()).\
-        validate(options[PARAMS_SPEC])
     options[PARAMS_SPEC][qs.TRANSCRIPT_GTF_FILE] = options[TRANSCRIPT_GTF_FILE]
     options[PARAMS_SPEC][qs.GENOME_FASTA_DIR] = options[GENOME_FASTA_DIR]
 
@@ -92,13 +103,16 @@ try:
         "Number of fragments must be a positive integer.",
         nonneg=True)
 
-    options[READ_DEPTH] = opt.validate_int_option(
-        options[READ_DEPTH], "Read depth must be a positive integer",
-        nonneg=True)
-
-    options[READ_LENGTH] = opt.validate_int_option(
-        options[READ_LENGTH], "Read length must be a positive integer",
-        nonneg=True)
+    options[READ_LENGTHS] = set(validate_list_option(
+        options[READ_LENGTHS], int))
+    options[READ_DEPTHS] = set(validate_list_option(
+        options[READ_DEPTHS], int))
+    options[PAIRED_ENDS] = set(validate_list_option(
+        options[PAIRED_ENDS], check_boolean_value))
+    options[ERRORS] = set(validate_list_option(
+        options[ERRORS], check_boolean_value))
+    options[BIASES] = set(validate_list_option(
+        options[BIASES], check_boolean_value))
 
     opt.validate_file_option(
         options[TRANSCRIPT_GTF_FILE], "Transcript GTF file does not exist")
@@ -108,28 +122,85 @@ try:
 except SchemaError as exc:
     exit("Exiting. " + exc.code)
 
-if options[QUANT_METHOD].requires_paired_end_reads() \
-        and not options[PAIRED_END]:
-    exit("Exiting. Quantification method {m} ".format(m=quant_method_name)
-         + "does not support single end reads.")
+if False in options[PAIRED_ENDS]:
+    for qm in options[QUANT_METHODS]:
+        if qm.requires_paired_end_reads():
+            exit("Exiting. Quantification method {m} ".format(m=qm.get_name())
+                 + "does not support single end reads.")
 
 # Set up logger
 logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
-if not options[RUN_ONLY]:
-    prq.create_quantification_files(
-        options[INPUT_DIRECTORY], options[RUN_DIRECTORY],
-        options[TRANSCRIPT_GTF_FILE], options[GENOME_FASTA_DIR],
-        options[NUM_FRAGMENTS], options[QUANT_METHOD],
-        options[READ_LENGTH], options[READ_DEPTH],
-        options[PAIRED_END], options[ERRORS], options[BIAS],
-        dict(options[PARAMS_SPEC]))
 
-# Execute the run quantification script
-if not options[PREPARE_ONLY]:
-    logger.info("Executing shell script to run quantification analysis.")
-    os.chdir(options[RUN_DIRECTORY])
+def _get_reads_name(length, depth, paired_end, errors, bias):
+    return "{d}x_{l}b_{p}_{e}_{b}".format(
+        d=depth, l=length,
+        p="pe" if paired_end else "se",
+        e="errors" if errors else "no_errors",
+        b="bias" if bias else "no_bias")
 
-    run_params = "-" + ("" if options[INPUT_DIRECTORY] else "r") + "qa"
-    args = ['nohup', './run_quantification.sh', run_params]
-    subprocess.Popen(args)
+
+def _get_run_name(quant_method, length, depth, paired_end, errors, bias):
+    return "{qm}_{r}".format(
+        qm=quant_method.get_name(),
+        r=_get_reads_name(length, depth, paired_end, errors, bias))
+
+
+def _get_reads_dir(output_dir, length, depth, paired_end, error, bias):
+    return output_dir + os.path.sep + \
+        _get_reads_name(length, depth, paired_end, error, bias)
+
+
+def _get_run_dir(output_dir, quant_method, length, depth,
+                 paired_end, error, bias):
+    return output_dir + os.path.sep + \
+        _get_run_name(quant_method, length, depth, paired_end, error, bias)
+
+
+for quant_method, length, depth, paired_end, error, bias in \
+    itertools.product(
+        options[QUANT_METHODS], options[READ_LENGTHS],
+        options[READ_DEPTHS], options[PAIRED_ENDS],
+        options[ERRORS], options[BIASES]):
+
+    # Check reads directory exists
+    reads_dir = _get_reads_dir(
+        options[OUTPUT_DIRECTORY], length, depth, paired_end, error, bias)
+    if not os.path.exists(reads_dir):
+        sys.exit("Reads directory '{d}' should exist.".format(d=reads_dir))
+
+    # Check run directory does or doesn't exist as appropriate
+    run_dir = _get_run_dir(
+        options[OUTPUT_DIRECTORY], quant_method,
+        length, depth, paired_end, error, bias)
+    if options[RUN_ONLY] != os.path.exists(run_dir):
+        sys.exit("Run directory '{d}' should ".format(d=run_dir) +
+                 ("" if options[RUN_ONLY] else "not ") + "already exist.")
+
+for quant_method, length, depth, paired_end, error, bias in \
+    itertools.product(
+        options[QUANT_METHODS], options[READ_LENGTHS],
+        options[READ_DEPTHS], options[PAIRED_ENDS],
+        options[ERRORS], options[BIASES]):
+
+    run_dir = _get_run_dir(
+        options[OUTPUT_DIRECTORY], quant_method,
+        length, depth, paired_end, error, bias)
+
+    # Create the run quantification script
+    if not options[RUN_ONLY]:
+        reads_dir = _get_reads_dir(
+            options[OUTPUT_DIRECTORY], length, depth, paired_end, error, bias)
+        prq.write_run_quantification_script(
+            reads_dir, run_dir, options[TRANSCRIPT_GTF_FILE],
+            quant_method, length, depth, paired_end, error, bias,
+            dict(options[PARAMS_SPEC]))
+
+    # Execute the run quantification script
+    if not options[PREPARE_ONLY]:
+        logger.info("Executing shell script to run quantification analysis.")
+        cwd = os.getcwd()
+        os.chdir(run_dir)
+        args = ['nohup', './run_quantification.sh', "-qa"]
+        subprocess.Popen(args)
+        os.chdir(cwd)
