@@ -132,4 +132,4 @@ if not options[PREPARE_ONLY]:
 
     run_params = "-" + ("" if options[INPUT_DIRECTORY] else "r") + "qa"
     args = ['nohup', './run_quantification.sh', run_params]
-    subprocess.Popen(['nohup', './run_quantification.sh', run_params])
+    subprocess.Popen(args)
