@@ -13,6 +13,7 @@ ASSEMBLE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "assemble_quantification_data.py"
 ANALYSE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "analyse_quantification_run.py"
 CALC_READ_DEPTH_SCRIPT = PYTHON_SCRIPT_DIR + "calculate_reads_for_depth.py"
 SIMULATE_BIAS_SCRIPT = PYTHON_SCRIPT_DIR + "simulate_read_bias.py"
+BIAS_PWM_FILE = PYTHON_SCRIPT_DIR + "bias_motif.pwm"
 
 CREATE_READS_VARIABLE = "CREATE_READS"
 QUANTIFY_TRANSCRIPTS_VARIABLE = "QUANTIFY_TRANSCRIPTS"
@@ -58,14 +59,14 @@ def _add_create_expression_profiles(writer):
 def _add_fix_zero_length_transcripts(writer, fs_pro_file):
     # When creating expression profiles, Flux Simulator sometimes appears to
     # output (incorrectly) one transcript with zero length - which then causes
-    # read simulation to barf. The following hack will remove the offending
+    # read simulation to fail. The following hack will remove the offending
     # transcript(s).
     writer.add_comment(
         "(this is a hack - Flux Simulator seems to sometimes " +
         "incorrectly output transcripts with zero length)")
     writer.add_line(
-        "ZERO_LENGTH_COUNT=$(awk 'BEGIN {{i=0}} $4 == 0 {{i++;}} " +
-        "END {{print i}}' " + fs_pro_file + ")")
+        "ZERO_LENGTH_COUNT=$(awk 'BEGIN {i=0} $4 == 0 {i++;} " +
+        "END {print i}' " + fs_pro_file + ")")
     writer.add_echo()
     writer.add_echo(
         "Removing $ZERO_LENGTH_COUNT transcripts with zero length...")
@@ -97,7 +98,7 @@ def _add_calculate_required_read_depth(
             "required number of reads, and later make a biased " +
             "selection from these.")
         writer.set_variable("FINAL_READS", "$READS")
-        writer.set_variable("READS", "echo \"2*$READS\" | bc")
+        writer.set_variable("READS", "$(echo \"2*$READS\" | bc)")
 
 
 def _add_update_flux_simulator_parameters(writer):
@@ -150,8 +151,8 @@ def _add_simulate_read_bias(writer, paired_end, errors, bias):
         writer.add_line(
             "python " + SIMULATE_BIAS_SCRIPT +
             " -n $FINAL_READS --out-prefix=" + out_prefix + " " +
-            ("--paired-end" if paired_end else "") +
-            " bias_motif.pwm " + reads_file)
+            ("--paired-end" if paired_end else "") + " " +
+            BIAS_PWM_FILE + " " + reads_file)
         writer.add_line(
             "mv " + out_prefix + "." + reads_file + " " + reads_file)
 
@@ -167,8 +168,8 @@ def _add_separate_paired_end_reads(writer, paired_end, errors):
             "paste " + ("- - - -" if errors else "- -") + " < " +
             _get_reads_file(errors),
             "awk -F '\\t' '$1~/\/1/ " +
-            "\"{{print $0 > \"" + TMP_LEFT_READS_FILE + "\"}} " +
-            "$1~/\/2/ {{print $0 > \"" + TMP_RIGHT_READS_FILE + "\"}}'"
+            "{print $0 > \"" + TMP_LEFT_READS_FILE + "\"} " +
+            "$1~/\/2/ {print $0 > \"" + TMP_RIGHT_READS_FILE + "\"}'"
         ])
         writer.add_line(
             "tr '\\t' '\\n' < " + TMP_LEFT_READS_FILE + " > " +

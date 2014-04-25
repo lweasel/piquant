@@ -60,8 +60,10 @@ bias_pwm = pwm.PWM(options[PWM_FILE])
 # Iterate through reads, storing positions and scores
 logger.info("Scoring reads according to PWM")
 
+with_errors = options[READS_FILE].endswith("fastq")
+
 lines_per_read = 2
-if options[READS_FILE].endswith("fastq"):
+if with_errors:
     lines_per_read *= 2
 if options[PAIRED_END]:
     lines_per_read *= 2
@@ -81,7 +83,6 @@ class SequenceLinePicker:
 
 ReadScore = collections.namedtuple("ReadScore", ["read_number", "score"])
 
-with_errors = options[READS_FILE].endswith("fastq")
 scores = []
 with open(options[READS_FILE], 'r') as f:
     for i, line in enumerate(
@@ -125,7 +126,7 @@ class OutputPicker:
 
 
 def write_output_file(input_file, scores):
-    dirname = os.path.dirname(input_file)
+    dirname = os.path.dirname(os.path.abspath(input_file))
     basename = os.path.basename(input_file)
     output_file = dirname + os.path.sep + options[OUT_PREFIX] + "." + basename
 
