@@ -58,16 +58,6 @@ options = docopt(__doc__, version="prepare_quantification_run v0.1")
 # Validate and process command-line options
 
 
-def check_boolean_value(data):
-    data = data.lower()
-    if data in ["true", "t", "yes", "y"]:
-        return True
-    elif data in ["false", "f", "no", "n"]:
-        return False
-    else:
-        raise Exception("Can't convert '{d}' to bool.".format(d=data))
-
-
 def check_quantification_method(data):
     available_methods = qs.get_quantification_methods()
     return available_methods[data]
@@ -102,11 +92,11 @@ try:
     options[READ_DEPTHS] = set(opt.validate_list_option(
         options[READ_DEPTHS], int))
     options[PAIRED_ENDS] = set(opt.validate_list_option(
-        options[PAIRED_ENDS], check_boolean_value))
+        options[PAIRED_ENDS], opt.check_boolean_value))
     options[ERRORS] = set(opt.validate_list_option(
-        options[ERRORS], check_boolean_value))
+        options[ERRORS], opt.check_boolean_value))
     options[BIASES] = set(opt.validate_list_option(
-        options[BIASES], check_boolean_value))
+        options[BIASES], opt.check_boolean_value))
 
     opt.validate_file_option(
         options[TRANSCRIPT_GTF_FILE], "Transcript GTF file does not exist")

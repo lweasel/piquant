@@ -50,18 +50,6 @@ __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
 options = docopt.docopt(__doc__, version="create_simulated_reads v0.1")
 
 # Validate command-line options
-
-
-def check_boolean_value(data):
-    data = data.lower()
-    if data in ["true", "t", "yes", "y"]:
-        return True
-    elif data in ["false", "f", "no", "n"]:
-        return False
-    else:
-        raise Exception("Can't convert '{d}' to bool.".format(d=data))
-
-
 try:
     opt.validate_dict_option(
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
@@ -80,11 +68,11 @@ try:
     options[READ_DEPTHS] = set(opt.validate_list_option(
         options[READ_DEPTHS], int))
     options[PAIRED_ENDS] = set(opt.validate_list_option(
-        options[PAIRED_ENDS], check_boolean_value))
+        options[PAIRED_ENDS], opt.check_boolean_value))
     options[ERRORS] = set(opt.validate_list_option(
-        options[ERRORS], check_boolean_value))
+        options[ERRORS], opt.check_boolean_value))
     options[BIASES] = set(opt.validate_list_option(
-        options[BIASES], check_boolean_value))
+        options[BIASES], opt.check_boolean_value))
 except schema.SchemaError as exc:
     exit(exc.code)
 
