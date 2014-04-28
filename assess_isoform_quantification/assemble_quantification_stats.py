@@ -26,7 +26,7 @@ import ordutils.log as log
 import ordutils.options as opt
 import os.path
 import pandas as pd
-import quantifiers as qs
+import piquant_options as popt
 import schema
 import sys
 
@@ -48,17 +48,11 @@ __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
 options = docopt.docopt(__doc__, version="assemble_quantification_stats v0.1")
 
 # Validate command-line options
-
-
-def check_quantification_method(data):
-    available_methods = qs.get_quantification_methods()
-    return available_methods[data]
-
 try:
     opt.validate_dict_option(
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
     options[QUANT_METHODS] = opt.validate_list_option(
-        options[QUANT_METHODS], check_quantification_method)
+        options[QUANT_METHODS], popt.check_quantification_method)
     options[READ_LENGTHS] = set(opt.validate_list_option(
         options[READ_LENGTHS], int))
     options[READ_DEPTHS] = set(opt.validate_list_option(

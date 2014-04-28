@@ -29,9 +29,9 @@ import ordutils.log as log
 import ordutils.options as opt
 import os
 import os.path
+import piquant_options as popt
 import prepare_quantification_run as prq
 import quantifiers as qs
-import schema
 import subprocess
 import sys
 
@@ -56,18 +56,12 @@ __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
 options = docopt(__doc__, version="prepare_quantification_run v0.1")
 
 # Validate and process command-line options
-
-
-def check_quantification_method(data):
-    available_methods = qs.get_quantification_methods()
-    return available_methods[data]
-
 try:
     opt.validate_dict_option(
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
 
     options[QUANT_METHODS] = opt.validate_list_option(
-        options[QUANT_METHODS], check_quantification_method)
+        options[QUANT_METHODS], popt.check_quantification_method)
 
     params = {}
     for param_spec in options[PARAMS_SPEC].split(","):
