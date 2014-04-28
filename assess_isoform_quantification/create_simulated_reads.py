@@ -27,6 +27,7 @@ import ordutils.log as log
 import ordutils.options as opt
 import os.path
 import prepare_read_simulation as prs
+import quantification_run as qr
 import schema
 import subprocess
 import sys
@@ -80,25 +81,12 @@ except schema.SchemaError as exc:
 logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
 
-def _get_reads_name(length, depth, paired_end, errors, bias):
-    return "{d}x_{l}b_{p}_{e}_{b}".format(
-        d=depth, l=length,
-        p="pe" if paired_end else "se",
-        e="errors" if errors else "no_errors",
-        b="bias" if bias else "no_bias")
-
-
-def _get_reads_dir(output_dir, length, depth, paired_end, error, bias):
-    return output_dir + os.path.sep + \
-        _get_reads_name(length, depth, paired_end, error, bias)
-
-
 for length, depth, paired_end, error, bias in \
         itertools.product(
             options[READ_LENGTHS], options[READ_DEPTHS],
             options[PAIRED_ENDS], options[ERRORS], options[BIASES]):
 
-    reads_dir = _get_reads_dir(
+    reads_dir = qr.get_reads_dir(
         options[OUTPUT_DIRECTORY], length, depth, paired_end, error, bias)
 
     if options[RUN_ONLY] != os.path.exists(reads_dir):
@@ -110,8 +98,8 @@ for length, depth, paired_end, error, bias in \
             options[READ_LENGTHS], options[READ_DEPTHS],
             options[PAIRED_ENDS], options[ERRORS], options[BIASES]):
 
-    reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
-        _get_reads_name(length, depth, paired_end, error, bias)
+    reads_dir = qr.get_reads_dir(
+        options[OUTPUT_DIRECTORY], length, depth, paired_end, error, bias)
 
     if not options[RUN_ONLY]:
         prs.create_simulation_files(

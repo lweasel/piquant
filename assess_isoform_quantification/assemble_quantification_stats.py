@@ -27,6 +27,7 @@ import ordutils.options as opt
 import os.path
 import pandas as pd
 import piquant_options as popt
+import quantification_run as qr
 import schema
 import sys
 
@@ -62,33 +63,12 @@ try:
     options[ERRORS] = set(opt.validate_list_option(
         options[ERRORS], opt.check_boolean_value))
     options[BIASES] = set(opt.validate_list_option(
-        options[BIASES], check_boolean_value))
+        options[BIASES], opt.check_boolean_value))
 except schema.SchemaError as exc:
     exit(exc.code)
 
 # Set up logger
-
 logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
-
-
-def _get_reads_name(length, depth, paired_end, errors, bias):
-    return "{d}x_{l}b_{p}_{e}_{b}".format(
-        d=depth, l=length,
-        p="pe" if paired_end else "se",
-        e="errors" if errors else "no_errors",
-        b="bias" if bias else "no_bias")
-
-
-def _get_run_name(quant_method, length, depth, paired_end, errors, bias):
-    return "{qm}_{r}".format(
-        qm=quant_method.get_name(),
-        r=_get_reads_name(length, depth, paired_end, errors, bias))
-
-
-def _get_run_dir(output_dir, quant_method, length, depth,
-                 paired_end, error, bias):
-    return output_dir + os.path.sep + \
-        _get_run_name(quant_method, length, depth, paired_end, error, bias)
 
 if not os.path.exists(options[OUTPUT_DIRECTORY]):
     os.mkdir(options[OUTPUT_DIRECTORY])
@@ -100,7 +80,7 @@ for quant_method, length, depth, paired_end, error, bias in \
         options[ERRORS], options[BIASES]):
 
     # Check all run directories exist
-    run_dir = _get_run_dir(
+    run_dir = qr.get_run_dir(
         options[RUN_DIRECTORY], quant_method,
         length, depth, paired_end, error, bias)
     if not os.path.exists(run_dir):
@@ -115,9 +95,9 @@ for stats_type in STATS_TYPES:
             options[READ_DEPTHS], options[PAIRED_ENDS],
             options[ERRORS], options[BIASES]):
 
-        run_name = _get_run_name(
+        run_name = qr.get_run_name(
             quant_method, length, depth, paired_end, error, bias)
-        run_dir = _get_run_dir(
+        run_dir = qr.get_run_dir(
             options[RUN_DIRECTORY], quant_method,
             length, depth, paired_end, error, bias)
 
