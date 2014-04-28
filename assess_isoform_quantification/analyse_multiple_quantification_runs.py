@@ -1,12 +1,12 @@
 #!/usr/bin/python
 
 """Usage:
-    analyse_multiple_quantification_runs [--log-level=<log-level>] <stats-prefix>
+    analyse_multiple_quantification_runs [--log-level=<log-level>] <overall-stats-dir>
 
 -h --help                 Show this message.
 -v --version              Show version.
 --log-level=<log-level>   Set logging level (one of {log_level_vals}) [default: info].
-<stats-prefix>            Path prefix for files containing assembled overall statistics.
+<overall_stats_dir>       Parent directory for files containing assembled overall statistics.
 """
 
 import classifiers
@@ -15,16 +15,16 @@ import fpkms_plotting as plot
 import itertools
 import ordutils.log as log
 import ordutils.options as opt
+import os.path
 import pandas as pd
 import parameters as params
 import schema
 import statistics as stats
 import sys
-import utils
 
 LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
-STATS_PREFIX = "<stats-prefix>"
+STATS_DIR = "<overall_stats_dir>"
 
 ORDER_VALUES = [True, False]
 
@@ -34,32 +34,13 @@ options = docopt.docopt(
     __doc__, version="analyse_multiple_quantification_runs v0.1")
 
 # Validate command-line options
-clsfrs = classifiers.get_grouped_stats_classifiers()
-dist_clsfrs = classifiers.get_distribution_plot_classifiers()
-
-
-def get_stats_file(classifier, distribution=False, ascending=False):
-    ret = options[STATS_PREFIX]
-    if distribution:
-        ret += "_distribution"
-    ret += "_stats"
-    if distribution:
-        ret += "_" + utils.get_order_string(ascending)
-    if classifier is not None:
-        ret += "_by_" + utils.spaces_to_underscore(
-            classifier.get_column_name())
-    return ret + ".csv"
-
-OVERALL_STATS_FILE = get_stats_file(None)
-
 try:
     opt.validate_dict_option(
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
 
-    stats_files = [OVERALL_STATS_FILE] + \
-        [get_stats_file(c) for c in clsfrs] + \
-        [get_stats_file(c, distribution=True, ascending=asc)
-            for c, asc in itertools.product(dist_clsfrs, ORDER_VALUES)]
+    stats_files = [stats.get_stats_file(
+        options[STATS_DIR], stats.OVERALL_STATS_PREFIX, **pset)
+        for pset in stats.get_stats_param_sets()]
     for stats_file in stats_files:
         opt.validate_file_option(
             stats_file, "Statistics file should exist")
@@ -67,12 +48,12 @@ except schema.SchemaError as exc:
     exit(exc.code)
 
 # Set up logger
-
 logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
 # Read in overall statistics
-
-overall_stats = pd.read_csv(OVERALL_STATS_FILE)
+overall_stats_file = stats.get_stats_file(
+    options[STATS_DIR], stats.OVERALL_STATS_PREFIX)
+overall_stats = pd.read_csv(overall_stats_file)
 
 param_values = {}
 for param in params.PARAMETERS:
@@ -81,7 +62,6 @@ for param in params.PARAMETERS:
 
 # Utility functions for manipulating sets of parameters
 degenerate_param = lambda x: len(param_values[x]) <= 1
-
 non_degenerate_params = lambda x: [p for p in x if not degenerate_param(p)]
 
 
@@ -109,6 +89,9 @@ def get_stats_for_fixed_params(stats_df, fixed_params, fp_values_set):
 
 # Create graphs based on overall statistics
 # TODO: better description!
+graph_file_basename = \
+    options[STATS_DIR] + os.path.sep + stats.OVERALL_STATS_PREFIX
+
 numerical_params = [p for p in params.PARAMETERS if p.is_numeric]
 
 for param in non_degenerate_params(params.PARAMETERS):
@@ -122,15 +105,20 @@ for param in non_degenerate_params(params.PARAMETERS):
 
             for stat in stats.get_graphable_statistics():
                 plot.plot_statistic(
-                    stats_df, options[STATS_PREFIX], stat,
-                    param, num_p, fixed_param_values)
+                    stats_df, graph_file_basename,
+                    stat, param, num_p, fixed_param_values)
 
 # Create graphs based on statistics stratified by classifier
 # TODO: better description!
 more_than_100_filter = lambda x: x[stats.NUM_FPKMS] > 100
 
-for clsfr in clsfrs:
-    stats_file = get_stats_file(clsfr)
+clsfrs = classifiers.get_classifiers()
+grp_clsfrs = [c for c in clsfrs if c.produces_grouped_stats()]
+dist_clsfrs = [c for c in clsfrs if c.produces_distribution_plots()]
+
+for clsfr in grp_clsfrs:
+    stats_file = stats.get_stats_file(
+        options[STATS_DIR], stats.OVERALL_STATS_PREFIX, clsfr)
     clsfr_stats = pd.read_csv(stats_file)
 
     for param in non_degenerate_params(params.PARAMETERS):
@@ -143,13 +131,14 @@ for clsfr in clsfrs:
 
             for stat in stats.get_graphable_by_classifier_statistics():
                 plot.plot_statistic_by_classifier(
-                    stats_df, options[STATS_PREFIX], stat, param,
+                    stats_df, graph_file_basename, stat, param,
                     clsfr, more_than_100_filter, fixed_param_values)
 
 # Create distribution plots
 # TODO: better description!
 for clsfr, asc in itertools.product(dist_clsfrs, ORDER_VALUES):
-    stats_file = get_stats_file(clsfr, distribution=True, ascending=asc)
+    stats_file = stats.get_stats_file(
+        options[STATS_DIR], stats.OVERALL_STATS_PREFIX, clsfr, asc)
     clsfr_stats = pd.read_csv(stats_file)
 
     for param in non_degenerate_params(params.PARAMETERS):
@@ -161,5 +150,5 @@ for clsfr, asc in itertools.product(dist_clsfrs, ORDER_VALUES):
                 clsfr_stats, fixed_params, fp_values_set)
 
             plot.plot_cumulative_transcript_distribution_grouped(
-                stats_df, options[STATS_PREFIX], param,
+                stats_df, graph_file_basename, param,
                 clsfr, asc, fixed_param_values)

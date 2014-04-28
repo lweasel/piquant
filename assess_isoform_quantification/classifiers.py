@@ -1,20 +1,11 @@
 import fpkms as f
+import utils
 
 CLASSIFIERS = []
-
-# TODO: Should be the only thing exported by the module
 
 
 def get_classifiers():
     return [c() for c in CLASSIFIERS]
-
-
-def get_grouped_stats_classifiers():
-    return [c for c in get_classifiers() if c.produces_grouped_stats()]
-
-
-def get_distribution_plot_classifiers():
-    return [c for c in get_classifiers() if c.produces_distribution_plots()]
 
 
 def Classifier(cls):
@@ -26,7 +17,6 @@ class BaseClassifier():
     def __init__(self, value_extractor):
         self.value_extractor = value_extractor
         self.grouped_stats = True
-        self.distribution_plots = True
 
     def get_value(self, row):
         return self.value_extractor(row)
@@ -38,13 +28,22 @@ class BaseClassifier():
         return self.grouped_stats
 
     def produces_distribution_plots(self):
-        return self.distribution_plots
+        return not self.grouped_stats
 
     def get_distribution_plot_range(self):
         return None
 
     def get_value_labels(self, num_labels):
         return range(1, num_labels + 1)
+
+    def get_stats_file_suffix(self, ascending=True):
+        suffix = "_"
+        if self.produces_grouped_stats():
+            suffix += "stats"
+        else:
+            suffix += "distribution_stats_" + utils.get_order_string(ascending)
+        return suffix + "_by_" + \
+            utils.spaces_to_underscore(self.get_column_name())
 
 
 # TODO: think this should be an instance of BaseClassifier rather than a class

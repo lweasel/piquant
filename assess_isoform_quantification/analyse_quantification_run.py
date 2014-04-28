@@ -29,7 +29,6 @@ import classifiers
 import fpkms_plotting as plot
 import ordutils.options as opt
 import pandas as pd
-import utils
 
 QUANT_METHOD = "quant-method"
 READ_DEPTH = "read-depth"
@@ -111,40 +110,38 @@ if options[OUT_FILE_BASENAME]:
     stats = f.get_stats(fpkms, tp_fpkms)
     add_overall_stats(stats)
 
-    with open(options[OUT_FILE_BASENAME] + "_stats.csv", "w") as out_file:
+    stats_file_name = stats.get_stats_file(".", options[OUT_FILE_BASENAME])
+
+    with open(stats_file_name, "w") as out_file:
         stats.to_csv(out_file, float_format="%.5f", index=False)
 
 # Write statistics for FPKMS stratified by various classification measures
 non_zero = fpkms[(fpkms[f.REAL_FPKM] > 0) & (fpkms[f.CALCULATED_FPKM] > 0)]
 
-grouped_stats_clsfrs = classifiers.get_grouped_stats_classifiers()
-distribution_plot_clsfrs = classifiers.get_distribution_plot_classifiers()
-
 if options[OUT_FILE_BASENAME]:
-    for classifier in grouped_stats_clsfrs:
-        column_name = classifier.get_column_name()
-        stats = f.get_grouped_stats(fpkms, tp_fpkms, column_name)
-        add_overall_stats(stats)
-
-        stats_file_name = options[OUT_FILE_BASENAME] + "_stats_by_" + \
-            utils.spaces_to_underscore(column_name) + ".csv"
-
-        with open(stats_file_name, "w") as out_file:
-            stats.to_csv(out_file, float_format="%.5f")
-
-    for classifier in distribution_plot_clsfrs:
-        for ascending in [True, False]:
-            stats = f.get_distribution_stats(
-                non_zero, tp_fpkms, classifier, ascending)
+    for classifier in clsfrs:
+        if classifier.produces_grouped_stats():
+            column_name = classifier.get_column_name()
+            stats = f.get_grouped_stats(fpkms, tp_fpkms, column_name)
             add_overall_stats(stats)
 
-            stats_file_name = options[OUT_FILE_BASENAME] + \
-                "_distribution_stats_" + utils.get_order_string(ascending) + "_by_" \
-                + utils.spaces_to_underscore(classifier.get_column_name()) + \
-                ".csv"
+            stats_file_name = stats.get_stats_file(
+                ".", options[OUT_FILE_BASENAME], classifier)
 
             with open(stats_file_name, "w") as out_file:
                 stats.to_csv(out_file, float_format="%.5f")
+
+        elif classifier.produces_distribution_plots():
+            for ascending in [True, False]:
+                stats = f.get_distribution_stats(
+                    non_zero, tp_fpkms, classifier, ascending)
+                add_overall_stats(stats)
+
+                stats_file_name = stats.get_stats_file(
+                    ".", options[OUT_FILE_BASENAME], classifier, ascending)
+
+                with open(stats_file_name, "w") as out_file:
+                    stats.to_csv(out_file, float_format="%.5f")
 
 # Make a scatter plot of log transformed calculated vs real FPKMs
 TP_PLOT_OPTIONS = plot.PlotOptions(
@@ -163,7 +160,7 @@ NON_ZERO_PLOT_OPTIONS = plot.PlotOptions(
     options[OUT_FILE_BASENAME])
 
 if options[OUT_FILE_BASENAME]:
-    for classifier in grouped_stats_clsfrs:
+    for classifier in [c for c in clsfrs if c.produces_grouped_stats()]:
         plot.log_ratio_boxplot(
             non_zero, NON_ZERO_PLOT_OPTIONS, classifier)
         plot.log_ratio_boxplot(
@@ -179,7 +176,7 @@ if options[OUT_FILE_BASENAME]:
 # Make plots showing the percentage of isoforms above or below threshold values
 # according to various classification measures
 if options[OUT_FILE_BASENAME]:
-    for classifier in distribution_plot_clsfrs:
+    for classifier in [c for c in clsfrs if c.produces_distribution_plots()]:
         for ascending in [True, False]:
             plot.plot_cumulative_transcript_distribution(
                 non_zero, NON_ZERO_PLOT_OPTIONS, classifier, ascending)

@@ -29,6 +29,7 @@ import pandas as pd
 import piquant_options as popt
 import quantification_run as qr
 import schema
+import statistics as stats
 import sys
 
 LOG_LEVEL = "--log-level"
@@ -41,8 +42,6 @@ READ_DEPTHS = "--read-depths"
 PAIRED_ENDS = "--paired-ends"
 ERRORS = "--errors"
 BIASES = "--biases"
-
-STATS_TYPES = ["_stats", "_stats_by_gene_transcript_number", "_stats_by_log10_real_FPKM", "_stats_by_transcript_length", "_stats_by_unique_sequence_percentage", "_distribution_stats_asc_by_absolute_percent_error", "_distribution_stats_desc_by_absolute_percent_error"]
 
 # Read in command-line options
 __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
@@ -86,7 +85,7 @@ for quant_method, length, depth, paired_end, error, bias in \
     if not os.path.exists(run_dir):
         sys.exit("Run directory '{d}' should exist.".format(d=run_dir))
 
-for stats_type in STATS_TYPES:
+for pset in stats.get_stats_param_sets():
     overall_stats_df = pd.DataFrame()
 
     for quant_method, length, depth, paired_end, error, bias in \
@@ -101,11 +100,11 @@ for stats_type in STATS_TYPES:
             options[RUN_DIRECTORY], quant_method,
             length, depth, paired_end, error, bias)
 
-        stats_file = run_dir + os.path.sep + run_name + stats_type + ".csv"
+        stats_file = stats.get_stats_file(run_dir, run_name, **pset)
         stats_df = pd.read_csv(stats_file)
         overall_stats_df = overall_stats_df.append(stats_df)
 
-    overall_stats_file = options[OUTPUT_DIRECTORY] + os.path.sep + \
-        "overall" + stats_type + ".csv"
+    overall_stats_file = stats.get_stats_file(
+        options[OUTPUT_DIRECTORY], stats.OVERALL_STATS_PREFIX, **pset)
     overall_stats_df.to_csv(
         overall_stats_file, float_format="%.5f", index=False)

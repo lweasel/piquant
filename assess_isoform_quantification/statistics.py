@@ -8,9 +8,13 @@ get_graphable_by_classifier_statistics: Return statistic instances suitable for
 graphing by a classifier.
 """
 
+import classifiers
 import fpkms as f
+import itertools
+import os.path
 
 NUM_FPKMS = "num-fpkms"
+OVERALL_STATS_PREFIX = "overall"
 
 _SUMMARY_COUNT = "count"
 _SUMMARY_MEDIAN = "50%"
@@ -49,6 +53,28 @@ def get_graphable_by_classifier_statistics():
     for each transcript's originating gene).
     """
     return set([s for s in get_statistics() if s.graphable_by_classifier])
+
+
+def get_stats_param_sets():
+    # TODO: documentation
+    # TODO: tests
+    clsfrs = classifiers.get_classifiers()
+    grp_clsfrs = [c for c in clsfrs if c.produces_grouped_stats()]
+    dist_clsfrs = [c for c in clsfrs if c.produces_distribution_plots()]
+
+    return [{}] + \
+        [{"classifier": c} for c in grp_clsfrs] + \
+        [{"classifier": c, "ascending": asc}
+            for c, asc in itertools.product(dist_clsfrs, [True, False])]
+
+
+def get_stats_file(directory, prefix, classifier=None, ascending=False):
+    # TODO: documentation
+    # TODO: tests
+    ret = directory + os.path.sep + prefix
+    ret += classifier.get_stats_file_suffix(ascending=ascending) \
+        if classifier else "_stats"
+    return ret + ".csv"
 
 
 def _Statistic(cls):
