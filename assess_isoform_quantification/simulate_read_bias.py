@@ -57,16 +57,18 @@ logger.info("Reading PWM file " + options[PWM_FILE])
 
 bias_pwm = pwm.PWM(options[PWM_FILE])
 
-# Iterate through reads, storing positions and scores
-logger.info("Scoring reads according to PWM")
+# Iterate through fragments, storing positions and scores
+logger.info("Scoring fragments according to PWM")
 
 with_errors = options[READS_FILE].endswith("fastq")
 
-lines_per_read = 2
+num_fragments = options[NUM_READS]
+lines_per_fragment = 2
 if with_errors:
-    lines_per_read *= 2
+    lines_per_fragment *= 2
 if options[PAIRED_END]:
-    lines_per_read *= 2
+    num_fragments /= 2
+    lines_per_fragment *= 2
 
 
 def yield_elements(enumerable, element_picker):
@@ -75,48 +77,54 @@ def yield_elements(enumerable, element_picker):
 
 
 class SequenceLinePicker:
-    def __init__(self, lines_per_read):
-        self.lines_per_read = lines_per_read
+    def __init__(self, lines_per_fragment):
+        self.lines_per_fragment = lines_per_fragment
 
     def __call__(self, line_no, line):
-        return (line_no - 1) % self.lines_per_read == 0
+        return (line_no - 1) % self.lines_per_fragment == 0
 
 ReadScore = collections.namedtuple("ReadScore", ["read_number", "score"])
 
 scores = []
 with open(options[READS_FILE], 'r') as f:
     for i, line in enumerate(
-            yield_elements(f, SequenceLinePicker(lines_per_read))):
+            yield_elements(f, SequenceLinePicker(lines_per_fragment))):
         score = ReadScore(i, random.random() * bias_pwm.score(line.strip()))
         scores.append(score)
 
-if options[NUM_READS] > len(scores):
-    sys.exit("Input file(s) did not contain enough reads " +
-             "({ni} found, {no} required)".
-             format(ni=len(scores), no=options[NUM_READS]))
+logger.info("...scored {n} fragments.".format(n=len(scores)))
 
-# Sort reads by score and select the required number of highest-scoring reads
-logger.info("Sorting and selecting scored reads")
+if num_fragments > len(scores):
+    sys.exit("Input file(s) did not contain enough fragments " +
+             "({ni} found, {no} required)".
+             format(ni=len(scores), no=num_fragments))
+
+# Sort fragments by score and select the required number of highest-scoring
+# fragments
+logger.info("Sorting and selecting scored fragments")
 
 scores.sort(key=lambda x: x.score, reverse=True)
-scores = scores[0: options[NUM_READS]]
+
+logger.info("...selecting {n} highest scoring fragments ".
+            format(n=num_fragments))
+scores = scores[0: num_fragments]
 scores.sort(key=lambda x: x.read_number)
 
-# Write selected reads to output file(s)
-logger.info("Writing selected reads to output files")
+# Write selected fragments to output file(s)
+logger.info("Writing selected fragments to output files")
 
 
 class OutputPicker:
-    def __init__(self, scores, lines_per_read):
+    def __init__(self, scores, lines_per_fragment):
         self.scores = scores
-        self.lines_per_read = lines_per_read
+        self.lines_per_fragment = lines_per_fragment
         self.index = 0
 
     def __call__(self, line_no, line):
         if self.index >= len(self.scores):
             return False
 
-        read_number = line_no / self.lines_per_read
+        read_number = line_no / self.lines_per_fragment
         if self.scores[self.index].read_number < read_number:
             self.index += 1
             if self.index >= len(self.scores):
@@ -131,8 +139,8 @@ def write_output_file(input_file, scores):
     output_file = dirname + os.path.sep + options[OUT_PREFIX] + "." + basename
 
     with open(input_file, 'r') as in_f, open(output_file, 'w') as out_f:
-        for i, line in enumerate(
-                yield_elements(in_f, OutputPicker(scores, lines_per_read))):
+        for i, line in enumerate(yield_elements(
+                in_f, OutputPicker(scores, lines_per_fragment))):
             out_f.write(line)
 
 write_output_file(options[READS_FILE], scores)
