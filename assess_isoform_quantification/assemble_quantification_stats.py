@@ -5,7 +5,7 @@
 # TODO: get STATS_TYPES from statistics module.
 
 """Usage:
-    assemble_quantification_stats [--log-level=<log-level>] [--out-dir=<out-dir>] [--run-dir=<run-dir>] --quant-methods=<quant-methods> --params=<param-values> --read-lengths=<read-lengths> --read-depths=<read-depths> --paired-ends=<paired-ends> --errors=<errors> --biases=<biases>
+    assemble_quantification_stats [--log-level=<log-level>] [--out-dir=<out-dir>] [--run-dir=<run-dir>] --quant-methods=<quant-methods> --read-lengths=<read-lengths> --read-depths=<read-depths> --paired-ends=<paired-ends> --errors=<errors> --biases=<biases>
 
 -h --help                           Show this message.
 -v --version                        Show version.
@@ -111,6 +111,9 @@ def _get_run_dir(output_dir, quant_method, length, depth,
     return output_dir + os.path.sep + \
         _get_run_name(quant_method, length, depth, paired_end, error, bias)
 
+if not os.path.exists(options[OUTPUT_DIRECTORY]):
+    os.mkdir(options[OUTPUT_DIRECTORY])
+
 for quant_method, length, depth, paired_end, error, bias in \
     itertools.product(
         options[QUANT_METHODS], options[READ_LENGTHS],
@@ -122,7 +125,7 @@ for quant_method, length, depth, paired_end, error, bias in \
         options[RUN_DIRECTORY], quant_method,
         length, depth, paired_end, error, bias)
     if not os.path.exists(run_dir):
-        sys.exit("Run directory '{d}' should exist.")
+        sys.exit("Run directory '{d}' should exist.".format(d=run_dir))
 
 for stats_type in STATS_TYPES:
     overall_stats_df = pd.DataFrame()
@@ -141,7 +144,7 @@ for stats_type in STATS_TYPES:
 
         stats_file = run_dir + os.path.sep + run_name + stats_type + ".csv"
         stats_df = pd.read_csv(stats_file)
-        overall_stats_df.append(stats_df)
+        overall_stats_df = overall_stats_df.append(stats_df)
 
     overall_stats_file = options[OUTPUT_DIRECTORY] + os.path.sep + \
         "overall" + stats_type + ".csv"
