@@ -1,5 +1,5 @@
-import assess_isoform_quantification.statistics as statistics
-import assess_isoform_quantification.fpkms as f
+import piquant.statistics as statistics
+import piquant.fpkms as f
 import numpy as np
 import pandas as pd
 import scipy.stats as scistats

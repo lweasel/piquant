@@ -20,12 +20,12 @@ class PyTest(TestCommand):
         sys.exit(errcode)
 
 setup(
-    name='assess_isoform_quantification',
+    name='piquant',
     version=assess_isoform_quantification.__version__,
     description='Pipeline for investigating the quantification of transcripts',
     author="Owen Dando",
     author_email='owen.dando@ed.ac.uk',
-    packages=['assess_isoform_quantification'],
+    packages=['piquant'],
     install_requires=['docopt>=0.6.1',
                       'ez-setup>=0.9',
                       'gtf-to-genes>=1.09',

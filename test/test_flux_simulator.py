@@ -1,4 +1,4 @@
-import assess_isoform_quantification.flux_simulator as fs
+import piquant.flux_simulator as fs
 
 
 def _get_read_identifier(t_region=1, t_start=1000, t_end=2000,
