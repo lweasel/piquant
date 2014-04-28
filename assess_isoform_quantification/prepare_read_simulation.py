@@ -142,7 +142,7 @@ def _add_separate_paired_end_reads(writer, paired_end, errors):
             "paste " + ("- - - -" if errors else "- -") + " < " +
             _get_reads_file(errors),
             "awk -F '\\t' '$1~/\/1/ " +
-            "\"{print $0 > \"" + TMP_LEFT_READS_FILE + "\"} " +
+            "{print $0 > \"" + TMP_LEFT_READS_FILE + "\"} " +
             "$1~/\/2/ {print $0 > \"" + TMP_RIGHT_READS_FILE + "\"}'"
         ])
         writer.add_line(
