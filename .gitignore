@@ -3,3 +3,4 @@ piquant.egg-info
 *.swp
 .ipynb_checkpoints
 output
+old-files
