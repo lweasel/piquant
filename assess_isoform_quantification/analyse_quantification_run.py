@@ -111,9 +111,7 @@ if options[OUT_FILE_BASENAME]:
     add_overall_stats(stats)
 
     stats_file_name = stats.get_stats_file(".", options[OUT_FILE_BASENAME])
-
-    with open(stats_file_name, "w") as out_file:
-        stats.to_csv(out_file, float_format="%.5f", index=False)
+    stats.write_stats_data(stats_file_name, stats, index=False)
 
 # Write statistics for FPKMS stratified by various classification measures
 non_zero = fpkms[(fpkms[f.REAL_FPKM] > 0) & (fpkms[f.CALCULATED_FPKM] > 0)]
@@ -127,9 +125,7 @@ if options[OUT_FILE_BASENAME]:
 
             stats_file_name = stats.get_stats_file(
                 ".", options[OUT_FILE_BASENAME], classifier)
-
-            with open(stats_file_name, "w") as out_file:
-                stats.to_csv(out_file, float_format="%.5f")
+            stats.write_stats_data(stats_file_name, stats)
 
         elif classifier.produces_distribution_plots():
             for ascending in [True, False]:
@@ -139,9 +135,7 @@ if options[OUT_FILE_BASENAME]:
 
                 stats_file_name = stats.get_stats_file(
                     ".", options[OUT_FILE_BASENAME], classifier, ascending)
-
-                with open(stats_file_name, "w") as out_file:
-                    stats.to_csv(out_file, float_format="%.5f")
+                stats.write_stats_data(stats_file_name, stats)
 
 # Make a scatter plot of log transformed calculated vs real FPKMs
 TP_PLOT_OPTIONS = plot.PlotOptions(

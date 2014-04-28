@@ -106,5 +106,4 @@ for pset in stats.get_stats_param_sets():
 
     overall_stats_file = stats.get_stats_file(
         options[OUTPUT_DIRECTORY], stats.OVERALL_STATS_PREFIX, **pset)
-    overall_stats_df.to_csv(
-        overall_stats_file, float_format="%.5f", index=False)
+    stats.write_stats_data(overall_stats_file, stats, index=False)

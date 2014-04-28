@@ -77,6 +77,13 @@ def get_stats_file(directory, prefix, classifier=None, ascending=False):
     return ret + ".csv"
 
 
+def write_stats_data(filename, data_frame, **kwargs):
+    # TODO: documentation
+    # TODO: tests
+    with open(filename, "w") as out_file:
+        data_frame.to_csv(out_file, float_format="%.5f", **kwargs)
+
+
 def _Statistic(cls):
     # Mark a class as capable of calculate a statistic for the results of a
     # quantification run.
