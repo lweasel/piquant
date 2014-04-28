@@ -52,12 +52,6 @@ options = docopt.docopt(__doc__, version="create_simulated_reads v0.1")
 # Validate command-line options
 
 
-def validate_list_option(option, item_validator, separator=','):
-    items = option.split(separator)
-    return [schema.Schema(
-        schema.Use(item_validator)).validate(i) for i in items]
-
-
 def check_boolean_value(data):
     data = data.lower()
     if data in ["true", "t", "yes", "y"]:
@@ -81,15 +75,15 @@ try:
         options[NUM_FRAGMENTS],
         "Number of fragments must be a positive integer.",
         nonneg=True)
-    options[READ_LENGTHS] = set(validate_list_option(
+    options[READ_LENGTHS] = set(opt.validate_list_option(
         options[READ_LENGTHS], int))
-    options[READ_DEPTHS] = set(validate_list_option(
+    options[READ_DEPTHS] = set(opt.validate_list_option(
         options[READ_DEPTHS], int))
-    options[PAIRED_ENDS] = set(validate_list_option(
+    options[PAIRED_ENDS] = set(opt.validate_list_option(
         options[PAIRED_ENDS], check_boolean_value))
-    options[ERRORS] = set(validate_list_option(
+    options[ERRORS] = set(opt.validate_list_option(
         options[ERRORS], check_boolean_value))
-    options[BIASES] = set(validate_list_option(
+    options[BIASES] = set(opt.validate_list_option(
         options[BIASES], check_boolean_value))
 except schema.SchemaError as exc:
     exit(exc.code)
