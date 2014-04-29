@@ -4,12 +4,9 @@ python:
 virtualenv:
   system_site_packages: true
 before_install:
-    - "sudo apt-get install -qq python-numpy python-scipy cython"
+    - "sudo apt-get install -qq python-numpy python-scipy python-matplotlib python-pandas cython"
 install: 
-    - "pip install -r requirements.txt --use-mirrors"
     - "pip install docopt"
-    - "pip install matplotlib"
-    - "pip install pandas"
     - "pip install py"
     - "pip install pytest"
     - "pip install schema"
@@ -17,6 +14,6 @@ install:
     - "pip install coverage"
     - "pip install coveralls"
 script: 
-    - "coverage run --source=ordutils setup.py test"
+    - "coverage run --source=piquant setup.py test"
 after_success:
     coveralls
