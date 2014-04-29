@@ -1,7 +1,7 @@
 # Liberally adapted from:
 # "http://www.jeffknupp.com/blog/2013/08/16/open-sourcing-a-python-project-the-right-way/"
 
-import assess_isoform_quantification
+import piquant
 import sys
 
 from distutils.core import setup
@@ -21,14 +21,12 @@ class PyTest(TestCommand):
 
 setup(
     name='piquant',
-    version=assess_isoform_quantification.__version__,
+    version=piquant.__version__,
     description='Pipeline for investigating the quantification of transcripts',
     author="Owen Dando",
     author_email='owen.dando@ed.ac.uk',
     packages=['piquant'],
     install_requires=['docopt>=0.6.1',
-                      'ez-setup>=0.9',
-                      'gtf-to-genes>=1.09',
                       'py>=1.4.20',
                       'pytest>=2.5.2',
                       'schema>=0.2.0'],
