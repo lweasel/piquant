@@ -25,7 +25,9 @@ class _Parameter:
 
 _PARAMETERS = []
 
-_PARAMETERS.append(_Parameter(QUANT_METHOD, "Method"))
+_PARAMETERS.append(_Parameter(
+    QUANT_METHOD, "Method",
+    value_namer=lambda x: x.get_name()))
 
 _PARAMETERS.append(_Parameter(
     READ_DEPTH, "Read depth", is_numeric=True,

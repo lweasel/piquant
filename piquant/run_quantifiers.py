@@ -26,7 +26,6 @@
 from docopt import docopt
 from schema import Schema, SchemaError
 
-import itertools
 import ordutils.log as log
 import ordutils.options as opt
 import os
@@ -34,7 +33,6 @@ import os.path
 import parameters
 import piquant_options as popt
 import prepare_quantification_run as prq
-import quantification_run as qr
 import quantifiers as qs
 import subprocess
 import sys
@@ -112,6 +110,8 @@ if False in options[PAIRED_ENDS]:
 
 
 def check_reads_directory(**params):
+    params = dict(params)
+    del params[parameters.QUANT_METHOD]
     reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
         parameters.get_file_name(**params)
     if not os.path.exists(reads_dir):
@@ -132,8 +132,10 @@ def create_and_run_quantification(**params):
 
     # Create the run quantification script
     if not options[RUN_ONLY]:
+        reads_params = dict(params)
+        del reads_params[parameters.QUANT_METHOD]
         reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
-            parameters.get_file_name(**params)
+            parameters.get_file_name(**reads_params)
         prq.write_run_quantification_script(
             reads_dir, run_dir, options[TRANSCRIPT_GTF_FILE],
             dict(options[PARAMS_SPEC]), **params)
@@ -152,6 +154,7 @@ def create_and_run_quantification(**params):
 logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
 params_values = {
+    parameters.QUANT_METHOD: options[QUANT_METHODS],
     parameters.READ_LENGTH: options[READ_LENGTHS],
     parameters.READ_DEPTH: options[READ_DEPTHS],
     parameters.PAIRED_END: options[PAIRED_ENDS],
@@ -160,13 +163,6 @@ params_values = {
 }
 
 parameters.execute_for_param_sets(
-    [check_reads_directory, check_run_directory, create_and_run_quantification],
-    params_values)
-
-
-for quant_method, length, depth, paired_end, error, bias in \
-    itertools.product(
-        options[QUANT_METHODS], options[READ_LENGTHS],
-        options[READ_DEPTHS], options[PAIRED_ENDS],
-        options[ERRORS], options[BIASES]):
-
+    [check_reads_directory, check_run_directory,
+     create_and_run_quantification],
+    **params_values)

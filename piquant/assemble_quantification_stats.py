@@ -103,11 +103,11 @@ params_values = {
 
 parameters.execute_for_param_sets(
     [check_run_directory],
-    params_values)
+    **params_values)
 
 for pset in stats.get_stats_param_sets():
     stats_acc = StatsAccumulator()
-    parameters.execute_for_param_sets([stats_acc], params_values)
+    parameters.execute_for_param_sets([stats_acc], **params_values)
 
     overall_stats_file = stats.get_stats_file(
         options[OUTPUT_DIRECTORY], stats.OVERALL_STATS_PREFIX, **pset)

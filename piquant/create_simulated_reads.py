@@ -115,4 +115,4 @@ params_values = {
 
 parameters.execute_for_param_sets(
     [check_reads_directory, create_and_run_reads_simulation],
-    params_values)
+    **params_values)

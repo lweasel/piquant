@@ -192,8 +192,8 @@ def _add_script_sections(
 
 
 def write_run_quantification_script(
-        input_dir, run_dir, transcript_gtf_file, quant_method, params_spec,
-        read_length=50, read_depth=10,
+        input_dir, run_dir, transcript_gtf_file, params_spec,
+        quant_method=None, read_length=50, read_depth=10,
         paired_end=False, errors=False, bias=False):
 
     input_dir = os.path.abspath(input_dir)
