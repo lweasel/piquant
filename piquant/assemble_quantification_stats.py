@@ -94,6 +94,7 @@ if not os.path.exists(options[OUTPUT_DIRECTORY]):
     os.mkdir(options[OUTPUT_DIRECTORY])
 
 params_values = {
+    parameters.QUANT_METHOD: options[QUANT_METHODS],
     parameters.READ_LENGTH: options[READ_LENGTHS],
     parameters.READ_DEPTH: options[READ_DEPTHS],
     parameters.PAIRED_END: options[PAIRED_ENDS],
