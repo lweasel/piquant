@@ -1,5 +1,4 @@
 Cython>=0.20.1
-OrdUtils>=0.1.0
 backports.ssl-match-hostname>=3.4.0.2
 docopt>=0.6.1
 ez-setup>=0.9
