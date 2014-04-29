@@ -50,8 +50,7 @@ def _add_fix_zero_length_transcripts(writer, fs_pro_file):
 
 
 def _add_calculate_required_read_depth(
-        writer, transcript_gtf_file, fs_pro_file,
-        read_length, read_depth, bias):
+        writer, fs_pro_file, read_length, read_depth, bias):
 
     # Given the expression profile created, calculate the number of reads
     # required to give the (approximate) read depth specified. Then edit the
@@ -63,8 +62,7 @@ def _add_calculate_required_read_depth(
         str(read_length))
     writer.set_variable(
         "READS", "$(python " + CALC_READ_DEPTH_SCRIPT + " " +
-        transcript_gtf_file + " " + fs_pro_file + " " +
-        str(read_length) + " " + str(read_depth) + ")")
+        fs_pro_file + " " + str(read_length) + " " + str(read_depth) + ")")
 
     if bias:
         writer.add_comment(
@@ -154,8 +152,8 @@ def _add_separate_paired_end_reads(writer, paired_end, errors):
 
 
 def _add_create_reads(
-        writer, transcript_gtf_file, fs_pro_file,
-        read_length, read_depth, paired_end, errors, bias):
+        writer, fs_pro_file, read_length, read_depth,
+        paired_end, errors, bias):
 
     with writer.section():
         _add_create_expression_profiles(writer)
@@ -163,8 +161,7 @@ def _add_create_reads(
         _add_fix_zero_length_transcripts(writer, fs_pro_file)
     with writer.section():
         _add_calculate_required_read_depth(
-            writer, transcript_gtf_file, fs_pro_file,
-            read_length, read_depth, bias)
+            writer, fs_pro_file, read_length, read_depth, bias)
     with writer.section():
         _add_update_flux_simulator_parameters(writer)
     with writer.section():
@@ -191,14 +188,14 @@ def _create_simulator_parameter_files(
 
 
 def _write_read_simulation_script(
-        reads_dir, transcript_gtf_file, fs_pro_file,
-        read_length, read_depth, paired_end, errors, bias):
+        reads_dir, fs_pro_file, read_length, read_depth,
+        paired_end, errors, bias):
 
     writer = fw.BashScriptWriter()
     with writer.section():
         _add_create_reads(
-            writer, transcript_gtf_file, fs_pro_file,
-            read_length, read_depth, paired_end, errors, bias)
+            writer, fs_pro_file, read_length, read_depth,
+            paired_end, errors, bias)
     writer.write_to_file(reads_dir, RUN_SCRIPT)
 
 
@@ -216,5 +213,5 @@ def create_simulation_files(
 
     # Write shell script to run read simulation
     _write_read_simulation_script(
-        reads_dir, transcript_gtf_file, fs_pro_file,
-        read_length, read_depth, paired_end, errors, bias)
+        reads_dir, fs_pro_file, read_length, read_depth,
+        paired_end, errors, bias)
