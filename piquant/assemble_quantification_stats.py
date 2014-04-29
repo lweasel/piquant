@@ -67,46 +67,49 @@ try:
 except schema.SchemaError as exc:
     exit(exc.code)
 
+
+def check_run_directory(**params):
+    run_dir = options[RUN_DIRECTORY] + os.path.sep + \
+        parameters.get_file_name(**params)
+    if not os.path.exists(run_dir):
+        sys.exit("Run directory '{d}' should exist.".format(d=run_dir))
+
+
+class StatsAccumulator:
+    def __init__(self):
+        self.overall_stats_df = pd.DataFrame()
+
+    def __call__(self, **params):
+        run_name = parameters.get_file_name(**params)
+        run_dir = options[RUN_DIRECTORY] + os.path.sep + run_name
+
+        stats_file = stats.get_stats_file(run_dir, run_name, **pset)
+        stats_df = pd.read_csv(stats_file)
+        self.overall_stats_df = self.overall_stats_df.append(stats_df)
+
 # Set up logger
 logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
 if not os.path.exists(options[OUTPUT_DIRECTORY]):
     os.mkdir(options[OUTPUT_DIRECTORY])
 
-for quant_method, length, depth, paired_end, error, bias in \
-    itertools.product(
-        options[QUANT_METHODS], options[READ_LENGTHS],
-        options[READ_DEPTHS], options[PAIRED_ENDS],
-        options[ERRORS], options[BIASES]):
+params_values = {
+    parameters.READ_LENGTH: options[READ_LENGTHS],
+    parameters.READ_DEPTH: options[READ_DEPTHS],
+    parameters.PAIRED_END: options[PAIRED_ENDS],
+    parameters.ERRORS: options[ERRORS],
+    parameters.BIAS: options[BIASES]
+}
 
-    # Check all run directories exist
-    run_dir = options[RUN_DIRECTORY] + os.path.sep + \
-        parameters.get_file_name(
-            quant_method=quant_method,
-            length=length, depth=depth,
-            paired_end=paired_end, error=error, bias=bias)
-    if not os.path.exists(run_dir):
-        sys.exit("Run directory '{d}' should exist.".format(d=run_dir))
+parameters.execute_for_param_sets(
+    [check_run_directory],
+    params_values)
 
 for pset in stats.get_stats_param_sets():
-    overall_stats_df = pd.DataFrame()
-
-    for quant_method, length, depth, paired_end, error, bias in \
-        itertools.product(
-            options[QUANT_METHODS], options[READ_LENGTHS],
-            options[READ_DEPTHS], options[PAIRED_ENDS],
-            options[ERRORS], options[BIASES]):
-
-        run_name = parameters.get_file_name(
-            quant_method=quant_method,
-            length=length, depth=depth,
-            paired_end=paired_end, error=error, bias=bias)
-        run_dir = options[RUN_DIRECTORY] + os.path.sep + run_name
-
-        stats_file = stats.get_stats_file(run_dir, run_name, **pset)
-        stats_df = pd.read_csv(stats_file)
-        overall_stats_df = overall_stats_df.append(stats_df)
+    stats_acc = StatsAccumulator()
+    parameters.execute_for_param_sets([stats_acc], params_values)
 
     overall_stats_file = stats.get_stats_file(
         options[OUTPUT_DIRECTORY], stats.OVERALL_STATS_PREFIX, **pset)
-    stats.write_stats_data(overall_stats_file, overall_stats_df, index=False)
+    stats.write_stats_data(
+        overall_stats_file, stats_acc.overall_stats_df, index=False)

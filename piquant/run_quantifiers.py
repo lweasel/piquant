@@ -110,53 +110,33 @@ if False in options[PAIRED_ENDS]:
             exit("Exiting. Quantification method {m} ".format(m=qm.get_name())
                  + "does not support single end reads.")
 
-# Set up logger
-logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
-for quant_method, length, depth, paired_end, error, bias in \
-    itertools.product(
-        options[QUANT_METHODS], options[READ_LENGTHS],
-        options[READ_DEPTHS], options[PAIRED_ENDS],
-        options[ERRORS], options[BIASES]):
-
-    # Check reads directory exists
+def check_reads_directory(**params):
     reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
-        parameters.get_file_name(
-            length=length, depth=depth,
-            paired_end=paired_end, error=error, bias=bias)
+        parameters.get_file_name(**params)
     if not os.path.exists(reads_dir):
         sys.exit("Reads directory '{d}' should exist.".format(d=reads_dir))
 
-    # Check run directory does or doesn't exist as appropriate
+
+def check_run_directory(**params):
     run_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
-        parameters.get_file_name(
-            quant_method=quant_method, length=length, depth=depth,
-            paired_end=paired_end, error=error, bias=bias)
+        parameters.get_file_name(**params)
     if options[RUN_ONLY] != os.path.exists(run_dir):
         sys.exit("Run directory '{d}' should ".format(d=run_dir) +
                  ("" if options[RUN_ONLY] else "not ") + "already exist.")
 
-for quant_method, length, depth, paired_end, error, bias in \
-    itertools.product(
-        options[QUANT_METHODS], options[READ_LENGTHS],
-        options[READ_DEPTHS], options[PAIRED_ENDS],
-        options[ERRORS], options[BIASES]):
 
+def create_and_run_quantification(**params):
     run_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
-        parameters.get_file_name(
-            quant_method=quant_method, length=length, depth=depth,
-            paired_end=paired_end, error=error, bias=bias)
+        parameters.get_file_name(**params)
 
     # Create the run quantification script
     if not options[RUN_ONLY]:
         reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
-            parameters.get_file_name(
-                length=length, depth=depth,
-                paired_end=paired_end, error=error, bias=bias)
+            parameters.get_file_name(**params)
         prq.write_run_quantification_script(
             reads_dir, run_dir, options[TRANSCRIPT_GTF_FILE],
-            quant_method, length, depth, paired_end, error, bias,
-            dict(options[PARAMS_SPEC]))
+            dict(options[PARAMS_SPEC]), **params)
 
     # Execute the run quantification script
     if not options[PREPARE_ONLY]:
@@ -166,3 +146,27 @@ for quant_method, length, depth, paired_end, error, bias in \
         args = ['nohup', './run_quantification.sh', "-qa"]
         subprocess.Popen(args)
         os.chdir(cwd)
+
+
+# Set up logger
+logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
+
+params_values = {
+    parameters.READ_LENGTH: options[READ_LENGTHS],
+    parameters.READ_DEPTH: options[READ_DEPTHS],
+    parameters.PAIRED_END: options[PAIRED_ENDS],
+    parameters.ERRORS: options[ERRORS],
+    parameters.BIAS: options[BIASES]
+}
+
+parameters.execute_for_param_sets(
+    [check_reads_directory, check_run_directory, create_and_run_quantification],
+    params_values)
+
+
+for quant_method, length, depth, paired_end, error, bias in \
+    itertools.product(
+        options[QUANT_METHODS], options[READ_LENGTHS],
+        options[READ_DEPTHS], options[PAIRED_ENDS],
+        options[ERRORS], options[BIASES]):
+

@@ -22,13 +22,11 @@
 """
 
 import docopt
-import itertools
 import ordutils.log as log
 import ordutils.options as opt
 import os.path
 import parameters
 import prepare_read_simulation as prs
-import quantification_run as qr
 import schema
 import subprocess
 import sys
@@ -78,40 +76,23 @@ try:
 except schema.SchemaError as exc:
     exit(exc.code)
 
-# Set up logger
-logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
-
-for length, depth, paired_end, error, bias in \
-        itertools.product(
-            options[READ_LENGTHS], options[READ_DEPTHS],
-            options[PAIRED_ENDS], options[ERRORS], options[BIASES]):
-
+def check_reads_directory(**params):
     reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
-        parameters.get_file_name(
-            length=length, depth=depth,
-            paired_end=paired_end, error=error, bias=bias)
-
+        parameters.get_file_name(**params)
     if options[RUN_ONLY] != os.path.exists(reads_dir):
         sys.exit("Reads directory '{d}' should ".format(d=reads_dir) +
                  ("" if options[RUN_ONLY] else "not ") + "already exist.")
 
-for length, depth, paired_end, error, bias in \
-        itertools.product(
-            options[READ_LENGTHS], options[READ_DEPTHS],
-            options[PAIRED_ENDS], options[ERRORS], options[BIASES]):
 
+def create_and_run_reads_simulation(**params):
     reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
-        parameters.get_file_name(
-            length=length, depth=depth,
-            paired_end=paired_end, error=error, bias=bias)
+        parameters.get_file_name(**params)
 
     if not options[RUN_ONLY]:
         prs.create_simulation_files(
-            reads_dir,
-            options[TRANSCRIPT_GTF_FILE],
-            options[GENOME_FASTA_DIR], options[NUM_FRAGMENTS],
-            length, depth, paired_end, error, bias)
+            reads_dir, options[TRANSCRIPT_GTF_FILE], options[GENOME_FASTA_DIR],
+            options[NUM_FRAGMENTS], **params)
 
     if not options[PREPARE_ONLY]:
         cwd = os.getcwd()
@@ -119,3 +100,19 @@ for length, depth, paired_end, error, bias in \
         args = ['nohup', './run_simulation.sh']
         subprocess.Popen(args)
         os.chdir(cwd)
+
+
+# Set up logger
+logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
+
+params_values = {
+    parameters.READ_LENGTH: options[READ_LENGTHS],
+    parameters.READ_DEPTH: options[READ_DEPTHS],
+    parameters.PAIRED_END: options[PAIRED_ENDS],
+    parameters.ERRORS: options[ERRORS],
+    parameters.BIAS: options[BIASES]
+}
+
+parameters.execute_for_param_sets(
+    [check_reads_directory, create_and_run_reads_simulation],
+    params_values)

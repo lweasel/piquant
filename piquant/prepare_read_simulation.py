@@ -201,8 +201,8 @@ def _write_read_simulation_script(
 
 def create_simulation_files(
         reads_dir, transcript_gtf_file, genome_fasta_dir,
-        num_fragments, read_length, read_depth,
-        paired_end, errors, bias):
+        num_fragments, read_length=30, read_depth=10,
+        paired_end=False, errors=False, bias=False):
 
     os.mkdir(reads_dir)
 
