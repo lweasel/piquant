@@ -20,4 +20,4 @@ scipy>=0.13.3
 seaborn>=0.2.1
 six>=1.5.2
 tornado>=3.2
---e git://github.com/lweasel/ord-utils.git#egg=ord-utils
+-e git://github.com/lweasel/ord-utils.git#egg=ord-utils
