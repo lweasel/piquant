@@ -56,7 +56,7 @@ overall_stats_file = stats.get_stats_file(
 overall_stats = pd.read_csv(overall_stats_file)
 
 param_values = {}
-for param in params.PARAMETERS:
+for param in params.get_parameters():
     param_series = overall_stats[param.name]
     param_values[param] = param_series.value_counts().index.tolist()
 
@@ -92,12 +92,12 @@ def get_stats_for_fixed_params(stats_df, fixed_params, fp_values_set):
 graph_file_basename = \
     options[STATS_DIR] + os.path.sep + stats.OVERALL_STATS_PREFIX
 
-numerical_params = [p for p in params.PARAMETERS if p.is_numeric]
+numerical_params = [p for p in params.get_parameters() if p.is_numeric]
 
-for param in non_degenerate_params(params.PARAMETERS):
+for param in non_degenerate_params(params.get_parameters()):
     for num_p in non_degenerate_params(remove_from(numerical_params, param)):
         fixed_params, fp_values_sets = \
-            get_fixed_params(params.PARAMETERS, [param, num_p])
+            get_fixed_params(params.get_parameters(), [param, num_p])
 
         for fp_values_set in fp_values_sets:
             stats_df, fixed_param_values = get_stats_for_fixed_params(
@@ -121,9 +121,9 @@ for clsfr in grp_clsfrs:
         options[STATS_DIR], stats.OVERALL_STATS_PREFIX, clsfr)
     clsfr_stats = pd.read_csv(stats_file)
 
-    for param in non_degenerate_params(params.PARAMETERS):
+    for param in non_degenerate_params(params.get_paramteters()):
         fixed_params, fp_values_sets = \
-            get_fixed_params(params.PARAMETERS, param)
+            get_fixed_params(params.get_parameters(), param)
 
         for fp_values_set in fp_values_sets:
             stats_df, fixed_param_values = get_stats_for_fixed_params(
@@ -141,9 +141,9 @@ for clsfr, asc in itertools.product(dist_clsfrs, ORDER_VALUES):
         options[STATS_DIR], stats.OVERALL_STATS_PREFIX, clsfr, asc)
     clsfr_stats = pd.read_csv(stats_file)
 
-    for param in non_degenerate_params(params.PARAMETERS):
+    for param in non_degenerate_params(params.get_parameters()):
         fixed_params, fp_values_sets = \
-            get_fixed_params(params.PARAMETERS, param)
+            get_fixed_params(params.get_parameters(), param)
 
         for fp_values_set in fp_values_sets:
             stats_df, fixed_param_values = get_stats_for_fixed_params(

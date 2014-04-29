@@ -1,6 +1,3 @@
-_PARAMETERS = []
-
-
 class _Parameter:
     def __init__(self, name, title, is_numeric=False, value_namer=None):
         self.name = name
@@ -10,6 +7,8 @@ class _Parameter:
 
     def get_value_name(self, value):
         return self.value_namer(value)
+
+_PARAMETERS = []
 
 _PARAMETERS.append(_Parameter("quant-method", "Method"))
 
@@ -33,4 +32,6 @@ _PARAMETERS.append(_Parameter(
     "bias", "Bias",
     value_namer=lambda x: "with bias" if x else "no bias"))
 
-PARAMETERS = set(_PARAMETERS)
+
+def get_parameters():
+    return set(_PARAMETERS)
