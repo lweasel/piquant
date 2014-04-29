@@ -1,22 +1,17 @@
 import fpkms as f
 import utils
 
-CLASSIFIERS = []
 
-
-def get_classifiers():
-    return [c() for c in CLASSIFIERS]
-
-
-def Classifier(cls):
-    CLASSIFIERS.append(cls)
-    return cls
-
-
-class BaseClassifier():
-    def __init__(self, value_extractor):
+class _Classifier():
+    def __init__(self, column_name, value_extractor,
+                 grouped_stats=True, distribution_plot_range=None):
+        self.column_name = column_name
         self.value_extractor = value_extractor
-        self.grouped_stats = True
+        self.grouped_stats = grouped_stats
+        self.distribution_plot_range = distribution_plot_range
+
+    def get_column_name(self):
+        return self.column_name
 
     def get_value(self, row):
         return self.value_extractor(row)
@@ -31,60 +26,31 @@ class BaseClassifier():
         return not self.grouped_stats
 
     def get_distribution_plot_range(self):
-        return None
+        return self.distribution_plot_range
 
     def get_value_labels(self, num_labels):
         return range(1, num_labels + 1)
 
     def get_stats_file_suffix(self, ascending=True):
-        suffix = "_"
-        if self.produces_grouped_stats():
-            suffix += "stats"
-        else:
-            suffix += "distribution_stats_" + utils.get_order_string(ascending)
-        return suffix + "_by_" + \
-            utils.spaces_to_underscore(self.get_column_name())
+        suffix = "_stats" if self.produces_grouped_stats() else \
+            "_distribution_stats_" + utils.get_order_string(ascending)
+        suffix += "_by_" + utils.spaces_to_underscore(self.get_column_name())
+        return suffix
 
 
-# TODO: think this should be an instance of BaseClassifier rather than a class
-# in its own right; ditto for everything else marked @Classifier.
-@Classifier
-class GeneTranscriptNumberClassifier(BaseClassifier):
-    def __init__(self):
-        BaseClassifier.__init__(self, lambda x: x[f.TRANSCRIPT_COUNT])
-
-    def get_column_name(self):
-        return "gene transcript number"
-
-
-@Classifier
-class PercentErrorClassifier(BaseClassifier):
-    def __init__(self):
-        BaseClassifier.__init__(self, lambda x: abs(x[f.PERCENT_ERROR]))
-        self.grouped_stats = False
-
-    def get_column_name(self):
-        return "absolute percent error"
-
-    def get_distribution_plot_range(self):
-        return (0, 100)
-
-
-class LevelsClassifier(BaseClassifier):
-    def __init__(self, levels, value_extractor, closed):
-        BaseClassifier.__init__(self, value_extractor)
+class _LevelsClassifier(_Classifier):
+    def __init__(self, column_name, value_extractor, levels, closed=False):
+        _Classifier.__init__(self, column_name, value_extractor)
 
         self.levels = levels
         self.closed = closed
 
-        if self.closed:
-            self.level_names = ["<= " + str(l) for l in levels]
-        else:
-            self.level_names = ["<= " + str(l) for l in levels] \
-                + ["> " + str(levels[-1])]
+        self.level_names = ["<= " + str(l) for l in levels]
+        if not self.closed:
+            self.level_names += ["> " + str(levels[-1])]
 
     def get_classification_value(self, row):
-        row_value = BaseClassifier.get_classification_value(self, row)
+        row_value = _Classifier.get_classification_value(self, row)
         for i, level in enumerate(self.levels):
             if row_value <= level:
                 return i
@@ -94,41 +60,29 @@ class LevelsClassifier(BaseClassifier):
         return self.level_names[:num_labels]
 
 
-@Classifier
-class RealAbundanceClassifier(LevelsClassifier):
-    LEVELS = [0, 0.5, 1, 1.5]
+_CLASSIFIERS = []
 
-    def __init__(self):
-        LevelsClassifier.__init__(
-            self, RealAbundanceClassifier.LEVELS,
-            lambda x: x[f.LOG10_REAL_FPKM], False)
+_CLASSIFIERS.append(_Classifier(
+    "gene transcript number", lambda x: x[f.TRANSCRIPT_COUNT]))
 
-    def get_column_name(self):
-        return "log10 real FPKM"
+_CLASSIFIERS.append(_Classifier(
+    "absolute percent error", lambda x: abs(x[f.PERCENT_ERROR]),
+    grouped_stats=False, distribution_plot_range=(0, 100)))
 
+_CLASSIFIERS.append(_LevelsClassifier(
+    "log10 real FPKM", lambda x: x[f.LOG10_REAL_FPKM],
+    [0, 0.5, 1, 1.5]))
 
-@Classifier
-class TranscriptLengthClassifier(LevelsClassifier):
-    LEVELS = [1000, 3162]
+_CLASSIFIERS.append(_LevelsClassifier(
+    "transcript length", lambda x: x[f.LENGTH],
+    [1000, 3162]))
 
-    def __init__(self):
-        LevelsClassifier.__init__(
-            self, TranscriptLengthClassifier.LEVELS,
-            lambda x: x[f.LENGTH], False)
-
-    def get_column_name(self):
-        return "transcript length"
+_CLASSIFIERS.append(_LevelsClassifier(
+    "unique sequence percentage",
+    lambda x: 100 * float(x[f.UNIQUE_SEQ_LENGTH]) / x[f.LENGTH],
+    [20, 40, 60, 80, 100],
+    closed=True))
 
 
-@Classifier
-class UniqueSequencePercentageClassifier(LevelsClassifier):
-    LEVELS = [20, 40, 60, 80, 100]
-
-    def __init__(self):
-        LevelsClassifier.__init__(
-            self, UniqueSequencePercentageClassifier.LEVELS,
-            lambda x: 100 * float(x[f.UNIQUE_SEQ_LENGTH]) / x[f.LENGTH],
-            True)
-
-    def get_column_name(self):
-        return "unique sequence percentage"
+def get_classifiers():
+    return set(_CLASSIFIERS)
