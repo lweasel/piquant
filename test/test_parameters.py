@@ -64,5 +64,5 @@ def test_get_file_name_part_returns_correct_value_when_file_namer_supplied():
 
 def test_get_file_name_returns_correct_name():
     assert parameters.get_file_name(
-        quant_method="Express", read_length=50,
-        paired_end=True, bias=False) == "Express_50b_pe_no_bias"
+        read_depth=30, read_length=50,
+        paired_end=True, bias=False) == "30x_50b_pe_no_bias"
