@@ -26,6 +26,7 @@ import itertools
 import ordutils.log as log
 import ordutils.options as opt
 import os.path
+import parameters
 import prepare_read_simulation as prs
 import quantification_run as qr
 import schema
@@ -86,8 +87,10 @@ for length, depth, paired_end, error, bias in \
             options[READ_LENGTHS], options[READ_DEPTHS],
             options[PAIRED_ENDS], options[ERRORS], options[BIASES]):
 
-    reads_dir = qr.get_reads_dir(
-        options[OUTPUT_DIRECTORY], length, depth, paired_end, error, bias)
+    reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
+        parameters.get_file_name(
+            length=length, depth=depth,
+            paired_end=paired_end, error=error, bias=bias)
 
     if options[RUN_ONLY] != os.path.exists(reads_dir):
         sys.exit("Reads directory '{d}' should ".format(d=reads_dir) +
@@ -98,8 +101,10 @@ for length, depth, paired_end, error, bias in \
             options[READ_LENGTHS], options[READ_DEPTHS],
             options[PAIRED_ENDS], options[ERRORS], options[BIASES]):
 
-    reads_dir = qr.get_reads_dir(
-        options[OUTPUT_DIRECTORY], length, depth, paired_end, error, bias)
+    reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
+        parameters.get_file_name(
+            length=length, depth=depth,
+            paired_end=paired_end, error=error, bias=bias)
 
     if not options[RUN_ONLY]:
         prs.create_simulation_files(

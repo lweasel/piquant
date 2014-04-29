@@ -26,6 +26,7 @@ import ordutils.log as log
 import ordutils.options as opt
 import os.path
 import pandas as pd
+import parameters
 import piquant_options as popt
 import quantification_run as qr
 import schema
@@ -79,9 +80,11 @@ for quant_method, length, depth, paired_end, error, bias in \
         options[ERRORS], options[BIASES]):
 
     # Check all run directories exist
-    run_dir = qr.get_run_dir(
-        options[RUN_DIRECTORY], quant_method,
-        length, depth, paired_end, error, bias)
+    run_dir = options[RUN_DIRECTORY] + os.path.sep + \
+        parameters.get_file_name(
+            quant_method=quant_method,
+            length=length, depth=depth,
+            paired_end=paired_end, error=error, bias=bias)
     if not os.path.exists(run_dir):
         sys.exit("Run directory '{d}' should exist.".format(d=run_dir))
 
@@ -94,11 +97,11 @@ for pset in stats.get_stats_param_sets():
             options[READ_DEPTHS], options[PAIRED_ENDS],
             options[ERRORS], options[BIASES]):
 
-        run_name = qr.get_run_name(
-            quant_method, length, depth, paired_end, error, bias)
-        run_dir = qr.get_run_dir(
-            options[RUN_DIRECTORY], quant_method,
-            length, depth, paired_end, error, bias)
+        run_name = parameters.get_file_name(
+            quant_method=quant_method,
+            length=length, depth=depth,
+            paired_end=paired_end, error=error, bias=bias)
+        run_dir = options[RUN_DIRECTORY] + os.path.sep + run_name
 
         stats_file = stats.get_stats_file(run_dir, run_name, **pset)
         stats_df = pd.read_csv(stats_file)

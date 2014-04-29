@@ -31,6 +31,7 @@ import ordutils.log as log
 import ordutils.options as opt
 import os
 import os.path
+import parameters
 import piquant_options as popt
 import prepare_quantification_run as prq
 import quantification_run as qr
@@ -119,15 +120,18 @@ for quant_method, length, depth, paired_end, error, bias in \
         options[ERRORS], options[BIASES]):
 
     # Check reads directory exists
-    reads_dir = qr.get_reads_dir(
-        options[OUTPUT_DIRECTORY], length, depth, paired_end, error, bias)
+    reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
+        parameters.get_file_name(
+            length=length, depth=depth,
+            paired_end=paired_end, error=error, bias=bias)
     if not os.path.exists(reads_dir):
         sys.exit("Reads directory '{d}' should exist.".format(d=reads_dir))
 
     # Check run directory does or doesn't exist as appropriate
-    run_dir = qr.get_run_dir(
-        options[OUTPUT_DIRECTORY], quant_method,
-        length, depth, paired_end, error, bias)
+    run_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
+        parameters.get_file_name(
+            quant_method=quant_method, length=length, depth=depth,
+            paired_end=paired_end, error=error, bias=bias)
     if options[RUN_ONLY] != os.path.exists(run_dir):
         sys.exit("Run directory '{d}' should ".format(d=run_dir) +
                  ("" if options[RUN_ONLY] else "not ") + "already exist.")
@@ -138,14 +142,17 @@ for quant_method, length, depth, paired_end, error, bias in \
         options[READ_DEPTHS], options[PAIRED_ENDS],
         options[ERRORS], options[BIASES]):
 
-    run_dir = qr.get_run_dir(
-        options[OUTPUT_DIRECTORY], quant_method,
-        length, depth, paired_end, error, bias)
+    run_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
+        parameters.get_file_name(
+            quant_method=quant_method, length=length, depth=depth,
+            paired_end=paired_end, error=error, bias=bias)
 
     # Create the run quantification script
     if not options[RUN_ONLY]:
-        reads_dir = qr.get_reads_dir(
-            options[OUTPUT_DIRECTORY], length, depth, paired_end, error, bias)
+        reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
+            parameters.get_file_name(
+                length=length, depth=depth,
+                paired_end=paired_end, error=error, bias=bias)
         prq.write_run_quantification_script(
             reads_dir, run_dir, options[TRANSCRIPT_GTF_FILE],
             quant_method, length, depth, paired_end, error, bias,
