@@ -106,4 +106,4 @@ for pset in stats.get_stats_param_sets():
 
     overall_stats_file = stats.get_stats_file(
         options[OUTPUT_DIRECTORY], stats.OVERALL_STATS_PREFIX, **pset)
-    stats.write_stats_data(overall_stats_file, stats, index=False)
+    stats.write_stats_data(overall_stats_file, overall_stats_df, index=False)

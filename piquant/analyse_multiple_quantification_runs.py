@@ -24,7 +24,7 @@ import sys
 
 LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
-STATS_DIR = "<overall_stats_dir>"
+STATS_DIR = "<overall-stats-dir>"
 
 ORDER_VALUES = [True, False]
 
