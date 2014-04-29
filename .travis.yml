@@ -6,7 +6,6 @@ virtualenv:
 before_install:
     - "sudo apt-get install -qq python-numpy python-scipy"
 install: 
-    - "pip install -r requirements.txt --use-mirrors"
     - "pip install docopt"
     - "pip install matplotlib"
     - "pip install pandas"
