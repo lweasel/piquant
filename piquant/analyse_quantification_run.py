@@ -29,6 +29,7 @@ import classifiers
 import fpkms_plotting as plot
 import ordutils.options as opt
 import pandas as pd
+import statistics
 
 QUANT_METHOD = "quant-method"
 READ_DEPTH = "read-depth"
@@ -110,8 +111,9 @@ if options[OUT_FILE_BASENAME]:
     stats = f.get_stats(fpkms, tp_fpkms)
     add_overall_stats(stats)
 
-    stats_file_name = stats.get_stats_file(".", options[OUT_FILE_BASENAME])
-    stats.write_stats_data(stats_file_name, stats, index=False)
+    stats_file_name = \
+        statistics.get_stats_file(".", options[OUT_FILE_BASENAME])
+    statistics.write_stats_data(stats_file_name, stats, index=False)
 
 # Write statistics for FPKMS stratified by various classification measures
 non_zero = fpkms[(fpkms[f.REAL_FPKM] > 0) & (fpkms[f.CALCULATED_FPKM] > 0)]
@@ -123,9 +125,9 @@ if options[OUT_FILE_BASENAME]:
             stats = f.get_grouped_stats(fpkms, tp_fpkms, column_name)
             add_overall_stats(stats)
 
-            stats_file_name = stats.get_stats_file(
+            stats_file_name = statistics.get_stats_file(
                 ".", options[OUT_FILE_BASENAME], classifier)
-            stats.write_stats_data(stats_file_name, stats)
+            statistics.write_stats_data(stats_file_name, stats)
 
         elif classifier.produces_distribution_plots():
             for ascending in [True, False]:
@@ -133,9 +135,9 @@ if options[OUT_FILE_BASENAME]:
                     non_zero, tp_fpkms, classifier, ascending)
                 add_overall_stats(stats)
 
-                stats_file_name = stats.get_stats_file(
+                stats_file_name = statistics.get_stats_file(
                     ".", options[OUT_FILE_BASENAME], classifier, ascending)
-                stats.write_stats_data(stats_file_name, stats)
+                statistics.write_stats_data(stats_file_name, stats)
 
 # Make a scatter plot of log transformed calculated vs real FPKMs
 TP_PLOT_OPTIONS = plot.PlotOptions(

@@ -52,7 +52,6 @@ class BaseClassifier():
 class GeneTranscriptNumberClassifier(BaseClassifier):
     def __init__(self):
         BaseClassifier.__init__(self, lambda x: x[f.TRANSCRIPT_COUNT])
-        self.distribution_plots = False
 
     def get_column_name(self):
         return "gene transcript number"
@@ -77,7 +76,6 @@ class LevelsClassifier(BaseClassifier):
 
         self.levels = levels
         self.closed = closed
-        self.distribution_plots = False
 
         if self.closed:
             self.level_names = ["<= " + str(l) for l in levels]

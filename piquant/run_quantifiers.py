@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# TODO: should be able to separately specify parent directory for reads directories.
+
 """Usage:
     run_quantifiers [--log-level=<log-level>] [--out-dir=<out-dir>] [--num-fragments=<num-fragments>] [--prepare-only|--run-only] --quant-methods=<quant-methods> --params=<param-values> --read-lengths=<read-lengths> --read-depths=<read-depths> --paired-ends=<paired-ends> --errors=<errors> --biases=<biases> <transcript-gtf-file> <genome-fasta-dir>
 
