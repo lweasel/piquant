@@ -16,7 +16,7 @@ class _Parameter:
                  is_numeric=False, value_namer=None, file_namer=None):
         self.name = name
         self.title = title
-        self.option_name = option_name,
+        self.option_name = option_name
         self.option_validator = option_validator
         self.is_numeric = is_numeric
         self.value_namer = value_namer if value_namer else lambda x: x
@@ -71,8 +71,9 @@ def get_parameters():
 def validate_command_line_parameter_sets(options):
     param_vals = {}
     for param in get_parameters():
-        param_vals[param.name] = set(opt.validate_list_option(
-            options[param.option_name], param.option_valditor))
+        if param.option_name in options:
+            param_vals[param.name] = set(opt.validate_list_option(
+                options[param.option_name], param.option_validator))
     return param_vals
 
 

@@ -152,6 +152,7 @@ class _RSEM:
             "REF_DIR=$(dirname " + params[TRANSCRIPT_REFERENCE] + ")")
 
         with writer.if_block("! -d $REF_DIR"):
+            # TODO: think we need to create the directory here.
             writer.add_line(
                 "rsem-prepare-reference --gtf " + params[TRANSCRIPT_GTF_FILE] +
                 " " + params[GENOME_FASTA_DIR] + " " +

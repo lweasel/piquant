@@ -1,5 +1,6 @@
 import piquant.parameters as parameters
-
+import pytest
+import schema
 
 def _get_test_parameter(
         name="name", title="The Name",
@@ -25,6 +26,18 @@ def test_parameter_title_is_correct():
     title = "A Title"
     p = _get_test_parameter(title=title)
     assert p.title == title
+
+
+def test_parameter_option_name_is_correct():
+    option_name = "--polyA"
+    p = _get_test_parameter(option_name=option_name)
+    assert p.option_name == option_name
+
+
+def test_parameter_option_validator_is_correct():
+    option_validator = lambda x: x
+    p = _get_test_parameter(option_validator=option_validator)
+    assert p.option_validator == option_validator
 
 
 def test_parameter_is_numeric_is_correct():
@@ -63,7 +76,102 @@ def test_get_file_name_part_returns_correct_value_when_file_namer_supplied():
     assert p.get_file_name_part(value) == str(value) + "bp"
 
 
+def test_validate_command_line_parameter_sets_returns_correct_number_of_param_vals():
+    options = {
+        "--quant-method": "Cufflinks",
+        "--read-length": "10,20"
+    }
+    param_vals = parameters.validate_command_line_parameter_sets(options)
+    assert len(param_vals) == 2
+
+
+def test_validate_command_line_parameter_sets_returns_correct_number_of_transformed_values():
+    num_values = 5
+    options = {
+        "--read-length": ",".join([str(i) for i in range(0, num_values)])
+    }
+    param_vals = parameters.validate_command_line_parameter_sets(options)
+    assert len(param_vals[parameters.READ_LENGTH]) == num_values
+
+
+def test_validate_command_line_parameter_sets_returns_correct_transformed_values():
+    len1 = 10
+    len2 = 20
+    options = {
+        "--read-length": str(len1) + "," + str(len2)
+    }
+    param_vals = parameters.validate_command_line_parameter_sets(options)
+    assert len1 in param_vals[parameters.READ_LENGTH]
+    assert len2 in param_vals[parameters.READ_LENGTH]
+
+
+def test_validate_command_line_parameter_sets_raises_exception_for_invalid_param_values():
+    options = {
+        "--read-length": "abc"
+    }
+    with pytest.raises(schema.SchemaError):
+        parameters.validate_command_line_parameter_sets(options)
+
+
 def test_get_file_name_returns_correct_name():
     assert parameters.get_file_name(
         read_depth=30, read_length=50,
         paired_end=True, bias=False) == "30x_50b_pe_no_bias"
+
+
+def test_execute_for_param_sets_executes_for_correct_number_of_parameter_sets():
+    len1 = 3
+    len2 = 5
+    len3 = 7
+    params_values = {
+        "param1": [1]*len1,
+        "param2": [2]*len2,
+        "param3": [3]*len3
+    }
+
+    execute_counter = []
+
+    def count_incrementer(**params):
+        execute_counter.append(1)
+
+    parameters.execute_for_param_sets([count_incrementer], **params_values)
+    assert len(execute_counter) == len1 * len2 * len3
+
+
+def test_execute_for_param_sets_executes_all_callables():
+    execute_record = []
+
+    def callable1(**params):
+        execute_record.append(1)
+
+    def callable2(**params):
+        execute_record.append(2)
+
+    parameters.execute_for_param_sets([callable1, callable2], param=["a"])
+
+    assert 1 in execute_record
+    assert 2 in execute_record
+    assert len(execute_record) == 2
+
+
+def test_execute_for_param_sets_executes_for_correct_sets_of_parameters():
+    params1 = [1, 2]
+    params2 = ["a", "b"]
+    params_values = {
+        "param1": params1,
+        "param2": params2
+    }
+
+    execute_record = []
+
+    def callable1(**params):
+        execute_record.append([v for v in params.values()])
+
+    parameters.execute_for_param_sets([callable1], **params_values)
+
+    execute_record = [set(params) for params in execute_record]
+    assert set([params1[0], params2[0]]) in execute_record
+    assert set([params1[0], params2[1]]) in execute_record
+    assert set([params1[1], params2[0]]) in execute_record
+    assert set([params1[1], params2[1]]) in execute_record
+
