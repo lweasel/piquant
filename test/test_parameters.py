@@ -1,12 +1,13 @@
 import piquant.parameters as parameters
-import os.path
 
 
 def _get_test_parameter(
-        name="name", title="The Name", is_numeric=False,
-        value_namer=None, file_namer=None):
-    return parameters._Parameter(name, title, is_numeric,
-                                 value_namer, file_namer)
+        name="name", title="The Name",
+        option_name="--option-name", option_validator=int,
+        is_numeric=False, value_namer=None, file_namer=None):
+    return parameters._Parameter(
+        name, title, option_name, option_validator, is_numeric,
+        value_namer, file_namer)
 
 
 def test_get_parameters_returns_parameters_instances():

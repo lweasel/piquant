@@ -37,11 +37,6 @@ OUTPUT_DIRECTORY = "--out-dir"
 NUM_FRAGMENTS = "--num-fragments"
 PREPARE_ONLY = "--prepare-only"
 RUN_ONLY = "--run-only"
-READ_LENGTHS = "--read-lengths"
-READ_DEPTHS = "--read-depths"
-PAIRED_ENDS = "--paired-ends"
-ERRORS = "--errors"
-BIASES = "--biases"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
@@ -50,6 +45,8 @@ __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
 options = docopt.docopt(__doc__, version="create_simulated_reads v0.1")
 
 # Validate command-line options
+param_values = None
+
 try:
     opt.validate_dict_option(
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
@@ -63,16 +60,8 @@ try:
         options[NUM_FRAGMENTS],
         "Number of fragments must be a positive integer.",
         nonneg=True)
-    options[READ_LENGTHS] = set(opt.validate_list_option(
-        options[READ_LENGTHS], int))
-    options[READ_DEPTHS] = set(opt.validate_list_option(
-        options[READ_DEPTHS], int))
-    options[PAIRED_ENDS] = set(opt.validate_list_option(
-        options[PAIRED_ENDS], opt.check_boolean_value))
-    options[ERRORS] = set(opt.validate_list_option(
-        options[ERRORS], opt.check_boolean_value))
-    options[BIASES] = set(opt.validate_list_option(
-        options[BIASES], opt.check_boolean_value))
+
+    param_values = parameters.validate_command_line_parameter_sets(options)
 except schema.SchemaError as exc:
     exit(exc.code)
 
@@ -105,14 +94,6 @@ def create_and_run_reads_simulation(**params):
 # Set up logger
 logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
-params_values = {
-    parameters.READ_LENGTH: options[READ_LENGTHS],
-    parameters.READ_DEPTH: options[READ_DEPTHS],
-    parameters.PAIRED_END: options[PAIRED_ENDS],
-    parameters.ERRORS: options[ERRORS],
-    parameters.BIAS: options[BIASES]
-}
-
 parameters.execute_for_param_sets(
     [check_reads_directory, create_and_run_reads_simulation],
-    **params_values)
+    **param_values)

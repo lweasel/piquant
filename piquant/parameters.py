@@ -1,4 +1,6 @@
 import itertools
+import ordutils.options as opt
+import piquant_options as popt
 
 QUANT_METHOD = "quant_method"
 READ_DEPTH = "read_depth"
@@ -9,10 +11,13 @@ BIAS = "bias"
 
 
 class _Parameter:
-    def __init__(self, name, title, is_numeric=False,
-                 value_namer=None, file_namer=None):
+    def __init__(self, name, title,
+                 option_name, option_validator,
+                 is_numeric=False, value_namer=None, file_namer=None):
         self.name = name
         self.title = title
+        self.option_name = option_name,
+        self.option_validator = option_validator
         self.is_numeric = is_numeric
         self.value_namer = value_namer if value_namer else lambda x: x
         self.file_namer = file_namer if file_namer else self.value_namer
@@ -26,35 +31,49 @@ class _Parameter:
 _PARAMETERS = []
 
 _PARAMETERS.append(_Parameter(
-    QUANT_METHOD, "Method",
+    QUANT_METHOD, "Method", "--quant-method",
+    popt.check_quantification_method,
     value_namer=lambda x: x.get_name()))
 
 _PARAMETERS.append(_Parameter(
-    READ_DEPTH, "Read depth", is_numeric=True,
+    READ_DEPTH, "Read depth", "--read-depth", int,
+    is_numeric=True,
     value_namer=lambda x: "{d}x".format(d=x)))
 
 _PARAMETERS.append(_Parameter(
-    READ_LENGTH, "Read length", is_numeric=True,
+    READ_LENGTH, "Read length", "--read-length", int,
+    is_numeric=True,
     value_namer=lambda x: "{l}b".format(l=x)))
 
 _PARAMETERS.append(_Parameter(
-    PAIRED_END, "End type",
+    PAIRED_END, "End type", "--paired-end",
+    opt.check_boolean_value,
     value_namer=lambda x: "paired-end" if x else "single-end",
     file_namer=lambda x: "pe" if x else "se"))
 
 _PARAMETERS.append(_Parameter(
-    ERRORS, "Error type",
+    ERRORS, "Error type", "--error",
+    opt.check_boolean_value,
     value_namer=lambda x: "with errors" if x else "no errors",
     file_namer=lambda x: "errors" if x else "no_errors"))
 
 _PARAMETERS.append(_Parameter(
-    BIAS, "Bias",
+    BIAS, "Bias", "--bias",
+    opt.check_boolean_value,
     value_namer=lambda x: "with bias" if x else "no bias",
     file_namer=lambda x: "bias" if x else "no_bias"))
 
 
 def get_parameters():
     return set(_PARAMETERS)
+
+
+def validate_command_line_parameter_sets(options):
+    param_vals = {}
+    for param in get_parameters():
+        param_vals[param.name] = set(opt.validate_list_option(
+            options[param.option_name], param.option_valditor))
+    return param_vals
 
 
 def get_file_name(**params):
