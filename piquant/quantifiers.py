@@ -13,17 +13,16 @@ LEFT_SIMULATED_READS = "LEFT_SIMULATED_READS"
 RIGHT_SIMULATED_READS = "RIGHT_SIMULATED_READS"
 FASTQ_READS = "FASTQ_READS"
 POLYA_TAIL = "POLYA_TAIL"
+QUANTIFIER_DIRECTORY = "QUANTIFIER_DIRECTORY"
 
 TOPHAT_OUTPUT_DIR = "tho"
 TOPHAT_MAPPED_READS = TOPHAT_OUTPUT_DIR + os.path.sep + "accepted_hits.bam"
 
 # Parameters required by particular quantification methods
 
-TRANSCRIPT_REFERENCE = "TRANSCRIPT_REFERENCE"
 BOWTIE_INDEX = "BOWTIE_INDEX"
 
 PARAM_DESCRIPTIONS = {
-    TRANSCRIPT_REFERENCE: "name of RSEM transcript reference",
     BOWTIE_INDEX: "name of Bowtie index used when TopHat maps reads to genome",
 }
 
@@ -34,13 +33,14 @@ class _ParamsValidator:
         self.required_params = required_params
 
     def validate(self, params):
-        for required_param in self.required_params:
-            if required_param not in params:
-                msg = "{m} requires parameter {p} ({d}).".format(
-                    m=self.method,
-                    p=required_param,
-                    d=PARAM_DESCRIPTIONS[required_param])
-                raise SchemaError([], msg)
+        if self.required_params:
+            for required_param in self.required_params:
+                if required_param not in params:
+                    msg = "{m} requires parameter {p} ({d}).".format(
+                        m=self.method,
+                        p=required_param,
+                        d=PARAM_DESCRIPTIONS[required_param])
+                    raise SchemaError([], msg)
 
         return params
 
@@ -59,15 +59,6 @@ def _Quantifier(cls):
     return cls
 
 
-# e.g.
-# python prepare_quantification_run.py
-#   -d cufflinks_30x_50b_se
-#   -m Cufflinks
-#   --read-depth=30
-#   --read-length=50
-#   -p BOWTIE_INDEX=~/data/genome/mouse/mm10/bowtie-index/mm10
-#   ~/data/genome/mouse/mm10/Mus_musculus.protein_coding.gtf
-#   ~/data/genome/mouse/mm10/top_level_per_contig
 @_Quantifier
 class _Cufflinks:
     @classmethod
@@ -113,26 +104,26 @@ class _Cufflinks:
         return False
 
 
-# e.g.
-# python prepare_quantification_run.py
-#   -d test_run
-#   -m RSEM
-#   --read-depth=30
-#   --read-length=50
-#   -p TRANSCRIPT_REFERENCE=~/data/genome/mouse/mm10/rsem/mm10-protein-coding
-#   ~/data/genome/mouse/mm10/Mus_musculus.protein_coding.gtf
-#   ~/data/genome/mouse/mm10/top_level_per_contig
 @_Quantifier
 class _RSEM:
     SAMPLE_NAME = "rsem_sample"
 
     @classmethod
     def get_required_params(cls):
-        return [TRANSCRIPT_REFERENCE]
+        return None
 
     @classmethod
     def get_name(cls):
         return "RSEM"
+
+    @classmethod
+    def _get_ref_dir(cls, quantifier_dir, polya):
+        return quantifier_dir + os.path.sep + "rsem_" + \
+            ("polya" if polya else "nopolya")
+
+    @classmethod
+    def _get_ref_name(cls, quantifier_dir, polya):
+        return _RSEM._get_ref_dir(quantifier_dir, polya) + os.path.sep + "rsem"
 
     def calculate_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
@@ -149,16 +140,17 @@ class _RSEM:
             "from the RSEM package. Note that this step only needs to " +
             "be done once for a particular set of transcripts.")
 
-        writer.add_line(
-            "REF_DIR=$(dirname " + params[TRANSCRIPT_REFERENCE] + ")")
+        ref_dir = _RSEM._get_ref_dir(
+            params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
+        with writer.if_block("! -d " + ref_dir):
+            writer.add_line("mkdir " + ref_dir)
 
-        with writer.if_block("! -d $REF_DIR"):
-            # TODO: think we need to create the directory here.
             polya_spec = "" if params[POLYA_TAIL] else " --no-polyA"
+            ref_name = _RSEM._get_ref_name(
+                params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
             writer.add_line(
                 "rsem-prepare-reference --gtf " + params[TRANSCRIPT_GTF_FILE] +
-                polya_spec + " " + params[GENOME_FASTA_DIR] + " " +
-                params[TRANSCRIPT_REFERENCE])
+                polya_spec + " " + params[GENOME_FASTA_DIR] + " " + ref_name)
 
     def write_quantification_commands(self, writer, params):
         qualities_spec = "" if params[FASTQ_READS] else "--no-qualities"
@@ -167,10 +159,12 @@ class _RSEM:
             else "--paired-end " + params[LEFT_SIMULATED_READS] + \
             " " + params[RIGHT_SIMULATED_READS]
 
+        ref_name = _RSEM._get_ref_name(
+            params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
         writer.add_line(
             "rsem-calculate-expression --time " + qualities_spec +
             " --p 32 --output-genome-bam " + reads_spec + " " +
-            params[TRANSCRIPT_REFERENCE] + " " + _RSEM.SAMPLE_NAME)
+            ref_name + " " + _RSEM.SAMPLE_NAME)
 
     def get_mapped_reads_file(self):
         return _RSEM.SAMPLE_NAME + ".genome.sorted.bam"
@@ -182,22 +176,13 @@ class _RSEM:
         return False
 
 
-# e.g.
-# python prepare_quantification_run.py
-#   -d express_30x_50b_se
-#   -m Express
-#   --read-depth=30
-#   --read-length=50
-#   -p TRANSCRIPT_REFERENCE=~/data/genome/mouse/mm10/rsem/mm10-protein-coding
-#   ~/data/genome/mouse/mm10/Mus_musculus.protein_coding.gtf
-#   ~/data/genome/mouse/mm10/top_level_per_contig
 @_Quantifier
 class _Express:
     MAPPED_READS_FILE = "hits.bam"
 
     @classmethod
     def get_required_params(cls):
-        return [TRANSCRIPT_REFERENCE]
+        return None
 
     @classmethod
     def get_name(cls):
@@ -225,10 +210,13 @@ class _Express:
 
         writer.add_comment(
             "Now map simulated reads to the transcriptome with Bowtie.")
+
+        ref_name = _RSEM._get_ref_name(
+            params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
         writer.add_pipe([
             "bowtie " + qualities_spec +
             " -e 99999999 -l 25 -I 1 -X 1000 -a -S -m 200 -p 32 " +
-            params[TRANSCRIPT_REFERENCE] + " " + reads_spec,
+            ref_name + " " + reads_spec,
             "samtools view -Sb - > " + _Express.MAPPED_READS_FILE
         ])
 
@@ -236,9 +224,11 @@ class _Express:
         stranded_spec = "--fr-stranded " \
             if SIMULATED_READS not in params else ""
 
+        ref_name = _RSEM._get_ref_name(
+            params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
         writer.add_line(
-            "express " + stranded_spec + params[TRANSCRIPT_REFERENCE] +
-            ".transcripts.fa " + _Express.MAPPED_READS_FILE)
+            "express " + stranded_spec + ref_name + ".transcripts.fa " +
+            _Express.MAPPED_READS_FILE)
 
     def get_mapped_reads_file(self):
         return _Express.MAPPED_READS_FILE

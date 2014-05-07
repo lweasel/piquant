@@ -120,8 +120,10 @@ def create_and_run_quantification(**params):
         del reads_params[parameters.QUANT_METHOD]
         reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
             parameters.get_file_name(**reads_params)
+        quantifier_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
+            "quantifier_scratch"
         prq.write_run_quantification_script(
-            reads_dir, run_dir, options[TRANSCRIPT_GTF_FILE],
+            reads_dir, run_dir, quantifier_dir, options[TRANSCRIPT_GTF_FILE],
             dict(options[PARAMS_SPEC]), **params)
 
     # Execute the run quantification script
@@ -136,6 +138,8 @@ def create_and_run_quantification(**params):
 
 # Set up logger
 logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
+
+options[OUTPUT_DIRECTORY] = os.path.abspath(options[OUTPUT_DIRECTORY])
 
 parameters.execute_for_param_sets(
     [check_reads_directory, check_run_directory,
