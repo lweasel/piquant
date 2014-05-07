@@ -3,7 +3,7 @@
 # TODO: should be able to separately specify parent directory for reads directories.
 
 """Usage:
-    run_quantifiers [--log-level=<log-level>] [--out-dir=<out-dir>] [--num-fragments=<num-fragments>] [--prepare-only|--run-only] --quant-methods=<quant-methods> --params=<param-values> --read-lengths=<read-lengths> --read-depths=<read-depths> --paired-ends=<paired-ends> --errors=<errors> --biases=<biases> <transcript-gtf-file> <genome-fasta-dir>
+    run_quantifiers [--log-level=<log-level>] [--out-dir=<out-dir>] [--num-fragments=<num-fragments>] [--prepare-only|--run-only] --quant-method=<quant-methods> --params=<param-values> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya> <transcript-gtf-file> <genome-fasta-dir>
 
 -h --help                           Show this message.
 -v --version                        Show version.
@@ -12,12 +12,13 @@
 --num-fragments=<num-fragments>     Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
 --prepare-only                      Quantification run scripts will be created, but not run.
 --run-only                          Quantification run scripts will be run, but not created (they must already exist).
--q --quant-methods=<quant-methods>  Comma-separated list of quantification methods to run.
--l --read-lengths=<read-lengths>  Comma-separated list of read-lengths to perform quantification for.
--d --read-depths=<read-depths>    Comma-separated list of read-depths to perform quantification for.
--p --paired-ends=<paired-ends>    Comma-separated list of True/False strings indicating whether quantification should be performed for single or paired-end reads.
--e --errors=<errors>              Comma-separated list of True/False strings indicating whether quantification should be performed with or without read errors.
--b --biases=<biases>              Comma-separated list of True/False strings indicating whether quantification should be performed with or without read sequence bias.
+-q --quant-method=<quant-methods>  Comma-separated list of quantification methods to run.
+-l --read-length=<read-lengths>  Comma-separated list of read-lengths to perform quantification for.
+-d --read-depth=<read-depths>    Comma-separated list of read-depths to perform quantification for.
+-p --paired-end=<paired-ends>    Comma-separated list of True/False strings indicating whether quantification should be performed for single or paired-end reads.
+-e --error=<errors>              Comma-separated list of True/False strings indicating whether quantification should be performed with or without read errors.
+-b --bias=<biases>              Comma-separated list of True/False strings indicating whether quantification should be performed with or without read sequence bias.
+-a --polya=<polya>              Comma-separated list of True/False strings indicating whether quantification should be performed assuming transcripts do or do not have polyA tails.
 --params=<param-values>          Comma-separated list of key=value parameters required by the specified quantification methods.
 <transcript-gtf-file>               GTF formatted file describing the transcripts to be simulated.
 <genome-fasta-dir>                  Directory containing per-chromosome sequences as FASTA files.
@@ -85,7 +86,7 @@ try:
 except SchemaError as exc:
     exit("Exiting. " + exc.code)
 
-if False in options[parameters.PAIRED_END]:
+if False in param_values[parameters.PAIRED_END]:
     for qm in param_values[parameters.QUANT_METHOD]:
         if qm.requires_paired_end_reads():
             exit("Exiting. Quantification method {m} ".format(m=qm.get_name())

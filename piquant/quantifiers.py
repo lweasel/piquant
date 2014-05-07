@@ -12,6 +12,7 @@ SIMULATED_READS = "SIMULATED_READS"
 LEFT_SIMULATED_READS = "LEFT_SIMULATED_READS"
 RIGHT_SIMULATED_READS = "RIGHT_SIMULATED_READS"
 FASTQ_READS = "FASTQ_READS"
+POLYA_TAIL = "POLYA_TAIL"
 
 TOPHAT_OUTPUT_DIR = "tho"
 TOPHAT_MAPPED_READS = TOPHAT_OUTPUT_DIR + os.path.sep + "accepted_hits.bam"
@@ -153,9 +154,10 @@ class _RSEM:
 
         with writer.if_block("! -d $REF_DIR"):
             # TODO: think we need to create the directory here.
+            polya_spec = "" if params[POLYA_TAIL] else " --no-polyA"
             writer.add_line(
                 "rsem-prepare-reference --gtf " + params[TRANSCRIPT_GTF_FILE] +
-                " " + params[GENOME_FASTA_DIR] + " " +
+                polya_spec + " " + params[GENOME_FASTA_DIR] + " " +
                 params[TRANSCRIPT_REFERENCE])
 
     def write_quantification_commands(self, writer, params):

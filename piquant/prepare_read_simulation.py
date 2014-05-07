@@ -176,13 +176,15 @@ def _add_create_reads(
 
 def _create_simulator_parameter_files(
         reads_dir, transcript_gtf_file, genome_fasta_dir,
-        num_fragments, read_length, paired_end, errors, bias):
+        num_fragments, read_length, paired_end,
+        errors, bias, polya):
 
     fs_pro_file = fs.EXPRESSION_PARAMS_FILE.replace("par", "pro")
 
     fs.write_flux_simulator_params_files(
         transcript_gtf_file, genome_fasta_dir, num_fragments,
-        read_length, paired_end, errors, bias, fs_pro_file, reads_dir)
+        read_length, paired_end, errors, bias, polya,
+        fs_pro_file, reads_dir)
 
     return fs_pro_file
 
@@ -202,14 +204,15 @@ def _write_read_simulation_script(
 def create_simulation_files(
         reads_dir, transcript_gtf_file, genome_fasta_dir,
         num_fragments, read_length=30, read_depth=10,
-        paired_end=False, errors=False, bias=False):
+        paired_end=False, errors=False, bias=False, polya=False):
 
     os.mkdir(reads_dir)
 
     # Write Flux Simulator parameters files
     fs_pro_file = _create_simulator_parameter_files(
         reads_dir, transcript_gtf_file, genome_fasta_dir,
-        num_fragments, read_length, paired_end, errors, bias)
+        num_fragments, read_length, paired_end,
+        errors, bias, polya)
 
     # Write shell script to run read simulation
     _write_read_simulation_script(

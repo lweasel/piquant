@@ -162,7 +162,7 @@ def _add_analyse_results(
             read_length, read_depth, paired_end, errors, bias)
 
 
-def _update_params_spec(params_spec, input_dir, paired_end, errors):
+def _update_params_spec(params_spec, input_dir, paired_end, errors, polya):
     if paired_end:
         params_spec[qs.LEFT_SIMULATED_READS] = \
             input_dir + os.path.sep + _get_reads_file(errors, 'l')
@@ -171,6 +171,11 @@ def _update_params_spec(params_spec, input_dir, paired_end, errors):
     else:
         params_spec[qs.SIMULATED_READS] = \
             input_dir + os.path.sep + _get_reads_file(errors)
+
+    params_spec[qs.TRANSCRIPT_REFERENCE] = \
+        params_spec[qs.TRANSCRIPT_REFERENCE] + "_" + \
+        ("polya" if polya else "no_polya")
+    params_spec[qs.POLYA_TAIL] = polya
 
     params_spec[qs.FASTQ_READS] = errors
 
@@ -194,13 +199,13 @@ def _add_script_sections(
 def write_run_quantification_script(
         input_dir, run_dir, transcript_gtf_file, params_spec,
         quant_method=None, read_length=50, read_depth=10,
-        paired_end=False, errors=False, bias=False):
+        paired_end=False, errors=False, bias=False, polya=False):
 
     input_dir = os.path.abspath(input_dir)
     fs_pro_file = input_dir + os.path.sep + \
         fs.EXPRESSION_PARAMS_FILE.replace("par", "pro")
 
-    _update_params_spec(params_spec, input_dir, paired_end, errors)
+    _update_params_spec(params_spec, input_dir, paired_end, errors, polya)
 
     os.mkdir(run_dir)
 

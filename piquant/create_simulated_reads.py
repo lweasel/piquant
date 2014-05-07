@@ -3,7 +3,7 @@
 # TODO: add logging
 
 """Usage:
-    create_simulated_reads [--log-level=<log-level>] [--out-dir=<out_dir>] [--num-fragments=<num-fragments>] [--prepare-only|--run-only] --read-lengths=<read-lengths> --read-depths=<read-depths> --paired-ends=<paired-ends> --errors=<errors> --biases=<biases> <transcript-gtf-file> <genome-fasta-dir>
+    create_simulated_reads [--log-level=<log-level>] [--out-dir=<out_dir>] [--num-fragments=<num-fragments>] [--prepare-only|--run-only] --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya> <transcript-gtf-file> <genome-fasta-dir>
 
 -h --help                Show this message.
 -v --version             Show version.
@@ -12,11 +12,12 @@
 --num-fragments=<num-fragments>  Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
 --prepare-only           Read simulation scripts will be created, but not run (they must not already exist).
 --run-only               Read simulation scripts will be run, but not created (they must already exist).
--l --read-lengths=<read-lengths>  Comma-separated list of read-lengths to create reads for.
--d --read-depths=<read-depths>    Comma-separated list of read-depths to create reads for
--p --paired-ends=<paired-ends>    Comma-separated list of True/False strings indicating whether paired-end reads should be created.
--e --errors=<errors>              Comma-separated list of True/False strings indicating whether reads should be created with errors.
--b --biases=<biases>              Comma-separated list of True/False strings indicating whether reads should be created with sequence bias.
+-l --read-length=<read-lengths>  Comma-separated list of read-lengths to create reads for.
+-d --read-depth=<read-depths>    Comma-separated list of read-depths to create reads for
+-p --paired-end=<paired-ends>    Comma-separated list of True/False strings indicating whether paired-end reads should be created.
+-e --error=<errors>              Comma-separated list of True/False strings indicating whether reads should be created with errors.
+-b --bias=<biases>              Comma-separated list of True/False strings indicating whether reads should be created with sequence bias.
+-a --polya=<polya>                Comma-separated list of True/False strings indicating whether reads should be created with polyA tails.
 <transcript-gtf-file>    GTF formatted file describing the transcripts to be simulated.
 <genome-fasta-dir>       Directory containing per-chromosome sequences as FASTA files.
 """
