@@ -1,5 +1,3 @@
-from schema import SchemaError
-
 import pandas as pd
 import os.path
 
@@ -19,32 +17,6 @@ TOPHAT_OUTPUT_DIR = "tho"
 TOPHAT_MAPPED_READS = TOPHAT_OUTPUT_DIR + os.path.sep + "accepted_hits.bam"
 
 # Parameters required by particular quantification methods
-
-BOWTIE_INDEX = "BOWTIE_INDEX"
-
-PARAM_DESCRIPTIONS = {
-    BOWTIE_INDEX: "name of Bowtie index used when TopHat maps reads to genome",
-}
-
-
-class _ParamsValidator:
-    def __init__(self, method, required_params):
-        self.method = method
-        self.required_params = required_params
-
-    def validate(self, params):
-        if self.required_params:
-            for required_param in self.required_params:
-                if required_param not in params:
-                    msg = "{m} requires parameter {p} ({d}).".format(
-                        m=self.method,
-                        p=required_param,
-                        d=PARAM_DESCRIPTIONS[required_param])
-                    raise SchemaError([], msg)
-
-        return params
-
-
 _QUANT_METHODS = {}
 
 
@@ -53,8 +25,6 @@ def get_quantification_methods():
 
 
 def _Quantifier(cls):
-    cls.get_params_validator = \
-        lambda x: _ParamsValidator(cls.get_name(), cls.get_required_params())
     _QUANT_METHODS[cls.get_name()] = cls()
     return cls
 
@@ -62,12 +32,13 @@ def _Quantifier(cls):
 @_Quantifier
 class _Cufflinks:
     @classmethod
-    def get_required_params(cls):
-        return [BOWTIE_INDEX]
-
-    @classmethod
     def get_name(cls):
         return "Cufflinks"
+
+    @classmethod
+    def _get_bowtie_index(cls, quantifier_dir):
+        return quantifier_dir + os.path.sep + "bowtie-index" + \
+            os.path.sep + "index"
 
     def calculate_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
@@ -78,6 +49,25 @@ class _Cufflinks:
             if transcript_id in self.abundances.index else 0
 
     def write_preparatory_commands(self, writer, params):
+        writer.add_comment(
+            "Prepare the bowtie index for read mapping if it doesn't " +
+            "already exist. Note that this step only needs to be done " +
+            "once for a particular reference genome")
+
+        bowtie_index = _Cufflinks._get_bowtie_index(
+            params[QUANTIFIER_DIRECTORY])
+
+        writer.add_line("BOWTIE_INDEX_DIR=$(dirname " + bowtie_index + ")")
+
+        with writer.section():
+            with writer.if_block("! -d $BOWTIE_INDEX_DIR"):
+                writer.add_line("mkdir $BOWTIE_INDEX_DIR")
+                writer.add_line(
+                    "REF_FILES=$(ls -1 " + params[GENOME_FASTA_DIR] +
+                    "/*.fa | tr '\\n' ',')")
+                writer.add_line("REF_FILES=${REF_FILES%,}")
+                writer.add_line("bowtie-build $REF_FILES " + bowtie_index)
+
         reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
             else params[LEFT_SIMULATED_READS] + \
             " " + params[RIGHT_SIMULATED_READS]
@@ -85,12 +75,14 @@ class _Cufflinks:
         writer.add_comment("Map simulated reads to the genome with TopHat.")
         writer.add_line(
             "tophat --library-type fr-unstranded --no-coverage-search " +
-            "-p 8 -o " + TOPHAT_OUTPUT_DIR + " " + params[BOWTIE_INDEX] +
+            "-p 8 -o " + TOPHAT_OUTPUT_DIR + " " + bowtie_index +
             " " + reads_spec)
 
     def write_quantification_commands(self, writer, params):
+        bowtie_index = _Cufflinks._get_bowtie_index(
+            params[QUANTIFIER_DIRECTORY])
         writer.add_line(
-            "cufflinks -o transcriptome -u -b " + params[BOWTIE_INDEX] +
+            "cufflinks -o transcriptome -u -b " + bowtie_index +
             ".fa -p 8 --library-type fr-unstranded -G " +
             params[TRANSCRIPT_GTF_FILE] + " " + self.get_mapped_reads_file())
 
@@ -109,21 +101,13 @@ class _RSEM:
     SAMPLE_NAME = "rsem_sample"
 
     @classmethod
-    def get_required_params(cls):
-        return None
-
-    @classmethod
     def get_name(cls):
         return "RSEM"
 
     @classmethod
-    def _get_ref_dir(cls, quantifier_dir, polya):
-        return quantifier_dir + os.path.sep + "rsem_" + \
-            ("polya" if polya else "nopolya")
-
-    @classmethod
     def _get_ref_name(cls, quantifier_dir, polya):
-        return _RSEM._get_ref_dir(quantifier_dir, polya) + os.path.sep + "rsem"
+        return quantifier_dir + os.path.sep + "rsem_" + \
+            ("polya" if polya else "nopolya") + os.path.sep + "rsem"
 
     def calculate_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
@@ -140,10 +124,13 @@ class _RSEM:
             "from the RSEM package. Note that this step only needs to " +
             "be done once for a particular set of transcripts.")
 
-        ref_dir = _RSEM._get_ref_dir(
+        ref_name = _RSEM._get_ref_name(
             params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
-        with writer.if_block("! -d " + ref_dir):
-            writer.add_line("mkdir " + ref_dir)
+
+        writer.add_line("REF_DIR=$(dirname " + ref_name + ")")
+
+        with writer.if_block("! -d $REF_DIR"):
+            writer.add_line("mkdir $REF_DIR")
 
             polya_spec = "" if params[POLYA_TAIL] else " --no-polyA"
             ref_name = _RSEM._get_ref_name(
@@ -179,10 +166,6 @@ class _RSEM:
 @_Quantifier
 class _Express:
     MAPPED_READS_FILE = "hits.bam"
-
-    @classmethod
-    def get_required_params(cls):
-        return None
 
     @classmethod
     def get_name(cls):

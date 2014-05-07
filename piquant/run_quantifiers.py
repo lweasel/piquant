@@ -3,7 +3,7 @@
 # TODO: should be able to separately specify parent directory for reads directories.
 
 """Usage:
-    run_quantifiers [--log-level=<log-level>] [--out-dir=<out-dir>] [--num-fragments=<num-fragments>] [--prepare-only|--run-only] --quant-method=<quant-methods> --params=<param-values> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya> <transcript-gtf-file> <genome-fasta-dir>
+    run_quantifiers [--log-level=<log-level>] [--out-dir=<out-dir>] [--num-fragments=<num-fragments>] [--prepare-only|--run-only] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya> <transcript-gtf-file> <genome-fasta-dir>
 
 -h --help                           Show this message.
 -v --version                        Show version.
@@ -19,7 +19,6 @@
 -e --error=<errors>              Comma-separated list of True/False strings indicating whether quantification should be performed with or without read errors.
 -b --bias=<biases>              Comma-separated list of True/False strings indicating whether quantification should be performed with or without read sequence bias.
 -a --polya=<polya>              Comma-separated list of True/False strings indicating whether quantification should be performed assuming transcripts do or do not have polyA tails.
---params=<param-values>          Comma-separated list of key=value parameters required by the specified quantification methods.
 <transcript-gtf-file>               GTF formatted file describing the transcripts to be simulated.
 <genome-fasta-dir>                  Directory containing per-chromosome sequences as FASTA files.
 """
@@ -43,7 +42,6 @@ OUTPUT_DIRECTORY = "--out-dir"
 NUM_FRAGMENTS = "--num-fragments"
 PREPARE_ONLY = "--prepare-only"
 RUN_ONLY = "--run-only"
-PARAMS_SPEC = "--params"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
@@ -59,19 +57,6 @@ try:
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
 
     param_values = parameters.validate_command_line_parameter_sets(options)
-
-    params = {}
-    for param_spec in options[PARAMS_SPEC].split(","):
-        param, value = param_spec.split("=")
-        params[param] = value
-    options[PARAMS_SPEC] = params
-
-    for quant_method in param_values[parameters.QUANT_METHOD]:
-        Schema(quant_method.get_params_validator()).\
-            validate(options[PARAMS_SPEC])
-
-    options[PARAMS_SPEC][qs.TRANSCRIPT_GTF_FILE] = options[TRANSCRIPT_GTF_FILE]
-    options[PARAMS_SPEC][qs.GENOME_FASTA_DIR] = options[GENOME_FASTA_DIR]
 
     options[NUM_FRAGMENTS] = opt.validate_int_option(
         options[NUM_FRAGMENTS],
@@ -122,9 +107,15 @@ def create_and_run_quantification(**params):
             parameters.get_file_name(**reads_params)
         quantifier_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
             "quantifier_scratch"
+
+        params_spec = {
+            qs.TRANSCRIPT_GTF_FILE: options[TRANSCRIPT_GTF_FILE],
+            qs.GENOME_FASTA_DIR: options[GENOME_FASTA_DIR]
+        }
+
         prq.write_run_quantification_script(
             reads_dir, run_dir, quantifier_dir, options[TRANSCRIPT_GTF_FILE],
-            dict(options[PARAMS_SPEC]), **params)
+            params_spec, **params)
 
     # Execute the run quantification script
     if not options[PREPARE_ONLY]:
