@@ -30,12 +30,14 @@ def _get_reads_file(errors, paired_end=None):
 
 
 def _get_transcript_counts_file(transcript_gtf_file):
+    # TODO: output to quantification scratch directory
     gtf_dir = os.path.abspath(
         os.path.dirname(transcript_gtf_file))
     return gtf_dir + os.path.sep + TRANSCRIPT_COUNTS_FILE
 
 
 def _get_unique_sequence_file(transcript_gtf_file):
+    # TODO: output to quantification scratch directory
     gtf_dir = os.path.abspath(
         os.path.dirname(transcript_gtf_file))
     return gtf_dir + os.path.sep + UNIQUE_SEQUENCE_FILE

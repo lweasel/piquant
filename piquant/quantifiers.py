@@ -221,29 +221,66 @@ class _Express:
 
 @_Quantifier
 class _Sailfish:
+    TPM_FILE = "tpms.csv"
+
     @classmethod
     def get_name(cls):
         return "Sailfish"
 
+    @classmethod
+    def _get_index_dir(cls, quantifier_dir, polya):
+        return quantifier_dir + os.path.sep + "sailfish_" + \
+            ("polya" if polya else "nopolya")
+
     def calculate_transcript_abundances(self, quant_file):
-        # TODO
-        pass
+        self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
+                                      index_col="Transcript")
 
     def get_transcript_abundance(self, transcript_id):
-        # TODO
-        return 0
+        return self.abundances.ix[transcript_id]["TPM"] \
+            if transcript_id in self.abundances.index else 0
 
     def write_preparatory_commands(self, writer, params):
-        # TODO
-        pass
+        # For convenience, we use a tool from the RSEM package to create the
+        # transcript reference
+        with writer.section():
+            _RSEM().write_preparatory_commands(writer, params)
+
+        writer.add_comment(
+            "Now create the Sailfish transcript index (this will only " +
+            "perform indexing if the index does not already exist.")
+
+        index_dir = _Sailfish._get_index_dir(
+            params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
+        ref_name = _RSEM._get_ref_name(
+            params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
+
+        writer.add_line(
+            "sailfish index -p 8 -t " + ref_name +
+            ".transcripts.fa -k 20 -o " + index_dir)
 
     def write_quantification_commands(self, writer, params):
-        # TODO
-        pass
+        index_dir = _Sailfish._get_index_dir(
+            params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
+
+        library_spec = "\"T=SE:S=U\"" if SIMULATED_READS in params \
+            else "\"T=PE:O=><:S=SA\""
+
+        reads_spec = "-r " + params[SIMULATED_READS] \
+            if SIMULATED_READS in params \
+            else "-1 " + params[LEFT_SIMULATED_READS] + \
+            " -2 " + params[RIGHT_SIMULATED_READS]
+
+        writer.add_line(
+            "sailfish quant -p 8 -i " + index_dir + " -l " +
+            library_spec + " " + reads_spec + " -o .")
+
+        writer.add_line(
+            "grep -v '^# \[' quant_bias_corrected.sf | sed -e 's/# //'i > " +
+            _Sailfish.TPM_FILE)
 
     def get_results_file(self):
-        # TODO
-        pass
+        return _Sailfish.TPM_FILE
 
     def requires_paired_end_reads(self):
         return False

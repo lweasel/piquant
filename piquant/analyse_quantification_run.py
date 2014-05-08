@@ -149,6 +149,7 @@ if options[OUT_FILE_BASENAME]:
 
 # Make boxplots of log ratios stratified by various classification measures
 # (e.g. the number of transcripts per-originating gene of each transcript)
+# TODO: need something in graph titles to indicate filter being applied
 more_than_100_filter = lambda x: len(x[t.REAL_TPM]) > 100
 
 NON_ZERO_PLOT_OPTIONS = plot.PlotOptions(
