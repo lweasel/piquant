@@ -1,5 +1,4 @@
 import tpms as t
-import utils
 
 
 class _Classifier():
@@ -33,8 +32,8 @@ class _Classifier():
 
     def get_stats_file_suffix(self, ascending=True):
         suffix = "_stats" if self.produces_grouped_stats() else \
-            "_distribution_stats_" + utils.get_order_string(ascending)
-        suffix += "_by_" + utils.spaces_to_underscore(self.get_column_name())
+            "_distribution_stats_" + ("asc" if ascending else "desc")
+        suffix += "_by_" + self.get_column_name().replace(' ', '_')
         return suffix
 
 

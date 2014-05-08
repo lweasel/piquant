@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sb
 import tpms as t
-import utils
 
 from collections import namedtuple
 
@@ -108,7 +107,7 @@ def plot_cumulative_transcript_distribution(
 
         _savefig(plot_options.out_file_base,
                  [grouping_column, plot_options.label,
-                  utils.get_order_string(ascending)],
+                  ("asc" if ascending else "desc")],
                  suffix="distribution")
 
 
@@ -262,6 +261,6 @@ def plot_cumulative_transcript_distribution_grouped(
         _savefig(base_name,
                  [clsfr_col, "per",
                   group_param.title.lower(),
-                  utils.get_order_string(ascending)]
+                  ("asc" if ascending else "desc")]
                  + fixed_param_info,
                  suffix="distribution")
