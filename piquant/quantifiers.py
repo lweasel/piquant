@@ -13,9 +13,6 @@ FASTQ_READS = "FASTQ_READS"
 POLYA_TAIL = "POLYA_TAIL"
 QUANTIFIER_DIRECTORY = "QUANTIFIER_DIRECTORY"
 
-TOPHAT_OUTPUT_DIR = "tho"
-TOPHAT_MAPPED_READS = TOPHAT_OUTPUT_DIR + os.path.sep + "accepted_hits.bam"
-
 # Parameters required by particular quantification methods
 _QUANT_METHODS = {}
 
@@ -31,6 +28,8 @@ def _Quantifier(cls):
 
 @_Quantifier
 class _Cufflinks:
+    TOPHAT_OUTPUT_DIR = "tho"
+
     @classmethod
     def get_name(cls):
         return "Cufflinks"
@@ -44,9 +43,12 @@ class _Cufflinks:
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
                                       index_col="tracking_id")
 
+        self.norm_constant = 1000000 / (self.abundances["FPKM"].sum())
+
     def get_transcript_abundance(self, transcript_id):
-        return self.abundances.ix[transcript_id]["FPKM"] \
+        fpkm = self.abundances.ix[transcript_id]["FPKM"] \
             if transcript_id in self.abundances.index else 0
+        return self.norm_constant * fpkm
 
     def write_preparatory_commands(self, writer, params):
         writer.add_comment(
@@ -75,21 +77,21 @@ class _Cufflinks:
         writer.add_comment("Map simulated reads to the genome with TopHat.")
         writer.add_line(
             "tophat --library-type fr-unstranded --no-coverage-search " +
-            "-p 8 -o " + TOPHAT_OUTPUT_DIR + " " + bowtie_index +
+            "-p 8 -o " + _Cufflinks.TOPHAT_OUTPUT_DIR + " " + bowtie_index +
             " " + reads_spec)
 
     def write_quantification_commands(self, writer, params):
         bowtie_index = _Cufflinks._get_bowtie_index(
             params[QUANTIFIER_DIRECTORY])
+        mapped_reads = _Cufflinks.TOPHAT_OUTPUT_DIR + \
+            os.path.sep + "accepted_hits.bam"
+
         writer.add_line(
             "cufflinks -o transcriptome -u -b " + bowtie_index +
             ".fa -p 8 --library-type fr-unstranded -G " +
-            params[TRANSCRIPT_GTF_FILE] + " " + self.get_mapped_reads_file())
+            params[TRANSCRIPT_GTF_FILE] + " " + mapped_reads)
 
-    def get_mapped_reads_file(self):
-        return TOPHAT_MAPPED_READS
-
-    def get_fpkm_file(self):
+    def get_results_file(self):
         return "transcriptome/isoforms.fpkm_tracking"
 
     def requires_paired_end_reads(self):
@@ -114,7 +116,7 @@ class _RSEM:
                                       index_col="transcript_id")
 
     def get_transcript_abundance(self, transcript_id):
-        return self.abundances.ix[transcript_id]["FPKM"] \
+        return self.abundances.ix[transcript_id]["TPM"] \
             if transcript_id in self.abundances.index else 0
 
     def write_preparatory_commands(self, writer, params):
@@ -153,10 +155,7 @@ class _RSEM:
             " --p 32 --output-genome-bam " + reads_spec + " " +
             ref_name + " " + _RSEM.SAMPLE_NAME)
 
-    def get_mapped_reads_file(self):
-        return _RSEM.SAMPLE_NAME + ".genome.sorted.bam"
-
-    def get_fpkm_file(self):
+    def get_results_file(self):
         return _RSEM.SAMPLE_NAME + ".isoforms.results"
 
     def requires_paired_end_reads(self):
@@ -176,7 +175,7 @@ class _Express:
                                       index_col="target_id")
 
     def get_transcript_abundance(self, transcript_id):
-        return self.abundances.ix[transcript_id]["fpkm"] \
+        return self.abundances.ix[transcript_id]["tpm"] \
             if transcript_id in self.abundances.index else 0
 
     def write_preparatory_commands(self, writer, params):
@@ -213,11 +212,38 @@ class _Express:
             "express " + stranded_spec + ref_name + ".transcripts.fa " +
             _Express.MAPPED_READS_FILE)
 
-    def get_mapped_reads_file(self):
-        return _Express.MAPPED_READS_FILE
-
-    def get_fpkm_file(self):
+    def get_results_file(self):
         return "results.xprs"
+
+    def requires_paired_end_reads(self):
+        return False
+
+
+@_Quantifier
+class _Sailfish:
+    @classmethod
+    def get_name(cls):
+        return "Sailfish"
+
+    def calculate_transcript_abundances(self, quant_file):
+        # TODO
+        pass
+
+    def get_transcript_abundance(self, transcript_id):
+        # TODO
+        return 0
+
+    def write_preparatory_commands(self, writer, params):
+        # TODO
+        pass
+
+    def write_quantification_commands(self, writer, params):
+        # TODO
+        pass
+
+    def get_results_file(self):
+        # TODO
+        pass
 
     def requires_paired_end_reads(self):
         return False

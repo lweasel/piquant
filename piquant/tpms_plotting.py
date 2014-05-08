@@ -1,7 +1,7 @@
-import fpkms as f
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sb
+import tpms as t
 import utils
 
 from collections import namedtuple
@@ -30,19 +30,19 @@ def _savefig(base_name, name_elements, suffix=None):
     plt.savefig(name, format="pdf")
 
 
-def log_fpkm_scatter_plot(fpkms, plot_options):
+def log_tpm_scatter_plot(tpms, plot_options):
     with NewPlot():
-        plt.scatter(fpkms[f.LOG10_REAL_FPKM].values,
-                    fpkms[f.LOG10_CALCULATED_FPKM].values,
+        plt.scatter(tpms[t.LOG10_REAL_TPM].values,
+                    tpms[t.LOG10_CALCULATED_TPM].values,
                     c="lightblue", alpha=0.4)
 
-        plt.suptitle("Scatter plot of log calculated vs real FPKMs: " +
+        plt.suptitle("Scatter plot of log calculated vs real TPMs: " +
                      ", ".join([plot_options.quant_method,
                                plot_options.label]))
-        plt.xlabel("Log10 real FPKM")
-        plt.ylabel("Log10 calculated FPKM")
+        plt.xlabel("Log10 real TPM")
+        plt.ylabel("Log10 calculated TPM")
 
-        min_val = np.log10(f.NOT_PRESENT_CUTOFF) - 0.2
+        min_val = np.log10(t.NOT_PRESENT_CUTOFF) - 0.2
         plt.xlim(xmin=min_val)
         plt.ylim(ymin=min_val)
 
@@ -51,26 +51,26 @@ def log_fpkm_scatter_plot(fpkms, plot_options):
                  suffix="log10 scatter")
 
 
-def log_ratio_boxplot(fpkms, plot_options, classifier,
+def log_ratio_boxplot(tpms, plot_options, classifier,
                       filter=None, save_to_file=True):
 
     grouping_column = classifier.get_column_name()
     name_elements = [plot_options.label]
     if filter:
-        grouped_fpkms = fpkms.groupby(grouping_column)
-        fpkms = grouped_fpkms.filter(filter)
+        grouped_tpms = tpms.groupby(grouping_column)
+        tpms = grouped_tpms.filter(filter)
     else:
         name_elements.append(NO_FILTER_LABEL)
 
     with NewPlot():
-        sb.boxplot(fpkms[f.LOG10_RATIO], groupby=fpkms[grouping_column],
+        sb.boxplot(tpms[t.LOG10_RATIO], groupby=tpms[grouping_column],
                    sym='', color='lightblue')
 
-        plt.suptitle("Log ratios of calculated to real FPKMs: " +
+        plt.suptitle("Log ratios of calculated to real TPMs: " +
                      ", ".join([plot_options.quant_method] + name_elements))
 
         plt.xlabel(grouping_column[:1].upper() + grouping_column[1:])
-        plt.ylabel("Log ratio (calculated/real FPKM)")
+        plt.ylabel("Log ratio (calculated/real TPM)")
 
         locs, labels = plt.xticks()
         plt.xticks(locs, classifier.get_value_labels(len(labels)))
@@ -82,9 +82,9 @@ def log_ratio_boxplot(fpkms, plot_options, classifier,
 
 
 def plot_cumulative_transcript_distribution(
-        fpkms, plot_options, classifier, ascending):
+        tpms, plot_options, classifier, ascending):
 
-    xvals, yvals = f.get_distribution(fpkms, classifier, ascending)
+    xvals, yvals = t.get_distribution(tpms, classifier, ascending)
 
     with NewPlot():
         plt.plot(xvals, yvals, '-o')
@@ -231,7 +231,7 @@ def plot_cumulative_transcript_distribution_grouped(
             group_stats = stats[stats[group_param.name] == group_param_value]
             group_stats.sort(columns=clsfr_col, axis=0, inplace=True)
             xvals = group_stats[clsfr_col]
-            yvals = group_stats[f.TRUE_POSITIVE_PERCENTAGE]
+            yvals = group_stats[t.TRUE_POSITIVE_PERCENTAGE]
 
             plt.plot(xvals, yvals, '-o',
                      label=group_param.get_value_name(group_param_value))

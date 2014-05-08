@@ -11,7 +11,7 @@
 
 import classifiers
 import docopt
-import fpkms_plotting as plot
+import tpms_plotting as plot
 import itertools
 import ordutils.log as log
 import ordutils.options as opt
@@ -110,7 +110,7 @@ for param in non_degenerate_params(params.get_parameters()):
 
 # Create graphs based on statistics stratified by classifier
 # TODO: better description!
-more_than_100_filter = lambda x: x[stats.NUM_FPKMS] > 100
+more_than_100_filter = lambda x: x[stats.NUM_TPMS] > 100
 
 clsfrs = classifiers.get_classifiers()
 grp_clsfrs = [c for c in clsfrs if c.produces_grouped_stats()]

@@ -4,7 +4,7 @@
 # TODO: method of specifying options here (e.g. <bias>) is horrible
 
 """Usage:
-    analyse_quantification_run [--scatter-max=<scatter-max-val>] [--log10-scatter-min=<log10-scatter-min-val>] [--log10-scatter-max=<log10-scatter-max-val>] <quant-method> <read-length> <read-depth> <paired-end> <errors> <bias> <fpkm-file> [<out-file>]
+    analyse_quantification_run [--scatter-max=<scatter-max-val>] [--log10-scatter-min=<log10-scatter-min-val>] [--log10-scatter-max=<log10-scatter-max-val>] <quant-method> <read-length> <read-depth> <paired-end> <errors> <bias> <tpm-file> [<out-file>]
 
 -h --help                                  Show this message.
 -v --version                               Show version.
@@ -17,19 +17,19 @@
 <paired-end>                               Whether paired-end sequence reads were used.
 <errors>                                   Whether the reads contain sequencing errors.
 <bias>                                     Whether the reads contain sequence bias.
-<fpkm-file>                                File containing real and calculated FPKMs.
+<tpm-file>                                File containing real and calculated TPMs.
 <out-file>                                 Basename for output graph and data files.
 """
 
 from docopt import docopt
 from schema import SchemaError
 
-import fpkms as f
 import classifiers
-import fpkms_plotting as plot
 import ordutils.options as opt
 import pandas as pd
 import statistics
+import tpms as t
+import tpms_plotting as plot
 
 QUANT_METHOD = "quant-method"
 READ_DEPTH = "read-depth"
@@ -45,7 +45,7 @@ ALL_LABEL = "all"
 
 opt_string = lambda x: "<{x}>".format(x=x)
 
-FPKM_FILE = "<fpkm-file>"
+TPM_FILE = "<tpm-file>"
 OUT_FILE_BASENAME = "<out-file>"
 SCATTER_MAX = "--scatter-max"
 LOG10_SCATTER_MIN = "--log10-scatter-min"
@@ -62,7 +62,7 @@ options = docopt(__doc__, version="assemble_quantification_data v0.1")
 
 # Validate command-line options
 try:
-    opt.validate_file_option(options[FPKM_FILE], "Could not open FPKM file")
+    opt.validate_file_option(options[TPM_FILE], "Could not open TPM file")
     options[SCATTER_MAX] = opt.validate_int_option(
         options[SCATTER_MAX], "Invalid maximum value for scatter plot axes")
     options[LOG10_SCATTER_MIN] = opt.validate_int_option(
@@ -74,27 +74,27 @@ try:
 except SchemaError as exc:
     exit(exc.code)
 
-# Read FPKMs into a data frame
-fpkms = pd.read_csv(options[FPKM_FILE])
+# Read TPMs into a data frame
+tpms = pd.read_csv(options[TPM_FILE])
 
-# Determine whether each FPKM measurement is a true/false positive/negative.
-# For our purposes, marking an FPKM as positive or negative is determined
+# Determine whether each TPM measurement is a true/false positive/negative.
+# For our purposes, marking an TPM as positive or negative is determined
 # by whether it is greater or less than an "isoform not present" cutoff value.
-f.mark_positives_and_negatives(fpkms)
+t.mark_positives_and_negatives(tpms)
 
-# Calculate the percent error (positive or negative) of the calculated FPKM
+# Calculate the percent error (positive or negative) of the calculated TPM
 # values from the real values
-f.calculate_percent_error(fpkms)
+t.calculate_percent_error(tpms)
 
-# Calculate log ratio of calculated and real FPKMs
-f.calculate_log_ratios(fpkms)
+# Calculate log ratio of calculated and real TPMs
+t.calculate_log_ratios(tpms)
 
-# Apply various classification measures to the FPKM data
+# Apply various classification measures to the TPM data
 clsfrs = classifiers.get_classifiers()
-f.apply_classifiers(fpkms, clsfrs)
+t.apply_classifiers(tpms, clsfrs)
 
-# Get a data frame containing only true positive FPKMs
-tp_fpkms = f.get_true_positives(fpkms)
+# Get a data frame containing only true positive TPMs
+tp_tpms = t.get_true_positives(tpms)
 
 # Write statistics pertaining to the set of quantified transcripts as a whole.
 
@@ -108,21 +108,21 @@ def add_overall_stats(stats):
     stats[BIAS] = options[BIAS_OPT]
 
 if options[OUT_FILE_BASENAME]:
-    stats = f.get_stats(fpkms, tp_fpkms)
+    stats = t.get_stats(tpms, tp_tpms)
     add_overall_stats(stats)
 
     stats_file_name = \
         statistics.get_stats_file(".", options[OUT_FILE_BASENAME])
     statistics.write_stats_data(stats_file_name, stats, index=False)
 
-# Write statistics for FPKMS stratified by various classification measures
-non_zero = fpkms[(fpkms[f.REAL_FPKM] > 0) & (fpkms[f.CALCULATED_FPKM] > 0)]
+# Write statistics for TPMS stratified by various classification measures
+non_zero = tpms[(tpms[t.REAL_TPM] > 0) & (tpms[t.CALCULATED_TPM] > 0)]
 
 if options[OUT_FILE_BASENAME]:
     for classifier in clsfrs:
         if classifier.produces_grouped_stats():
             column_name = classifier.get_column_name()
-            stats = f.get_grouped_stats(fpkms, tp_fpkms, column_name)
+            stats = t.get_grouped_stats(tpms, tp_tpms, column_name)
             add_overall_stats(stats)
 
             stats_file_name = statistics.get_stats_file(
@@ -131,25 +131,25 @@ if options[OUT_FILE_BASENAME]:
 
         elif classifier.produces_distribution_plots():
             for ascending in [True, False]:
-                stats = f.get_distribution_stats(
-                    non_zero, tp_fpkms, classifier, ascending)
+                stats = t.get_distribution_stats(
+                    non_zero, tp_tpms, classifier, ascending)
                 add_overall_stats(stats)
 
                 stats_file_name = statistics.get_stats_file(
                     ".", options[OUT_FILE_BASENAME], classifier, ascending)
                 statistics.write_stats_data(stats_file_name, stats)
 
-# Make a scatter plot of log transformed calculated vs real FPKMs
+# Make a scatter plot of log transformed calculated vs real TPMs
 TP_PLOT_OPTIONS = plot.PlotOptions(
     options[QUANT_METHOD_OPT], TRUE_POSITIVES_LABEL,
     options[OUT_FILE_BASENAME])
 
 if options[OUT_FILE_BASENAME]:
-    plot.log_fpkm_scatter_plot(tp_fpkms, TP_PLOT_OPTIONS)
+    plot.log_tpm_scatter_plot(tp_tpms, TP_PLOT_OPTIONS)
 
 # Make boxplots of log ratios stratified by various classification measures
 # (e.g. the number of transcripts per-originating gene of each transcript)
-more_than_100_filter = lambda x: len(x[f.REAL_FPKM]) > 100
+more_than_100_filter = lambda x: len(x[t.REAL_TPM]) > 100
 
 NON_ZERO_PLOT_OPTIONS = plot.PlotOptions(
     options[QUANT_METHOD_OPT], NON_ZERO_LABEL,
@@ -164,9 +164,9 @@ if options[OUT_FILE_BASENAME]:
             filter=more_than_100_filter)
 
         plot.log_ratio_boxplot(
-            tp_fpkms, TP_PLOT_OPTIONS, classifier)
+            tp_tpms, TP_PLOT_OPTIONS, classifier)
         plot.log_ratio_boxplot(
-            tp_fpkms, TP_PLOT_OPTIONS, classifier,
+            tp_tpms, TP_PLOT_OPTIONS, classifier,
             filter=more_than_100_filter)
 
 # Make plots showing the percentage of isoforms above or below threshold values
@@ -177,4 +177,4 @@ if options[OUT_FILE_BASENAME]:
             plot.plot_cumulative_transcript_distribution(
                 non_zero, NON_ZERO_PLOT_OPTIONS, classifier, ascending)
             plot.plot_cumulative_transcript_distribution(
-                tp_fpkms, TP_PLOT_OPTIONS, classifier, ascending)
+                tp_tpms, TP_PLOT_OPTIONS, classifier, ascending)

@@ -1,4 +1,4 @@
-import fpkms as f
+import tpms as t
 import utils
 
 
@@ -63,23 +63,23 @@ class _LevelsClassifier(_Classifier):
 _CLASSIFIERS = []
 
 _CLASSIFIERS.append(_Classifier(
-    "gene transcript number", lambda x: x[f.TRANSCRIPT_COUNT]))
+    "gene transcript number", lambda x: x[t.TRANSCRIPT_COUNT]))
 
 _CLASSIFIERS.append(_Classifier(
-    "absolute percent error", lambda x: abs(x[f.PERCENT_ERROR]),
+    "absolute percent error", lambda x: abs(x[t.PERCENT_ERROR]),
     grouped_stats=False, distribution_plot_range=(0, 100)))
 
 _CLASSIFIERS.append(_LevelsClassifier(
-    "log10 real FPKM", lambda x: x[f.LOG10_REAL_FPKM],
+    "log10 real TPM", lambda x: x[t.LOG10_REAL_TPM],
     [0, 0.5, 1, 1.5]))
 
 _CLASSIFIERS.append(_LevelsClassifier(
-    "transcript length", lambda x: x[f.LENGTH],
+    "transcript length", lambda x: x[t.LENGTH],
     [1000, 3162]))
 
 _CLASSIFIERS.append(_LevelsClassifier(
     "unique sequence percentage",
-    lambda x: 100 * float(x[f.UNIQUE_SEQ_LENGTH]) / x[f.LENGTH],
+    lambda x: 100 * float(x[t.UNIQUE_SEQ_LENGTH]) / x[t.LENGTH],
     [20, 40, 60, 80, 100],
     closed=True))
 

@@ -1,89 +1,89 @@
 import piquant.statistics as statistics
-import piquant.fpkms as f
+import piquant.tpms as t
 import numpy as np
 import pandas as pd
 import scipy.stats as scistats
 
-REAL_FPKMS_VALS = [0.05, 0.02, 15, 2, 10, 30, 11]
-CALC_FPKMS_VALS = [0.03, 20, 3, 0.01, 5, 20, 10]
+REAL_TPMS_VALS = [0.05, 0.02, 15, 2, 10, 30, 11]
+CALC_TPMS_VALS = [0.03, 20, 3, 0.01, 5, 20, 10]
 GROUPS = [0, 1, 0, 1, 0, 1, 1]
 
 GROUP_TEST_COL = "group_test"
 
 
-def _get_test_fpkms():
-    fpkms = pd.DataFrame.from_dict({
-        f.REAL_FPKM: REAL_FPKMS_VALS,
-        f.CALCULATED_FPKM: CALC_FPKMS_VALS,
+def _get_test_tpms():
+    tpms = pd.DataFrame.from_dict({
+        t.REAL_TPM: REAL_TPMS_VALS,
+        t.CALCULATED_TPM: CALC_TPMS_VALS,
         GROUP_TEST_COL: GROUPS
     })
 
-    f.calculate_log_ratios(fpkms)
-    f.calculate_percent_error(fpkms)
-    f.mark_positives_and_negatives(fpkms)
+    t.calculate_log_ratios(tpms)
+    t.calculate_percent_error(tpms)
+    t.mark_positives_and_negatives(tpms)
 
-    return fpkms, f.get_true_positives(fpkms)
+    return tpms, t.get_true_positives(tpms)
 
 
-def __get_test_grouped_fpkms():
-    fpkms, tp_fpkms = _get_test_fpkms()
+def __get_test_grouped_tpms():
+    tpms, tp_tpms = _get_test_tpms()
 
-    grouped = fpkms.groupby(GROUP_TEST_COL)
-    tp_grouped = tp_fpkms.groupby(GROUP_TEST_COL)
+    grouped = tpms.groupby(GROUP_TEST_COL)
+    tp_grouped = tp_tpms.groupby(GROUP_TEST_COL)
     summary = grouped.describe()
     tp_summary = tp_grouped.describe()
 
     return grouped, summary, tp_grouped, tp_summary
 
 
-def _true_positive(real_fpkm, calculated_fpkm):
-    return real_fpkm > f.NOT_PRESENT_CUTOFF and \
-        calculated_fpkm > f.NOT_PRESENT_CUTOFF
+def _true_positive(real_tpm, calculated_tpm):
+    return real_tpm > t.NOT_PRESENT_CUTOFF and \
+        calculated_tpm > t.NOT_PRESENT_CUTOFF
 
 
-def _true_negative(real_fpkm, calculated_fpkm):
-    return real_fpkm < f.NOT_PRESENT_CUTOFF and \
-        calculated_fpkm < f.NOT_PRESENT_CUTOFF
+def _true_negative(real_tpm, calculated_tpm):
+    return real_tpm < t.NOT_PRESENT_CUTOFF and \
+        calculated_tpm < t.NOT_PRESENT_CUTOFF
 
 
-def _false_negative(real_fpkm, calculated_fpkm):
-    return real_fpkm > f.NOT_PRESENT_CUTOFF and \
-        calculated_fpkm < f.NOT_PRESENT_CUTOFF
+def _false_negative(real_tpm, calculated_tpm):
+    return real_tpm > t.NOT_PRESENT_CUTOFF and \
+        calculated_tpm < t.NOT_PRESENT_CUTOFF
 
 
-def _false_positive(real_fpkm, calculated_fpkm):
-    return real_fpkm < f.NOT_PRESENT_CUTOFF and \
-        calculated_fpkm > f.NOT_PRESENT_CUTOFF
+def _false_positive(real_tpm, calculated_tpm):
+    return real_tpm < t.NOT_PRESENT_CUTOFF and \
+        calculated_tpm > t.NOT_PRESENT_CUTOFF
 
 
-def _fpkm_pairs(filter=lambda r, c: True):
-    return [(r, c) for r, c in zip(REAL_FPKMS_VALS, CALC_FPKMS_VALS) if
+def _tpm_pairs(filter=lambda r, c: True):
+    return [(r, c) for r, c in zip(REAL_TPMS_VALS, CALC_TPMS_VALS) if
             filter(r, c)]
 
 
-def _tp_fpkm_pairs():
-    return _fpkm_pairs(lambda r, c: _true_positive(r, c))
+def _tp_tpm_pairs():
+    return _tpm_pairs(lambda r, c: _true_positive(r, c))
 
 
-def _group_fpkm_pairs(group_val, filter=lambda r, c: True):
+def _group_tpm_pairs(group_val, filter=lambda r, c: True):
     return [(r, c) for r, c, gv in
-            zip(REAL_FPKMS_VALS, CALC_FPKMS_VALS, GROUPS) if
+            zip(REAL_TPMS_VALS, CALC_TPMS_VALS, GROUPS) if
             (gv == group_val and filter(r, c))]
 
 
-def _group_tp_fpkm_pairs(group_val):
-    return _group_fpkm_pairs(group_val, lambda r, c: _true_positive(r, c))
+def _group_tp_tpm_pairs(group_val):
+    return _group_tpm_pairs(group_val, lambda r, c: _true_positive(r, c))
 
 
 def _check_statistic_value(stat_class, calculator, pair_func):
-    fpkms, tp_fpkms = _get_test_fpkms()
+    tpms, tp_tpms = _get_test_tpms()
     stat = stat_class()
     correct_value = calculator(pair_func())
-    assert stat.calculate(fpkms, tp_fpkms) == correct_value
+    assert stat.calculate(tpms, tp_tpms) == correct_value
 
 
 def _check_grouped_statistic_values(stat_class, calculator, grouped_pair_func):
-    g, s, tp_g, tp_s = __get_test_grouped_fpkms()
+    g, s, tp_g, tp_s = __get_test_grouped_tpms()
     stat = stat_class()
     grouped_stats = stat.calculate_grouped(g, s, tp_g, tp_s)
     correct_value_calculator = lambda x: calculator(grouped_pair_func(x))
@@ -119,113 +119,113 @@ def test_get_graphable_by_classifier_statistics_return_graphable_by_classifier_i
     assert all([s.graphable_by_classifier for s in g_stats])
 
 
-def _number_of_fpkms(fpkm_pairs):
-    return len(fpkm_pairs)
+def _number_of_tpms(tpm_pairs):
+    return len(tpm_pairs)
 
 
-def test_number_of_fpkms_statistic_calculates_correct_value():
+def test_number_of_tpms_statistic_calculates_correct_value():
     _check_statistic_value(
-        statistics._NumberOfFPKMs, _number_of_fpkms, _fpkm_pairs)
+        statistics._NumberOfTPMs, _number_of_tpms, _tpm_pairs)
 
 
-def test_number_of_fpkms_statistic_calculates_correct_grouped_values():
+def test_number_of_tpms_statistic_calculates_correct_grouped_values():
     _check_grouped_statistic_values(
-        statistics._NumberOfFPKMs, _number_of_fpkms, _group_fpkm_pairs)
+        statistics._NumberOfTPMs, _number_of_tpms, _group_tpm_pairs)
 
 
-def test_number_of_true_positive_fpkms_statistic_calculates_correct_value():
+def test_number_of_true_positive_tpms_statistic_calculates_correct_value():
     _check_statistic_value(
-        statistics._NumberOfTruePositiveFPKMs,
-        _number_of_fpkms, _tp_fpkm_pairs)
+        statistics._NumberOfTruePositiveTPMs,
+        _number_of_tpms, _tp_tpm_pairs)
 
 
-def test_number_of_true_positive_fpkms_statistic_calculates_correct_grouped_values():
+def test_number_of_true_positive_tpms_statistic_calculates_correct_grouped_values():
     _check_grouped_statistic_values(
-        statistics._NumberOfTruePositiveFPKMs,
-        _number_of_fpkms, _group_tp_fpkm_pairs)
+        statistics._NumberOfTruePositiveTPMs,
+        _number_of_tpms, _group_tp_tpm_pairs)
 
 
-def _spearman(fpkm_pairs):
-    rs, cs = zip(*fpkm_pairs)
+def _spearman(tpm_pairs):
+    rs, cs = zip(*tpm_pairs)
     return scistats.spearmanr(np.array(rs), np.array(cs))[0]
 
 
 def test_spearman_correlation_statistic_calculates_correct_value():
     _check_statistic_value(
-        statistics._SpearmanCorrelation, _spearman, _tp_fpkm_pairs)
+        statistics._SpearmanCorrelation, _spearman, _tp_tpm_pairs)
 
 
 def test_spearman_correlation_statistic_calculates_correct_grouped_values():
     _check_grouped_statistic_values(
-        statistics._SpearmanCorrelation, _spearman, _group_tp_fpkm_pairs)
+        statistics._SpearmanCorrelation, _spearman, _group_tp_tpm_pairs)
 
 
-def _error_fraction(fpkm_pairs):
+def _error_fraction(tpm_pairs):
     error_percent = lambda r, c: abs(100 * (c - r) / float(r))
     above_threshold = \
-        [r for r, c in fpkm_pairs if
+        [r for r, c in tpm_pairs if
          error_percent(r, c) >
             statistics._TruePositiveErrorFraction.ERROR_PERCENTAGE_THRESHOLD]
-    return len(above_threshold) / float(len(fpkm_pairs))
+    return len(above_threshold) / float(len(tpm_pairs))
 
 
 def test_true_positive_error_fraction_statistic_calculates_correct_value():
     _check_statistic_value(
         statistics._TruePositiveErrorFraction,
-        _error_fraction, _tp_fpkm_pairs)
+        _error_fraction, _tp_tpm_pairs)
 
 
 def test_true_positive_error_fraction_statistic_calculates_correct_grouped_values():
     _check_grouped_statistic_values(
         statistics._TruePositiveErrorFraction,
-        _error_fraction, _group_tp_fpkm_pairs)
+        _error_fraction, _group_tp_tpm_pairs)
 
 
-def _median_percent_error(fpkm_pairs):
+def _median_percent_error(tpm_pairs):
     error_percent = lambda r, c: 100 * (c - r) / float(r)
-    percent_errors = [error_percent(r, c) for r, c in fpkm_pairs]
+    percent_errors = [error_percent(r, c) for r, c in tpm_pairs]
     return np.median(percent_errors)
 
 
 def test_median_percent_error_statistic_calculates_correct_value():
     _check_statistic_value(
         statistics._MedianPercentError,
-        _median_percent_error, _tp_fpkm_pairs)
+        _median_percent_error, _tp_tpm_pairs)
 
 
 def test_median_percent_error_statistic_calculates_correct_grouped_values():
     _check_grouped_statistic_values(
         statistics._MedianPercentError,
-        _median_percent_error, _group_tp_fpkm_pairs)
+        _median_percent_error, _group_tp_tpm_pairs)
 
 
-def _sensitivity(fpkm_pairs):
-    num_tp = sum([_true_positive(r, c) for r, c in fpkm_pairs])
-    num_fn = sum([_false_negative(r, c) for r, c in fpkm_pairs])
+def _sensitivity(tpm_pairs):
+    num_tp = sum([_true_positive(r, c) for r, c in tpm_pairs])
+    num_fn = sum([_false_negative(r, c) for r, c in tpm_pairs])
     return float(num_tp) / (num_tp + num_fn)
 
 
 def test_sensitivity_statistic_calculates_correct_value():
     _check_statistic_value(
-        statistics._Sensitivity, _sensitivity, _fpkm_pairs)
+        statistics._Sensitivity, _sensitivity, _tpm_pairs)
 
 
 def test_sensitivity_statistic_calculates_correct_grouped_values():
     _check_grouped_statistic_values(
-        statistics._Sensitivity, _sensitivity, _group_fpkm_pairs)
+        statistics._Sensitivity, _sensitivity, _group_tpm_pairs)
 
 
-def _specificity(fpkm_pairs):
-    num_fp = sum([_false_positive(r, c) for r, c in fpkm_pairs])
-    num_tn = sum([_true_negative(r, c) for r, c in fpkm_pairs])
+def _specificity(tpm_pairs):
+    num_fp = sum([_false_positive(r, c) for r, c in tpm_pairs])
+    num_tn = sum([_true_negative(r, c) for r, c in tpm_pairs])
     return float(num_tn) / (num_tn + num_fp)
 
 
 def test_specificity_statistic_calculates_correct_value():
     _check_statistic_value(
-        statistics._Specificity, _specificity, _fpkm_pairs)
+        statistics._Specificity, _specificity, _tpm_pairs)
 
 
 def test_specificity_statistic_calculates_correct_grouped_values():
     _check_grouped_statistic_values(
-        statistics._Specificity, _specificity, _group_fpkm_pairs)
+        statistics._Specificity, _specificity, _group_tpm_pairs)

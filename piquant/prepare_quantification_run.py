@@ -15,7 +15,7 @@ ANALYSE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "analyse_quantification_run.py"
 QUANTIFY_TRANSCRIPTS_VARIABLE = "QUANTIFY_TRANSCRIPTS"
 ANALYSE_RESULTS_VARIABLE = "ANALYSE_RESULTS"
 
-FPKMS_FILE = "fpkms.csv"
+TPMS_FILE = "tpms.csv"
 TRANSCRIPT_COUNTS_FILE = "transcript_counts.csv"
 UNIQUE_SEQUENCE_FILE = "unique_sequence.csv"
 
@@ -51,10 +51,10 @@ def _add_preparatory_quantification_commands(
 
 
 def _add_quantification_commands(writer, quant_method, params_spec):
-    # Use the specified quantification method to calculate per-transcript FPKMs
+    # Use the specified quantification method to calculate per-transcript TPMs
     method_name = quant_method.get_name()
     writer.add_comment(
-        "Use " + method_name + " to calculate per-transcript FPKMs.")
+        "Use " + method_name + " to calculate per-transcript TPMs.")
     quant_method.write_quantification_commands(writer, params_spec)
 
 
@@ -97,9 +97,8 @@ def _add_assemble_quantification_data(
 
     writer.add_line(
         "python " + ASSEMBLE_DATA_SCRIPT + " --method=" + method_name + " " +
-        "--out=" + FPKMS_FILE + " " + fs_pro_file + " " +
-        quant_method.get_mapped_reads_file() + " " +
-        quant_method.get_fpkm_file() + " " + counts_file + " " +
+        "--out=" + TPMS_FILE + " " + fs_pro_file + " " +
+        quant_method.get_results_file() + " " + counts_file + " " +
         unique_seq_file)
 
 
@@ -107,14 +106,14 @@ def _add_analyse_quantification_results(
         writer, run_dir, quant_method, read_length,
         read_depth, paired_end, errors, bias):
 
-    # Finally perform analysis on the calculated FPKMs
-    writer.add_comment("Perform analysis on calculated FPKMs.")
+    # Finally perform analysis on the calculated TPMs
+    writer.add_comment("Perform analysis on calculated TPMs.")
 
     method_name = quant_method.get_name()
     writer.add_line(
         "python " + ANALYSE_DATA_SCRIPT + " " + method_name + " " +
         str(read_length) + " " + str(read_depth) + " " + str(paired_end) +
-        " " + str(errors) + " " + str(bias) + " " + FPKMS_FILE + " " +
+        " " + str(errors) + " " + str(bias) + " " + TPMS_FILE + " " +
         os.path.basename(run_dir))
 
 
