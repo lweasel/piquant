@@ -61,7 +61,7 @@ class _Cufflinks:
 
         with writer.section():
             with writer.if_block("! -d $BOWTIE_INDEX_DIR"):
-                writer.add_line("mkdir $BOWTIE_INDEX_DIR")
+                writer.add_line("mkdir -p $BOWTIE_INDEX_DIR")
                 writer.add_line(
                     "REF_FILES=$(ls -1 " + params[GENOME_FASTA_DIR] +
                     "/*.fa | tr '\\n' ',')")
@@ -130,7 +130,7 @@ class _RSEM:
         writer.add_line("REF_DIR=$(dirname " + ref_name + ")")
 
         with writer.if_block("! -d $REF_DIR"):
-            writer.add_line("mkdir $REF_DIR")
+            writer.add_line("mkdir -p $REF_DIR")
 
             polya_spec = "" if params[POLYA_TAIL] else " --no-polyA"
             ref_name = _RSEM._get_ref_name(
