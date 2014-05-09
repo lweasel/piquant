@@ -25,6 +25,7 @@ from docopt import docopt
 from schema import SchemaError
 
 import classifiers
+import itertools
 import ordutils.options as opt
 import pandas as pd
 import statistics
@@ -140,42 +141,31 @@ if options[OUT_FILE_BASENAME]:
                 statistics.write_stats_data(stats_file_name, stats)
 
 # Make a scatter plot of log transformed calculated vs real TPMs
-TP_PLOT_OPTIONS = plot.PlotOptions(
-    options[QUANT_METHOD_OPT], TRUE_POSITIVES_LABEL,
-    options[OUT_FILE_BASENAME])
-
 if options[OUT_FILE_BASENAME]:
-    plot.log_tpm_scatter_plot(tp_tpms, TP_PLOT_OPTIONS)
+    plot.log_tpm_scatter_plot(
+        tp_tpms, options[OUT_FILE_BASENAME],
+        options[QUANT_METHOD_OPT], TRUE_POSITIVES_LABEL)
 
 # Make boxplots of log ratios stratified by various classification measures
 # (e.g. the number of transcripts per-originating gene of each transcript)
 # TODO: need something in graph titles to indicate filter being applied
 more_than_100_filter = lambda x: len(x[t.REAL_TPM]) > 100
-
-NON_ZERO_PLOT_OPTIONS = plot.PlotOptions(
-    options[QUANT_METHOD_OPT], NON_ZERO_LABEL,
-    options[OUT_FILE_BASENAME])
+tpm_infos = [(non_zero, NON_ZERO_LABEL), (tp_tpms, TRUE_POSITIVES_LABEL)]
 
 if options[OUT_FILE_BASENAME]:
-    for classifier in [c for c in clsfrs if c.produces_grouped_stats()]:
+    classifiers = [c for c in clsfrs if c.produces_grouped_stats()]
+    filters = [None, more_than_100_filter]
+    for c, f, ti in itertools.product(classifiers, filters, tpm_infos):
         plot.log_ratio_boxplot(
-            non_zero, NON_ZERO_PLOT_OPTIONS, classifier)
-        plot.log_ratio_boxplot(
-            non_zero, NON_ZERO_PLOT_OPTIONS, classifier,
-            filter=more_than_100_filter)
-
-        plot.log_ratio_boxplot(
-            tp_tpms, TP_PLOT_OPTIONS, classifier)
-        plot.log_ratio_boxplot(
-            tp_tpms, TP_PLOT_OPTIONS, classifier,
-            filter=more_than_100_filter)
+            ti[0], options[OUT_FILE_BASENAME],
+            options[QUANT_METHOD_OPT], ti[1], c, f)
 
 # Make plots showing the percentage of isoforms above or below threshold values
 # according to various classification measures
 if options[OUT_FILE_BASENAME]:
-    for classifier in [c for c in clsfrs if c.produces_distribution_plots()]:
-        for ascending in [True, False]:
-            plot.plot_cumulative_transcript_distribution(
-                non_zero, NON_ZERO_PLOT_OPTIONS, classifier, ascending)
-            plot.plot_cumulative_transcript_distribution(
-                tp_tpms, TP_PLOT_OPTIONS, classifier, ascending)
+    classifiers = [c for c in clsfrs if c.produces_distribution_plots()]
+    ascending = [True, False]
+    for c, asc, ti in itertools.product(classifiers, ascending, tpm_infos):
+        plot.plot_cumulative_transcript_distribution(
+            ti[0], options[OUT_FILE_BASENAME],
+            options[QUANT_METHOD_OPT], ti[1], c, asc)

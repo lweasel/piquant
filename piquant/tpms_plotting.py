@@ -3,41 +3,30 @@ import numpy as np
 import seaborn as sb
 import tpms as t
 
-from collections import namedtuple
-
 NO_FILTER_LABEL = "no filter"
 
 
 class NewPlot:
+    def __init__(self, *file_name_elements):
+        self.file_name = "_".join([str(el) for el in file_name_elements])
+        self.file_name = self.file_name.replace(' ', '_')
+
     def __enter__(self):
         plt.figure()
 
     def __exit__(self, type, value, traceback):
+        plt.savefig(self.file_name, format="pdf")
         plt.close()
 
 
-PlotOptions = namedtuple(
-    'PlotOptions', ['quant_method', 'label', 'out_file_base'])
-
-
-def _savefig(base_name, name_elements, suffix=None):
-    elements = [base_name] + name_elements
-    if suffix:
-        elements += [suffix]
-    name = "_".join(elements) + ".pdf"
-    name = name.replace(' ', '_')
-    plt.savefig(name, format="pdf")
-
-
-def log_tpm_scatter_plot(tpms, plot_options):
-    with NewPlot():
+def log_tpm_scatter_plot(tpms, base_name, quant_method, tpm_label):
+    with NewPlot(base_name, tpm_label, "log10 scatter"):
         plt.scatter(tpms[t.LOG10_REAL_TPM].values,
                     tpms[t.LOG10_CALCULATED_TPM].values,
                     c="lightblue", alpha=0.4)
 
         plt.suptitle("Scatter plot of log calculated vs real TPMs: " +
-                     ", ".join([plot_options.quant_method,
-                               plot_options.label]))
+                     quant_method + ", " + tpm_label)
         plt.xlabel("Log10 real TPM")
         plt.ylabel("Log10 calculated TPM")
 
@@ -45,28 +34,26 @@ def log_tpm_scatter_plot(tpms, plot_options):
         plt.xlim(xmin=min_val)
         plt.ylim(ymin=min_val)
 
-        _savefig(plot_options.out_file_base,
-                 [plot_options.label],
-                 suffix="log10 scatter")
 
-
-def log_ratio_boxplot(tpms, plot_options, classifier,
+def log_ratio_boxplot(tpms, base_name, quant_method, tpm_label, classifier,
                       filter=None, save_to_file=True):
 
     grouping_column = classifier.get_column_name()
-    name_elements = [plot_options.label]
+    name_elements = [tpm_label]
+
     if filter:
         grouped_tpms = tpms.groupby(grouping_column)
         tpms = grouped_tpms.filter(filter)
     else:
         name_elements.append(NO_FILTER_LABEL)
 
-    with NewPlot():
+    title_elements = [base_name] + name_elements + ["boxplot"]
+    with NewPlot(*title_elements):
         sb.boxplot(tpms[t.LOG10_RATIO], groupby=tpms[grouping_column],
                    sym='', color='lightblue')
 
         plt.suptitle("Log ratios of calculated to real TPMs: " +
-                     ", ".join([plot_options.quant_method] + name_elements))
+                     ", ".join([quant_method] + name_elements))
 
         plt.xlabel(grouping_column[:1].upper() + grouping_column[1:])
         plt.ylabel("Log ratio (calculated/real TPM)")
@@ -74,18 +61,15 @@ def log_ratio_boxplot(tpms, plot_options, classifier,
         locs, labels = plt.xticks()
         plt.xticks(locs, classifier.get_value_labels(len(labels)))
 
-        if save_to_file:
-            _savefig(plot_options.out_file_base,
-                     [grouping_column] + name_elements,
-                     suffix="boxplot")
-
 
 def plot_cumulative_transcript_distribution(
-        tpms, plot_options, classifier, ascending):
+        tpms, base_name, quant_method, tpm_label, classifier, ascending):
 
     xvals, yvals = t.get_distribution(tpms, classifier, ascending)
+    grouping_column = classifier.get_column_name()
 
-    with NewPlot():
+    with NewPlot(base_name, grouping_column, tpm_label,
+                 ("asc" if ascending else "desc"), "distribution"):
         plt.plot(xvals, yvals, '-o')
 
         plt.ylim(ymin=-2.5, ymax=102.5)
@@ -95,20 +79,13 @@ def plot_cumulative_transcript_distribution(
         xmargin = (xmax - xmin) / 40.0
         plt.xlim(xmin=xmin-xmargin, xmax=xmax+xmargin)
 
-        grouping_column = classifier.get_column_name()
         capitalized = grouping_column[:1].upper() + grouping_column[1:]
         plt.xlabel(capitalized)
         plt.ylabel("Percentage of isoforms " +
                    ("less" if ascending else "greater") + " than threshold")
 
-        plt.suptitle(capitalized + " threshold: " +
-                     ", ".join([plot_options.quant_method,
-                               plot_options.label]))
-
-        _savefig(plot_options.out_file_base,
-                 [grouping_column, plot_options.label,
-                  ("asc" if ascending else "desc")],
-                 suffix="distribution")
+        plt.suptitle(capitalized + " threshold: " + quant_method +
+                     ", " + tpm_label)
 
 
 def plot_statistic(stats, base_name, statistic,
@@ -117,7 +94,14 @@ def plot_statistic(stats, base_name, statistic,
     group_param_values = stats[group_param.name].value_counts().index.tolist()
     group_param_values.sort()
 
-    with NewPlot():
+    fixed_param_info = [k.get_value_name(v) for k, v
+                        in fixed_param_values.items()]
+
+    name_elements = [base_name, statistic.name, "vs", varying_param.name,
+                     "per", group_param.title.lower()]
+    name_elements += fixed_param_info
+
+    with NewPlot(*name_elements):
 
         for group_param_value in group_param_values:
             group_stats = stats[stats[group_param.name] == group_param_value]
@@ -140,21 +124,12 @@ def plot_statistic(stats, base_name, statistic,
             if max_val is not None:
                 plt.ylim(ymax=max_val)
 
-        fixed_param_info = [k.get_value_name(v) for k, v
-                            in fixed_param_values.items()]
-
         title = " ".join([statistic.title, "vs",
                           varying_param.title.lower(), "per",
                           group_param.title.lower()]) \
                 + ": " + ", ".join(fixed_param_info)
 
         plt.suptitle(title)
-
-        _savefig(base_name,
-                 [statistic.name, "vs",
-                  varying_param.name, "per",
-                  group_param.title.lower()]
-                 + fixed_param_info)
 
 
 def plot_statistic_by_classifier(
@@ -169,7 +144,14 @@ def plot_statistic_by_classifier(
     if filter:
         stats = stats[filter(stats)]
 
-    with NewPlot():
+    fixed_param_info = [k.get_value_name(v) for k, v
+                        in fixed_param_values.items()]
+
+    name_elements = [base_name, statistic.name, "vs", clsfr_col, "per",
+                     group_param.title.lower()]
+    name_elements += fixed_param_info
+
+    with NewPlot(*name_elements):
         for group_param_value in group_param_values:
             group_stats = stats[stats[group_param.name] == group_param_value]
             group_stats.sort(columns=clsfr_col, axis=0, inplace=True)
@@ -199,21 +181,12 @@ def plot_statistic_by_classifier(
         plt.xticks(np.arange(min_xval, max_xval + 1),
                    classifier.get_value_labels(len(tick_range)))
 
-        fixed_param_info = [k.get_value_name(v) for k, v
-                            in fixed_param_values.items()]
-
         title = " ".join([statistic.title, "vs",
                           clsfr_col.lower(), "per",
                           group_param.title.lower()]) \
                 + ": " + ", ".join(fixed_param_info)
 
         plt.suptitle(title)
-
-        _savefig(base_name,
-                 [statistic.name, "vs",
-                  clsfr_col, "per",
-                  group_param.title.lower()]
-                 + fixed_param_info)
 
 
 def plot_cumulative_transcript_distribution_grouped(
@@ -225,7 +198,15 @@ def plot_cumulative_transcript_distribution_grouped(
     group_param_values = stats[group_param.name].value_counts().index.tolist()
     group_param_values.sort()
 
-    with NewPlot():
+    fixed_param_info = [k.get_value_name(v) for k, v
+                        in fixed_param_values.items()]
+
+    name_elements = [base_name, clsfr_col, "per",
+                     group_param.title.lower(),
+                     ("asc" if ascending else "desc")]
+    name_elements += fixed_param_info
+
+    with NewPlot(*name_elements):
         for group_param_value in group_param_values:
             group_stats = stats[stats[group_param.name] == group_param_value]
             group_stats.sort(columns=clsfr_col, axis=0, inplace=True)
@@ -248,19 +229,9 @@ def plot_cumulative_transcript_distribution_grouped(
                    ("less" if ascending else "greater") + " than threshold")
         plt.legend(title=group_param.title, loc=4)
 
-        fixed_param_info = [k.get_value_name(v) for k, v
-                            in fixed_param_values.items()]
-
         title = " ".join([capitalized,
                           "threshold per",
                           group_param.title.lower()]) + \
             ": " + ", ".join(fixed_param_info)
 
         plt.suptitle(title)
-
-        _savefig(base_name,
-                 [clsfr_col, "per",
-                  group_param.title.lower(),
-                  ("asc" if ascending else "desc")]
-                 + fixed_param_info,
-                 suffix="distribution")
