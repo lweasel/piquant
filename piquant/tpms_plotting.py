@@ -6,7 +6,7 @@ import tpms as t
 NO_FILTER_LABEL = "no filter"
 
 
-class NewPlot:
+class _NewPlot:
     def __init__(self, *file_name_elements):
         self.file_name = "_".join([str(el) for el in file_name_elements])
         self.file_name = self.file_name.replace(' ', '_')
@@ -20,7 +20,7 @@ class NewPlot:
 
 
 def log_tpm_scatter_plot(tpms, base_name, quant_method, tpm_label):
-    with NewPlot(base_name, tpm_label, "log10 scatter"):
+    with _NewPlot(base_name, tpm_label, "log10 scatter"):
         plt.scatter(tpms[t.LOG10_REAL_TPM].values,
                     tpms[t.LOG10_CALCULATED_TPM].values,
                     c="lightblue", alpha=0.4)
@@ -48,7 +48,7 @@ def log_ratio_boxplot(tpms, base_name, quant_method, tpm_label, classifier,
         name_elements.append(NO_FILTER_LABEL)
 
     title_elements = [base_name] + name_elements + ["boxplot"]
-    with NewPlot(*title_elements):
+    with _NewPlot(*title_elements):
         sb.boxplot(tpms[t.LOG10_RATIO], groupby=tpms[grouping_column],
                    sym='', color='lightblue')
 
@@ -62,13 +62,109 @@ def log_ratio_boxplot(tpms, base_name, quant_method, tpm_label, classifier,
         plt.xticks(locs, classifier.get_value_labels(len(labels)))
 
 
+def _get_group_param_values(stats_df, group_param):
+    group_param_vals = stats_df[group_param.name].value_counts().index.tolist()
+    group_param_vals.sort()
+    return group_param_vals
+
+
+def _get_fixed_param_info(fixed_param_values):
+    return [k.get_value_name(v) for k, v in fixed_param_values.items()]
+
+
+def _get_stats_plot_name_elements(
+        base_name, statistic, versus, group_param, fixed_param_info):
+    name_elements = [base_name, statistic.name, "vs", versus,
+                     "per", group_param.title.lower()]
+    name_elements += fixed_param_info
+    return name_elements
+
+
+def _get_stats_plot_title(
+        statistic, versus, group_param, fixed_param_info):
+    title = " ".join([statistic.title, "vs", versus.lower(),
+                     "per", group_param.title.lower()])
+    title += ": " + ", ".join(fixed_param_info)
+    return title
+
+
+def _plot_stats_for_groups(
+        stats_df, statistic, group_param, xcol, xlabel, fixed_param_info):
+
+    group_param_vals = _get_group_param_values(stats_df, group_param)
+
+    for group_param_value in group_param_vals:
+        group_stats = stats_df[stats_df[group_param.name] == group_param_value]
+        group_stats.sort(columns=xcol, axis=0, inplace=True)
+        xvals = group_stats[xcol]
+        yvals = group_stats[statistic.name]
+        plt.plot(xvals, yvals, '-o',
+                 label=group_param.get_value_name(group_param_value))
+
+    plt.xlabel(xlabel)
+    plt.ylabel(statistic.title)
+    plt.legend(title=group_param.title, loc=4)
+
+    stat_range = statistic.stat_range
+    if stat_range is not None:
+        min_val = stat_range[0]
+        max_val = stat_range[1]
+        if min_val is not None:
+            plt.ylim(ymin=min_val)
+        if max_val is not None:
+            plt.ylim(ymax=max_val)
+
+    title = _get_stats_plot_title(
+        statistic, xlabel, group_param, fixed_param_info)
+    plt.suptitle(title)
+
+
+def plot_statistic(stats, base_name, statistic,
+                   group_param, varying_param, fixed_param_values):
+
+    fixed_param_info = _get_fixed_param_info(fixed_param_values)
+
+    name_elements = _get_stats_plot_name_elements(
+        base_name, statistic, varying_param.name,
+        group_param, fixed_param_info)
+
+    with _NewPlot(*name_elements):
+        _plot_stats_for_groups(
+            stats, statistic, group_param, varying_param.name,
+            varying_param.title, fixed_param_info)
+
+
+def plot_statistic_by_classifier(
+        stats, base_name, statistic, group_param,
+        classifier, fixed_param_values):
+
+    clsfr_col = classifier.get_column_name()
+    fixed_param_info = _get_fixed_param_info(fixed_param_values)
+
+    name_elements = _get_stats_plot_name_elements(
+        base_name, statistic, clsfr_col, group_param, fixed_param_info)
+
+    with _NewPlot(*name_elements):
+        xlabel = clsfr_col[:1].upper() + clsfr_col[1:]
+        _plot_stats_for_groups(
+            stats, statistic, group_param, clsfr_col, xlabel, fixed_param_info)
+
+        min_xval = stats[clsfr_col].min()
+        max_xval = stats[clsfr_col].max()
+        plt.xlim(xmin=min_xval, xmax=max_xval)
+
+        tick_range = np.arange(min_xval, max_xval + 1)
+        plt.xticks(np.arange(min_xval, max_xval + 1),
+                   classifier.get_value_labels(len(tick_range)))
+
+
 def plot_cumulative_transcript_distribution(
         tpms, base_name, quant_method, tpm_label, classifier, ascending):
 
     xvals, yvals = t.get_distribution(tpms, classifier, ascending)
     grouping_column = classifier.get_column_name()
 
-    with NewPlot(base_name, grouping_column, tpm_label,
+    with _NewPlot(base_name, grouping_column, tpm_label,
                  ("asc" if ascending else "desc"), "distribution"):
         plt.plot(xvals, yvals, '-o')
 
@@ -88,125 +184,21 @@ def plot_cumulative_transcript_distribution(
                      ", " + tpm_label)
 
 
-def plot_statistic(stats, base_name, statistic,
-                   group_param, varying_param, fixed_param_values):
-
-    group_param_values = stats[group_param.name].value_counts().index.tolist()
-    group_param_values.sort()
-
-    fixed_param_info = [k.get_value_name(v) for k, v
-                        in fixed_param_values.items()]
-
-    name_elements = [base_name, statistic.name, "vs", varying_param.name,
-                     "per", group_param.title.lower()]
-    name_elements += fixed_param_info
-
-    with NewPlot(*name_elements):
-
-        for group_param_value in group_param_values:
-            group_stats = stats[stats[group_param.name] == group_param_value]
-            group_stats.sort(columns=varying_param.name, axis=0, inplace=True)
-            xvals = group_stats[varying_param.name]
-            yvals = group_stats[statistic.name]
-            plt.plot(xvals, yvals, '-o',
-                     label=group_param.get_value_name(group_param_value))
-
-        plt.xlabel(varying_param.title)
-        plt.ylabel(statistic.title)
-        plt.legend(title=group_param.title, loc=4)
-
-        stat_range = statistic.stat_range
-        if stat_range is not None:
-            min_val = stat_range[0]
-            max_val = stat_range[1]
-            if min_val is not None:
-                plt.ylim(ymin=min_val)
-            if max_val is not None:
-                plt.ylim(ymax=max_val)
-
-        title = " ".join([statistic.title, "vs",
-                          varying_param.title.lower(), "per",
-                          group_param.title.lower()]) \
-                + ": " + ", ".join(fixed_param_info)
-
-        plt.suptitle(title)
-
-
-def plot_statistic_by_classifier(
-        stats, base_name, statistic, group_param,
-        classifier, filter, fixed_param_values):
-
-    clsfr_col = classifier.get_column_name()
-
-    group_param_values = stats[group_param.name].value_counts().index.tolist()
-    group_param_values.sort()
-
-    if filter:
-        stats = stats[filter(stats)]
-
-    fixed_param_info = [k.get_value_name(v) for k, v
-                        in fixed_param_values.items()]
-
-    name_elements = [base_name, statistic.name, "vs", clsfr_col, "per",
-                     group_param.title.lower()]
-    name_elements += fixed_param_info
-
-    with NewPlot(*name_elements):
-        for group_param_value in group_param_values:
-            group_stats = stats[stats[group_param.name] == group_param_value]
-            group_stats.sort(columns=clsfr_col, axis=0, inplace=True)
-            xvals = group_stats[clsfr_col]
-            yvals = group_stats[statistic.name]
-            plt.plot(xvals, yvals, '-o',
-                     label=group_param.get_value_name(group_param_value))
-
-        plt.xlabel(clsfr_col[:1].upper() + clsfr_col[1:])
-        plt.ylabel(statistic.title)
-        plt.legend(title=group_param.title, loc=4)
-
-        stat_range = statistic.stat_range
-        if stat_range is not None:
-            min_val = stat_range[0]
-            max_val = stat_range[1]
-            if min_val is not None:
-                plt.ylim(ymin=min_val)
-            if max_val is not None:
-                plt.ylim(ymax=max_val)
-
-        min_xval = group_stats[clsfr_col].min()
-        max_xval = group_stats[clsfr_col].max()
-        plt.xlim(xmin=min_xval, xmax=max_xval)
-
-        tick_range = np.arange(min_xval, max_xval + 1)
-        plt.xticks(np.arange(min_xval, max_xval + 1),
-                   classifier.get_value_labels(len(tick_range)))
-
-        title = " ".join([statistic.title, "vs",
-                          clsfr_col.lower(), "per",
-                          group_param.title.lower()]) \
-                + ": " + ", ".join(fixed_param_info)
-
-        plt.suptitle(title)
-
-
 def plot_cumulative_transcript_distribution_grouped(
         stats, base_name, group_param,
         classifier, ascending, fixed_param_values):
 
     clsfr_col = classifier.get_column_name()
 
-    group_param_values = stats[group_param.name].value_counts().index.tolist()
-    group_param_values.sort()
-
-    fixed_param_info = [k.get_value_name(v) for k, v
-                        in fixed_param_values.items()]
+    group_param_values = _get_group_param_values(stats, group_param)
+    fixed_param_info = _get_fixed_param_info(fixed_param_values)
 
     name_elements = [base_name, clsfr_col, "per",
                      group_param.title.lower(),
                      ("asc" if ascending else "desc")]
     name_elements += fixed_param_info
 
-    with NewPlot(*name_elements):
+    with _NewPlot(*name_elements):
         for group_param_value in group_param_values:
             group_stats = stats[stats[group_param.name] == group_param_value]
             group_stats.sort(columns=clsfr_col, axis=0, inplace=True)

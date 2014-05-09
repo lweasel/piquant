@@ -130,9 +130,10 @@ for clsfr in grp_clsfrs:
                 clsfr_stats, fixed_params, fp_values_set)
 
             for stat in stats.get_graphable_by_classifier_statistics():
+                filtered_stats_df = stats_df[more_than_100_filter(stats_df)]
                 plot.plot_statistic_by_classifier(
                     stats_df, graph_file_basename, stat, param,
-                    clsfr, more_than_100_filter, fixed_param_values)
+                    clsfr, fixed_param_values)
 
 # Create distribution plots
 # TODO: better description!
