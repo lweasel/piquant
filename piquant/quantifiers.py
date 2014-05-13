@@ -69,6 +69,9 @@ class _Cufflinks:
                     "/*.fa | tr '\\n' ',')")
                 writer.add_line("REF_FILES=${REF_FILES%,}")
                 writer.add_line("bowtie-build $REF_FILES " + bowtie_index)
+                writer.add_line(
+                    "bowtie-inspect " + bowtie_index + " > " +
+                    bowtie_index + ".fa")
 
         reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
             else params[LEFT_SIMULATED_READS] + \
