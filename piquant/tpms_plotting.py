@@ -15,7 +15,7 @@ class _NewPlot:
         plt.figure()
 
     def __exit__(self, type, value, traceback):
-        plt.savefig(self.file_name, format="pdf")
+        plt.savefig(self.file_name + ".pdf", format="pdf")
         plt.close()
 
 
@@ -137,7 +137,7 @@ def log_ratio_boxplot(tpms, base_name, quant_method, tpm_label, classifier,
     else:
         name_elements.append(NO_FILTER_LABEL)
 
-    title_elements = [base_name] + name_elements + ["boxplot"]
+    title_elements = [base_name, grouping_column] + name_elements + ["boxplot"]
     with _NewPlot(*title_elements):
         sb.boxplot(tpms[t.LOG10_RATIO], groupby=tpms[grouping_column],
                    sym='', color='lightblue')
