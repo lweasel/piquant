@@ -2,6 +2,7 @@ import file_writer as fw
 import flux_simulator as fs
 import quantifiers as qs
 import os.path
+import parameters
 
 RUN_SCRIPT = "run_quantification.sh"
 
@@ -104,19 +105,18 @@ def _add_assemble_quantification_data(
         unique_seq_file)
 
 
-def _add_analyse_quantification_results(
-        writer, run_dir, quant_method, read_length,
-        read_depth, paired_end, errors, bias):
-
+def _add_analyse_quantification_results(writer, run_dir, **params):
     # Finally perform analysis on the calculated TPMs
     writer.add_comment("Perform analysis on calculated TPMs.")
 
-    method_name = quant_method.get_name()
-    writer.add_line(
-        "python " + ANALYSE_DATA_SCRIPT + " " + method_name + " " +
-        str(read_length) + " " + str(read_depth) + " " + str(paired_end) +
-        " " + str(errors) + " " + str(bias) + " " + TPMS_FILE + " " +
-        os.path.basename(run_dir))
+    options_dict = {p.name: p.option_name for p in parameters.get_parameters()}
+
+    command = "python " + ANALYSE_DATA_SCRIPT + " "
+    for param_name, param_val in params.items():
+        command += options_dict[param_name] + "=" + str(param_val) + " "
+    command += TPMS_FILE + " " + os.path.basename(run_dir)
+
+    writer.add_line(command)
 
 
 def _add_process_command_line_options(writer):
@@ -148,7 +148,8 @@ def _add_quantify_transcripts(writer, quant_method, params_spec):
 
 def _add_analyse_results(
         writer, run_dir, transcript_gtf_file, fs_pro_file,
-        quant_method, read_length, read_depth, paired_end, errors, bias):
+        quant_method, read_length, read_depth,
+        paired_end, errors, bias, polya):
 
     with writer.if_block("-n \"$ANALYSE_RESULTS\""):
         with writer.section():
@@ -159,8 +160,9 @@ def _add_analyse_results(
             _add_assemble_quantification_data(
                 writer, transcript_gtf_file, fs_pro_file, quant_method)
         _add_analyse_quantification_results(
-            writer, run_dir, quant_method,
-            read_length, read_depth, paired_end, errors, bias)
+            writer, run_dir, quant_method=quant_method.get_name(),
+            read_length=read_length, read_depth=read_depth,
+            paired_end=paired_end, errors=errors, bias=bias, polya=polya)
 
 
 def _update_params_spec(params_spec, input_dir, quantifier_dir,
@@ -182,7 +184,8 @@ def _update_params_spec(params_spec, input_dir, quantifier_dir,
 def _add_script_sections(
         writer, run_dir, transcript_gtf_file, fs_pro_file,
         quant_method, read_length, read_depth,
-        paired_end, errors, bias, params_spec):
+        paired_end, errors, bias, polya,
+        params_spec):
 
     with writer.section():
         _add_process_command_line_options(writer)
@@ -192,7 +195,8 @@ def _add_script_sections(
 
     _add_analyse_results(
         writer, run_dir, transcript_gtf_file, fs_pro_file,
-        quant_method, read_length, read_depth, paired_end, errors, bias)
+        quant_method, read_length, read_depth, paired_end,
+        errors, bias, polya)
 
 
 def write_run_quantification_script(
@@ -213,5 +217,5 @@ def write_run_quantification_script(
     _add_script_sections(
         writer, run_dir, transcript_gtf_file, fs_pro_file,
         quant_method, read_length, read_depth,
-        paired_end, errors, bias, params_spec)
+        paired_end, errors, bias, polya, params_spec)
     writer.write_to_file(run_dir, RUN_SCRIPT)

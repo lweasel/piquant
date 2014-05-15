@@ -121,7 +121,7 @@ for clsfr in grp_clsfrs:
         options[STATS_DIR], stats.OVERALL_STATS_PREFIX, clsfr)
     clsfr_stats = pd.read_csv(stats_file)
 
-    for param in non_degenerate_params(params.get_paramteters()):
+    for param in non_degenerate_params(params.get_parameters()):
         fixed_params, fp_values_sets = \
             get_fixed_params(params.get_parameters(), param)
 

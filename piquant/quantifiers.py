@@ -224,7 +224,7 @@ class _Express:
 
 @_Quantifier
 class _Sailfish:
-    TPM_FILE = "tpms.csv"
+    TPM_FILE = "quant_filtered.csv"
 
     @classmethod
     def get_name(cls):

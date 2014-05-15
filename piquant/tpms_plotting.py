@@ -69,8 +69,9 @@ def _plot_statistic_for_grouped_param_values(
         group_stats.sort(columns=xcol, axis=0, inplace=True)
         xvals = group_stats[xcol]
         yvals = group_stats[ycol]
-        plt.plot(xvals, yvals, '-o',
-                 label=group_param.get_value_name(group_param_value))
+        #plt.plot(xvals, yvals, '-o',
+                 #label=group_param.get_value_name(group_param_value))
+        plt.plot(xvals, yvals, '-o', label=group_param_value)
 
 
 def _plot_statistic(
@@ -231,6 +232,6 @@ def plot_cumulative_transcript_distribution_grouped(
         plt.legend(title=group_param.title, loc=4)
 
         title = _get_grouped_stats_plot_title(
-            _capitalized(clsfr_col) + "threshold", group_param,
+            _capitalized(clsfr_col) + " threshold", group_param,
             fixed_param_info)
         plt.suptitle(title)

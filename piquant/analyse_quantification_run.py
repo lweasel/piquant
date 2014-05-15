@@ -1,22 +1,22 @@
 #!/usr/bin/python
 
 # TODO: add logging
-# TODO: method of specifying options here (e.g. <bias>) is horrible
 
 """Usage:
-    analyse_quantification_run [--scatter-max=<scatter-max-val>] [--log10-scatter-min=<log10-scatter-min-val>] [--log10-scatter-max=<log10-scatter-max-val>] <quant-method> <read-length> <read-depth> <paired-end> <errors> <bias> <tpm-file> [<out-file>]
+    analyse_quantification_run [--scatter-max=<scatter-max-val>] [--log10-scatter-min=<log10-scatter-min-val>] [--log10-scatter-max=<log10-scatter-max-val>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> --polya=<polya> <tpm-file> [<out-file>]
 
 -h --help                                  Show this message.
 -v --version                               Show version.
 --scatter-max=<scatter-max-val>            Maximum x and y values for scatter plot; a value of 0 means do not impose a maximum [default: 0].
 --log10-scatter-min=<log10-scatter-min-val>  Minimum x and y values for log10 scatter plot; a value of 0 means do not impose a minimum [default: 0].
 --log10-scatter-max=<log10-scatter-max-val>  Maximum x and y values for log10 scatter plot; a value of 0 means do not impose a maximum [default: 0].
-<quant-method>                             Method used to quantify transcript abundances.
-<read-length>                              The length of sequence reads.
-<read-depth>                               The depth of reads sequenced across the transcriptome.
-<paired-end>                               Whether paired-end sequence reads were used.
-<errors>                                   Whether the reads contain sequencing errors.
-<bias>                                     Whether the reads contain sequence bias.
+--quant-method=<quant-method>                             Method used to quantify transcript abundances.
+--read-length=<read-length>                              The length of sequence reads.
+--read-depth=<read-depth>                               The depth of reads sequenced across the transcriptome.
+--paired-end=<paired-end>                               Whether paired-end sequence reads were used.
+--error=<errors>                                   Whether the reads contain sequencing errors.
+--bias=<bias>                                     Whether the reads contain sequence bias.
+--polya=<polya>                         Indicates whether reads were created from transcripts with or without polyA tails.
 <tpm-file>                                File containing real and calculated TPMs.
 <out-file>                                 Basename for output graph and data files.
 """
@@ -28,35 +28,21 @@ import classifiers
 import itertools
 import ordutils.options as opt
 import pandas as pd
+import parameters
 import statistics
 import tpms as t
 import tpms_plotting as plot
-
-QUANT_METHOD = "quant-method"
-READ_DEPTH = "read-depth"
-READ_LENGTH = "read-length"
-PAIRED_END = "paired-end"
-ERRORS = "errors"
-BIAS = "bias"
 
 TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
 TRUE_POSITIVES_LABEL = "true positives"
 NON_ZERO_LABEL = "non-zero"
 ALL_LABEL = "all"
 
-opt_string = lambda x: "<{x}>".format(x=x)
-
 TPM_FILE = "<tpm-file>"
 OUT_FILE_BASENAME = "<out-file>"
 SCATTER_MAX = "--scatter-max"
 LOG10_SCATTER_MIN = "--log10-scatter-min"
 LOG10_SCATTER_MAX = "--log10-scatter-max"
-QUANT_METHOD_OPT = opt_string(QUANT_METHOD)
-READ_DEPTH_OPT = opt_string(READ_DEPTH)
-READ_LENGTH_OPT = opt_string(READ_LENGTH)
-PAIRED_END_OPT = opt_string(PAIRED_END)
-ERRORS_OPT = opt_string(ERRORS)
-BIAS_OPT = opt_string(BIAS)
 
 # Read in command-line options
 options = docopt(__doc__, version="assemble_quantification_data v0.1")
@@ -101,12 +87,8 @@ tp_tpms = t.get_true_positives(tpms)
 
 
 def add_overall_stats(stats):
-    stats[QUANT_METHOD] = options[QUANT_METHOD_OPT]
-    stats[READ_LENGTH] = options[READ_LENGTH_OPT]
-    stats[READ_DEPTH] = options[READ_DEPTH_OPT]
-    stats[PAIRED_END] = options[PAIRED_END_OPT]
-    stats[ERRORS] = options[ERRORS_OPT]
-    stats[BIAS] = options[BIAS_OPT]
+    for param in parameters.get_parameters():
+        stats[param.name] = options[param.option_name]
 
 if options[OUT_FILE_BASENAME]:
     stats = t.get_stats(tpms, tp_tpms)
@@ -142,9 +124,10 @@ if options[OUT_FILE_BASENAME]:
 
 # Make a scatter plot of log transformed calculated vs real TPMs
 if options[OUT_FILE_BASENAME]:
+    #TODO: string literal
     plot.log_tpm_scatter_plot(
         tp_tpms, options[OUT_FILE_BASENAME],
-        options[QUANT_METHOD_OPT], TRUE_POSITIVES_LABEL)
+        options["--quant-method"], TRUE_POSITIVES_LABEL)
 
 # Make boxplots of log ratios stratified by various classification measures
 # (e.g. the number of transcripts per-originating gene of each transcript)
@@ -156,9 +139,10 @@ if options[OUT_FILE_BASENAME]:
     classifiers = [c for c in clsfrs if c.produces_grouped_stats()]
     filters = [None, more_than_100_filter]
     for c, f, ti in itertools.product(classifiers, filters, tpm_infos):
+        #TODO: string literal
         plot.log_ratio_boxplot(
             ti[0], options[OUT_FILE_BASENAME],
-            options[QUANT_METHOD_OPT], ti[1], c, f)
+            options["--quant-method"], ti[1], c, f)
 
 # Make plots showing the percentage of isoforms above or below threshold values
 # according to various classification measures
@@ -166,6 +150,7 @@ if options[OUT_FILE_BASENAME]:
     classifiers = [c for c in clsfrs if c.produces_distribution_plots()]
     ascending = [True, False]
     for c, asc, ti in itertools.product(classifiers, ascending, tpm_infos):
+        #TODO: string literal
         plot.plot_cumulative_transcript_distribution(
             ti[0], options[OUT_FILE_BASENAME],
-            options[QUANT_METHOD_OPT], ti[1], c, asc)
+            options["--quant-method"], ti[1], c, asc)

@@ -5,19 +5,20 @@
 # TODO: get STATS_TYPES from statistics module.
 
 """Usage:
-    assemble_quantification_stats [--log-level=<log-level>] [--out-dir=<out-dir>] [--run-dir=<run-dir>] --quant-methods=<quant-methods> --read-lengths=<read-lengths> --read-depths=<read-depths> --paired-ends=<paired-ends> --errors=<errors> --biases=<biases>
+    assemble_quantification_stats [--log-level=<log-level>] [--out-dir=<out-dir>] [--run-dir=<run-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya>
 
 -h --help                           Show this message.
 -v --version                        Show version.
 --log-level=<log-level>             Set logging level (one of {log_level_vals}) [default: info].
 --run-dir=<out-dir>                 Parent directory for quantification run directories [default: output].
 --out-dir=<out-dir>                 Directory to output assembled stats files to [default: output/overall_stats].
--q --quant-methods=<quant-methods>  Comma-separated list of quantification methods to assemble stats for.
--l --read-lengths=<read-lengths>    Comma-separated list of read-lengths to assemble stats for.
--d --read-depths=<read-depths>      Comma-separated list of read-depths to assemble stats for.
--p --paired-ends=<paired-ends>      Comma-separated list of True/False strings indicating whether stats should be assembled for single or paired-end reads.
--e --errors=<errors>                Comma-separated list of True/False strings indicating whether stats should be assembled with or without read errors.
--b --biases=<biases>                Comma-separated list of True/False strings indicating whether stats should be assembled with or without read sequence bias.
+-q --quant-method=<quant-methods>  Comma-separated list of quantification methods to assemble stats for.
+-l --read-length=<read-lengths>    Comma-separated list of read-lengths to assemble stats for.
+-d --read-depth=<read-depths>      Comma-separated list of read-depths to assemble stats for.
+-p --paired-end=<paired-ends>      Comma-separated list of True/False strings indicating whether stats should be assembled for single or paired-end reads.
+-e --error=<errors>                Comma-separated list of True/False strings indicating whether stats should be assembled with or without read errors.
+-b --bias=<biases>                Comma-separated list of True/False strings indicating whether stats should be assembled with or without read sequence bias.
+-a --polya=<polya>                  Comma-separated list of True/False strings indicating whether stats should be assembled assuming transcripts do or do not have polyA tails.
 """
 
 import docopt
