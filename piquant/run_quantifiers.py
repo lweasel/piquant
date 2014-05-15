@@ -5,22 +5,22 @@
 """Usage:
     run_quantifiers [--log-level=<log-level>] [--out-dir=<out-dir>] [--num-fragments=<num-fragments>] [--prepare-only|--run-only] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya> <transcript-gtf-file> <genome-fasta-dir>
 
--h --help                           Show this message.
--v --version                        Show version.
---log-level=<log-level>             Set logging level (one of {log_level_vals}) [default: info].
---out-dir=<out-dir>      Parent output directory to which quantification run directories will be written [default: output].
---num-fragments=<num-fragments>     Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
---prepare-only                      Quantification run scripts will be created, but not run.
---run-only                          Quantification run scripts will be run, but not created (they must already exist).
+-h --help                          Show this message.
+-v --version                       Show version.
+--log-level=<log-level>            Set logging level (one of {log_level_vals}) [default: info].
+--out-dir=<out-dir>                Parent output directory to which quantification run directories will be written [default: output].
+--num-fragments=<num-fragments>    Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
+--prepare-only                     Quantification run scripts will be created, but not run.
+--run-only                         Quantification run scripts will be run, but not created (they must already exist).
 -q --quant-method=<quant-methods>  Comma-separated list of quantification methods to run.
--l --read-length=<read-lengths>  Comma-separated list of read-lengths to perform quantification for.
--d --read-depth=<read-depths>    Comma-separated list of read-depths to perform quantification for.
--p --paired-end=<paired-ends>    Comma-separated list of True/False strings indicating whether quantification should be performed for single or paired-end reads.
--e --error=<errors>              Comma-separated list of True/False strings indicating whether quantification should be performed with or without read errors.
--b --bias=<biases>              Comma-separated list of True/False strings indicating whether quantification should be performed with or without read sequence bias.
--a --polya=<polya>              Comma-separated list of True/False strings indicating whether quantification should be performed assuming transcripts do or do not have polyA tails.
-<transcript-gtf-file>               GTF formatted file describing the transcripts to be simulated.
-<genome-fasta-dir>                  Directory containing per-chromosome sequences as FASTA files.
+-l --read-length=<read-lengths>    Comma-separated list of read-lengths to perform quantification for.
+-d --read-depth=<read-depths>      Comma-separated list of read-depths to perform quantification for.
+-p --paired-end=<paired-ends>      Comma-separated list of True/False strings indicating whether quantification should be performed for single or paired-end reads.
+-e --error=<errors>                Comma-separated list of True/False strings indicating whether quantification should be performed with or without read errors.
+-b --bias=<biases>                 Comma-separated list of True/False strings indicating whether quantification should be performed with or without read sequence bias.
+-a --polya=<polya>                 Comma-separated list of True/False strings indicating whether quantification should be performed assuming transcripts do or do not have polyA tails.
+<transcript-gtf-file>              GTF formatted file describing the transcripts to be simulated.
+<genome-fasta-dir>                 Directory containing per-chromosome sequences as FASTA files.
 """
 
 from docopt import docopt
