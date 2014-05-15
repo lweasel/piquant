@@ -15,7 +15,6 @@
 """
 
 import docopt
-import gtf
 import ordutils.log as log
 import ordutils.options as opt
 import pandas as pd
@@ -28,6 +27,15 @@ LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
 GTF_FILE = "<gtf-file>"
 OUT_FILE = "<out-file>"
+
+SEQUENCE_COL = 0
+FEATURE_COL = 2
+START_COL = 3
+END_COL = 4
+STRAND_COL = 6
+ATTRIBUTES_COL = 8
+EXON_FEATURE = "exon"
+TRANSCRIPT_ID_ATTRIBUTE = "transcript_id"
 
 # Read in command-line options
 __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
@@ -53,19 +61,22 @@ logger.info("Reading GTF file {f}".format(f=options[GTF_FILE]))
 
 gtf_info = pd.read_csv(options[GTF_FILE], sep='\t', header=None)
 
-exon_info = gtf_info[gtf_info[gtf.FEATURE_COL] == gtf.EXON_FEATURE]
+exon_info = gtf_info[gtf_info[FEATURE_COL] == EXON_FEATURE]
 
-exon_info[gtf.TRANSCRIPT_ID_ATTRIBUTE] = exon_info[gtf.ATTRIBUTES_COL].map(
-    lambda x: gtf.get_attributes_dict(x)[gtf.TRANSCRIPT_ID_ATTRIBUTE].
+attributes_dict = lambda x: \
+    {attr: val for attr, val in [av.split() for av in x.split("; ")]}
+
+exon_info[TRANSCRIPT_ID_ATTRIBUTE] = exon_info[ATTRIBUTES_COL].map(
+    lambda x: attributes_dict(x)[TRANSCRIPT_ID_ATTRIBUTE].
     replace('"', ''))
 
 # Extract pairs of exons and transcripts IDs from GTF exon lines
 
 column_dict = exon_info.to_dict(outtype="list")
 exon_info_list = zip(
-    column_dict[gtf.SEQUENCE_COL], column_dict[gtf.START_COL],
-    column_dict[gtf.END_COL], column_dict[gtf.STRAND_COL],
-    column_dict[gtf.TRANSCRIPT_ID_ATTRIBUTE])
+    column_dict[SEQUENCE_COL], column_dict[START_COL],
+    column_dict[END_COL], column_dict[STRAND_COL],
+    column_dict[TRANSCRIPT_ID_ATTRIBUTE])
 
 Exon = namedtuple('Exon', ['sequence', 'start', 'end', 'strand'])
 ExonAndTranscript = namedtuple('ExonAndTranscript', ['exon', 'transcript'])
