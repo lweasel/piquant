@@ -3,19 +3,14 @@ import piquant.tpms as t
 import numpy as np
 import pandas as pd
 import scipy.stats as scistats
-
-REAL_TPMS_VALS = [0.05, 0.02, 15, 2, 10, 30, 11]
-CALC_TPMS_VALS = [0.03, 20, 3, 0.01, 5, 20, 10]
-GROUPS = [0, 1, 0, 1, 0, 1, 1]
-
-GROUP_TEST_COL = "group_test"
+import test_tpkms
 
 
 def _get_test_tpms():
     tpms = pd.DataFrame.from_dict({
-        t.REAL_TPM: REAL_TPMS_VALS,
-        t.CALCULATED_TPM: CALC_TPMS_VALS,
-        GROUP_TEST_COL: GROUPS
+        t.REAL_TPM: test_tpkms.REAL_TPMS_VALS,
+        t.CALCULATED_TPM: test_tpkms.CALC_TPMS_VALS,
+        test_tpkms.GROUP_TEST_COL: test_tpkms.GROUPS
     })
 
     t.calculate_log_ratios(tpms)
@@ -28,51 +23,35 @@ def _get_test_tpms():
 def __get_test_grouped_tpms():
     tpms, tp_tpms = _get_test_tpms()
 
-    grouped = tpms.groupby(GROUP_TEST_COL)
-    tp_grouped = tp_tpms.groupby(GROUP_TEST_COL)
+    grouped = tpms.groupby(test_tpkms.GROUP_TEST_COL)
+    tp_grouped = tp_tpms.groupby(test_tpkms.GROUP_TEST_COL)
     summary = grouped.describe()
     tp_summary = tp_grouped.describe()
 
     return grouped, summary, tp_grouped, tp_summary
 
 
-def _true_positive(real_tpm, calculated_tpm):
-    return real_tpm > t.NOT_PRESENT_CUTOFF and \
-        calculated_tpm > t.NOT_PRESENT_CUTOFF
-
-
-def _true_negative(real_tpm, calculated_tpm):
-    return real_tpm < t.NOT_PRESENT_CUTOFF and \
-        calculated_tpm < t.NOT_PRESENT_CUTOFF
-
-
-def _false_negative(real_tpm, calculated_tpm):
-    return real_tpm > t.NOT_PRESENT_CUTOFF and \
-        calculated_tpm < t.NOT_PRESENT_CUTOFF
-
-
-def _false_positive(real_tpm, calculated_tpm):
-    return real_tpm < t.NOT_PRESENT_CUTOFF and \
-        calculated_tpm > t.NOT_PRESENT_CUTOFF
-
-
 def _tpm_pairs(filter=lambda r, c: True):
-    return [(r, c) for r, c in zip(REAL_TPMS_VALS, CALC_TPMS_VALS) if
-            filter(r, c)]
+    return [(r, c) for r, c in zip(test_tpkms.REAL_TPMS_VALS,
+                                   test_tpkms.CALC_TPMS_VALS)
+            if filter(r, c)]
 
 
 def _tp_tpm_pairs():
-    return _tpm_pairs(lambda r, c: _true_positive(r, c))
+    return _tpm_pairs(lambda r, c: test_tpkms.true_positive(r, c))
 
 
 def _group_tpm_pairs(group_val, filter=lambda r, c: True):
     return [(r, c) for r, c, gv in
-            zip(REAL_TPMS_VALS, CALC_TPMS_VALS, GROUPS) if
+            zip(test_tpkms.REAL_TPMS_VALS,
+                test_tpkms.CALC_TPMS_VALS,
+                test_tpkms.GROUPS) if
             (gv == group_val and filter(r, c))]
 
 
 def _group_tp_tpm_pairs(group_val):
-    return _group_tpm_pairs(group_val, lambda r, c: _true_positive(r, c))
+    return _group_tpm_pairs(
+        group_val, lambda r, c: test_tpkms.true_positive(r, c))
 
 
 def _check_statistic_value(stat_class, calculator, pair_func):
@@ -89,7 +68,7 @@ def _check_grouped_statistic_values(stat_class, calculator, grouped_pair_func):
     correct_value_calculator = lambda x: calculator(grouped_pair_func(x))
     group_count_test = \
         lambda x: grouped_stats.ix[x] == correct_value_calculator(x)
-    assert all([group_count_test(gv) for gv in set(GROUPS)])
+    assert all([group_count_test(gv) for gv in set(test_tpkms.GROUPS)])
 
 
 def test_get_statistics_returns_statistics_instances():
@@ -200,8 +179,8 @@ def test_median_percent_error_statistic_calculates_correct_grouped_values():
 
 
 def _sensitivity(tpm_pairs):
-    num_tp = sum([_true_positive(r, c) for r, c in tpm_pairs])
-    num_fn = sum([_false_negative(r, c) for r, c in tpm_pairs])
+    num_tp = sum([test_tpkms.true_positive(r, c) for r, c in tpm_pairs])
+    num_fn = sum([test_tpkms.false_negative(r, c) for r, c in tpm_pairs])
     return float(num_tp) / (num_tp + num_fn)
 
 
@@ -216,8 +195,8 @@ def test_sensitivity_statistic_calculates_correct_grouped_values():
 
 
 def _specificity(tpm_pairs):
-    num_fp = sum([_false_positive(r, c) for r, c in tpm_pairs])
-    num_tn = sum([_true_negative(r, c) for r, c in tpm_pairs])
+    num_fp = sum([test_tpkms.false_positive(r, c) for r, c in tpm_pairs])
+    num_tn = sum([test_tpkms.true_negative(r, c) for r, c in tpm_pairs])
     return float(num_tn) / (num_tn + num_fp)
 
 
