@@ -153,8 +153,9 @@ def log_ratio_boxplot(tpms, base_name, quant_method, tpm_label, classifier,
         plt.xticks(locs, classifier.get_value_labels(len(labels)))
 
 
-def plot_statistic(stats, base_name, statistic,
-                   group_param, varying_param, fixed_param_values):
+def plot_statistic_by_parameter_values(
+        stats, base_name, statistic, group_param, varying_param,
+        fixed_param_values):
 
     fixed_param_info = _get_fixed_param_info(fixed_param_values)
 
@@ -168,7 +169,7 @@ def plot_statistic(stats, base_name, statistic,
             varying_param.title, fixed_param_info)
 
 
-def plot_statistic_by_classifier(
+def plot_statistic_by_transcript_classifier_values(
         stats, base_name, statistic, group_param,
         classifier, fixed_param_values):
 
