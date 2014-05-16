@@ -4,8 +4,9 @@
 
 """Usage:
     run_quantifiers prepare [--log-level=<log-level>] [--out-dir=<out-dir>] [--num-fragments=<num-fragments>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya> <transcript-gtf-file> <genome-fasta-dir>
-    run_quantifiers prequantify [--log-level=<log-level>] [--out-dir=<out-dir>] [--num-fragments=<num-fragments>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya> <transcript-gtf-file> <genome-fasta-dir>
-    run_quantifiers quantify [--log-level=<log-level>] [--out-dir=<out-dir>] [--num-fragments=<num-fragments>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya> <transcript-gtf-file> <genome-fasta-dir>
+    run_quantifiers prequantify [--log-level=<log-level>] [--out-dir=<out-dir>] [--num-fragments=<num-fragments>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya>
+    run_quantifiers quantify [--log-level=<log-level>] [--out-dir=<out-dir>] [--num-fragments=<num-fragments>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya>
+    run_quantifiers check_completion [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya>
 
 -h --help                          Show this message.
 -v --version                       Show version.
@@ -35,6 +36,7 @@ import os.path
 import parameters
 import prepare_quantification_run as prq
 import quantifiers as qs
+import statistics
 import subprocess
 import sys
 
@@ -45,6 +47,7 @@ NUM_FRAGMENTS = "--num-fragments"
 PREPARE = "prepare"
 PREQUANTIFY = "prequantify"
 QUANTIFY = "quantify"
+CHECK_COMPLETION = "check_completion"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
@@ -66,11 +69,11 @@ try:
         "Number of fragments must be a positive integer.",
         nonneg=True)
 
-    opt.validate_file_option(
-        options[TRANSCRIPT_GTF_FILE], "Transcript GTF file does not exist")
-
-    opt.validate_dir_option(
-        options[GENOME_FASTA_DIR], "Genome FASTA directory does not exist")
+    if options[PREPARE]:
+        opt.validate_file_option(
+            options[TRANSCRIPT_GTF_FILE], "Transcript GTF file does not exist")
+        opt.validate_dir_option(
+            options[GENOME_FASTA_DIR], "Genome FASTA directory does not exist")
 except SchemaError as exc:
     exit("Exiting. " + exc.code)
 
@@ -95,7 +98,8 @@ def check_reads_directory(**params):
 def check_run_directory(**params):
     run_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
         parameters.get_file_name(**params)
-    should_exist = options[PREQUANTIFY] or options[QUANTIFY]
+    should_exist = options[PREQUANTIFY] or options[QUANTIFY] \
+        or options[CHECK_COMPLETION]
     if should_exist != os.path.exists(run_dir):
         sys.exit("Run directory '{d}' should ".format(d=run_dir) +
                  ("" if should_exist else "not ") + "already exist.")
@@ -109,39 +113,55 @@ def execute_quantification_script(run_dir, cl_opts):
     os.chdir(cwd)
 
 
-def create_and_run_quantification(**params):
-    run_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
-        parameters.get_file_name(**params)
+def prepare_quantification(**params):
+    run_name = parameters.get_file_name(**params)
+    run_dir = options[OUTPUT_DIRECTORY] + os.path.sep + run_name
 
-    if options[PREPARE]:
-        # Create the run quantification script
-        reads_params = dict(params)
-        del reads_params[parameters.QUANT_METHOD]
-        reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
-            parameters.get_file_name(**reads_params)
-        quantifier_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
-            "quantifier_scratch"
+    reads_params = dict(params)
+    del reads_params[parameters.QUANT_METHOD]
+    reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
+        parameters.get_file_name(**reads_params)
+    quantifier_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
+        "quantifier_scratch"
 
-        params_spec = {
-            qs.TRANSCRIPT_GTF_FILE: options[TRANSCRIPT_GTF_FILE],
-            qs.GENOME_FASTA_DIR: options[GENOME_FASTA_DIR]
-        }
+    params_spec = {
+        qs.TRANSCRIPT_GTF_FILE: options[TRANSCRIPT_GTF_FILE],
+        qs.GENOME_FASTA_DIR: options[GENOME_FASTA_DIR]
+    }
 
-        prq.write_run_quantification_script(
-            reads_dir, run_dir, quantifier_dir, options[TRANSCRIPT_GTF_FILE],
-            params_spec, **params)
-    elif options[PREQUANTIFY]:
-        # Execute prequantification commands, but only once per quantifier
-        quant_method = param_values[parameters.QUANT_METHOD]
-        if quant_method not in quantifiers_used:
-            quantifiers_used.append(quant_method)
-            logger.info("Executing prequantification for " +
-                        quant_method.get_name())
-            execute_quantification_script(run_dir, "-p")
-    elif options[QUANTIFY]:
-        # Execute the run quantification script
-        logger.info("Executing shell script to run quantification analysis.")
-        execute_quantification_script(run_dir, "-qa")
+    prq.write_run_quantification_script(
+        reads_dir, run_dir, quantifier_dir, options[TRANSCRIPT_GTF_FILE],
+        params_spec, **params)
+
+
+def prequantify(**params):
+    run_name = parameters.get_file_name(**params)
+    run_dir = options[OUTPUT_DIRECTORY] + os.path.sep + run_name
+
+    quant_method = param_values[parameters.QUANT_METHOD]
+    if quant_method not in quantifiers_used:
+        quantifiers_used.append(quant_method)
+        logger.info("Executing prequantification for " +
+                    quant_method.get_name())
+        execute_quantification_script(run_dir, "-p")
+
+
+def quantify(**params):
+    run_name = parameters.get_file_name(**params)
+    run_dir = options[OUTPUT_DIRECTORY] + os.path.sep + run_name
+
+    logger.info("Executing shell script to run quantification analysis.")
+    execute_quantification_script(run_dir, "-qa")
+
+
+def check_completion(**params):
+    run_name = parameters.get_file_name(**params)
+    run_dir = options[OUTPUT_DIRECTORY] + os.path.sep + run_name
+
+    main_stats_file = statistics.get_stats_file(
+        run_dir, os.path.basename(run_dir))
+    if not os.path.exists(main_stats_file):
+        logger.error("Run " + run_name + " did not complete")
 
 
 # Set up logger
@@ -149,7 +169,15 @@ logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
 options[OUTPUT_DIRECTORY] = os.path.abspath(options[OUTPUT_DIRECTORY])
 
-parameters.execute_for_param_sets(
-    [check_reads_directory, check_run_directory,
-     create_and_run_quantification],
-    **param_values)
+to_execute = [check_reads_directory, check_run_directory]
+
+if options[PREPARE]:
+    to_execute.append(prepare_quantification)
+elif options[PREQUANTIFY]:
+    to_execute.append(prequantify)
+elif options[QUANTIFY]:
+    to_execute.append(quantify)
+elif options[CHECK_COMPLETION]:
+    to_execute.append(check_completion)
+
+parameters.execute_for_param_sets(to_execute, **param_values)
