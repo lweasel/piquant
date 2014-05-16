@@ -3,7 +3,8 @@
 # TODO: add logging
 
 """Usage:
-    create_simulated_reads [--log-level=<log-level>] [--out-dir=<out_dir>] [--num-fragments=<num-fragments>] [--prepare-only|--run-only] --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya> <transcript-gtf-file> <genome-fasta-dir>
+    create_simulated_reads prepare [--log-level=<log-level>] [--out-dir=<out_dir>] [--num-fragments=<num-fragments>] --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya> <transcript-gtf-file> <genome-fasta-dir>
+    create_simulated_reads create [--log-level=<log-level>] [--out-dir=<out_dir>] --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya>
 
 -h --help                        Show this message.
 -v --version                     Show version.
@@ -36,8 +37,8 @@ LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
 OUTPUT_DIRECTORY = "--out-dir"
 NUM_FRAGMENTS = "--num-fragments"
-PREPARE_ONLY = "--prepare-only"
-RUN_ONLY = "--run-only"
+PREPARE = "prepare"
+CREATE = "create"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
@@ -53,14 +54,16 @@ try:
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
     opt.validate_dir_option(
         options[OUTPUT_DIRECTORY], "Output parent directory does not exist.")
-    opt.validate_file_option(
-        options[TRANSCRIPT_GTF_FILE], "Transcript GTF file does not exist")
-    opt.validate_dir_option(
-        options[GENOME_FASTA_DIR], "Genome FASTA directory does not exist")
     options[NUM_FRAGMENTS] = opt.validate_int_option(
         options[NUM_FRAGMENTS],
         "Number of fragments must be a positive integer.",
         nonneg=True)
+
+    if options[PREPARE]:
+        opt.validate_file_option(
+            options[TRANSCRIPT_GTF_FILE], "Transcript GTF file does not exist")
+        opt.validate_dir_option(
+            options[GENOME_FASTA_DIR], "Genome FASTA directory does not exist")
 
     param_values = parameters.validate_command_line_parameter_sets(options)
 except schema.SchemaError as exc:
@@ -70,21 +73,20 @@ except schema.SchemaError as exc:
 def check_reads_directory(**params):
     reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
         parameters.get_file_name(**params)
-    if options[RUN_ONLY] != os.path.exists(reads_dir):
+    if options[CREATE] != os.path.exists(reads_dir):
         sys.exit("Reads directory '{d}' should ".format(d=reads_dir) +
-                 ("" if options[RUN_ONLY] else "not ") + "already exist.")
+                 ("" if options[CREATE] else "not ") + "already exist.")
 
 
 def create_and_run_reads_simulation(**params):
     reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
         parameters.get_file_name(**params)
 
-    if not options[RUN_ONLY]:
+    if options[PREPARE]:
         prs.create_simulation_files(
             reads_dir, options[TRANSCRIPT_GTF_FILE], options[GENOME_FASTA_DIR],
             options[NUM_FRAGMENTS], **params)
-
-    if not options[PREPARE_ONLY]:
+    elif options[CREATE]:
         cwd = os.getcwd()
         os.chdir(reads_dir)
         args = ['nohup', './run_simulation.sh']
