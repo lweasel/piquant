@@ -3,16 +3,15 @@
 # TODO: should be able to separately specify parent directory for reads directories.
 
 """Usage:
-    run_quantifiers prepare [--log-level=<log-level>] [--out-dir=<out-dir>] [--num-fragments=<num-fragments>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya> <transcript-gtf-file> <genome-fasta-dir>
-    run_quantifiers prequantify [--log-level=<log-level>] [--out-dir=<out-dir>] [--num-fragments=<num-fragments>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya>
-    run_quantifiers quantify [--log-level=<log-level>] [--out-dir=<out-dir>] [--num-fragments=<num-fragments>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya>
+    run_quantifiers prepare [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya> <transcript-gtf-file> <genome-fasta-dir>
+    run_quantifiers prequantify [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya>
+    run_quantifiers quantify [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya>
     run_quantifiers check_completion [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya>
 
 -h --help                          Show this message.
 -v --version                       Show version.
 --log-level=<log-level>            Set logging level (one of {log_level_vals}) [default: info].
 --out-dir=<out-dir>                Parent output directory to which quantification run directories will be written [default: output].
---num-fragments=<num-fragments>    Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
 --prepare-only                     Quantification run scripts will be created, but not run.
 --run-only                         Quantification run scripts will be run, but not created (they must already exist).
 -q --quant-method=<quant-methods>  Comma-separated list of quantification methods to run.
@@ -43,7 +42,6 @@ import sys
 LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
 OUTPUT_DIRECTORY = "--out-dir"
-NUM_FRAGMENTS = "--num-fragments"
 PREPARE = "prepare"
 PREQUANTIFY = "prequantify"
 QUANTIFY = "quantify"
@@ -63,11 +61,6 @@ try:
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
 
     param_values = parameters.validate_command_line_parameter_sets(options)
-
-    options[NUM_FRAGMENTS] = opt.validate_int_option(
-        options[NUM_FRAGMENTS],
-        "Number of fragments must be a positive integer.",
-        nonneg=True)
 
     if options[PREPARE]:
         opt.validate_file_option(
