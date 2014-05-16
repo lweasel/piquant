@@ -13,6 +13,7 @@ UNIQUE_SEQUENCE_SCRIPT = PYTHON_SCRIPT_DIR + \
 ASSEMBLE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "assemble_quantification_data.py"
 ANALYSE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "analyse_quantification_run.py"
 
+RUN_PREQUANTIFICATION_VARIABLE = "RUN_PREQUANTIFICATION"
 QUANTIFY_TRANSCRIPTS_VARIABLE = "QUANTIFY_TRANSCRIPTS"
 ANALYSE_RESULTS_VARIABLE = "ANALYSE_RESULTS"
 
@@ -44,21 +45,21 @@ def _get_unique_sequence_file(transcript_gtf_file):
     return gtf_dir + os.path.sep + UNIQUE_SEQUENCE_FILE
 
 
-def _add_preparatory_quantification_commands(
-        writer, quant_method, params_spec):
-
+def _add_run_prequantification(writer, quant_method, params_spec):
     # Perform preparatory tasks required by a particular quantification method
     # prior to calculating abundances; for example, this might include mapping
     # reads to the genome with TopHat
-    quant_method.write_preparatory_commands(writer, params_spec)
+    with writer.if_block("-n \"$RUN_PREQUANTIFICATION\""):
+        quant_method.write_preparatory_commands(writer, params_spec)
 
 
-def _add_quantification_commands(writer, quant_method, params_spec):
+def _add_quantify_transcripts(writer, quant_method, params_spec):
     # Use the specified quantification method to calculate per-transcript TPMs
-    method_name = quant_method.get_name()
-    writer.add_comment(
-        "Use " + method_name + " to calculate per-transcript TPMs.")
-    quant_method.write_quantification_commands(writer, params_spec)
+    with writer.if_block("-n \"$QUANTIFY_TRANSCRIPTS\""):
+        method_name = quant_method.get_name()
+        writer.add_comment(
+            "Use " + method_name + " to calculate per-transcript TPMs.")
+        quant_method.write_quantification_commands(writer, params_spec)
 
 
 def _add_calculate_transcripts_per_gene(writer, transcript_gtf_file):
@@ -125,25 +126,20 @@ def _add_process_command_line_options(writer):
     writer.add_comment("Process command line options.")
 
     with writer.section():
+        writer.set_variable(RUN_PREQUANTIFICATION_VARIABLE, "")
         writer.set_variable(QUANTIFY_TRANSCRIPTS_VARIABLE, "")
         writer.set_variable(ANALYSE_RESULTS_VARIABLE, "")
 
     with writer.while_block("getopts \":qa\" opt"):
         with writer.case_block("$opt"):
+            with writer.case_option_block("p"):
+                writer.set_variable(RUN_PREQUANTIFICATION_VARIABLE, 1)
             with writer.case_option_block("q"):
                 writer.set_variable(QUANTIFY_TRANSCRIPTS_VARIABLE, 1)
             with writer.case_option_block("a"):
                 writer.set_variable(ANALYSE_RESULTS_VARIABLE, 1)
             with writer.case_option_block("\?"):
                 writer.add_line("echo \"Invalid option: -$OPTARG\" >&2")
-
-
-def _add_quantify_transcripts(writer, quant_method, params_spec):
-    with writer.if_block("-n \"$QUANTIFY_TRANSCRIPTS\""):
-        with writer.section():
-            _add_preparatory_quantification_commands(
-                writer, quant_method, params_spec)
-        _add_quantification_commands(writer, quant_method, params_spec)
 
 
 def _add_analyse_results(
@@ -189,6 +185,9 @@ def _add_script_sections(
 
     with writer.section():
         _add_process_command_line_options(writer)
+
+    with writer.section():
+        _add_run_prequantification(writer, quant_method, params_spec)
 
     with writer.section():
         _add_quantify_transcripts(writer, quant_method, params_spec)

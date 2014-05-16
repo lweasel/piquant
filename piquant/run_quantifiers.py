@@ -122,7 +122,7 @@ def create_and_run_quantification(**params):
         logger.info("Executing shell script to run quantification analysis.")
         cwd = os.getcwd()
         os.chdir(run_dir)
-        args = ['nohup', './run_quantification.sh', "-qa"]
+        args = ['nohup', './run_quantification.sh', "-pqa"]
         subprocess.Popen(args)
         os.chdir(cwd)
 
