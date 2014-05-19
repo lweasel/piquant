@@ -1,3 +1,5 @@
+import numpy as np
+import numpy.testing as npt
 import pandas as pd
 import piquant.tpms as t
 
@@ -87,3 +89,67 @@ def test_mark_positives_negatives_marks_correct_entries_as_false_negative():
             assert not row[t.TRUE_POSITIVE]
         else:
             assert not row[t.FALSE_NEGATIVE]
+
+
+def test_get_true_positives_returns_correct_number_of_entries():
+    tpms = _get_test_tpms()
+    t.mark_positives_and_negatives(tpms)
+    tp_tpms = t.get_true_positives(tpms)
+
+    assert len(tp_tpms) == \
+        len([x for x, y in zip(CALC_TPMS_VALS, REAL_TPMS_VALS)
+            if x > t.NOT_PRESENT_CUTOFF and y > t.NOT_PRESENT_CUTOFF])
+
+
+def test_calculate_percent_error_calculates_correct_values():
+    tpms = _get_test_tpms()
+    t.calculate_percent_error(tpms)
+
+    for index, row in tpms.iterrows():
+        val = 100 * ((CALC_TPMS_VALS[index] - REAL_TPMS_VALS[index])
+                     / float(REAL_TPMS_VALS[index]))
+        npt.assert_approx_equal(row[t.PERCENT_ERROR], val)
+
+
+def test_calculate_log_ratios_calculates_correct_values():
+    tpms = _get_test_tpms()
+    t.calculate_log_ratios(tpms)
+
+    for index, row in tpms.iterrows():
+        val = np.log10(CALC_TPMS_VALS[index]/float(REAL_TPMS_VALS[index]))
+        npt.assert_approx_equal(row[t.LOG10_RATIO], val)
+
+
+class DummyClassifier:
+    def __init__(self, name, value_func=lambda x: x[t.REAL_TPM]):
+        self.name = name
+        self.value_func = value_func
+
+    def get_column_name(self):
+        return self.name
+
+    def get_classification_value(self, x):
+        return self.value_func(x)
+
+
+def test_apply_classifiers_adds_correct_columns():
+    classifier_names = ["a", "b", "c"]
+    classifiers = [DummyClassifier(x) for x in classifier_names]
+
+    tpms = _get_test_tpms()
+    t.apply_classifiers(tpms, classifiers)
+
+    for name in classifier_names:
+        assert tpms[name] is not None
+
+
+def test_apply_classifiers_calculates_correct_values():
+    name = "dummy"
+    val = 5
+    classifiers = [DummyClassifier(name, lambda x: x[t.CALCULATED_TPM] + val)]
+
+    tpms = _get_test_tpms()
+    t.apply_classifiers(tpms, classifiers)
+
+    for index, row in tpms.iterrows():
+        assert row[name] == CALC_TPMS_VALS[index] + val
