@@ -1,6 +1,6 @@
 import itertools
 import ordutils.options as opt
-import piquant_options as popt
+import quantifiers
 
 QUANT_METHOD = "quant_method"
 READ_DEPTH = "read_depth"
@@ -33,7 +33,7 @@ _PARAMETERS = []
 # TODO: get rid of isinstance() ASAP
 _PARAMETERS.append(_Parameter(
     QUANT_METHOD, "Method", "--quant-method",
-    popt.check_quantification_method,
+    lambda x: quantifiers.get_quantification_methods()[x],
     value_namer=lambda x: x if isinstance(x, basestring) else x.get_name()))
 
 _PARAMETERS.append(_Parameter(
