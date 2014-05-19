@@ -132,7 +132,7 @@ for clsfr in grp_clsfrs:
             for stat in stats.get_graphable_by_classifier_statistics():
                 filtered_stats_df = stats_df[more_than_100_filter(stats_df)]
                 plot.plot_statistic_by_transcript_classifier_values(
-                    stats_df, graph_file_basename, stat, param,
+                    filtered_stats_df, graph_file_basename, stat, param,
                     clsfr, fixed_param_values)
 
 # Create distribution plots

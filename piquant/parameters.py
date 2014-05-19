@@ -31,10 +31,11 @@ class _Parameter:
 
 _PARAMETERS = []
 
+# TODO: get rid of isinstance() ASAP
 _PARAMETERS.append(_Parameter(
     QUANT_METHOD, "Method", "--quant-method",
     popt.check_quantification_method,
-    value_namer=lambda x: x.get_name()))
+    value_namer=lambda x: x if isinstance(x, basestring) else x.get_name()))
 
 _PARAMETERS.append(_Parameter(
     READ_DEPTH, "Read depth", "--read-depth", int,

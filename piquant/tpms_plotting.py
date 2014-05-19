@@ -41,7 +41,7 @@ def _get_stats_plot_name_elements(
         name_elements += ["vs", versus]
     name_elements += ["per", group_param.title.lower()]
     if ascending is not None:
-        name_elements += ("asc" if ascending else "desc")
+        name_elements.append("asc" if ascending else "desc")
     name_elements += fixed_param_info
     if ascending is not None:
         name_elements.append("distribution")
@@ -56,7 +56,7 @@ def _get_grouped_stats_plot_title(
         title_elements += ["vs", versus.lower()]
     title_elements += ["per", group_param.title.lower()]
 
-    return " ".join(title_elements) + ", ".join(fixed_param_info)
+    return " ".join(title_elements) + ": " + ", ".join(fixed_param_info)
 
 
 def _plot_statistic_for_grouped_param_values(
@@ -69,9 +69,8 @@ def _plot_statistic_for_grouped_param_values(
         group_stats.sort(columns=xcol, axis=0, inplace=True)
         xvals = group_stats[xcol]
         yvals = group_stats[ycol]
-        #plt.plot(xvals, yvals, '-o',
-                 #label=group_param.get_value_name(group_param_value))
-        plt.plot(xvals, yvals, '-o', label=group_param_value)
+        plt.plot(xvals, yvals, '-o',
+                 label=group_param.get_value_name(group_param_value))
 
 
 def _plot_statistic(
