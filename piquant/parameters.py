@@ -8,7 +8,6 @@ READ_LENGTH = "read_length"
 PAIRED_END = "paired_end"
 ERRORS = "errors"
 BIAS = "bias"
-POLYA_TAIL = "polya"
 
 
 class _Parameter:
@@ -64,12 +63,6 @@ _PARAMETERS.append(_Parameter(
     opt.check_boolean_value,
     value_namer=lambda x: "with bias" if x else "no bias",
     file_namer=lambda x: "bias" if x else "no_bias"))
-
-_PARAMETERS.append(_Parameter(
-    POLYA_TAIL, "PolyA tail", "--polya",
-    opt.check_boolean_value,
-    value_namer=lambda x: "with polyA tail" if x else "no polyA tail",
-    file_namer=lambda x: "polya" if x else "no_polya"))
 
 
 def get_parameters():

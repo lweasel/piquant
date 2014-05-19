@@ -126,38 +126,33 @@ def get_fragment_bounds(read_identifier):
 
 
 def _get_common_flux_simulator_params(
-        transcript_gtf_file, genome_fasta_dir, num_fragments, polya):
+        transcript_gtf_file, genome_fasta_dir, num_fragments):
 
-    params = {
+    return {
         "REF_FILE_NAME": transcript_gtf_file,
         "GEN_DIR": genome_fasta_dir,
-        "NB_MOLECULES": int(num_fragments / FRAGMENTS_PER_MOLECULE)
+        "NB_MOLECULES": int(num_fragments / FRAGMENTS_PER_MOLECULE),
+        "POLYA_SCALE": "NaN",
+        "POLYA_SHAPE": "NaN"
     }
-
-    if not polya:
-        params["POLYA_SCALE"] = "NaN"
-        params["POLYA_SHAPE"] = "NaN"
-
-    return params
 
 
 def _write_flux_simulator_expression_params(
-        transcript_gtf_file, genome_fasta_dir, num_fragments,
-        polya, output_dir):
+        transcript_gtf_file, genome_fasta_dir, num_fragments, output_dir):
 
     fs_params = _get_common_flux_simulator_params(
-        transcript_gtf_file, genome_fasta_dir, num_fragments, polya)
+        transcript_gtf_file, genome_fasta_dir, num_fragments)
     writer = fw.FluxSimulatorParamsWriter(fs_params)
     writer.write_to_file(output_dir, EXPRESSION_PARAMS_FILE)
 
 
 def _write_flux_simulator_simulation_params(
         transcript_gtf_file, genome_fasta_dir, num_fragments,
-        read_length, paired_end, errors, bias, polya,
+        read_length, paired_end, errors, bias,
         fs_pro_file, output_dir):
 
     fs_params = _get_common_flux_simulator_params(
-        transcript_gtf_file, genome_fasta_dir, num_fragments, polya)
+        transcript_gtf_file, genome_fasta_dir, num_fragments)
 
     fs_params["SEQ_FILE_NAME"] = SIMULATED_READS_PREFIX + ".bed"
     fs_params["PRO_FILE_NAME"] = fs_pro_file
@@ -184,13 +179,12 @@ def _write_flux_simulator_simulation_params(
 
 def write_flux_simulator_params_files(
         transcript_gtf_file, genome_fasta_dir, num_fragments,
-        read_length, paired_end, errors, bias, polya,
+        read_length, paired_end, errors, bias,
         fs_pro_file, output_dir):
 
     _write_flux_simulator_expression_params(
-        transcript_gtf_file, genome_fasta_dir, num_fragments,
-        polya, output_dir)
+        transcript_gtf_file, genome_fasta_dir, num_fragments, output_dir)
     _write_flux_simulator_simulation_params(
         transcript_gtf_file, genome_fasta_dir, num_fragments,
-        read_length, paired_end, errors, bias, polya,
+        read_length, paired_end, errors, bias,
         fs_pro_file, output_dir)

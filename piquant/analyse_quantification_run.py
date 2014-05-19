@@ -3,7 +3,7 @@
 # TODO: add logging
 
 """Usage:
-    analyse_quantification_run [--scatter-max=<scatter-max-val>] [--log10-scatter-min=<log10-scatter-min-val>] [--log10-scatter-max=<log10-scatter-max-val>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> --polya=<polya> <tpm-file> [<out-file>]
+    analyse_quantification_run [--scatter-max=<scatter-max-val>] [--log10-scatter-min=<log10-scatter-min-val>] [--log10-scatter-max=<log10-scatter-max-val>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> <tpm-file> [<out-file>]
 
 -h --help                                    Show this message.
 -v --version                                 Show version.
@@ -16,7 +16,6 @@
 --paired-end=<paired-end>                    Whether paired-end sequence reads were used.
 --error=<errors>                             Whether the reads contain sequencing errors.
 --bias=<bias>                                Whether the reads contain sequence bias.
---polya=<polya>                              Indicates whether reads were created from transcripts with or without polyA tails.
 <tpm-file>                                   File containing real and calculated TPMs.
 <out-file>                                   Basename for output graph and data files.
 """

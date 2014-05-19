@@ -145,7 +145,7 @@ def _add_process_command_line_options(writer):
 def _add_analyse_results(
         writer, run_dir, transcript_gtf_file, fs_pro_file,
         quant_method, read_length, read_depth,
-        paired_end, errors, bias, polya):
+        paired_end, errors, bias):
 
     with writer.if_block("-n \"$ANALYSE_RESULTS\""):
         with writer.section():
@@ -158,11 +158,11 @@ def _add_analyse_results(
         _add_analyse_quantification_results(
             writer, run_dir, quant_method=quant_method.get_name(),
             read_length=read_length, read_depth=read_depth,
-            paired_end=paired_end, errors=errors, bias=bias, polya=polya)
+            paired_end=paired_end, errors=errors, bias=bias)
 
 
 def _update_params_spec(params_spec, input_dir, quantifier_dir,
-                        paired_end, errors, polya):
+                        paired_end, errors):
     if paired_end:
         params_spec[qs.LEFT_SIMULATED_READS] = \
             input_dir + os.path.sep + _get_reads_file(errors, 'l')
@@ -173,15 +173,13 @@ def _update_params_spec(params_spec, input_dir, quantifier_dir,
             input_dir + os.path.sep + _get_reads_file(errors)
 
     params_spec[qs.QUANTIFIER_DIRECTORY] = quantifier_dir
-    params_spec[qs.POLYA_TAIL] = polya
     params_spec[qs.FASTQ_READS] = errors
 
 
 def _add_script_sections(
         writer, run_dir, transcript_gtf_file, fs_pro_file,
         quant_method, read_length, read_depth,
-        paired_end, errors, bias, polya,
-        params_spec):
+        paired_end, errors, bias, params_spec):
 
     with writer.section():
         _add_process_command_line_options(writer)
@@ -195,20 +193,20 @@ def _add_script_sections(
     _add_analyse_results(
         writer, run_dir, transcript_gtf_file, fs_pro_file,
         quant_method, read_length, read_depth, paired_end,
-        errors, bias, polya)
+        errors, bias)
 
 
 def write_run_quantification_script(
         input_dir, run_dir, quantifier_dir,
         transcript_gtf_file, params_spec,
         quant_method=None, read_length=50, read_depth=10,
-        paired_end=False, errors=False, bias=False, polya=False):
+        paired_end=False, errors=False, bias=False):
 
     fs_pro_file = input_dir + os.path.sep + \
         fs.EXPRESSION_PARAMS_FILE.replace("par", "pro")
 
     _update_params_spec(params_spec, input_dir, quantifier_dir,
-                        paired_end, errors, polya)
+                        paired_end, errors)
 
     os.mkdir(run_dir)
 
@@ -216,5 +214,5 @@ def write_run_quantification_script(
     _add_script_sections(
         writer, run_dir, transcript_gtf_file, fs_pro_file,
         quant_method, read_length, read_depth,
-        paired_end, errors, bias, polya, params_spec)
+        paired_end, errors, bias, params_spec)
     writer.write_to_file(run_dir, RUN_SCRIPT)

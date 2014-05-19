@@ -3,10 +3,10 @@
 # TODO: should be able to separately specify parent directory for reads directories.
 
 """Usage:
-    run_quantifiers prepare [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya> <transcript-gtf-file> <genome-fasta-dir>
-    run_quantifiers prequantify [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya>
-    run_quantifiers quantify [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya>
-    run_quantifiers check_completion [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya>
+    run_quantifiers prepare [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> <transcript-gtf-file> <genome-fasta-dir>
+    run_quantifiers prequantify [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
+    run_quantifiers quantify [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
+    run_quantifiers check_completion [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
 
 -h --help                          Show this message.
 -v --version                       Show version.
@@ -20,7 +20,6 @@
 -p --paired-end=<paired-ends>      Comma-separated list of True/False strings indicating whether quantification should be performed for single or paired-end reads.
 -e --error=<errors>                Comma-separated list of True/False strings indicating whether quantification should be performed with or without read errors.
 -b --bias=<biases>                 Comma-separated list of True/False strings indicating whether quantification should be performed with or without read sequence bias.
--a --polya=<polya>                 Comma-separated list of True/False strings indicating whether quantification should be performed assuming transcripts do or do not have polyA tails.
 <transcript-gtf-file>              GTF formatted file describing the transcripts to be simulated.
 <genome-fasta-dir>                 Directory containing per-chromosome sequences as FASTA files.
 """

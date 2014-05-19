@@ -10,7 +10,6 @@ SIMULATED_READS = "SIMULATED_READS"
 LEFT_SIMULATED_READS = "LEFT_SIMULATED_READS"
 RIGHT_SIMULATED_READS = "RIGHT_SIMULATED_READS"
 FASTQ_READS = "FASTQ_READS"
-POLYA_TAIL = "POLYA_TAIL"
 QUANTIFIER_DIRECTORY = "QUANTIFIER_DIRECTORY"
 
 # Parameters required by particular quantification methods
@@ -110,9 +109,8 @@ class _RSEM:
         return "RSEM"
 
     @classmethod
-    def _get_ref_name(cls, quantifier_dir, polya):
-        return quantifier_dir + os.path.sep + "rsem_" + \
-            ("polya" if polya else "nopolya") + os.path.sep + "rsem"
+    def _get_ref_name(cls, quantifier_dir):
+        return quantifier_dir + os.path.sep + "rsem" + os.path.sep + "rsem"
 
     def calculate_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
@@ -129,20 +127,17 @@ class _RSEM:
             "from the RSEM package. Note that this step only needs to " +
             "be done once for a particular set of transcripts.")
 
-        ref_name = _RSEM._get_ref_name(
-            params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
+        ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
 
         writer.add_line("REF_DIR=$(dirname " + ref_name + ")")
 
         with writer.if_block("! -d $REF_DIR"):
             writer.add_line("mkdir -p $REF_DIR")
 
-            polya_spec = "" if params[POLYA_TAIL] else " --no-polyA"
-            ref_name = _RSEM._get_ref_name(
-                params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
+            ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
             writer.add_line(
                 "rsem-prepare-reference --gtf " + params[TRANSCRIPT_GTF_FILE] +
-                polya_spec + " " + params[GENOME_FASTA_DIR] + " " + ref_name)
+                " --no-polyA " + params[GENOME_FASTA_DIR] + " " + ref_name)
 
     def write_quantification_commands(self, writer, params):
         qualities_spec = "" if params[FASTQ_READS] else "--no-qualities"
@@ -151,8 +146,7 @@ class _RSEM:
             else "--paired-end " + params[LEFT_SIMULATED_READS] + \
             " " + params[RIGHT_SIMULATED_READS]
 
-        ref_name = _RSEM._get_ref_name(
-            params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
+        ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
         writer.add_line(
             "rsem-calculate-expression --time " + qualities_spec +
             " --p 32 --output-genome-bam " + reads_spec + " " +
@@ -196,8 +190,7 @@ class _Express:
         writer.add_comment(
             "Now map simulated reads to the transcriptome with Bowtie.")
 
-        ref_name = _RSEM._get_ref_name(
-            params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
+        ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
         writer.add_pipe([
             "bowtie " + qualities_spec +
             " -e 99999999 -l 25 -I 1 -X 1000 -a -S -m 200 -p 32 " +
@@ -209,8 +202,7 @@ class _Express:
         stranded_spec = "--fr-stranded " \
             if SIMULATED_READS not in params else ""
 
-        ref_name = _RSEM._get_ref_name(
-            params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
+        ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
         writer.add_line(
             "express " + stranded_spec + ref_name + ".transcripts.fa " +
             _Express.MAPPED_READS_FILE)
@@ -231,9 +223,8 @@ class _Sailfish:
         return "Sailfish"
 
     @classmethod
-    def _get_index_dir(cls, quantifier_dir, polya):
-        return quantifier_dir + os.path.sep + "sailfish_" + \
-            ("polya" if polya else "nopolya")
+    def _get_index_dir(cls, quantifier_dir):
+        return quantifier_dir + os.path.sep + "sailfish"
 
     def calculate_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
@@ -253,18 +244,15 @@ class _Sailfish:
             "Now create the Sailfish transcript index (this will only " +
             "perform indexing if the index does not already exist.")
 
-        index_dir = _Sailfish._get_index_dir(
-            params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
-        ref_name = _RSEM._get_ref_name(
-            params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
+        index_dir = _Sailfish._get_index_dir(params[QUANTIFIER_DIRECTORY])
+        ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
 
         writer.add_line(
             "sailfish index -p 8 -t " + ref_name +
             ".transcripts.fa -k 20 -o " + index_dir)
 
     def write_quantification_commands(self, writer, params):
-        index_dir = _Sailfish._get_index_dir(
-            params[QUANTIFIER_DIRECTORY], params[POLYA_TAIL])
+        index_dir = _Sailfish._get_index_dir(params[QUANTIFIER_DIRECTORY])
 
         library_spec = "\"T=SE:S=U\"" if SIMULATED_READS in params \
             else "\"T=PE:O=><:S=SA\""

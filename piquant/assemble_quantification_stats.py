@@ -5,7 +5,7 @@
 # TODO: get STATS_TYPES from statistics module.
 
 """Usage:
-    assemble_quantification_stats [--log-level=<log-level>] [--out-dir=<out-dir>] [--run-dir=<run-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya>
+    assemble_quantification_stats [--log-level=<log-level>] [--out-dir=<out-dir>] [--run-dir=<run-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
 
 -h --help                           Show this message.
 -v --version                        Show version.
@@ -18,7 +18,6 @@
 -p --paired-end=<paired-ends>      Comma-separated list of True/False strings indicating whether stats should be assembled for single or paired-end reads.
 -e --error=<errors>                Comma-separated list of True/False strings indicating whether stats should be assembled with or without read errors.
 -b --bias=<biases>                Comma-separated list of True/False strings indicating whether stats should be assembled with or without read sequence bias.
--a --polya=<polya>                  Comma-separated list of True/False strings indicating whether stats should be assembled assuming transcripts do or do not have polyA tails.
 """
 
 import docopt

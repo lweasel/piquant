@@ -3,8 +3,8 @@
 # TODO: add logging
 
 """Usage:
-    create_simulated_reads prepare [--log-level=<log-level>] [--out-dir=<out_dir>] [--num-fragments=<num-fragments>] --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya> <transcript-gtf-file> <genome-fasta-dir>
-    create_simulated_reads create [--log-level=<log-level>] [--out-dir=<out_dir>] --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --polya=<polya>
+    create_simulated_reads prepare [--log-level=<log-level>] [--out-dir=<out_dir>] [--num-fragments=<num-fragments>] --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> <transcript-gtf-file> <genome-fasta-dir>
+    create_simulated_reads create [--log-level=<log-level>] [--out-dir=<out_dir>] --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
 
 -h --help                        Show this message.
 -v --version                     Show version.
@@ -18,7 +18,6 @@
 -p --paired-end=<paired-ends>    Comma-separated list of True/False strings indicating whether paired-end reads should be created.
 -e --error=<errors>              Comma-separated list of True/False strings indicating whether reads should be created with errors.
 -b --bias=<biases>               Comma-separated list of True/False strings indicating whether reads should be created with sequence bias.
--a --polya=<polya>               Comma-separated list of True/False strings indicating whether reads should be created with polyA tails.
 <transcript-gtf-file>            GTF formatted file describing the transcripts to be simulated.
 <genome-fasta-dir>               Directory containing per-chromosome sequences as FASTA files.
 """
