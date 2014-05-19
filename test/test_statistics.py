@@ -3,7 +3,7 @@ import piquant.tpms as t
 import numpy as np
 import pandas as pd
 import scipy.stats as scistats
-import test_tpkms
+import test_tpms
 
 
 def _get_test_tpms():

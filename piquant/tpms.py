@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import statistics as stats
 
 TRANSCRIPT_COUNT = "num-transcripts"
 LENGTH = "length"
@@ -61,13 +60,13 @@ def apply_classifiers(tpms, clsfrs):
             classifier.get_classification_value, axis=1)
 
 
-def get_stats(tpms, tp_tpms):
+def get_stats(tpms, tp_tpms, statistics):
     stats_dict = {stat.name: stat.calculate(tpms, tp_tpms)
-                  for stat in stats.get_statistics()}
+                  for stat in statistics}
     return pd.DataFrame([stats_dict])
 
 
-def get_grouped_stats(tpms, tp_tpms, column_name):
+def get_grouped_stats(tpms, tp_tpms, column_name, statistics):
     grouped = tpms.groupby(column_name)
     tp_grouped = tp_tpms.groupby(column_name)
     summary = grouped.describe()
@@ -75,7 +74,7 @@ def get_grouped_stats(tpms, tp_tpms, column_name):
 
     stats_dict = {stat.name: stat.calculate_grouped(
         grouped, summary, tp_grouped, tp_summary)
-        for stat in stats.get_statistics()}
+        for stat in statistics}
     return pd.DataFrame.from_dict(stats_dict)
 
 

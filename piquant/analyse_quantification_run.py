@@ -89,8 +89,10 @@ def add_overall_stats(stats):
     for param in parameters.get_parameters():
         stats[param.name] = options[param.option_name]
 
+stats_types = statistics.get_statistics()
+
 if options[OUT_FILE_BASENAME]:
-    stats = t.get_stats(tpms, tp_tpms)
+    stats = t.get_stats(tpms, tp_tpms, stats_types)
     add_overall_stats(stats)
 
     stats_file_name = \
@@ -104,7 +106,8 @@ if options[OUT_FILE_BASENAME]:
     for classifier in clsfrs:
         if classifier.produces_grouped_stats():
             column_name = classifier.get_column_name()
-            stats = t.get_grouped_stats(tpms, tp_tpms, column_name)
+            stats = t.get_grouped_stats(tpms, tp_tpms,
+                                        column_name, stats_types)
             add_overall_stats(stats)
 
             stats_file_name = statistics.get_stats_file(
