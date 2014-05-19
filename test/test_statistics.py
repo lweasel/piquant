@@ -8,9 +8,9 @@ import test_tpms
 
 def _get_test_tpms():
     tpms = pd.DataFrame.from_dict({
-        t.REAL_TPM: test_tpkms.REAL_TPMS_VALS,
-        t.CALCULATED_TPM: test_tpkms.CALC_TPMS_VALS,
-        test_tpkms.GROUP_TEST_COL: test_tpkms.GROUPS
+        t.REAL_TPM: test_tpms.REAL_TPMS_VALS,
+        t.CALCULATED_TPM: test_tpms.CALC_TPMS_VALS,
+        test_tpms.GROUP_TEST_COL: test_tpms.GROUPS
     })
 
     t.calculate_log_ratios(tpms)
@@ -23,8 +23,8 @@ def _get_test_tpms():
 def __get_test_grouped_tpms():
     tpms, tp_tpms = _get_test_tpms()
 
-    grouped = tpms.groupby(test_tpkms.GROUP_TEST_COL)
-    tp_grouped = tp_tpms.groupby(test_tpkms.GROUP_TEST_COL)
+    grouped = tpms.groupby(test_tpms.GROUP_TEST_COL)
+    tp_grouped = tp_tpms.groupby(test_tpms.GROUP_TEST_COL)
     summary = grouped.describe()
     tp_summary = tp_grouped.describe()
 
@@ -32,26 +32,26 @@ def __get_test_grouped_tpms():
 
 
 def _tpm_pairs(filter=lambda r, c: True):
-    return [(r, c) for r, c in zip(test_tpkms.REAL_TPMS_VALS,
-                                   test_tpkms.CALC_TPMS_VALS)
+    return [(r, c) for r, c in zip(test_tpms.REAL_TPMS_VALS,
+                                   test_tpms.CALC_TPMS_VALS)
             if filter(r, c)]
 
 
 def _tp_tpm_pairs():
-    return _tpm_pairs(lambda r, c: test_tpkms.true_positive(r, c))
+    return _tpm_pairs(lambda r, c: test_tpms.true_positive(r, c))
 
 
 def _group_tpm_pairs(group_val, filter=lambda r, c: True):
     return [(r, c) for r, c, gv in
-            zip(test_tpkms.REAL_TPMS_VALS,
-                test_tpkms.CALC_TPMS_VALS,
-                test_tpkms.GROUPS) if
+            zip(test_tpms.REAL_TPMS_VALS,
+                test_tpms.CALC_TPMS_VALS,
+                test_tpms.GROUPS) if
             (gv == group_val and filter(r, c))]
 
 
 def _group_tp_tpm_pairs(group_val):
     return _group_tpm_pairs(
-        group_val, lambda r, c: test_tpkms.true_positive(r, c))
+        group_val, lambda r, c: test_tpms.true_positive(r, c))
 
 
 def _check_statistic_value(stat_class, calculator, pair_func):
@@ -68,7 +68,7 @@ def _check_grouped_statistic_values(stat_class, calculator, grouped_pair_func):
     correct_value_calculator = lambda x: calculator(grouped_pair_func(x))
     group_count_test = \
         lambda x: grouped_stats.ix[x] == correct_value_calculator(x)
-    assert all([group_count_test(gv) for gv in set(test_tpkms.GROUPS)])
+    assert all([group_count_test(gv) for gv in set(test_tpms.GROUPS)])
 
 
 def test_get_statistics_returns_statistics_instances():
@@ -179,8 +179,8 @@ def test_median_percent_error_statistic_calculates_correct_grouped_values():
 
 
 def _sensitivity(tpm_pairs):
-    num_tp = sum([test_tpkms.true_positive(r, c) for r, c in tpm_pairs])
-    num_fn = sum([test_tpkms.false_negative(r, c) for r, c in tpm_pairs])
+    num_tp = sum([test_tpms.true_positive(r, c) for r, c in tpm_pairs])
+    num_fn = sum([test_tpms.false_negative(r, c) for r, c in tpm_pairs])
     return float(num_tp) / (num_tp + num_fn)
 
 
@@ -195,8 +195,8 @@ def test_sensitivity_statistic_calculates_correct_grouped_values():
 
 
 def _specificity(tpm_pairs):
-    num_fp = sum([test_tpkms.false_positive(r, c) for r, c in tpm_pairs])
-    num_tn = sum([test_tpkms.true_negative(r, c) for r, c in tpm_pairs])
+    num_fp = sum([test_tpms.false_positive(r, c) for r, c in tpm_pairs])
+    num_tn = sum([test_tpms.true_negative(r, c) for r, c in tpm_pairs])
     return float(num_tn) / (num_tn + num_fp)
 
 
