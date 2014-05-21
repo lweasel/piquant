@@ -90,7 +90,7 @@ class _Cufflinks:
 
         writer.add_line(
             "cufflinks -o transcriptome -u -b " + bowtie_index +
-            ".fa -p 8 --library-type fr-unstranded -G " +
+            ".fa -p 8 --library-type fr-secondstrand -G " +
             params[TRANSCRIPT_GTF_FILE] + " " + mapped_reads)
 
     def get_results_file(self):
@@ -149,8 +149,8 @@ class _RSEM:
         ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
         writer.add_line(
             "rsem-calculate-expression --time " + qualities_spec +
-            " --p 32 --output-genome-bam " + reads_spec + " " +
-            ref_name + " " + _RSEM.SAMPLE_NAME)
+            " --p 32 --output-genome-bam --strand-specific " + reads_spec +
+            " " + ref_name + " " + _RSEM.SAMPLE_NAME)
 
     def get_results_file(self):
         return _RSEM.SAMPLE_NAME + ".isoforms.results"
