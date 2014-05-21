@@ -1,5 +1,6 @@
 Cython>=0.20.1
 OrdUtils>=0.1.0
+Sphinx>=1.2.2
 docopt>=0.6.1
 matplotlib>=1.3.1
 numpy>=1.8.0
