@@ -67,7 +67,7 @@ def _write_flux_simulator_expression_params(
 
 def _write_flux_simulator_simulation_params(
         transcript_gtf_file, genome_fasta_dir, num_fragments,
-        read_length, paired_end, errors, bias,
+        read_length, paired_end, errors,
         fs_pro_file, output_dir):
 
     fs_params = _get_common_flux_simulator_params(
@@ -89,21 +89,18 @@ def _write_flux_simulator_simulation_params(
             read_length > 0.5*(ERROR_MODEL_SHORT + ERROR_MODEL_LONG) \
             else ERROR_MODEL_SHORT
 
-    if bias:
-        fs_params["RT_MOTIF"] = "default"
-
     writer = fw.FluxSimulatorParamsWriter(fs_params)
     writer.write_to_file(output_dir, SIMULATION_PARAMS_FILE)
 
 
 def write_flux_simulator_params_files(
         transcript_gtf_file, genome_fasta_dir, num_fragments,
-        read_length, paired_end, errors, bias,
+        read_length, paired_end, errors,
         fs_pro_file, output_dir):
 
     _write_flux_simulator_expression_params(
         transcript_gtf_file, genome_fasta_dir, num_fragments, output_dir)
     _write_flux_simulator_simulation_params(
         transcript_gtf_file, genome_fasta_dir, num_fragments,
-        read_length, paired_end, errors, bias,
+        read_length, paired_end, errors,
         fs_pro_file, output_dir)
