@@ -19,6 +19,12 @@ def _get_test_tpms():
     return tpms
 
 
+def _get_test_tp_tpms():
+    tpms = _get_test_tpms()
+    return tpms[(tpms[t.REAL_TPM] > t.NOT_PRESENT_CUTOFF) &
+                (tpms[t.CALCULATED_TPM] > t.NOT_PRESENT_CUTOFF)]
+
+
 def true_positive(real_tpm, calculated_tpm):
     return real_tpm > t.NOT_PRESENT_CUTOFF and \
         calculated_tpm > t.NOT_PRESENT_CUTOFF
@@ -37,6 +43,16 @@ def false_negative(real_tpm, calculated_tpm):
 def false_positive(real_tpm, calculated_tpm):
     return real_tpm < t.NOT_PRESENT_CUTOFF and \
         calculated_tpm > t.NOT_PRESENT_CUTOFF
+
+
+class DummyStatistic:
+    def __init__(self, name, true_positives):
+        self.name = name
+        self.true_positives = true_positives
+
+    def calculate(self, tpms, tp_tpms):
+        df = tp_tpms if self.true_positives else tpms
+        return len(df)
 
 
 def test_mark_positives_negatives_marks_correct_entries_as_true_positive():
@@ -153,3 +169,40 @@ def test_apply_classifiers_calculates_correct_values():
 
     for index, row in tpms.iterrows():
         assert row[name] == CALC_TPMS_VALS[index] + val
+
+
+def test_get_stats_returns_correct_number_of_statistics():
+    num_statistics = 5
+    statistics = [DummyStatistic(str(i), False) for i in range(num_statistics)]
+
+    tpms = _get_test_tpms()
+    tp_tpms = _get_test_tp_tpms()
+
+    stats = t.get_stats(tpms, tp_tpms, statistics)
+    assert len(stats.columns) == num_statistics
+
+
+def test_get_stats_returns_correct_column_names():
+    name1 = "dummy1"
+    name2 = "dummy2"
+    statistics = [DummyStatistic(name1, False), DummyStatistic(name2, False)]
+
+    tpms = _get_test_tpms()
+    tp_tpms = _get_test_tp_tpms()
+
+    stats = t.get_stats(tpms, tp_tpms, statistics)
+    assert name1 in stats.columns
+    assert name2 in stats.columns
+
+
+def test_get_stats_calculates_correct_values():
+    name1 = "dummy1"
+    name2 = "dummy2"
+    statistics = [DummyStatistic(name1, False), DummyStatistic(name2, True)]
+
+    tpms = _get_test_tpms()
+    tp_tpms = _get_test_tp_tpms()
+
+    stats = t.get_stats(tpms, tp_tpms, statistics)
+    assert stats[name1].ix[0] == len(tpms)
+    assert stats[name2].ix[0] == len(tp_tpms)
