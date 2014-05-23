@@ -30,7 +30,7 @@ def _add_create_expression_profiles(writer):
         "flux-simulator -t simulator -x -p " + fs.EXPRESSION_PARAMS_FILE)
 
 
-def _add_fix_zero_length_transcripts(writer, fs_pro_file):
+def _add_fix_zero_length_transcripts(writer):
     # When creating expression profiles, Flux Simulator sometimes appears to
     # output (incorrectly) one transcript with zero length - which then causes
     # read simulation to fail. The following hack will remove the offending
@@ -40,17 +40,17 @@ def _add_fix_zero_length_transcripts(writer, fs_pro_file):
         "incorrectly output transcripts with zero length)")
     writer.add_line(
         "ZERO_LENGTH_COUNT=$(awk 'BEGIN {i=0} $4 == 0 {i++;} " +
-        "END {print i}' " + fs_pro_file + ")")
+        "END {print i}' " + fs.EXPRESSION_PROFILE_FILE + ")")
     writer.add_echo()
     writer.add_echo(
         "Removing $ZERO_LENGTH_COUNT transcripts with zero length...")
     writer.add_echo()
     writer.add_line(
-        "awk '$4 > 0' " + fs_pro_file + " > tmp; mv tmp " + fs_pro_file)
+        "awk '$4 > 0' " + fs.EXPRESSION_PROFILE_FILE +
+        " > tmp; mv tmp " + fs.EXPRESSION_PROFILE_FILE)
 
 
-def _add_calculate_required_read_depth(
-        writer, fs_pro_file, read_length, read_depth, bias):
+def _add_calculate_required_read_depth(writer, read_length, read_depth, bias):
 
     # Given the expression profile created, calculate the number of reads
     # required to give the (approximate) read depth specified. Then edit the
@@ -62,7 +62,8 @@ def _add_calculate_required_read_depth(
         str(read_length))
     writer.set_variable(
         "READS", "$(python " + CALC_READ_DEPTH_SCRIPT + " " +
-        fs_pro_file + " " + str(read_length) + " " + str(read_depth) + ")")
+        fs.EXPRESSION_PROFILE_FILE + " " + str(read_length) + " " +
+        str(read_depth) + ")")
 
     if bias:
         writer.add_comment(
@@ -152,16 +153,15 @@ def _add_separate_paired_end_reads(writer, paired_end, errors):
 
 
 def _add_create_reads(
-        writer, fs_pro_file, read_length, read_depth,
-        paired_end, errors, bias):
+        writer, read_length, read_depth, paired_end, errors, bias):
 
     with writer.section():
         _add_create_expression_profiles(writer)
     with writer.section():
-        _add_fix_zero_length_transcripts(writer, fs_pro_file)
+        _add_fix_zero_length_transcripts(writer)
     with writer.section():
         _add_calculate_required_read_depth(
-            writer, fs_pro_file, read_length, read_depth, bias)
+            writer, read_length, read_depth, bias)
     with writer.section():
         _add_update_flux_simulator_parameters(writer)
     with writer.section():
@@ -178,24 +178,18 @@ def _create_simulator_parameter_files(
         reads_dir, transcript_gtf_file, genome_fasta_dir,
         num_fragments, read_length, paired_end, errors):
 
-    fs_pro_file = fs.EXPRESSION_PARAMS_FILE.replace("par", "pro")
-
     fs.write_flux_simulator_params_files(
         transcript_gtf_file, genome_fasta_dir, num_fragments,
-        read_length, paired_end, errors, fs_pro_file, reads_dir)
-
-    return fs_pro_file
+        read_length, paired_end, errors, reads_dir)
 
 
 def _write_read_simulation_script(
-        reads_dir, fs_pro_file, read_length, read_depth,
-        paired_end, errors, bias):
+        reads_dir, read_length, read_depth, paired_end, errors, bias):
 
     writer = fw.BashScriptWriter()
     with writer.section():
         _add_create_reads(
-            writer, fs_pro_file, read_length, read_depth,
-            paired_end, errors, bias)
+            writer, read_length, read_depth, paired_end, errors, bias)
     writer.write_to_file(reads_dir, RUN_SCRIPT)
 
 
@@ -207,11 +201,10 @@ def create_simulation_files(
     os.mkdir(reads_dir)
 
     # Write Flux Simulator parameters files
-    fs_pro_file = _create_simulator_parameter_files(
+    _create_simulator_parameter_files(
         reads_dir, transcript_gtf_file, genome_fasta_dir,
         num_fragments, read_length, paired_end, errors)
 
     # Write shell script to run read simulation
     _write_read_simulation_script(
-        reads_dir, fs_pro_file, read_length, read_depth,
-        paired_end, errors, bias)
+        reads_dir, read_length, read_depth, paired_end, errors, bias)

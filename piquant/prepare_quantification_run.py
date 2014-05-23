@@ -202,8 +202,7 @@ def write_run_quantification_script(
         quant_method=None, read_length=50, read_depth=10,
         paired_end=False, errors=False, bias=False):
 
-    fs_pro_file = input_dir + os.path.sep + \
-        fs.EXPRESSION_PARAMS_FILE.replace("par", "pro")
+    fs_pro_file = input_dir + os.path.sep + fs.EXPRESSION_PROFILE_FILE
 
     _update_params_spec(params_spec, input_dir, quantifier_dir,
                         paired_end, errors)
