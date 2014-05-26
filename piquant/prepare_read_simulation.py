@@ -14,15 +14,6 @@ TMP_LEFT_READS_FILE = "lr.tmp"
 TMP_RIGHT_READS_FILE = "rr.tmp"
 
 
-def _get_reads_file(errors, paired_end=None):
-    reads_file = fs.SIMULATED_READS_PREFIX
-    if paired_end == 'l':
-        reads_file += ".1"
-    if paired_end == 'r':
-        reads_file += ".2"
-    return reads_file + (".fastq" if errors else ".fasta")
-
-
 def _add_create_expression_profiles(writer):
     writer.add_comment(
         "First run Flux Simulator to create expression profiles.")
@@ -103,7 +94,7 @@ def _add_shuffle_simulated_reads(writer, paired_end, errors):
         "Some isoform quantifiers require reads to be presented in a " +
         "random order, hence we shuffle the reads output by Flux Simulator.")
 
-    reads_file = _get_reads_file(errors)
+    reads_file = fs.get_reads_file(errors)
     writer.add_pipe([
         "paste " + ("- " * lines_per_fragment) + "< " + reads_file,
         "shuf",
@@ -119,7 +110,7 @@ def _add_simulate_read_bias(writer, paired_end, errors, bias):
             "Use a position weight matrix to simulate sequence bias in " +
             "the reads.")
 
-        reads_file = _get_reads_file(errors)
+        reads_file = fs.get_reads_file(errors)
         out_prefix = "bias"
         writer.add_line(
             "python " + SIMULATE_BIAS_SCRIPT +
@@ -139,17 +130,17 @@ def _add_separate_paired_end_reads(writer, paired_end, errors):
             "output into files containing left and right reads.")
         writer.add_pipe([
             "paste " + ("- - - -" if errors else "- -") + " < " +
-            _get_reads_file(errors),
+            fs.get_reads_file(errors),
             "awk -F '\\t' '$1~/\/1/ " +
             "{print $0 > \"" + TMP_LEFT_READS_FILE + "\"} " +
             "$1~/\/2/ {print $0 > \"" + TMP_RIGHT_READS_FILE + "\"}'"
         ])
         writer.add_line(
             "tr '\\t' '\\n' < " + TMP_LEFT_READS_FILE + " > " +
-            _get_reads_file(errors, 'l'))
+            fs.get_reads_file(errors, 'l'))
         writer.add_line(
             "tr '\\t' '\\n' < " + TMP_RIGHT_READS_FILE + " > " +
-            _get_reads_file(errors, 'r'))
+            fs.get_reads_file(errors, 'r'))
 
 
 def _add_create_reads(

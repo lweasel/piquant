@@ -132,3 +132,13 @@ def write_flux_simulator_params_files(
     _write_flux_simulator_simulation_params(
         transcript_gtf_file, genome_fasta_dir, num_fragments,
         read_length, paired_end, errors, output_dir)
+
+
+def get_reads_file(errors, paired_end=None):
+    # TODO: Document and test
+    reads_file = SIMULATED_READS_PREFIX
+    if paired_end == 'l':
+        reads_file += ".1"
+    if paired_end == 'r':
+        reads_file += ".2"
+    return reads_file + (".fastq" if errors else ".fasta")

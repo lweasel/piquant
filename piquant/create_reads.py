@@ -3,8 +3,9 @@
 # TODO: add logging
 
 """Usage:
-    create_simulated_reads prepare [--log-level=<log-level>] [--out-dir=<out_dir>] [--num-fragments=<num-fragments>] --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> <transcript-gtf-file> <genome-fasta-dir>
-    create_simulated_reads create [--log-level=<log-level>] [--out-dir=<out_dir>] --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
+    create_reads prepare [--log-level=<log-level>] [--out-dir=<out_dir>] [--num-fragments=<num-fragments>] --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> <transcript-gtf-file> <genome-fasta-dir>
+    create_reads create [--log-level=<log-level>] [--out-dir=<out_dir>] --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
+    create_reads check_completion [--log-level=<log-level>] [--out-dir=<out_dir>] --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
 
 -h --help                        Show this message.
 -v --version                     Show version.
@@ -23,6 +24,7 @@
 """
 
 import docopt
+import flux_simulator as fs
 import ordutils.log as log
 import ordutils.options as opt
 import os.path
@@ -38,12 +40,13 @@ OUTPUT_DIRECTORY = "--out-dir"
 NUM_FRAGMENTS = "--num-fragments"
 PREPARE = "prepare"
 CREATE = "create"
+CHECK_COMPLETION = "check_completion"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
 # Read in command-line options
 __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
-options = docopt.docopt(__doc__, version="create_simulated_reads v0.1")
+options = docopt.docopt(__doc__, version="create_reads v0.1")
 
 # Validate command-line options
 param_values = None
@@ -69,33 +72,55 @@ except schema.SchemaError as exc:
     exit(exc.code)
 
 
-def check_reads_directory(**params):
-    reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
+def get_reads_dir(**params):
+    return options[OUTPUT_DIRECTORY] + os.path.sep + \
         parameters.get_file_name(**params)
-    if options[CREATE] != os.path.exists(reads_dir):
+
+
+def check_reads_directory(**params):
+    reads_dir = get_reads_dir(**params)
+    should_exist = options[CREATE] or options[CHECK_COMPLETION]
+    if should_exist != os.path.exists(reads_dir):
         sys.exit("Reads directory '{d}' should ".format(d=reads_dir) +
                  ("" if options[CREATE] else "not ") + "already exist.")
 
 
-def create_and_run_reads_simulation(**params):
-    reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
-        parameters.get_file_name(**params)
+def prepare_read_simulation(**params):
+    reads_dir = get_reads_dir(**params)
+    prs.create_simulation_files(
+        reads_dir, options[TRANSCRIPT_GTF_FILE], options[GENOME_FASTA_DIR],
+        options[NUM_FRAGMENTS], **params)
 
-    if options[PREPARE]:
-        prs.create_simulation_files(
-            reads_dir, options[TRANSCRIPT_GTF_FILE], options[GENOME_FASTA_DIR],
-            options[NUM_FRAGMENTS], **params)
-    elif options[CREATE]:
-        cwd = os.getcwd()
-        os.chdir(reads_dir)
-        args = ['nohup', './run_simulation.sh']
-        subprocess.Popen(args)
-        os.chdir(cwd)
+
+def create_reads(**params):
+    cwd = os.getcwd()
+    os.chdir(get_reads_dir(**params))
+    args = ['nohup', './run_simulation.sh']
+    subprocess.Popen(args)
+    os.chdir(cwd)
+
+
+def check_completion(**params):
+    reads_dir = get_reads_dir(**params)
+    reads_file = fs.get_reads_file(
+        params[parameters.ERRORS],
+        'l' if params[parameters.PAIRED_END] else None)
+    reads_file_path = reads_dir + os.path.sep + reads_file
+    if not os.path.exists(reads_file_path):
+        run_name = os.path.basename(reads_dir)
+        logger.error("Run " + run_name + " did not complete.")
 
 
 # Set up logger
 logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
-parameters.execute_for_param_sets(
-    [check_reads_directory, create_and_run_reads_simulation],
-    **param_values)
+to_execute = [check_reads_directory]
+
+if options[PREPARE]:
+    to_execute.append(prepare_read_simulation)
+elif options[CREATE]:
+    to_execute.append(create_reads)
+elif options[CHECK_COMPLETION]:
+    to_execute.append(check_completion)
+
+parameters.execute_for_param_sets(to_execute, **param_values)

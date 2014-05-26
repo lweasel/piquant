@@ -22,15 +22,6 @@ TRANSCRIPT_COUNTS_FILE = "transcript_counts.csv"
 UNIQUE_SEQUENCE_FILE = "unique_sequence.csv"
 
 
-def _get_reads_file(errors, paired_end=None):
-    reads_file = fs.SIMULATED_READS_PREFIX
-    if paired_end == 'l':
-        reads_file += ".1"
-    if paired_end == 'r':
-        reads_file += ".2"
-    return reads_file + (".fastq" if errors else ".fasta")
-
-
 def _get_transcript_counts_file(transcript_gtf_file):
     # TODO: output to quantification scratch directory
     gtf_dir = os.path.abspath(
@@ -165,12 +156,12 @@ def _update_params_spec(params_spec, input_dir, quantifier_dir,
                         paired_end, errors):
     if paired_end:
         params_spec[qs.LEFT_SIMULATED_READS] = \
-            input_dir + os.path.sep + _get_reads_file(errors, 'l')
+            input_dir + os.path.sep + fs.get_reads_file(errors, 'l')
         params_spec[qs.RIGHT_SIMULATED_READS] = \
-            input_dir + os.path.sep + _get_reads_file(errors, 'r')
+            input_dir + os.path.sep + fs.get_reads_file(errors, 'r')
     else:
         params_spec[qs.SIMULATED_READS] = \
-            input_dir + os.path.sep + _get_reads_file(errors)
+            input_dir + os.path.sep + fs.get_reads_file(errors)
 
     params_spec[qs.QUANTIFIER_DIRECTORY] = quantifier_dir
     params_spec[qs.FASTQ_READS] = errors
