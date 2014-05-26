@@ -3,11 +3,12 @@
 # TODO: should be able to separately specify parent directory for reads directories.
 
 """Usage:
-    run_quantifiers prepare [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> <transcript-gtf-file> <genome-fasta-dir>
-    run_quantifiers prequantify [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
-    run_quantifiers quantify [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
-    run_quantifiers check_completion [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
+    quantify prepare [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> <transcript-gtf-file> <genome-fasta-dir>
+    quantify prequantify [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
+    quantify run [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
+    quantify check_completion [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
 
+Options:
 -h --help                          Show this message.
 -v --version                       Show version.
 --log-level=<log-level>            Set logging level (one of {log_level_vals}) [default: info].
@@ -37,13 +38,14 @@ import quantifiers as qs
 import statistics
 import subprocess
 import sys
+import time
 
 LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
 OUTPUT_DIRECTORY = "--out-dir"
 PREPARE = "prepare"
 PREQUANTIFY = "prequantify"
-QUANTIFY = "quantify"
+QUANTIFY = "run"
 CHECK_COMPLETION = "check_completion"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
@@ -130,12 +132,13 @@ def prequantify(**params):
     run_name = parameters.get_file_name(**params)
     run_dir = options[OUTPUT_DIRECTORY] + os.path.sep + run_name
 
-    quant_method = param_values[parameters.QUANT_METHOD]
+    quant_method = params[parameters.QUANT_METHOD]
     if quant_method not in quantifiers_used:
         quantifiers_used.append(quant_method)
         logger.info("Executing prequantification for " +
                     quant_method.get_name())
         execute_quantification_script(run_dir, "-p")
+        time.sleep(1)
 
 
 def quantify(**params):

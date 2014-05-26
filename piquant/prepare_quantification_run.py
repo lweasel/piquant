@@ -130,7 +130,7 @@ def _add_process_command_line_options(writer):
         writer.set_variable(QUANTIFY_TRANSCRIPTS_VARIABLE, "")
         writer.set_variable(ANALYSE_RESULTS_VARIABLE, "")
 
-    with writer.while_block("getopts \":qa\" opt"):
+    with writer.while_block("getopts \":pqa\" opt"):
         with writer.case_block("$opt"):
             with writer.case_option_block("p"):
                 writer.set_variable(RUN_PREQUANTIFICATION_VARIABLE, 1)
