@@ -80,7 +80,6 @@ class _Cufflinks:
             else params[LEFT_SIMULATED_READS] + \
             " " + params[RIGHT_SIMULATED_READS]
 
-        writer.add_comment("Map simulated reads to the genome with TopHat.")
         writer.add_line(
             "tophat --library-type fr-unstranded --no-coverage-search " +
             "-p 8 -o " + _Cufflinks.TOPHAT_OUTPUT_DIR + " " + bowtie_index +
@@ -182,14 +181,12 @@ class _Express:
         with writer.section():
             _RSEM().write_preparatory_commands(writer, params)
 
+    def write_quantification_commands(self, writer, params):
         qualities_spec = "-q" if params[FASTQ_READS] else "-f"
 
         reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
             else "-1 " + params[LEFT_SIMULATED_READS] + \
             " -2 " + params[RIGHT_SIMULATED_READS]
-
-        writer.add_comment(
-            "Now map simulated reads to the transcriptome with Bowtie.")
 
         ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
         writer.add_pipe([
@@ -199,7 +196,6 @@ class _Express:
             "samtools view -Sb - > " + _Express.MAPPED_READS_FILE
         ])
 
-    def write_quantification_commands(self, writer, params):
         stranded_spec = "--fr-stranded " \
             if SIMULATED_READS not in params else ""
 
