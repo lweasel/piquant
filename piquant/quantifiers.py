@@ -72,6 +72,10 @@ class _Cufflinks:
                     "bowtie-inspect " + bowtie_index + " > " +
                     bowtie_index + ".fa")
 
+    def write_quantification_commands(self, writer, params):
+        bowtie_index = _Cufflinks._get_bowtie_index(
+            params[QUANTIFIER_DIRECTORY])
+
         reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
             else params[LEFT_SIMULATED_READS] + \
             " " + params[RIGHT_SIMULATED_READS]
@@ -82,9 +86,6 @@ class _Cufflinks:
             "-p 8 -o " + _Cufflinks.TOPHAT_OUTPUT_DIR + " " + bowtie_index +
             " " + reads_spec)
 
-    def write_quantification_commands(self, writer, params):
-        bowtie_index = _Cufflinks._get_bowtie_index(
-            params[QUANTIFIER_DIRECTORY])
         mapped_reads = _Cufflinks.TOPHAT_OUTPUT_DIR + \
             os.path.sep + "accepted_hits.bam"
 
