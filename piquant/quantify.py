@@ -34,9 +34,9 @@ import os
 import os.path
 import parameters
 import prepare_quantification_run as prq
+import process
 import quantifiers as qs
 import statistics
-import subprocess
 import sys
 import time
 
@@ -100,11 +100,7 @@ def check_run_directory(**params):
 
 
 def execute_quantification_script(run_dir, cl_opts):
-    cwd = os.getcwd()
-    os.chdir(run_dir)
-    args = ['nohup', './run_quantification.sh', cl_opts]
-    subprocess.Popen(args)
-    os.chdir(cwd)
+    process.run_in_directory(run_dir, './run_quantification.sh', cl_opts)
 
 
 def prepare_quantification(**params):

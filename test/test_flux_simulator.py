@@ -1,22 +1,13 @@
 import os.path
 import piquant.flux_simulator as fs
-import shutil
 import subprocess
-import tempfile
+
+from utils import TempDir
 
 TRANSCRIPT_GTF_FILE = "transcript_gtf_file"
 GENOME_FASTA_DIR = "genome_fasta_dir"
 NUM_FRAGMENTS = 1000
 READ_LENGTH = 50
-
-
-class TempDir:
-    def __enter__(self):
-        self.dirname = tempfile.mkdtemp()
-        return self.dirname
-
-    def __exit__(self, type, value, traceback):
-        shutil.rmtree(self.dirname)
 
 
 def _write_flux_simulator_params_files(

@@ -30,8 +30,8 @@ import ordutils.options as opt
 import os.path
 import parameters
 import prepare_read_simulation as prs
+import process
 import schema
-import subprocess
 import sys
 
 LOG_LEVEL = "--log-level"
@@ -93,11 +93,8 @@ def prepare_read_simulation(**params):
 
 
 def create_reads(**params):
-    cwd = os.getcwd()
-    os.chdir(get_reads_dir(**params))
-    args = ['nohup', './run_simulation.sh']
-    subprocess.Popen(args)
-    os.chdir(cwd)
+    run_dir = get_reads_dir(**params)
+    process.run_in_directory(run_dir, './run_simulation.sh')
 
 
 def check_completion(**params):

@@ -54,8 +54,8 @@ def degenerate_param(param, param_values):
     return len(param_values[param]) <= 1
 
 
-def get_non_degenerate_params(param_values):
-    return [p for p in param_values if not degenerate_param(p, param_values)]
+def get_non_degenerate_params(params, param_values):
+    return [p for p in params if not degenerate_param(p, param_values)]
 
 
 def remove_from(params, to_remove):
