@@ -38,7 +38,7 @@ def _tpm_pairs(filter=lambda r, c: True):
 
 
 def _tp_tpm_pairs():
-    return _tpm_pairs(lambda r, c: test_tpms.true_positive(r, c))
+    return _tpm_pairs(lambda r, c: test_tpms._true_positive(r, c))
 
 
 def _group_tpm_pairs(group_val, filter=lambda r, c: True):
@@ -51,7 +51,7 @@ def _group_tpm_pairs(group_val, filter=lambda r, c: True):
 
 def _group_tp_tpm_pairs(group_val):
     return _group_tpm_pairs(
-        group_val, lambda r, c: test_tpms.true_positive(r, c))
+        group_val, lambda r, c: test_tpms._true_positive(r, c))
 
 
 def _check_statistic_value(stat_class, calculator, pair_func):
@@ -179,8 +179,8 @@ def test_median_percent_error_statistic_calculates_correct_grouped_values():
 
 
 def _sensitivity(tpm_pairs):
-    num_tp = sum([test_tpms.true_positive(r, c) for r, c in tpm_pairs])
-    num_fn = sum([test_tpms.false_negative(r, c) for r, c in tpm_pairs])
+    num_tp = sum([test_tpms._true_positive(r, c) for r, c in tpm_pairs])
+    num_fn = sum([test_tpms._false_negative(r, c) for r, c in tpm_pairs])
     return float(num_tp) / (num_tp + num_fn)
 
 
@@ -195,8 +195,8 @@ def test_sensitivity_statistic_calculates_correct_grouped_values():
 
 
 def _specificity(tpm_pairs):
-    num_fp = sum([test_tpms.false_positive(r, c) for r, c in tpm_pairs])
-    num_tn = sum([test_tpms.true_negative(r, c) for r, c in tpm_pairs])
+    num_fp = sum([test_tpms._false_positive(r, c) for r, c in tpm_pairs])
+    num_tn = sum([test_tpms._true_negative(r, c) for r, c in tpm_pairs])
     return float(num_tn) / (num_tn + num_fp)
 
 
