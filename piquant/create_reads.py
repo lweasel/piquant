@@ -3,9 +3,9 @@
 # TODO: add logging
 
 """Usage:
-    create_reads prepare [--log-level=<log-level> --out-dir=<out_dir> --num-fragments=<num-fragments> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> <transcript-gtf-file> <genome-fasta-dir>]
-    create_reads create [--log-level=<log-level> --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
-    create_reads check_completion [--log-level=<log-level> --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+    create_reads prepare_read_dirs [--log-level=<log-level> --out-dir=<out_dir> --num-fragments=<num-fragments> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> <transcript-gtf-file> <genome-fasta-dir>]
+    create_reads create_reads [--log-level=<log-level> --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+    create_reads check_reads [--log-level=<log-level> --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
 
 -h --help                        Show this message.
 -v --version                     Show version.
@@ -38,9 +38,9 @@ LOG_LEVEL_VALS = str(log.LEVELS.keys())
 OUTPUT_DIRECTORY = "--out-dir"
 NUM_FRAGMENTS = "--num-fragments"
 PARAMS_FILE = "--params-file"
-PREPARE = "prepare"
-CREATE = "create"
-CHECK_COMPLETION = "check_completion"
+PREPARE_READ_DIRS = "prepare_read_dirs"
+CREATE_READS = "create_reads"
+CHECK_READS = "check_reads"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
@@ -65,7 +65,7 @@ try:
         "Parameter specification file should exist",
         nullable=True)
 
-    if options[PREPARE]:
+    if options[PREPARE_READ_DIRS]:
         opt.validate_file_option(
             options[TRANSCRIPT_GTF_FILE], "Transcript GTF file does not exist")
         opt.validate_dir_option(
@@ -84,10 +84,10 @@ def get_reads_dir(**params):
 
 def check_reads_directory(**params):
     reads_dir = get_reads_dir(**params)
-    should_exist = options[CREATE] or options[CHECK_COMPLETION]
+    should_exist = options[CREATE_READS] or options[CHECK_READS]
     if should_exist != os.path.exists(reads_dir):
         sys.exit("Reads directory '{d}' should ".format(d=reads_dir) +
-                 ("" if options[CREATE] else "not ") + "already exist.")
+                 ("" if options[CREATE_READS] else "not ") + "already exist.")
 
 
 def prepare_read_simulation(**params):
@@ -118,11 +118,11 @@ logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
 to_execute = [check_reads_directory]
 
-if options[PREPARE]:
+if options[PREPARE_READ_DIRS]:
     to_execute.append(prepare_read_simulation)
-elif options[CREATE]:
+elif options[CREATE_READS]:
     to_execute.append(create_reads)
-elif options[CHECK_COMPLETION]:
+elif options[CHECK_READS]:
     to_execute.append(check_completion)
 
 parameters.execute_for_param_sets(to_execute, **param_values)
