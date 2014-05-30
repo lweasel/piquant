@@ -3,10 +3,10 @@
 # TODO: should be able to separately specify parent directory for reads directories.
 
 """Usage:
-    quantify prepare [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> <transcript-gtf-file> <genome-fasta-dir>
-    quantify prequantify [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
-    quantify run [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
-    quantify check_completion [--log-level=<log-level>] [--out-dir=<out-dir>] --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
+    quantify prepare [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>] <transcript-gtf-file> <genome-fasta-dir>
+    quantify prequantify [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+    quantify run [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+    quantify check_completion [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
 
 Options:
 -h --help                          Show this message.
@@ -15,6 +15,7 @@ Options:
 --out-dir=<out-dir>                Parent output directory to which quantification run directories will be written [default: output].
 --prepare-only                     Quantification run scripts will be created, but not run.
 --run-only                         Quantification run scripts will be run, but not created (they must already exist).
+-f --params-file=<params-file>     File containing specification of quantification methods, read-lengths, read-depths and end, error and bias parameter values to create reads for.
 -q --quant-method=<quant-methods>  Comma-separated list of quantification methods to run.
 -l --read-length=<read-lengths>    Comma-separated list of read-lengths to perform quantification for.
 -d --read-depth=<read-depths>      Comma-separated list of read-depths to perform quantification for.
@@ -43,6 +44,7 @@ import time
 LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
 OUTPUT_DIRECTORY = "--out-dir"
+PARAMS_FILE = "--params-file"
 PREPARE = "prepare"
 PREQUANTIFY = "prequantify"
 QUANTIFY = "run"
@@ -52,7 +54,7 @@ GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
 # Read in command-line options
 __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
-options = docopt(__doc__, version="prepare_quantification_run v0.1")
+options = docopt(__doc__, version="quantify v0.1")
 
 # Validate and process command-line options
 param_values = None
@@ -61,7 +63,13 @@ try:
     opt.validate_dict_option(
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
 
-    param_values = parameters.validate_command_line_parameter_sets(options)
+    opt.validate_file_option(
+        options[PARAMS_FILE],
+        "Parameter specification file should exist",
+        nullable=True)
+
+    param_values = parameters.validate_command_line_parameter_sets(
+        options[PARAMS_FILE], options)
 
     if options[PREPARE]:
         opt.validate_file_option(

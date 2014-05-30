@@ -76,12 +76,15 @@ def test_get_file_name_part_returns_correct_value_when_file_namer_supplied():
     assert p.get_file_name_part(value) == str(value) + "bp"
 
 
-def test_validate_command_line_parameter_sets_returns_correct_number_of_param_vals():
+def test_validate_command_line_parameter_sets_returns_correct_number_of_param_sets():
     options = {
         "--quant-method": "Cufflinks",
-        "--read-length": "10,20"
+        "--read-length": "10,20",
     }
-    param_vals = parameters.validate_command_line_parameter_sets(options)
+
+    ignore_params = ["read_depth", "paired_end", "errors", "bias"]
+    param_vals = parameters.validate_command_line_parameter_sets(
+        None, options, ignore_params)
     assert len(param_vals) == 2
 
 
@@ -90,7 +93,11 @@ def test_validate_command_line_parameter_sets_returns_correct_number_of_transfor
     options = {
         "--read-length": ",".join([str(i) for i in range(0, num_values)])
     }
-    param_vals = parameters.validate_command_line_parameter_sets(options)
+
+    ignore_params = ["quant_method", "read_depth",
+                     "paired_end", "errors", "bias"]
+    param_vals = parameters.validate_command_line_parameter_sets(
+        None, options, ignore_params)
     assert len(param_vals[parameters.READ_LENGTH]) == num_values
 
 
@@ -100,7 +107,11 @@ def test_validate_command_line_parameter_sets_returns_correct_transformed_values
     options = {
         "--read-length": str(len1) + "," + str(len2)
     }
-    param_vals = parameters.validate_command_line_parameter_sets(options)
+
+    ignore_params = ["quant_method", "read_depth",
+                     "paired_end", "errors", "bias"]
+    param_vals = parameters.validate_command_line_parameter_sets(
+        None, options, ignore_params)
     assert len1 in param_vals[parameters.READ_LENGTH]
     assert len2 in param_vals[parameters.READ_LENGTH]
 
@@ -110,7 +121,7 @@ def test_validate_command_line_parameter_sets_raises_exception_for_invalid_param
         "--read-length": "abc"
     }
     with pytest.raises(schema.SchemaError):
-        parameters.validate_command_line_parameter_sets(options)
+        parameters.validate_command_line_parameter_sets(None, options)
 
 
 def test_get_file_name_returns_correct_name():

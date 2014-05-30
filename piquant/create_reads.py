@@ -3,17 +3,16 @@
 # TODO: add logging
 
 """Usage:
-    create_reads prepare [--log-level=<log-level>] [--out-dir=<out_dir>] [--num-fragments=<num-fragments>] --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> <transcript-gtf-file> <genome-fasta-dir>
-    create_reads create [--log-level=<log-level>] [--out-dir=<out_dir>] --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
-    create_reads check_completion [--log-level=<log-level>] [--out-dir=<out_dir>] --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>
+    create_reads prepare [--log-level=<log-level> --out-dir=<out_dir> --num-fragments=<num-fragments> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> <transcript-gtf-file> <genome-fasta-dir>]
+    create_reads create [--log-level=<log-level> --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+    create_reads check_completion [--log-level=<log-level> --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
 
 -h --help                        Show this message.
 -v --version                     Show version.
 --log-level=<log-level>          Set logging level (one of {log_level_vals}) [default: info].
 --out-dir=<out-dir>              Parent output directory to which read directories will be written [default: output].
 --num-fragments=<num-fragments>  Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
---prepare-only                   Read simulation scripts will be created, but not run (they must not already exist).
---run-only                       Read simulation scripts will be run, but not created (they must already exist).
+-f --params-file=<params-file>   File containing specification of read-lengths, read-depths and end, error and bias parameter values to create reads for.
 -l --read-length=<read-lengths>  Comma-separated list of read-lengths to create reads for.
 -d --read-depth=<read-depths>    Comma-separated list of read-depths to create reads for
 -p --paired-end=<paired-ends>    Comma-separated list of True/False strings indicating whether paired-end reads should be created.
@@ -38,6 +37,7 @@ LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
 OUTPUT_DIRECTORY = "--out-dir"
 NUM_FRAGMENTS = "--num-fragments"
+PARAMS_FILE = "--params-file"
 PREPARE = "prepare"
 CREATE = "create"
 CHECK_COMPLETION = "check_completion"
@@ -55,11 +55,15 @@ try:
     opt.validate_dict_option(
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
     opt.validate_dir_option(
-        options[OUTPUT_DIRECTORY], "Output parent directory does not exist.")
+        options[OUTPUT_DIRECTORY], "Output parent directory does not exist")
     options[NUM_FRAGMENTS] = opt.validate_int_option(
         options[NUM_FRAGMENTS],
-        "Number of fragments must be a positive integer.",
+        "Number of fragments must be a positive integer",
         nonneg=True)
+    opt.validate_file_option(
+        options[PARAMS_FILE],
+        "Parameter specification file should exist",
+        nullable=True)
 
     if options[PREPARE]:
         opt.validate_file_option(
@@ -67,9 +71,10 @@ try:
         opt.validate_dir_option(
             options[GENOME_FASTA_DIR], "Genome FASTA directory does not exist")
 
-    param_values = parameters.validate_command_line_parameter_sets(options)
+    param_values = parameters.validate_command_line_parameter_sets(
+        options[PARAMS_FILE], options, ignore_params=[parameters.QUANT_METHOD])
 except schema.SchemaError as exc:
-    exit(exc.code)
+    exit("Exiting. " + exc.code)
 
 
 def get_reads_dir(**params):

@@ -1,6 +1,8 @@
 import itertools
 import ordutils.options as opt
+import os.path
 import quantifiers
+import schema
 
 QUANT_METHOD = "quant_method"
 READ_DEPTH = "read_depth"
@@ -69,12 +71,31 @@ def get_parameters():
     return set(_PARAMETERS)
 
 
-def validate_command_line_parameter_sets(options):
+# TODO: add tests for params_file and ignore_params options
+def validate_command_line_parameter_sets(
+        params_file, cl_options, ignore_params=[]):
+
+    file_param_vals = {}
+    if params_file:
+        with open(params_file) as f:
+            file_param_vals = {param: vals for param, vals in
+                               [line.strip().split() for line in f]}
+
     param_vals = {}
     for param in get_parameters():
-        if param.option_name in options:
-            param_vals[param.name] = set(opt.validate_list_option(
-                options[param.option_name], param.option_validator))
+        if param.name in ignore_params:
+            continue
+
+        for values_dict in [file_param_vals, cl_options]:
+            if param.option_name in values_dict and \
+                    values_dict[param.option_name] is not None:
+                param_vals[param.name] = set(opt.validate_list_option(
+                    values_dict[param.option_name], param.option_validator))
+
+        if param.name not in param_vals:
+            raise schema.SchemaError(
+                None, param.title + " parameter values must be specified.")
+
     return param_vals
 
 
