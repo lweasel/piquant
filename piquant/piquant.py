@@ -47,7 +47,7 @@ import schema
 import statistics
 import sys
 import time
-import tpms_plotting as plot
+import plot
 
 LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())

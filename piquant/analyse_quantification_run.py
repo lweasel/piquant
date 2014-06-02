@@ -30,7 +30,7 @@ import pandas as pd
 import parameters
 import statistics
 import tpms as t
-import tpms_plotting as plot
+import plot
 
 TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
 TRUE_POSITIVES_LABEL = "true positives"
