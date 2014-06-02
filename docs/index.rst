@@ -15,6 +15,9 @@ Contents:
 
    intro
    overview
+   commands
+   support_scripts
+   extending
 
 
 Indices and tables
