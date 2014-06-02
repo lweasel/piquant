@@ -47,6 +47,7 @@ import schema
 import statistics
 import sys
 import time
+import tpms_plotting as plot
 
 LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
@@ -281,3 +282,24 @@ if options[ANALYSE_RUNS]:
         os.mkdir(options[STATS_DIRECTORY])
     for stats_acc in stats_accumulators:
         stats_acc.write_stats()
+
+    overall_stats_file = statistics.get_stats_file(
+        options[STATS_DIRECTORY], statistics.OVERALL_STATS_PREFIX)
+    overall_stats = pd.read_csv(overall_stats_file)
+
+    param_values = {}
+    for param in parameters.get_parameters():
+        param_series = overall_stats[param.name]
+        param_values[param] = param_series.value_counts().index.tolist()
+
+    logger.info("Drawing graphs derived from statistics calculated for the " +
+                "whole set of TPMs...")
+    plot.draw_overall_stats_graphs(
+        options[STATS_DIRECTORY], overall_stats, param_values)
+
+    logger.info("Drawing graphs derived from statistics calculated on " +
+                "subsets of TPMs...")
+    plot.draw_grouped_stats_graphs(options[STATS_DIRECTORY], param_values)
+
+    logger.info("Drawing distribution plots...")
+    plot.draw_distribution_graphs(options[STATS_DIRECTORY], param_values)
