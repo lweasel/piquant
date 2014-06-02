@@ -36,7 +36,7 @@ import os
 import os.path
 import parameters
 import prepare_quantification_run as prq
-import prepared_read_simulation as prs
+import prepare_read_simulation as prs
 import process
 import quantifiers as qs
 import schema
@@ -86,10 +86,15 @@ try:
         options[PARAMS_FILE],
         "Parameter specification file should exist",
         nullable=True)
-    param_values = parameters.validate_command_line_parameter_sets(
-        options[PARAMS_FILE], options)
 
-    if False in param_values[parameters.PAIRED_END]:
+    processing_reads = options[PREPARE_READ_DIRS] or \
+        options[CREATE_READS] or options[CHECK_READS]
+
+    ignore_params = [parameters.QUANT_METHOD] if processing_reads else []
+    param_values = parameters.validate_command_line_parameter_sets(
+        options[PARAMS_FILE], options, ignore_params=ignore_params)
+
+    if not processing_reads and False in param_values[parameters.PAIRED_END]:
         for qm in param_values[parameters.QUANT_METHOD]:
             if qm.requires_paired_end_reads():
                 raise schema.SchemaError(
@@ -99,23 +104,56 @@ except schema.SchemaError as exc:
     exit("Exiting. " + exc.code)
 
 
-def check_reads_directory(**params):
-    params = dict(params)
-    del params[parameters.QUANT_METHOD]
-    reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
+def get_parameters_dir(**params):
+    return options[OUTPUT_DIRECTORY] + os.path.sep + \
         parameters.get_file_name(**params)
-    if not os.path.exists(reads_dir):
-        sys.exit("Reads directory '{d}' should exist.".format(d=reads_dir))
 
 
-def check_run_directory(**params):
-    run_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
-        parameters.get_file_name(**params)
-    should_exist = options[PREQUANTIFY] or options[QUANTIFY] \
-        or options[CHECK_QUANTIFICATION]
-    if should_exist != os.path.exists(run_dir):
-        sys.exit("Run directory '{d}' should ".format(d=run_dir) +
-                 ("" if should_exist else "not ") + "already exist.")
+def reads_directory_checker(should_exist):
+    def check_reads_directory(**params):
+        params = dict(params)
+        if parameters.QUANT_METHOD in params:
+            del params[parameters.QUANT_METHOD]
+
+        reads_dir = get_parameters_dir(**params)
+        if should_exist != os.path.exists(reads_dir):
+            sys.exit("Reads directory '{d}' should {n}already exist.".
+                     format(d=reads_dir, n=("" if should_exist else "not ")))
+
+    return check_reads_directory
+
+
+def prepare_read_simulation(**params):
+    reads_dir = get_parameters_dir(**params)
+    prs.create_simulation_files(
+        reads_dir, options[TRANSCRIPT_GTF_FILE], options[GENOME_FASTA_DIR],
+        options[NUM_FRAGMENTS], **params)
+
+
+def create_reads(**params):
+    run_dir = get_parameters_dir(**params)
+    process.run_in_directory(run_dir, './run_simulation.sh')
+
+
+def check_reads_created(**params):
+    reads_dir = get_parameters_dir(**params)
+    reads_file = fs.get_reads_file(
+        params[parameters.ERRORS],
+        'l' if params[parameters.PAIRED_END] else None)
+    reads_file_path = reads_dir + os.path.sep + reads_file
+    if not os.path.exists(reads_file_path):
+        run_name = os.path.basename(reads_dir)
+        logger.error("Run " + run_name + " did not complete.")
+
+
+def run_directory_checker(should_exist):
+    def check_run_directory(**params):
+        run_dir = get_parameters_dir(**params)
+        if should_exist != os.path.exists(run_dir):
+            sys.exit("Run directory '{d}' should {n}already exist.".
+                     format(d=run_dir, n=("" if should_exist else "not ")))
+
+    return check_run_directory
 
 
 def execute_quantification_script(run_dir, cl_opts):
@@ -123,13 +161,12 @@ def execute_quantification_script(run_dir, cl_opts):
 
 
 def prepare_quantification(**params):
-    run_name = parameters.get_file_name(**params)
-    run_dir = options[OUTPUT_DIRECTORY] + os.path.sep + run_name
+    run_dir = get_parameters_dir(**params)
 
     reads_params = dict(params)
     del reads_params[parameters.QUANT_METHOD]
-    reads_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
-        parameters.get_file_name(**reads_params)
+    reads_dir = get_parameters_dir(**params)
+
     quantifier_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
         "quantifier_scratch"
 
@@ -146,8 +183,7 @@ quantifiers_used = []
 
 
 def prequantify(**params):
-    run_name = parameters.get_file_name(**params)
-    run_dir = options[OUTPUT_DIRECTORY] + os.path.sep + run_name
+    run_dir = get_parameters_dir(**params)
 
     quant_method = params[parameters.QUANT_METHOD]
     if quant_method not in quantifiers_used:
@@ -159,20 +195,19 @@ def prequantify(**params):
 
 
 def quantify(**params):
-    run_name = parameters.get_file_name(**params)
-    run_dir = options[OUTPUT_DIRECTORY] + os.path.sep + run_name
+    run_dir = get_parameters_dir(**params)
 
     logger.info("Executing shell script to run quantification analysis.")
     execute_quantification_script(run_dir, "-qa")
 
 
-def check_completion(**params):
-    run_name = parameters.get_file_name(**params)
-    run_dir = options[OUTPUT_DIRECTORY] + os.path.sep + run_name
+def check_quantification_completed(**params):
+    run_dir = get_parameters_dir(**params)
 
     main_stats_file = statistics.get_stats_file(
         run_dir, os.path.basename(run_dir))
     if not os.path.exists(main_stats_file):
+        run_name = parameters.get_file_name(**params)
         logger.error("Run " + run_name + " did not complete")
 
 
@@ -181,15 +216,26 @@ logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
 options[OUTPUT_DIRECTORY] = os.path.abspath(options[OUTPUT_DIRECTORY])
 
-to_execute = [check_reads_directory, check_run_directory]
-
-if options[PREPARE_QUANT_DIRS]:
-    to_execute.append(prepare_quantification)
+if options[PREPARE_READ_DIRS]:
+    to_execute = [reads_directory_checker(False),
+                  prepare_read_simulation]
+elif options[CREATE_READS]:
+    to_execute = [reads_directory_checker(True),
+                  create_reads]
+elif options[CHECK_READS]:
+    to_execute = [reads_directory_checker(True),
+                  check_reads_created]
+elif options[PREPARE_QUANT_DIRS]:
+    to_execute = [run_directory_checker(False),
+                  prepare_quantification]
 elif options[PREQUANTIFY]:
-    to_execute.append(prequantify)
+    to_execute = [prequantify]
 elif options[QUANTIFY]:
-    to_execute.append(quantify)
+    to_execute = [reads_directory_checker(True),
+                  run_directory_checker(True),
+                  quantify]
 elif options[CHECK_QUANTIFICATION]:
-    to_execute.append(check_completion)
+    to_execute = [run_directory_checker(True),
+                  check_quantification_completed]
 
 parameters.execute_for_param_sets(to_execute, **param_values)
