@@ -97,12 +97,12 @@ try:
     processing_reads = options[PREPARE_READ_DIRS] or \
         options[CREATE_READS] or options[CHECK_READS]
 
-    ignore_params = [parameters.QUANT_METHOD] if processing_reads else []
+    ignore_params = [parameters.QUANT_METHOD.name] if processing_reads else []
     param_values = parameters.validate_command_line_parameter_sets(
         options[PARAMS_FILE], options, ignore_params=ignore_params)
 
-    if not processing_reads and False in param_values[parameters.PAIRED_END]:
-        for qm in param_values[parameters.QUANT_METHOD]:
+    if not processing_reads and False in param_values[parameters.PAIRED_END.name]:
+        for qm in param_values[parameters.QUANT_METHOD.name]:
             if qm.requires_paired_end_reads():
                 raise schema.SchemaError(
                     None, "Quantification method " + qm.get_name() +
@@ -119,8 +119,8 @@ def get_parameters_dir(**params):
 def reads_directory_checker(should_exist):
     def check_reads_directory(**params):
         params = dict(params)
-        if parameters.QUANT_METHOD in params:
-            del params[parameters.QUANT_METHOD]
+        if parameters.QUANT_METHOD.name in params:
+            del params[parameters.QUANT_METHOD.name]
 
         reads_dir = get_parameters_dir(**params)
         if should_exist != os.path.exists(reads_dir):
@@ -145,8 +145,8 @@ def create_reads(**params):
 def check_reads_created(**params):
     reads_dir = get_parameters_dir(**params)
     reads_file = fs.get_reads_file(
-        params[parameters.ERRORS],
-        'l' if params[parameters.PAIRED_END] else None)
+        params[parameters.ERRORS.name],
+        'l' if params[parameters.PAIRED_END.name] else None)
     reads_file_path = reads_dir + os.path.sep + reads_file
     if not os.path.exists(reads_file_path):
         run_name = os.path.basename(reads_dir)
@@ -171,7 +171,7 @@ def prepare_quantification(**params):
     run_dir = get_parameters_dir(**params)
 
     reads_params = dict(params)
-    del reads_params[parameters.QUANT_METHOD]
+    del reads_params[parameters.QUANT_METHOD.name]
     reads_dir = get_parameters_dir(**params)
 
     quantifier_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
@@ -192,7 +192,7 @@ quantifiers_used = []
 def prequantify(**params):
     run_dir = get_parameters_dir(**params)
 
-    quant_method = params[parameters.QUANT_METHOD]
+    quant_method = params[parameters.QUANT_METHOD.name]
     if quant_method not in quantifiers_used:
         quantifiers_used.append(quant_method)
         logger.info("Executing prequantification for " +

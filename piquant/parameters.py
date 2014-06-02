@@ -1,15 +1,7 @@
 import itertools
 import ordutils.options as opt
-import os.path
 import quantifiers
 import schema
-
-QUANT_METHOD = "quant_method"
-READ_DEPTH = "read_depth"
-READ_LENGTH = "read_length"
-PAIRED_END = "paired_end"
-ERRORS = "errors"
-BIAS = "bias"
 
 
 class _Parameter:
@@ -33,38 +25,44 @@ class _Parameter:
 _PARAMETERS = []
 
 # TODO: get rid of isinstance() ASAP
-_PARAMETERS.append(_Parameter(
-    QUANT_METHOD, "Method", "--quant-method",
+QUANT_METHOD = _Parameter(
+    "quant_method", "Method", "--quant-method",
     lambda x: quantifiers.get_quantification_methods()[x],
-    value_namer=lambda x: x if isinstance(x, basestring) else x.get_name()))
+    value_namer=lambda x: x if isinstance(x, basestring) else x.get_name())
+_PARAMETERS.append(QUANT_METHOD)
 
-_PARAMETERS.append(_Parameter(
-    READ_DEPTH, "Read depth", "--read-depth", int,
+READ_DEPTH = _Parameter(
+    "read_depth", "Read depth", "--read-depth", int,
     is_numeric=True,
-    value_namer=lambda x: "{d}x".format(d=x)))
+    value_namer=lambda x: "{d}x".format(d=x))
+_PARAMETERS.append(READ_DEPTH)
 
-_PARAMETERS.append(_Parameter(
-    READ_LENGTH, "Read length", "--read-length", int,
+READ_LENGTH = _Parameter(
+    "read_length", "Read length", "--read-length", int,
     is_numeric=True,
-    value_namer=lambda x: "{l}b".format(l=x)))
+    value_namer=lambda x: "{l}b".format(l=x))
+_PARAMETERS.append(READ_LENGTH)
 
-_PARAMETERS.append(_Parameter(
-    PAIRED_END, "End type", "--paired-end",
+PAIRED_END = _Parameter(
+    "paired_end", "End type", "--paired-end",
     opt.check_boolean_value,
     value_namer=lambda x: "paired-end" if x else "single-end",
-    file_namer=lambda x: "pe" if x else "se"))
+    file_namer=lambda x: "pe" if x else "se")
+_PARAMETERS.append(PAIRED_END)
 
-_PARAMETERS.append(_Parameter(
-    ERRORS, "Error type", "--error",
+ERRORS = _Parameter(
+    "errors", "Error type", "--error",
     opt.check_boolean_value,
     value_namer=lambda x: "with errors" if x else "no errors",
-    file_namer=lambda x: "errors" if x else "no_errors"))
+    file_namer=lambda x: "errors" if x else "no_errors")
+_PARAMETERS.append(ERRORS)
 
-_PARAMETERS.append(_Parameter(
-    BIAS, "Bias", "--bias",
+BIAS = _Parameter(
+    "bias", "Bias", "--bias",
     opt.check_boolean_value,
     value_namer=lambda x: "with bias" if x else "no bias",
-    file_namer=lambda x: "bias" if x else "no_bias"))
+    file_namer=lambda x: "bias" if x else "no_bias")
+_PARAMETERS.append(BIAS)
 
 
 def get_parameters():
