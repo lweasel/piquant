@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """Usage:
     analyse_quantification_run [--log-level=<log-level> --scatter-max=<scatter-max-val> --log10-scatter-min=<log10-scatter-min-val> --log10-scatter-max=<log10-scatter-max-val>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> <tpm-file> [<out-file>]

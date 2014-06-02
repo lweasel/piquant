@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """Usage:
     simulate_read_bias [--log-level=<log-level>] --num-reads=<num-reads> [--out-prefix=<out-prefix>] [--paired-end] <pwm-file> <reads_file>

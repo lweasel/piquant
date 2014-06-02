@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """Usage:
     count_transcripts_for_genes <gtf-file>

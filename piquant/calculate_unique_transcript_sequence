@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # TODO: Add logging
 # TODO: Make consistent with transcript count calculator re: output file vs
