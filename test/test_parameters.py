@@ -2,6 +2,7 @@ import piquant.parameters as parameters
 import pytest
 import schema
 
+
 def _get_test_parameter(
         name="name", title="The Name",
         option_name="--option-name", option_validator=int,
@@ -98,7 +99,7 @@ def test_validate_command_line_parameter_sets_returns_correct_number_of_transfor
                      "paired_end", "errors", "bias"]
     param_vals = parameters.validate_command_line_parameter_sets(
         None, options, ignore_params)
-    assert len(param_vals[parameters.READ_LENGTH]) == num_values
+    assert len(param_vals[parameters.READ_LENGTH.name]) == num_values
 
 
 def test_validate_command_line_parameter_sets_returns_correct_transformed_values():
@@ -112,8 +113,8 @@ def test_validate_command_line_parameter_sets_returns_correct_transformed_values
                      "paired_end", "errors", "bias"]
     param_vals = parameters.validate_command_line_parameter_sets(
         None, options, ignore_params)
-    assert len1 in param_vals[parameters.READ_LENGTH]
-    assert len2 in param_vals[parameters.READ_LENGTH]
+    assert len1 in param_vals[parameters.READ_LENGTH.name]
+    assert len2 in param_vals[parameters.READ_LENGTH.name]
 
 
 def test_validate_command_line_parameter_sets_raises_exception_for_invalid_param_values():
