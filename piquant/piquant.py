@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 # TODO: should be able to separately specify parent directory for reads directories.
+# TODO: rename out-dir
 
 """Usage:
     piquant prepare_read_dirs [--log-level=<log-level> --out-dir=<out_dir> --num-fragments=<num-fragments> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> <transcript-gtf-file> <genome-fasta-dir>]
@@ -10,13 +11,15 @@
     piquant prequantify [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant quantify [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant check_quant [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+    piquant analyse_runs [--log-level=<log-level> --out-dir=<out-dir> --stats-dir=<stats-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
 
 Options:
 -h --help                          Show this message.
 -v --version                       Show version.
 --log-level=<log-level>            Set logging level (one of {log_level_vals}) [default: info].
 --out-dir=<out-dir>                Parent output directory to which quantification run directories will be written [default: output].
---num-fragments=<num-fragments>  Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
+--stats-dir=<stats-dir>            Directory to output assembled stats and graphs to [default: output/overall_stats].
+--num-fragments=<num-fragments>    Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
 -f --params-file=<params-file>     File containing specification of quantification methods, read-lengths, read-depths and end, error and bias parameter values to create reads for.
 -q --quant-method=<quant-methods>  Comma-separated list of quantification methods to run.
 -l --read-length=<read-lengths>    Comma-separated list of read-lengths to perform quantification for.
@@ -34,6 +37,7 @@ import ordutils.log as log
 import ordutils.options as opt
 import os
 import os.path
+import pandas as pd
 import parameters
 import prepare_quantification_run as prq
 import prepare_read_simulation as prs
@@ -47,6 +51,7 @@ import time
 LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
 OUTPUT_DIRECTORY = "--out-dir"
+STATS_DIRECTORY = "--stats-dir"
 NUM_FRAGMENTS = "--num-fragments"
 PARAMS_FILE = "--params-file"
 PREPARE_READ_DIRS = "prepare_read_dirs"
@@ -56,6 +61,7 @@ PREPARE_QUANT_DIRS = "prepare_quant_dirs"
 PREQUANTIFY = "prequantify"
 QUANTIFY = "quantify"
 CHECK_QUANTIFICATION = "check_quant"
+ANALYSE_RUNS = "analyse_runs"
 TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
 GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
@@ -211,10 +217,34 @@ def check_quantification_completed(**params):
         logger.error("Run " + run_name + " did not complete")
 
 
+class StatsAccumulator:
+    def __init__(self, pset):
+        self.overall_stats_df = pd.DataFrame()
+        self.pset = pset
+
+    def __call__(self, **params):
+        # TODO: get rid of need to pass run_name into get_stats_file()
+        run_name = parameters.get_file_name(**params)
+        run_dir = get_parameters_dir(**params)
+
+        stats_file = statistics.get_stats_file(run_dir, run_name, **self.pset)
+        stats_df = pd.read_csv(stats_file)
+        self.overall_stats_df = self.overall_stats_df.append(stats_df)
+
+    def write_stats(self):
+        overall_stats_file = statistics.get_stats_file(
+            options[STATS_DIRECTORY], statistics.OVERALL_STATS_PREFIX,
+            **self.pset)
+        statistics.write_stats_data(
+            overall_stats_file, self.overall_stats_df, index=False)
+
+
 # Set up logger
 logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
 options[OUTPUT_DIRECTORY] = os.path.abspath(options[OUTPUT_DIRECTORY])
+
+stats_accumulators = []
 
 if options[PREPARE_READ_DIRS]:
     to_execute = [reads_directory_checker(False),
@@ -237,5 +267,17 @@ elif options[QUANTIFY]:
 elif options[CHECK_QUANTIFICATION]:
     to_execute = [run_directory_checker(True),
                   check_quantification_completed]
+elif options[ANALYSE_RUNS]:
+    to_execute = [run_directory_checker(True)]
+    for pset in statistics.get_stats_param_sets():
+        stats_acc = StatsAccumulator(pset)
+        to_execute.append(stats_acc)
+        stats_accumulators.append(stats_acc)
 
 parameters.execute_for_param_sets(to_execute, **param_values)
+
+if options[ANALYSE_RUNS]:
+    if not os.path.exists(options[STATS_DIRECTORY]):
+        os.mkdir(options[STATS_DIRECTORY])
+    for stats_acc in stats_accumulators:
+        stats_acc.write_stats()
