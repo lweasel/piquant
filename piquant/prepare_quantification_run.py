@@ -22,18 +22,12 @@ TRANSCRIPT_COUNTS_FILE = "transcript_counts.csv"
 UNIQUE_SEQUENCE_FILE = "unique_sequence.csv"
 
 
-def _get_transcript_counts_file(transcript_gtf_file):
-    # TODO: output to quantification scratch directory
-    gtf_dir = os.path.abspath(
-        os.path.dirname(transcript_gtf_file))
-    return gtf_dir + os.path.sep + TRANSCRIPT_COUNTS_FILE
+def _get_transcript_counts_file(quantifier_dir):
+    return quantifier_dir + os.path.sep + TRANSCRIPT_COUNTS_FILE
 
 
-def _get_unique_sequence_file(transcript_gtf_file):
-    # TODO: output to quantification scratch directory
-    gtf_dir = os.path.abspath(
-        os.path.dirname(transcript_gtf_file))
-    return gtf_dir + os.path.sep + UNIQUE_SEQUENCE_FILE
+def _get_unique_sequence_file(quantifier_dir):
+    return quantifier_dir + os.path.sep + UNIQUE_SEQUENCE_FILE
 
 
 def _add_run_prequantification(writer, quant_method, params_spec):
@@ -53,24 +47,28 @@ def _add_quantify_transcripts(writer, quant_method, params_spec):
         quant_method.write_quantification_commands(writer, params_spec)
 
 
-def _add_calculate_transcripts_per_gene(writer, transcript_gtf_file):
+def _add_calculate_transcripts_per_gene(
+        writer, quantifier_dir, transcript_gtf_file):
+
     # Calculate the number of transcripts per gene and write to a file
     writer.add_comment("Calculate the number of transcripts per gene.")
 
-    counts_file = _get_transcript_counts_file(transcript_gtf_file)
+    counts_file = _get_transcript_counts_file(quantifier_dir)
     with writer.if_block("! -f " + counts_file):
         writer.add_line(
             TRANSCRIPT_COUNTS_SCRIPT + " " + transcript_gtf_file +
             " > " + counts_file)
 
 
-def _add_calculate_unique_sequence_length(writer, transcript_gtf_file):
+def _add_calculate_unique_sequence_length(
+        writer, quantifier_dir, transcript_gtf_file):
+
     # Calculate the length of unique sequence per transcript and write to a
     # file.
     writer.add_comment(
         "Calculate the length of unique sequence per transcript.")
 
-    unique_seq_file = _get_unique_sequence_file(transcript_gtf_file)
+    unique_seq_file = _get_unique_sequence_file(quantifier_dir)
     with writer.if_block("! -f " + unique_seq_file):
         writer.add_line(
             UNIQUE_SEQUENCE_SCRIPT + " " + transcript_gtf_file +
@@ -78,7 +76,7 @@ def _add_calculate_unique_sequence_length(writer, transcript_gtf_file):
 
 
 def _add_assemble_quantification_data(
-        writer, transcript_gtf_file, fs_pro_file, quant_method):
+        writer, quantifier_dir, fs_pro_file, quant_method):
 
     # Now assemble data required for analysis of quantification performance
     # into one file
@@ -87,8 +85,8 @@ def _add_assemble_quantification_data(
         "into one file")
 
     method_name = quant_method.get_name()
-    counts_file = _get_transcript_counts_file(transcript_gtf_file)
-    unique_seq_file = _get_unique_sequence_file(transcript_gtf_file)
+    counts_file = _get_transcript_counts_file(quantifier_dir)
+    unique_seq_file = _get_unique_sequence_file(quantifier_dir)
 
     writer.add_line(
         ASSEMBLE_DATA_SCRIPT + " --method=" + method_name + " " +
@@ -134,18 +132,20 @@ def _add_process_command_line_options(writer):
 
 
 def _add_analyse_results(
-        writer, run_dir, transcript_gtf_file, fs_pro_file,
+        writer, run_dir, quantifier_dir, transcript_gtf_file, fs_pro_file,
         quant_method, read_length, read_depth,
         paired_end, errors, bias):
 
     with writer.if_block("-n \"$ANALYSE_RESULTS\""):
         with writer.section():
-            _add_calculate_transcripts_per_gene(writer, transcript_gtf_file)
+            _add_calculate_transcripts_per_gene(
+                writer, quantifier_dir, transcript_gtf_file)
         with writer.section():
-            _add_calculate_unique_sequence_length(writer, transcript_gtf_file)
+            _add_calculate_unique_sequence_length(
+                writer, quantifier_dir, transcript_gtf_file)
         with writer.section():
             _add_assemble_quantification_data(
-                writer, transcript_gtf_file, fs_pro_file, quant_method)
+                writer, quantifier_dir, fs_pro_file, quant_method)
         _add_analyse_quantification_results(
             writer, run_dir, quant_method=quant_method.get_name(),
             read_length=read_length, read_depth=read_depth,
@@ -168,7 +168,7 @@ def _update_params_spec(params_spec, input_dir, quantifier_dir,
 
 
 def _add_script_sections(
-        writer, run_dir, transcript_gtf_file, fs_pro_file,
+        writer, run_dir, quantifier_dir, transcript_gtf_file, fs_pro_file,
         quant_method, read_length, read_depth,
         paired_end, errors, bias, params_spec):
 
@@ -182,14 +182,13 @@ def _add_script_sections(
         _add_quantify_transcripts(writer, quant_method, params_spec)
 
     _add_analyse_results(
-        writer, run_dir, transcript_gtf_file, fs_pro_file,
-        quant_method, read_length, read_depth, paired_end,
-        errors, bias)
+        writer, run_dir, quantifier_dir, transcript_gtf_file,
+        fs_pro_file, quant_method, read_length, read_depth,
+        paired_end, errors, bias)
 
 
 def write_run_quantification_script(
-        input_dir, run_dir, quantifier_dir,
-        transcript_gtf_file, params_spec,
+        input_dir, run_dir, quantifier_dir, transcript_gtf_file, params_spec,
         quant_method=None, read_length=50, read_depth=10,
         paired_end=False, errors=False, bias=False):
 
@@ -202,7 +201,7 @@ def write_run_quantification_script(
 
     writer = fw.BashScriptWriter()
     _add_script_sections(
-        writer, run_dir, transcript_gtf_file, fs_pro_file,
-        quant_method, read_length, read_depth,
+        writer, run_dir, quantifier_dir, transcript_gtf_file,
+        fs_pro_file, quant_method, read_length, read_depth,
         paired_end, errors, bias, params_spec)
     writer.write_to_file(run_dir, RUN_SCRIPT)
