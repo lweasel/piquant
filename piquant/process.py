@@ -12,7 +12,7 @@ def run_in_directory(run_dir, command, cl_args=None, nohup=True):
     """
     Run a command in the specified directory.
 
-    Run a command in the specified directory. Unlink subprocess.Popen(), the
+    Run a command in the specified directory. Unlike subprocess.Popen(), the
     command's path can be specified relative to the run directory.
     run_dir: the directory in which to run the command.
     command: the command or script to run.
