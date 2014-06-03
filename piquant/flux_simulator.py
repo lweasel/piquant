@@ -40,6 +40,9 @@ _PRO_FILE_COLS = [
     6, 7, 8, 9, 10, 11, 12
 ]
 
+LEFT_READS = 'l'
+RIGHT_READS = 'r'
+
 _FRAGMENTS_PER_MOLECULE = 8.26
 _ERROR_MODEL_SHORT = 35
 _ERROR_MODEL_LONG = 76
@@ -137,8 +140,8 @@ def write_flux_simulator_params_files(
 def get_reads_file(errors, paired_end=None):
     # TODO: Document and test
     reads_file = SIMULATED_READS_PREFIX
-    if paired_end == 'l':
+    if paired_end == LEFT_READS:
         reads_file += ".1"
-    if paired_end == 'r':
+    if paired_end == RIGHT_READS:
         reads_file += ".2"
     return reads_file + (".fastq" if errors else ".fasta")

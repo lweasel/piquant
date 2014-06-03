@@ -141,10 +141,10 @@ def _add_separate_paired_end_reads(writer, paired_end, errors):
         ])
         writer.add_line(
             "tr '\\t' '\\n' < " + TMP_LEFT_READS_FILE + " > " +
-            fs.get_reads_file(errors, 'l'))
+            fs.get_reads_file(errors, fs.LEFT_READS))
         writer.add_line(
             "tr '\\t' '\\n' < " + TMP_RIGHT_READS_FILE + " > " +
-            fs.get_reads_file(errors, 'r'))
+            fs.get_reads_file(errors, fs.RIGHT_READS))
 
 
 def _add_create_reads(

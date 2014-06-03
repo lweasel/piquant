@@ -159,9 +159,9 @@ def _update_params_spec(params_spec, input_dir, quantifier_dir,
                         paired_end, errors):
     if paired_end:
         params_spec[qs.LEFT_SIMULATED_READS] = \
-            os.path.join(input_dir, fs.get_reads_file(errors, 'l'))
+            os.path.join(input_dir, fs.get_reads_file(errors, fs.LEFT_READS))
         params_spec[qs.RIGHT_SIMULATED_READS] = \
-            os.path.join(input_dir, fs.get_reads_file(errors, 'r'))
+            os.path.join(input_dir, fs.get_reads_file(errors, fs.RIGHT_READS))
     else:
         params_spec[qs.SIMULATED_READS] = \
             os.path.join(input_dir, fs.get_reads_file(errors))
