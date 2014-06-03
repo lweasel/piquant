@@ -74,10 +74,11 @@ def _add_calculate_unique_sequence_length(
 
     unique_seq_file = _get_unique_sequence_file(quantifier_dir)
     with writer.if_block("! -f " + unique_seq_file):
-        writer.add_line("{command} {transcript_gtf} {unique_seq_file}".format(
-            command=_get_script_path(UNIQUE_SEQUENCE_SCRIPT),
-            transcript_gtf=transcript_gtf_file,
-            unique_seq_file=unique_seq_file))
+        writer.add_line(
+            "{command} {transcript_gtf} > {unique_seq_file}".format(
+                command=_get_script_path(UNIQUE_SEQUENCE_SCRIPT),
+                transcript_gtf=transcript_gtf_file,
+                unique_seq_file=unique_seq_file))
 
 
 def _add_assemble_quantification_data(

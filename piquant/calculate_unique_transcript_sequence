@@ -1,17 +1,12 @@
 #!/usr/bin/env python
 
-# TODO: Add logging
-# TODO: Make consistent with transcript count calculator re: output file vs
-# standard out.
-
 """Usage:
-    calculate_unique_transcript_sequence [--log-level=<log-level>] <gtf-file> <out-file>
+    calculate_unique_transcript_sequence [--log-level=<log-level>] <gtf-file>
 
 -h --help                 Show this message.
 -v --version              Show version.
 --log-level=<log-level>   Set logging level (one of {log_level_vals}) [default: info].
 <gtf-file>                GTF file containing genes and transcripts.
-<out-file>                Write the number of bases unique to each transcript to this file.
 """
 
 import docopt
@@ -26,7 +21,6 @@ from collections import defaultdict, namedtuple
 LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
 GTF_FILE = "<gtf-file>"
-OUT_FILE = "<out-file>"
 
 SEQUENCE_COL = 0
 FEATURE_COL = 2
@@ -51,12 +45,10 @@ except schema.SchemaError as exc:
     exit(exc.code)
 
 # Set up logger
-
 logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
 # Read exon lines information from GTF file and extract transcript ID from GTF
 # attributes.
-
 logger.info("Reading GTF file {f}".format(f=options[GTF_FILE]))
 
 gtf_info = pd.read_csv(options[GTF_FILE], sep='\t', header=None)
@@ -71,7 +63,6 @@ exon_info[TRANSCRIPT_ID_ATTRIBUTE] = exon_info[ATTRIBUTES_COL].map(
     replace('"', ''))
 
 # Extract pairs of exons and transcripts IDs from GTF exon lines
-
 column_dict = exon_info.to_dict(outtype="list")
 exon_info_list = zip(
     column_dict[SEQUENCE_COL], column_dict[START_COL],
@@ -90,7 +81,6 @@ logger.info("Read {c} exon + transcripts pairs.".
 
 # Construct a map from exons to the transcripts that contain that exon. Then
 # discard any exons which are shared between transcripts.
-
 exon_transcript_map = defaultdict(list)
 for e_and_t in exon_transcript_pairs:
     exon_transcript_map[e_and_t.exon].append(e_and_t.transcript)
@@ -103,7 +93,6 @@ logger.info("Retained {c} exons unique to one transcript.".
 
 # For those exons which originate from only one transcript, split into groups
 # per originating chromosome
-
 unique_exon_transcript_list = \
     [ExonAndTranscript(exon, transcripts[0])
         for exon, transcripts in unique_exon_transcript_map.items()]
@@ -117,7 +106,6 @@ for e_and_t in unique_exon_transcript_list:
 # For the remaining exons, some will overlap - we want now calculate how much
 # of each exon is unique, and thus sum, per-transcript, the number of bases
 # unique to that transcript.
-
 logger.info("Removing overlaps between exons...")
 
 exon_bases = {e_and_t.exon:
@@ -156,11 +144,9 @@ for seq, e_and_t_list in seq_to_unique_exon_transcript_map.items():
             0 if exon1_bases is None else len(exon1_bases)
 
 # Write the unique number of bases per-transcript to the specified output file.
-
 logger.info("Writing unique lengths for {n} transcripts.".
             format(n=len(transcript_lengths)))
 
-with open(options[OUT_FILE], 'w') as f:
-    f.write("transcript,unique-length\n")
-    for transcript, length in transcript_lengths.items():
-        f.write("{t},{l}\n".format(t=transcript, l=length))
+print("transcript,unique-length")
+for transcript, length in transcript_lengths.items():
+    print("{t},{l}".format(t=transcript, l=length))
