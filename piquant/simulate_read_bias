@@ -136,7 +136,7 @@ class OutputPicker:
 def write_output_file(input_file, scores):
     dirname = os.path.dirname(os.path.abspath(input_file))
     basename = os.path.basename(input_file)
-    output_file = dirname + os.path.sep + options[OUT_PREFIX] + "." + basename
+    output_file = os.path.join(dirname, options[OUT_PREFIX] + "." + basename)
 
     with open(input_file, 'r') as in_f, open(output_file, 'w') as out_f:
         for i, line in enumerate(yield_elements(

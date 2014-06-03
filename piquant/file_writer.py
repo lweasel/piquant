@@ -12,8 +12,7 @@ class _Writer:
         self.lines.append(line_string)
 
     def write_to_file(self, directory, filename):
-        filename = directory + os.path.sep + filename
-        with open(filename, "w") as f:
+        with open(os.path.join(directory, filename), "w") as f:
             f.write("\n".join(self.lines) + '\n')
 
 
@@ -124,7 +123,8 @@ class BashScriptWriter(_Writer):
 
     def write_to_file(self, directory, filename):
         _Writer.write_to_file(self, directory, filename)
-        path = os.path.abspath(directory + os.path.sep + filename)
+
+        path = os.path.abspath(os.path.join(directory, filename))
         os.chmod(path,
                  stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR |
                  stat.S_IRGRP | stat.S_IROTH)

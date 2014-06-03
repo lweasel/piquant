@@ -71,10 +71,9 @@ def get_stats_param_sets():
 def get_stats_file(directory, prefix, classifier=None, ascending=False):
     # TODO: documentation
     # TODO: tests
-    ret = directory + os.path.sep + prefix
-    ret += classifier.get_stats_file_suffix(ascending=ascending) \
-        if classifier else "_stats"
-    return ret + ".csv"
+    return os.path.join(directory, prefix) + \
+        (classifier.get_stats_file_suffix(ascending=ascending)
+            if classifier else "_stats") + ".csv"
 
 
 def write_stats_data(filename, data_frame, **kwargs):

@@ -283,8 +283,8 @@ def draw_overall_stats_graphs(stats_dir, overall_stats, param_values):
     # e.g. the Spearman correlation of calculated and real TPMs graphed as
     # read-depth varies, for each quantification method, in the case of
     # paired-end reads with errors and bias.
-    graph_file_basename = \
-        stats_dir + os.path.sep + statistics.OVERALL_STATS_PREFIX
+    graph_file_basename = os.path.join(
+        stats_dir, statistics.OVERALL_STATS_PREFIX)
 
     numerical_params = [p for p in parameters.get_parameters() if p.is_numeric]
 
@@ -313,8 +313,8 @@ def draw_grouped_stats_graphs(stats_dir, param_values):
     # the percentage of unique sequence per-transcript varies, for single and
     # paired-end reads, in the case of reads with errors and bias, and a
     # particular quantification method.
-    graph_file_basename = \
-        stats_dir + os.path.sep + statistics.OVERALL_STATS_PREFIX
+    graph_file_basename = os.path.join(
+        stats_dir, statistics.OVERALL_STATS_PREFIX)
 
     more_than_100_filter = lambda x: x[statistics.NUM_TPMS] > 100
 
@@ -350,8 +350,8 @@ def draw_distribution_graphs(stats_dir, param_values):
     # some threshold as that threshold changes. e.g. the percentage of TPMs
     # whose absolute percentage error in calculated TPM, as compared to real
     # TPM, is below a particular threshold.
-    graph_file_basename = \
-        stats_dir + os.path.sep + statistics.OVERALL_STATS_PREFIX
+    graph_file_basename = os.path.join(
+        stats_dir, statistics.OVERALL_STATS_PREFIX)
 
     clsfrs = classifiers.get_classifiers()
     dist_clsfrs = [c for c in clsfrs if c.produces_distribution_plots()]

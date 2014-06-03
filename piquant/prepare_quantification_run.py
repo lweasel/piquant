@@ -6,12 +6,10 @@ import parameters
 
 RUN_SCRIPT = "run_quantification.sh"
 
-PYTHON_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__)) + os.path.sep
-TRANSCRIPT_COUNTS_SCRIPT = PYTHON_SCRIPT_DIR + "count_transcripts_for_genes"
-UNIQUE_SEQUENCE_SCRIPT = PYTHON_SCRIPT_DIR + \
-    "calculate_unique_transcript_sequence"
-ASSEMBLE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "assemble_quantification_data"
-ANALYSE_DATA_SCRIPT = PYTHON_SCRIPT_DIR + "analyse_quantification_run"
+TRANSCRIPT_COUNTS_SCRIPT = "count_transcripts_for_genes"
+UNIQUE_SEQUENCE_SCRIPT = "calculate_unique_transcript_sequence"
+ASSEMBLE_DATA_SCRIPT = "assemble_quantification_data"
+ANALYSE_DATA_SCRIPT = "analyse_quantification_run"
 
 RUN_PREQUANTIFICATION_VARIABLE = "RUN_PREQUANTIFICATION"
 QUANTIFY_TRANSCRIPTS_VARIABLE = "QUANTIFY_TRANSCRIPTS"
@@ -22,12 +20,17 @@ TRANSCRIPT_COUNTS_FILE = "transcript_counts.csv"
 UNIQUE_SEQUENCE_FILE = "unique_sequence.csv"
 
 
+def _get_script_path(script_name):
+    return os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), script_name)
+
+
 def _get_transcript_counts_file(quantifier_dir):
-    return quantifier_dir + os.path.sep + TRANSCRIPT_COUNTS_FILE
+    return os.path.join(quantifier_dir, TRANSCRIPT_COUNTS_FILE)
 
 
 def _get_unique_sequence_file(quantifier_dir):
-    return quantifier_dir + os.path.sep + UNIQUE_SEQUENCE_FILE
+    return os.path.join(quantifier_dir, UNIQUE_SEQUENCE_FILE)
 
 
 def _add_run_prequantification(writer, quant_method, params_spec):
@@ -56,8 +59,8 @@ def _add_calculate_transcripts_per_gene(
     counts_file = _get_transcript_counts_file(quantifier_dir)
     with writer.if_block("! -f " + counts_file):
         writer.add_line(
-            TRANSCRIPT_COUNTS_SCRIPT + " " + transcript_gtf_file +
-            " > " + counts_file)
+            _get_script_path(TRANSCRIPT_COUNTS_SCRIPT) + " " +
+            transcript_gtf_file + " > " + counts_file)
 
 
 def _add_calculate_unique_sequence_length(
@@ -71,8 +74,8 @@ def _add_calculate_unique_sequence_length(
     unique_seq_file = _get_unique_sequence_file(quantifier_dir)
     with writer.if_block("! -f " + unique_seq_file):
         writer.add_line(
-            UNIQUE_SEQUENCE_SCRIPT + " " + transcript_gtf_file +
-            " " + unique_seq_file)
+            _get_script_path(UNIQUE_SEQUENCE_SCRIPT) + " " +
+            transcript_gtf_file + " " + unique_seq_file)
 
 
 def _add_assemble_quantification_data(
@@ -89,8 +92,8 @@ def _add_assemble_quantification_data(
     unique_seq_file = _get_unique_sequence_file(quantifier_dir)
 
     writer.add_line(
-        ASSEMBLE_DATA_SCRIPT + " --method=" + method_name + " " +
-        "--out=" + TPMS_FILE + " " + fs_pro_file + " " +
+        _get_script_path(ASSEMBLE_DATA_SCRIPT) + " --method=" + method_name +
+        " --out=" + TPMS_FILE + " " + fs_pro_file + " " +
         quant_method.get_results_file() + " " + counts_file + " " +
         unique_seq_file)
 
@@ -101,7 +104,7 @@ def _add_analyse_quantification_results(writer, run_dir, **params):
 
     options_dict = {p.name: p.option_name for p in parameters.get_parameters()}
 
-    command = ANALYSE_DATA_SCRIPT + " "
+    command = _get_script_path(ANALYSE_DATA_SCRIPT) + " "
     for param_name, param_val in params.items():
         command += options_dict[param_name] + "=" + str(param_val) + " "
     command += TPMS_FILE + " " + os.path.basename(run_dir)
@@ -156,12 +159,12 @@ def _update_params_spec(params_spec, input_dir, quantifier_dir,
                         paired_end, errors):
     if paired_end:
         params_spec[qs.LEFT_SIMULATED_READS] = \
-            input_dir + os.path.sep + fs.get_reads_file(errors, 'l')
+            os.path.join(input_dir, fs.get_reads_file(errors, 'l'))
         params_spec[qs.RIGHT_SIMULATED_READS] = \
-            input_dir + os.path.sep + fs.get_reads_file(errors, 'r')
+            os.path.join(input_dir, fs.get_reads_file(errors, 'r'))
     else:
         params_spec[qs.SIMULATED_READS] = \
-            input_dir + os.path.sep + fs.get_reads_file(errors)
+            os.path.join(input_dir, fs.get_reads_file(errors))
 
     params_spec[qs.QUANTIFIER_DIRECTORY] = quantifier_dir
     params_spec[qs.FASTQ_READS] = errors
@@ -192,7 +195,7 @@ def write_run_quantification_script(
         quant_method=None, read_length=50, read_depth=10,
         paired_end=False, errors=False, bias=False):
 
-    fs_pro_file = input_dir + os.path.sep + fs.EXPRESSION_PROFILE_FILE
+    fs_pro_file = os.path.join(input_dir, fs.EXPRESSION_PROFILE_FILE)
 
     _update_params_spec(params_spec, input_dir, quantifier_dir,
                         paired_end, errors)

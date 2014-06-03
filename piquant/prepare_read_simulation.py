@@ -4,14 +4,18 @@ import os.path
 
 RUN_SCRIPT = "run_simulation.sh"
 
-PYTHON_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__)) + os.path.sep
-CALC_READ_DEPTH_SCRIPT = PYTHON_SCRIPT_DIR + "calculate_reads_for_depth"
-SIMULATE_BIAS_SCRIPT = PYTHON_SCRIPT_DIR + "simulate_read_bias"
-BIAS_PWM_FILE = PYTHON_SCRIPT_DIR + "bias_motif.pwm"
+CALC_READ_DEPTH_SCRIPT = "calculate_reads_for_depth"
+SIMULATE_BIAS_SCRIPT = "simulate_read_bias"
+BIAS_PWM_FILE = "bias_motif.pwm"
 
 TMP_READS_FILE = "reads.tmp"
 TMP_LEFT_READS_FILE = "lr.tmp"
 TMP_RIGHT_READS_FILE = "rr.tmp"
+
+
+def _get_script_path(script_name):
+    return os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), script_name)
 
 
 def _add_create_expression_profiles(writer):
@@ -52,7 +56,7 @@ def _add_calculate_required_read_depth(writer, read_length, read_depth, bias):
         " across the transcriptome, given a read length of " +
         str(read_length))
     writer.set_variable(
-        "READS", "$(" + CALC_READ_DEPTH_SCRIPT + " " +
+        "READS", "$(" + _get_script_path(CALC_READ_DEPTH_SCRIPT) + " " +
         fs.EXPRESSION_PROFILE_FILE + " " + str(read_length) + " " +
         str(read_depth) + ")")
 
@@ -113,8 +117,9 @@ def _add_simulate_read_bias(writer, paired_end, errors, bias):
         reads_file = fs.get_reads_file(errors)
         out_prefix = "bias"
         writer.add_line(
-            SIMULATE_BIAS_SCRIPT + " -n $FINAL_READS --out-prefix=" +
-            out_prefix + " " + ("--paired-end" if paired_end else "") + " " +
+            _get_script_path(SIMULATE_BIAS_SCRIPT) +
+            " -n $FINAL_READS --out-prefix=" + out_prefix + " " +
+            ("--paired-end" if paired_end else "") + " " +
             BIAS_PWM_FILE + " " + reads_file)
         writer.add_line(
             "mv " + out_prefix + "." + reads_file + " " + reads_file)

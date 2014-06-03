@@ -35,8 +35,7 @@ class _Cufflinks:
 
     @classmethod
     def _get_bowtie_index(cls, quantifier_dir):
-        return quantifier_dir + os.path.sep + "bowtie-index" + \
-            os.path.sep + "index"
+        return os.path.join(quantifier_dir, "bowtie-index", "index")
 
     def calculate_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
@@ -85,8 +84,8 @@ class _Cufflinks:
             "-p 8 -o " + _Cufflinks.TOPHAT_OUTPUT_DIR + " " + bowtie_index +
             " " + reads_spec)
 
-        mapped_reads = _Cufflinks.TOPHAT_OUTPUT_DIR + \
-            os.path.sep + "accepted_hits.bam"
+        mapped_reads = os.path.join(
+            _Cufflinks.TOPHAT_OUTPUT_DIR, "accepted_hits.bam")
 
         writer.add_line(
             "cufflinks -o transcriptome -u -b " + bowtie_index +
@@ -110,7 +109,7 @@ class _RSEM:
 
     @classmethod
     def _get_ref_name(cls, quantifier_dir):
-        return quantifier_dir + os.path.sep + "rsem" + os.path.sep + "rsem"
+        return os.path.join(quantifier_dir, "rsem", "rsem")
 
     def calculate_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
@@ -221,7 +220,7 @@ class _Sailfish:
 
     @classmethod
     def _get_index_dir(cls, quantifier_dir):
-        return quantifier_dir + os.path.sep + "sailfish"
+        return os.path.join(quantifier_dir, "sailfish")
 
     def calculate_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,

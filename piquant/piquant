@@ -101,7 +101,8 @@ try:
     param_values = parameters.validate_command_line_parameter_sets(
         options[PARAMS_FILE], options, ignore_params=ignore_params)
 
-    if not processing_reads and False in param_values[parameters.PAIRED_END.name]:
+    if not processing_reads and \
+            False in param_values[parameters.PAIRED_END.name]:
         for qm in param_values[parameters.QUANT_METHOD.name]:
             if qm.requires_paired_end_reads():
                 raise schema.SchemaError(
@@ -112,8 +113,8 @@ except schema.SchemaError as exc:
 
 
 def get_parameters_dir(**params):
-    return options[OUTPUT_DIRECTORY] + os.path.sep + \
-        parameters.get_file_name(**params)
+    return os.path.join(options[OUTPUT_DIRECTORY],
+                        parameters.get_file_name(**params))
 
 
 def reads_directory_checker(should_exist):
@@ -147,8 +148,8 @@ def check_reads_created(**params):
     reads_file = fs.get_reads_file(
         params[parameters.ERRORS.name],
         'l' if params[parameters.PAIRED_END.name] else None)
-    reads_file_path = reads_dir + os.path.sep + reads_file
-    if not os.path.exists(reads_file_path):
+
+    if not os.path.exists(os.path.join(reads_dir, reads_file)):
         run_name = os.path.basename(reads_dir)
         logger.error("Run " + run_name + " did not complete.")
 
@@ -174,8 +175,8 @@ def prepare_quantification(**params):
     del reads_params[parameters.QUANT_METHOD.name]
     reads_dir = get_parameters_dir(**params)
 
-    quantifier_dir = options[OUTPUT_DIRECTORY] + os.path.sep + \
-        "quantifier_scratch"
+    quantifier_dir = os.path.join(
+        options[OUTPUT_DIRECTORY], "quantifier_scratch")
 
     params_spec = {
         qs.TRANSCRIPT_GTF_FILE: options[TRANSCRIPT_GTF_FILE],
