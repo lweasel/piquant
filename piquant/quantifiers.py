@@ -1,9 +1,6 @@
 import pandas as pd
 import os.path
 
-# TODO: many instance methods could be class methods - only those calculating
-# abundances are instance methods
-
 TRANSCRIPT_GTF_FILE = "TRANSCRIPT_GTF_FILE"
 GENOME_FASTA_DIR = "GENOME_FASTA_DIR"
 SIMULATED_READS = "SIMULATED_READS"
@@ -12,7 +9,6 @@ RIGHT_SIMULATED_READS = "RIGHT_SIMULATED_READS"
 FASTQ_READS = "FASTQ_READS"
 QUANTIFIER_DIRECTORY = "QUANTIFIER_DIRECTORY"
 
-# Parameters required by particular quantification methods
 _QUANT_METHODS = {}
 
 
@@ -37,25 +33,14 @@ class _Cufflinks:
     def _get_bowtie_index(cls, quantifier_dir):
         return os.path.join(quantifier_dir, "bowtie-index", "index")
 
-    def calculate_transcript_abundances(self, quant_file):
-        self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
-                                      index_col="tracking_id")
-
-        self.norm_constant = 1000000 / (self.abundances["FPKM"].sum())
-
-    def get_transcript_abundance(self, transcript_id):
-        fpkm = self.abundances.ix[transcript_id]["FPKM"] \
-            if transcript_id in self.abundances.index else 0
-        return self.norm_constant * fpkm
-
-    def write_preparatory_commands(self, writer, params):
+    @classmethod
+    def write_preparatory_commands(cls, writer, params):
         writer.add_comment(
             "Prepare the bowtie index for read mapping if it doesn't " +
             "already exist. Note that this step only needs to be done " +
             "once for a particular reference genome")
 
-        bowtie_index = _Cufflinks._get_bowtie_index(
-            params[QUANTIFIER_DIRECTORY])
+        bowtie_index = cls._get_bowtie_index(params[QUANTIFIER_DIRECTORY])
 
         writer.add_line("BOWTIE_INDEX_DIR=$(dirname " + bowtie_index + ")")
 
@@ -71,9 +56,9 @@ class _Cufflinks:
                     "bowtie-inspect " + bowtie_index + " > " +
                     bowtie_index + ".fa")
 
-    def write_quantification_commands(self, writer, params):
-        bowtie_index = _Cufflinks._get_bowtie_index(
-            params[QUANTIFIER_DIRECTORY])
+    @classmethod
+    def write_quantification_commands(cls, writer, params):
+        bowtie_index = cls._get_bowtie_index(params[QUANTIFIER_DIRECTORY])
 
         reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
             else params[LEFT_SIMULATED_READS] + \
@@ -81,22 +66,34 @@ class _Cufflinks:
 
         writer.add_line(
             "tophat --library-type fr-unstranded --no-coverage-search " +
-            "-p 8 -o " + _Cufflinks.TOPHAT_OUTPUT_DIR + " " + bowtie_index +
+            "-p 8 -o " + cls.TOPHAT_OUTPUT_DIR + " " + bowtie_index +
             " " + reads_spec)
 
-        mapped_reads = os.path.join(
-            _Cufflinks.TOPHAT_OUTPUT_DIR, "accepted_hits.bam")
+        mapped_reads = os.path.join(cls.TOPHAT_OUTPUT_DIR, "accepted_hits.bam")
 
         writer.add_line(
             "cufflinks -o transcriptome -u -b " + bowtie_index +
             ".fa -p 8 --library-type fr-secondstrand -G " +
             params[TRANSCRIPT_GTF_FILE] + " " + mapped_reads)
 
-    def get_results_file(self):
+    @classmethod
+    def get_results_file(cls):
         return "transcriptome/isoforms.fpkm_tracking"
 
-    def requires_paired_end_reads(self):
+    @classmethod
+    def requires_paired_end_reads(cls):
         return False
+
+    def calculate_transcript_abundances(self, quant_file):
+        self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
+                                      index_col="tracking_id")
+
+        self.norm_constant = 1000000 / (self.abundances["FPKM"].sum())
+
+    def get_transcript_abundance(self, transcript_id):
+        fpkm = self.abundances.ix[transcript_id]["FPKM"] \
+            if transcript_id in self.abundances.index else 0
+        return self.norm_constant * fpkm
 
 
 @_Quantifier
@@ -111,6 +108,46 @@ class _RSEM:
     def _get_ref_name(cls, quantifier_dir):
         return os.path.join(quantifier_dir, "rsem", "rsem")
 
+    @classmethod
+    def write_preparatory_commands(cls, writer, params):
+        writer.add_comment(
+            "Prepare the transcript reference if it doesn't already " +
+            "exist. We create the transcript reference using a tool " +
+            "from the RSEM package. Note that this step only needs to " +
+            "be done once for a particular set of transcripts.")
+
+        ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
+
+        writer.add_line("REF_DIR=$(dirname " + ref_name + ")")
+
+        with writer.if_block("! -d $REF_DIR"):
+            writer.add_line("mkdir -p $REF_DIR")
+            writer.add_line(
+                "rsem-prepare-reference --gtf " + params[TRANSCRIPT_GTF_FILE] +
+                " --no-polyA " + params[GENOME_FASTA_DIR] + " " + ref_name)
+
+    @classmethod
+    def write_quantification_commands(cls, writer, params):
+        qualities_spec = "" if params[FASTQ_READS] else "--no-qualities"
+
+        reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
+            else "--paired-end " + params[LEFT_SIMULATED_READS] + \
+            " " + params[RIGHT_SIMULATED_READS]
+
+        ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
+        writer.add_line(
+            "rsem-calculate-expression --time " + qualities_spec +
+            " --p 32 --output-genome-bam --strand-specific " + reads_spec +
+            " " + ref_name + " " + cls.SAMPLE_NAME)
+
+    @classmethod
+    def get_results_file(cls):
+        return cls.SAMPLE_NAME + ".isoforms.results"
+
+    @classmethod
+    def requires_paired_end_reads(cls):
+        return False
+
     def calculate_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
                                       index_col="transcript_id")
@@ -118,44 +155,6 @@ class _RSEM:
     def get_transcript_abundance(self, transcript_id):
         return self.abundances.ix[transcript_id]["TPM"] \
             if transcript_id in self.abundances.index else 0
-
-    def write_preparatory_commands(self, writer, params):
-        writer.add_comment(
-            "Prepare the transcript reference if it doesn't already " +
-            "exist. We create the transcript reference using a tool " +
-            "from the RSEM package. Note that this step only needs to " +
-            "be done once for a particular set of transcripts.")
-
-        ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
-
-        writer.add_line("REF_DIR=$(dirname " + ref_name + ")")
-
-        with writer.if_block("! -d $REF_DIR"):
-            writer.add_line("mkdir -p $REF_DIR")
-
-            ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
-            writer.add_line(
-                "rsem-prepare-reference --gtf " + params[TRANSCRIPT_GTF_FILE] +
-                " --no-polyA " + params[GENOME_FASTA_DIR] + " " + ref_name)
-
-    def write_quantification_commands(self, writer, params):
-        qualities_spec = "" if params[FASTQ_READS] else "--no-qualities"
-
-        reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
-            else "--paired-end " + params[LEFT_SIMULATED_READS] + \
-            " " + params[RIGHT_SIMULATED_READS]
-
-        ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
-        writer.add_line(
-            "rsem-calculate-expression --time " + qualities_spec +
-            " --p 32 --output-genome-bam --strand-specific " + reads_spec +
-            " " + ref_name + " " + _RSEM.SAMPLE_NAME)
-
-    def get_results_file(self):
-        return _RSEM.SAMPLE_NAME + ".isoforms.results"
-
-    def requires_paired_end_reads(self):
-        return False
 
 
 @_Quantifier
@@ -166,21 +165,15 @@ class _Express:
     def get_name(cls):
         return "Express"
 
-    def calculate_transcript_abundances(self, quant_file):
-        self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
-                                      index_col="target_id")
-
-    def get_transcript_abundance(self, transcript_id):
-        return self.abundances.ix[transcript_id]["tpm"] \
-            if transcript_id in self.abundances.index else 0
-
-    def write_preparatory_commands(self, writer, params):
+    @classmethod
+    def write_preparatory_commands(cls, writer, params):
         # For convenience, we use a tool from the RSEM package to create the
         # transcript reference
         with writer.section():
             _RSEM().write_preparatory_commands(writer, params)
 
-    def write_quantification_commands(self, writer, params):
+    @classmethod
+    def write_quantification_commands(cls, writer, params):
         qualities_spec = "-q" if params[FASTQ_READS] else "-f"
 
         reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
@@ -192,7 +185,7 @@ class _Express:
             "bowtie " + qualities_spec +
             " -e 99999999 -l 25 -I 1 -X 1000 -a -S -m 200 -p 32 " +
             ref_name + " " + reads_spec,
-            "samtools view -Sb - > " + _Express.MAPPED_READS_FILE
+            "samtools view -Sb - > " + cls.MAPPED_READS_FILE
         ])
 
         stranded_spec = "--fr-stranded " \
@@ -201,13 +194,23 @@ class _Express:
         ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
         writer.add_line(
             "express " + stranded_spec + ref_name + ".transcripts.fa " +
-            _Express.MAPPED_READS_FILE)
+            cls.MAPPED_READS_FILE)
 
-    def get_results_file(self):
+    @classmethod
+    def get_results_file(cls):
         return "results.xprs"
 
-    def requires_paired_end_reads(self):
+    @classmethod
+    def requires_paired_end_reads(cls):
         return False
+
+    def calculate_transcript_abundances(self, quant_file):
+        self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
+                                      index_col="target_id")
+
+    def get_transcript_abundance(self, transcript_id):
+        return self.abundances.ix[transcript_id]["tpm"] \
+            if transcript_id in self.abundances.index else 0
 
 
 @_Quantifier
@@ -222,15 +225,8 @@ class _Sailfish:
     def _get_index_dir(cls, quantifier_dir):
         return os.path.join(quantifier_dir, "sailfish")
 
-    def calculate_transcript_abundances(self, quant_file):
-        self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
-                                      index_col="Transcript")
-
-    def get_transcript_abundance(self, transcript_id):
-        return self.abundances.ix[transcript_id]["TPM"] \
-            if transcript_id in self.abundances.index else 0
-
-    def write_preparatory_commands(self, writer, params):
+    @classmethod
+    def write_preparatory_commands(cls, writer, params):
         # For convenience, we use a tool from the RSEM package to create the
         # transcript reference
         with writer.section():
@@ -240,15 +236,16 @@ class _Sailfish:
             "Now create the Sailfish transcript index (this will only " +
             "perform indexing if the index does not already exist.")
 
-        index_dir = _Sailfish._get_index_dir(params[QUANTIFIER_DIRECTORY])
+        index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
         ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
 
         writer.add_line(
             "sailfish index -p 8 -t " + ref_name +
             ".transcripts.fa -k 20 -o " + index_dir)
 
-    def write_quantification_commands(self, writer, params):
-        index_dir = _Sailfish._get_index_dir(params[QUANTIFIER_DIRECTORY])
+    @classmethod
+    def write_quantification_commands(cls, writer, params):
+        index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
 
         library_spec = "\"T=SE:S=U\"" if SIMULATED_READS in params \
             else "\"T=PE:O=><:S=SA\""
@@ -264,10 +261,20 @@ class _Sailfish:
 
         writer.add_line(
             "grep -v '^# \[' quant_bias_corrected.sf | sed -e 's/# //'i > " +
-            _Sailfish.TPM_FILE)
+            cls.TPM_FILE)
 
-    def get_results_file(self):
-        return _Sailfish.TPM_FILE
+    @classmethod
+    def get_results_file(cls):
+        return cls.TPM_FILE
 
-    def requires_paired_end_reads(self):
+    @classmethod
+    def requires_paired_end_reads(cls):
         return False
+
+    def calculate_transcript_abundances(self, quant_file):
+        self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
+                                      index_col="Transcript")
+
+    def get_transcript_abundance(self, transcript_id):
+        return self.abundances.ix[transcript_id]["TPM"] \
+            if transcript_id in self.abundances.index else 0
