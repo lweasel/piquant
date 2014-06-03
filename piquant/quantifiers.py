@@ -24,21 +24,28 @@ def _Quantifier(cls):
 @_Quantifier
 class _Cufflinks:
     TOPHAT_OUTPUT_DIR = "tho"
+    FPKM_COLUMN = "FPKM"
 
-    CALC_BOWTIE_INDEX_DIR = "BOWTIE_INDEX_DIR=$(dirname {bowtie_index})"
-    CHECK_BOWTIE_INDEX_DIR = "! -d $BOWTIE_INDEX_DIR"
-    MAKE_BOWTIE_INDEX_DIR = "mkdir -p $BOWTIE_INDEX_DIR"
-    GET_GENOME_REF_FILE_LIST = "REF_FILES=$(ls -1 {genome_fasta_dir}/*.fa" + \
-        " | tr '\\n' ',')"
-    STRIP_TRAILING_COMMA = "REF_FILES=${REF_FILES%,}"
-    BUILD_BOWTIE_INDEX = "bowtie-build $REF_FILES {bowtie_index}"
-    CONSTRUCT_REFERENCE_FASTA = "bowtie-inspect {bowtie_index} > " + \
-        "{bowtie_index}.fa"
+    CALCULATE_BOWTIE_INDEX_DIRECTORY = \
+        "BOWTIE_INDEX_DIR=$(dirname {bowtie_index})"
+    CHECK_BOWTIE_INDEX_DIRECTORY_EXISTS = \
+        "! -d $BOWTIE_INDEX_DIR"
+    MAKE_BOWTIE_INDEX_DIRECTORY = \
+        "mkdir -p $BOWTIE_INDEX_DIR"
+    GET_GENOME_REFERENCE_FASTA_FILE_LIST = \
+        "REF_FILES=$(ls -1 {genome_fasta_dir}/*.fa | tr '\\n' ',')"
+    STRIP_TRAILING_COMMA_FROM_FASTA_FILE_LIST = \
+        "REF_FILES=${REF_FILES%,}"
+    BUILD_BOWTIE_INDEX = \
+        "bowtie-build $REF_FILES {bowtie_index}"
+    CONSTRUCT_BOWTIE_REFERENCE_FASTA = \
+        "bowtie-inspect {bowtie_index} > {bowtie_index}.fa"
 
-    MAP_READS = "tophat --library-type fr-unstranded " + \
-        "--no-coverage-search -p 8 -o {tophat_output_dir} " + \
-        "{bowtie_index} {reads_spec}"
-    QUANTIFY = "cufflinks -o transcriptome -u -b {bowtie_index}.fa -p 8 " + \
+    MAP_READS_TO_GENOME_WITH_TOPHAT = \
+        "tophat --library-type fr-unstranded --no-coverage-search -p 8 " + \
+        "-o {tophat_output_dir} {bowtie_index} {reads_spec}"
+    QUANTIFY_ISOFORM_EXPRESSION = \
+        "cufflinks -o transcriptome -u -b {bowtie_index}.fa -p 8 " + \
         "--library-type fr-secondstrand -G {transcript_gtf} {mapped_reads}"
 
     @classmethod
@@ -58,18 +65,19 @@ class _Cufflinks:
 
         bowtie_index = cls._get_bowtie_index(params[QUANTIFIER_DIRECTORY])
 
-        writer.add_line(cls.CALC_BOWTIE_INDEX_DIR.format(
+        writer.add_line(cls.CALCULATE_BOWTIE_INDEX_DIRECTORY.format(
             bowtie_index=bowtie_index))
 
         with writer.section():
-            with writer.if_block(cls.CHECK_BOWTIE_INDEX_DIR):
-                writer.add_line(cls.MAKE_BOWTIE_INDEX_DIR)
-                writer.add_line(cls.GET_GENOME_REF_FILE_LIST.format(
-                    genome_fasta_dir=params[GENOME_FASTA_DIR]))
-                writer.add_line(cls.STRIP_TRAILING_COMMA)
+            with writer.if_block(cls.CHECK_BOWTIE_INDEX_DIRECTORY_EXISTS):
+                writer.add_line(cls.MAKE_BOWTIE_INDEX_DIRECTORY)
+                writer.add_line(
+                    cls.GET_GENOME_REFERENCE_FASTA_FILE_LIST.format(
+                        genome_fasta_dir=params[GENOME_FASTA_DIR]))
+                writer.add_line(cls.STRIP_TRAILING_COMMA_FROM_FASTA_FILE_LIST)
                 writer.add_line(cls.BUILD_BOWTIE_INDEX.format(
                     bowtie_index=bowtie_index))
-                writer.add_line(cls.CONSTRUCT_REFERENCE_FASTA.format(
+                writer.add_line(cls.CONSTRUCT_BOWTIE_REFERENCE_FASTA.format(
                     bowtie_index=bowtie_index))
 
     @classmethod
@@ -83,12 +91,12 @@ class _Cufflinks:
 
         mapped_reads = os.path.join(cls.TOPHAT_OUTPUT_DIR, "accepted_hits.bam")
 
-        writer.add_line(cls.MAP_READS.format(
+        writer.add_line(cls.MAP_READS_TO_GENOME_WITH_TOPHAT.format(
             tophat_output_dir=cls.TOPHAT_OUTPUT_DIR,
             bowtie_index=bowtie_index,
             reads_spec=reads_spec))
 
-        writer.add_line(cls.QUANTIFY.format(
+        writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
             bowtie_index=bowtie_index,
             transcript_gtf=params[TRANSCRIPT_GTF_FILE],
             mapped_reads=mapped_reads))
@@ -105,17 +113,31 @@ class _Cufflinks:
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
                                       index_col="tracking_id")
 
-        self.norm_constant = 1000000 / (self.abundances["FPKM"].sum())
+        self.norm_constant = \
+            1000000 / (self.abundances[_Cufflinks.FPKM_COLUMN].sum())
 
     def get_transcript_abundance(self, transcript_id):
-        fpkm = self.abundances.ix[transcript_id]["FPKM"] \
+        fpkm = self.abundances.ix[transcript_id][_Cufflinks.FPKM_COLUMN] \
             if transcript_id in self.abundances.index else 0
         return self.norm_constant * fpkm
 
 
 @_Quantifier
 class _RSEM:
-    SAMPLE_NAME = "rsem_sample"
+    CALCULATE_TRANSCRIPT_REFERENCE_DIRECTORY = \
+        "REF_DIR=$(dirname {ref_name})"
+    CHECK_TRANSCRIPT_REFERENCE_DIRECTORY_EXISTS = \
+        "! -d $REF_DIR"
+    MAKE_TRANSCRIPT_REFERENCE_DIRECTORY = \
+        "mkdir -p $REF_DIR"
+    PREPARE_TRANSCRIPT_REFERENCE = \
+        "rsem-prepare-reference --gtf {transcript_gtf} --no-polyA " + \
+        "{genome_fasta_dir} {ref_name}"
+
+    QUANTIFY_ISOFORM_EXPRESSION = \
+        "rsem-calculate-expression --time {qualities_spec} --p 32 " + \
+        "--output-genome-bam --strand-specific {reads_spec} " + \
+        "{ref_name} rsem_sample"
 
     @classmethod
     def get_name(cls):
@@ -135,31 +157,35 @@ class _RSEM:
 
         ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
 
-        writer.add_line("REF_DIR=$(dirname " + ref_name + ")")
+        writer.add_line(cls.CALCULATE_TRANSCRIPT_REFERENCE_DIRECTORY.format(
+            ref_name=ref_name))
 
-        with writer.if_block("! -d $REF_DIR"):
-            writer.add_line("mkdir -p $REF_DIR")
-            writer.add_line(
-                "rsem-prepare-reference --gtf " + params[TRANSCRIPT_GTF_FILE] +
-                " --no-polyA " + params[GENOME_FASTA_DIR] + " " + ref_name)
+        with writer.if_block(cls.CHECK_TRANSCRIPT_REFERENCE_DIRECTORY_EXISTS):
+            writer.add_line(cls.MAKE_TRANSCRIPT_REFERENCE_DIRECTORY)
+            writer.add_line(cls.PREPARE_TRANSCRIPT_REFERENCE.format(
+                transcript_gtf=params[TRANSCRIPT_GTF_FILE],
+                genome_fasta_dir=params[GENOME_FASTA_DIR],
+                ref_name=ref_name))
 
     @classmethod
     def write_quantification_commands(cls, writer, params):
         qualities_spec = "" if params[FASTQ_READS] else "--no-qualities"
 
         reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
-            else "--paired-end " + params[LEFT_SIMULATED_READS] + \
-            " " + params[RIGHT_SIMULATED_READS]
+            else "--paired-end {l} {r}".format(
+                l=params[LEFT_SIMULATED_READS],
+                r=params[RIGHT_SIMULATED_READS])
 
         ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
-        writer.add_line(
-            "rsem-calculate-expression --time " + qualities_spec +
-            " --p 32 --output-genome-bam --strand-specific " + reads_spec +
-            " " + ref_name + " " + cls.SAMPLE_NAME)
+
+        writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
+            qualities_spec=qualities_spec,
+            reads_spec=reads_spec,
+            ref_name=ref_name))
 
     @classmethod
     def get_results_file(cls):
-        return cls.SAMPLE_NAME + ".isoforms.results"
+        return "rsem_sample.isoforms.results"
 
     @classmethod
     def requires_paired_end_reads(cls):
@@ -176,7 +202,13 @@ class _RSEM:
 
 @_Quantifier
 class _Express:
-    MAPPED_READS_FILE = "hits.bam"
+    MAP_READS_TO_TRANSCRIPT_REFERENCE = \
+        "bowtie {qualities_spec} -e 99999999 -l 25 -I 1 -X 1000 -a -S " + \
+        "-m 200 -p 32 {ref_name} {reads_spec}"
+    CONVERT_SAM_TO_BAM = \
+        "samtools view -Sb - > hits.bam"
+    QUANTIFY_ISOFORM_EXPRESSION = \
+        "express {stranded_spec} {ref_name}.transcripts.fa hits.bam"
 
     @classmethod
     def get_name(cls):
@@ -191,27 +223,28 @@ class _Express:
 
     @classmethod
     def write_quantification_commands(cls, writer, params):
+        ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
+
         qualities_spec = "-q" if params[FASTQ_READS] else "-f"
 
         reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
-            else "-1 " + params[LEFT_SIMULATED_READS] + \
-            " -2 " + params[RIGHT_SIMULATED_READS]
-
-        ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
-        writer.add_pipe([
-            "bowtie " + qualities_spec +
-            " -e 99999999 -l 25 -I 1 -X 1000 -a -S -m 200 -p 32 " +
-            ref_name + " " + reads_spec,
-            "samtools view -Sb - > " + cls.MAPPED_READS_FILE
-        ])
+            else "-1 {l} -2 {r}".format(
+                l=params[LEFT_SIMULATED_READS],
+                r=params[RIGHT_SIMULATED_READS])
 
         stranded_spec = "--fr-stranded " \
             if SIMULATED_READS not in params else ""
 
-        ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
-        writer.add_line(
-            "express " + stranded_spec + ref_name + ".transcripts.fa " +
-            cls.MAPPED_READS_FILE)
+        writer.add_pipe([
+            cls.MAP_READS_TO_TRANSCRIPT_REFERENCE.format(
+                qualities_spec=qualities_spec,
+                ref_name=ref_name,
+                reads_spec=reads_spec),
+            cls.CONVERT_SAM_TO_BAM
+        ])
+        writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
+            stranded_spec=stranded_spec,
+            ref_name=ref_name))
 
     @classmethod
     def get_results_file(cls):
@@ -232,7 +265,15 @@ class _Express:
 
 @_Quantifier
 class _Sailfish:
-    TPM_FILE = "quant_filtered.csv"
+    CREATE_SAILFISH_TRANSCRIPT_INDEX = \
+        "sailfish index -p 8 -t {ref_name}.transcripts.fa -k 20 -o {index_dir}"
+
+    QUANTIFY_ISOFORM_EXPRESSION = \
+        "sailfish quant -p 8 -i {index_dir} -l {library_spec} " + \
+        "{reads_spec} -o ."
+    FILTER_COMMENT_LINES = \
+        "grep -v '^# \[' quant_bias_corrected.sf | " + \
+        "sed -e 's/# //'i > quant_filtered.csv"
 
     @classmethod
     def get_name(cls):
@@ -253,12 +294,12 @@ class _Sailfish:
             "Now create the Sailfish transcript index (this will only " +
             "perform indexing if the index does not already exist.")
 
-        index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
         ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
+        index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
 
-        writer.add_line(
-            "sailfish index -p 8 -t " + ref_name +
-            ".transcripts.fa -k 20 -o " + index_dir)
+        writer.add_line(cls.CREATE_SAILFISH_TRANSCRIPT_INDEX.format(
+            ref_name=ref_name,
+            index_dir=index_dir))
 
     @classmethod
     def write_quantification_commands(cls, writer, params):
@@ -267,22 +308,21 @@ class _Sailfish:
         library_spec = "\"T=SE:S=U\"" if SIMULATED_READS in params \
             else "\"T=PE:O=><:S=SA\""
 
-        reads_spec = "-r " + params[SIMULATED_READS] \
+        reads_spec = "-r {r}".format(r=params[SIMULATED_READS]) \
             if SIMULATED_READS in params \
-            else "-1 " + params[LEFT_SIMULATED_READS] + \
-            " -2 " + params[RIGHT_SIMULATED_READS]
+            else "-1 {l} -2 {r}".format(
+                l=params[LEFT_SIMULATED_READS],
+                r=params[RIGHT_SIMULATED_READS])
 
-        writer.add_line(
-            "sailfish quant -p 8 -i " + index_dir + " -l " +
-            library_spec + " " + reads_spec + " -o .")
-
-        writer.add_line(
-            "grep -v '^# \[' quant_bias_corrected.sf | sed -e 's/# //'i > " +
-            cls.TPM_FILE)
+        writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
+            index_dir=index_dir,
+            library_spec=library_spec,
+            reads_spec=reads_spec))
+        writer.add_line(cls.FILTER_COMMENT_LINES)
 
     @classmethod
     def get_results_file(cls):
-        return cls.TPM_FILE
+        return "quant_filtered.csv"
 
     @classmethod
     def requires_paired_end_reads(cls):
