@@ -35,13 +35,13 @@ import docopt
 import flux_simulator as fs
 import ordutils.log as log
 import ordutils.options as opt
+import ordutils.process as process
 import os
 import os.path
 import pandas as pd
 import parameters
 import prepare_quantification_run as prq
 import prepare_read_simulation as prs
-import process
 import quantifiers as qs
 import schema
 import statistics
