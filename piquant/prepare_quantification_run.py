@@ -44,9 +44,9 @@ def _add_run_prequantification(writer, quant_method, params_spec):
 def _add_quantify_transcripts(writer, quant_method, params_spec):
     # Use the specified quantification method to calculate per-transcript TPMs
     with writer.if_block("-n \"$QUANTIFY_TRANSCRIPTS\""):
-        method_name = quant_method.get_name()
         writer.add_comment(
-            "Use " + method_name + " to calculate per-transcript TPMs.")
+            "Use {method} to calculate per-transcript TPMs.".format(
+                method=quant_method.get_name()))
         quant_method.write_quantification_commands(writer, params_spec)
 
 
@@ -58,9 +58,10 @@ def _add_calculate_transcripts_per_gene(
 
     counts_file = _get_transcript_counts_file(quantifier_dir)
     with writer.if_block("! -f " + counts_file):
-        writer.add_line(
-            _get_script_path(TRANSCRIPT_COUNTS_SCRIPT) + " " +
-            transcript_gtf_file + " > " + counts_file)
+        writer.add_line("{command} {transcript_gtf} > {counts_file}".format(
+            command=_get_script_path(TRANSCRIPT_COUNTS_SCRIPT),
+            transcript_gtf=transcript_gtf_file,
+            counts_file=counts_file))
 
 
 def _add_calculate_unique_sequence_length(
@@ -73,9 +74,10 @@ def _add_calculate_unique_sequence_length(
 
     unique_seq_file = _get_unique_sequence_file(quantifier_dir)
     with writer.if_block("! -f " + unique_seq_file):
-        writer.add_line(
-            _get_script_path(UNIQUE_SEQUENCE_SCRIPT) + " " +
-            transcript_gtf_file + " " + unique_seq_file)
+        writer.add_line("{command} {transcript_gtf} {unique_seq_file}".format(
+            command=_get_script_path(UNIQUE_SEQUENCE_SCRIPT),
+            transcript_gtf=transcript_gtf_file,
+            unique_seq_file=unique_seq_file))
 
 
 def _add_assemble_quantification_data(
@@ -87,15 +89,16 @@ def _add_assemble_quantification_data(
         "Assemble data required for analysis of quantification performance " +
         "into one file")
 
-    method_name = quant_method.get_name()
-    counts_file = _get_transcript_counts_file(quantifier_dir)
-    unique_seq_file = _get_unique_sequence_file(quantifier_dir)
-
     writer.add_line(
-        _get_script_path(ASSEMBLE_DATA_SCRIPT) + " --method=" + method_name +
-        " --out=" + TPMS_FILE + " " + fs_pro_file + " " +
-        quant_method.get_results_file() + " " + counts_file + " " +
-        unique_seq_file)
+        ("{command} --method={method} --out={out_file} {fs_pro_file} " +
+         "{results_file} {counts_file} {unique_seq_file}").format(
+            command=_get_script_path(ASSEMBLE_DATA_SCRIPT),
+            method=quant_method.get_name(),
+            out_file=TPMS_FILE,
+            fs_pro_file=fs_pro_file,
+            results_file=quant_method.get_results_file(),
+            counts_file=_get_transcript_counts_file(quantifier_dir),
+            unique_seq_file=_get_unique_sequence_file(quantifier_dir)))
 
 
 def _add_analyse_quantification_results(writer, run_dir, **params):
@@ -104,12 +107,18 @@ def _add_analyse_quantification_results(writer, run_dir, **params):
 
     options_dict = {p.name: p.option_name for p in parameters.get_parameters()}
 
-    command = _get_script_path(ANALYSE_DATA_SCRIPT) + " "
+    params_spec = ""
     for param_name, param_val in params.items():
-        command += options_dict[param_name] + "=" + str(param_val) + " "
-    command += TPMS_FILE + " " + os.path.basename(run_dir)
+        params_spec += "{name}={val} ".format(
+            name=options_dict[param_name],
+            val=str(param_val))
 
-    writer.add_line(command)
+    writer.add_line(
+        "{command} {params_spec} {tpms_file} {output_basename}".format(
+            command=_get_script_path(ANALYSE_DATA_SCRIPT),
+            params_spec=params_spec,
+            tpms_file=TPMS_FILE,
+            output_basename=os.path.basename(run_dir)))
 
 
 def _add_process_command_line_options(writer):

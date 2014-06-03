@@ -12,6 +12,8 @@ TMP_READS_FILE = "reads.tmp"
 TMP_LEFT_READS_FILE = "lr.tmp"
 TMP_RIGHT_READS_FILE = "rr.tmp"
 
+# TODO: Tidy writing of command a la prepare_quantification_run
+
 
 def _get_script_path(script_name):
     return os.path.join(
