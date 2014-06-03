@@ -25,6 +25,22 @@ def _Quantifier(cls):
 class _Cufflinks:
     TOPHAT_OUTPUT_DIR = "tho"
 
+    CALC_BOWTIE_INDEX_DIR = "BOWTIE_INDEX_DIR=$(dirname {bowtie_index})"
+    CHECK_BOWTIE_INDEX_DIR = "! -d $BOWTIE_INDEX_DIR"
+    MAKE_BOWTIE_INDEX_DIR = "mkdir -p $BOWTIE_INDEX_DIR"
+    GET_GENOME_REF_FILE_LIST = "REF_FILES=$(ls -1 {genome_fasta_dir}/*.fa" + \
+        " | tr '\\n' ',')"
+    STRIP_TRAILING_COMMA = "REF_FILES=${REF_FILES%,}"
+    BUILD_BOWTIE_INDEX = "bowtie-build $REF_FILES {bowtie_index}"
+    CONSTRUCT_REFERENCE_FASTA = "bowtie-inspect {bowtie_index} > " + \
+        "{bowtie_index}.fa"
+
+    MAP_READS = "tophat --library-type fr-unstranded " + \
+        "--no-coverage-search -p 8 -o {tophat_output_dir} " + \
+        "{bowtie_index} {reads_spec}"
+    QUANTIFY = "cufflinks -o transcriptome -u -b {bowtie_index}.fa -p 8 " + \
+        "--library-type fr-secondstrand -G {transcript_gtf} {mapped_reads}"
+
     @classmethod
     def get_name(cls):
         return "Cufflinks"
@@ -42,39 +58,40 @@ class _Cufflinks:
 
         bowtie_index = cls._get_bowtie_index(params[QUANTIFIER_DIRECTORY])
 
-        writer.add_line("BOWTIE_INDEX_DIR=$(dirname " + bowtie_index + ")")
+        writer.add_line(cls.CALC_BOWTIE_INDEX_DIR.format(
+            bowtie_index=bowtie_index))
 
         with writer.section():
-            with writer.if_block("! -d $BOWTIE_INDEX_DIR"):
-                writer.add_line("mkdir -p $BOWTIE_INDEX_DIR")
-                writer.add_line(
-                    "REF_FILES=$(ls -1 " + params[GENOME_FASTA_DIR] +
-                    "/*.fa | tr '\\n' ',')")
-                writer.add_line("REF_FILES=${REF_FILES%,}")
-                writer.add_line("bowtie-build $REF_FILES " + bowtie_index)
-                writer.add_line(
-                    "bowtie-inspect " + bowtie_index + " > " +
-                    bowtie_index + ".fa")
+            with writer.if_block(cls.CHECK_BOWTIE_INDEX_DIR):
+                writer.add_line(cls.MAKE_BOWTIE_INDEX_DIR)
+                writer.add_line(cls.GET_GENOME_REF_FILE_LIST.format(
+                    genome_fasta_dir=params[GENOME_FASTA_DIR]))
+                writer.add_line(cls.STRIP_TRAILING_COMMA)
+                writer.add_line(cls.BUILD_BOWTIE_INDEX.format(
+                    bowtie_index=bowtie_index))
+                writer.add_line(cls.CONSTRUCT_REFERENCE_FASTA.format(
+                    bowtie_index=bowtie_index))
 
     @classmethod
     def write_quantification_commands(cls, writer, params):
         bowtie_index = cls._get_bowtie_index(params[QUANTIFIER_DIRECTORY])
 
         reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
-            else params[LEFT_SIMULATED_READS] + \
-            " " + params[RIGHT_SIMULATED_READS]
-
-        writer.add_line(
-            "tophat --library-type fr-unstranded --no-coverage-search " +
-            "-p 8 -o " + cls.TOPHAT_OUTPUT_DIR + " " + bowtie_index +
-            " " + reads_spec)
+            else "{l} {r}".format(
+                l=params[LEFT_SIMULATED_READS],
+                r=params[RIGHT_SIMULATED_READS])
 
         mapped_reads = os.path.join(cls.TOPHAT_OUTPUT_DIR, "accepted_hits.bam")
 
-        writer.add_line(
-            "cufflinks -o transcriptome -u -b " + bowtie_index +
-            ".fa -p 8 --library-type fr-secondstrand -G " +
-            params[TRANSCRIPT_GTF_FILE] + " " + mapped_reads)
+        writer.add_line(cls.MAP_READS.format(
+            tophat_output_dir=cls.TOPHAT_OUTPUT_DIR,
+            bowtie_index=bowtie_index,
+            reads_spec=reads_spec))
+
+        writer.add_line(cls.QUANTIFY.format(
+            bowtie_index=bowtie_index,
+            transcript_gtf=params[TRANSCRIPT_GTF_FILE],
+            mapped_reads=mapped_reads))
 
     @classmethod
     def get_results_file(cls):
