@@ -34,4 +34,3 @@ Assess accuracy
 
 TODO.
 
-.. [FluxSimulator] `Homepage <http://sammeth.net/confluence/display/SIM/Home>`_ 

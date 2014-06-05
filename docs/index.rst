@@ -20,3 +20,4 @@ Contents:
    assessment
    support_scripts
    extending
+   references
