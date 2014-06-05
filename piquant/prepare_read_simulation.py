@@ -121,7 +121,7 @@ def _add_simulate_read_bias(writer, paired_end, errors):
         _get_script_path(SIMULATE_BIAS_SCRIPT) +
         " -n $FINAL_READS --out-prefix=" + out_prefix + " " +
         ("--paired-end" if paired_end else "") + " " +
-        BIAS_PWM_FILE + " " + reads_file)
+        _get_script_path(BIAS_PWM_FILE) + " " + reads_file)
     writer.add_line("mv " + out_prefix + "." + reads_file + " " + reads_file)
 
 
