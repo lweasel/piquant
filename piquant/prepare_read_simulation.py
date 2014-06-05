@@ -109,44 +109,46 @@ def _add_shuffle_simulated_reads(writer, paired_end, errors):
     writer.add_line("mv " + TMP_READS_FILE + " " + reads_file)
 
 
-def _add_simulate_read_bias(writer, paired_end, errors, bias):
-    if bias:
-        # Use a position weight matrix to simulate sequence bias in the reads
-        writer.add_comment(
-            "Use a position weight matrix to simulate sequence bias in " +
-            "the reads.")
+def _add_simulate_read_bias(writer, paired_end, errors):
+    # Use a position weight matrix to simulate sequence bias in the reads
+    writer.add_comment(
+        "Use a position weight matrix to simulate sequence bias in " +
+        "the reads.")
 
-        reads_file = fs.get_reads_file(errors)
-        out_prefix = "bias"
-        writer.add_line(
-            _get_script_path(SIMULATE_BIAS_SCRIPT) +
-            " -n $FINAL_READS --out-prefix=" + out_prefix + " " +
-            ("--paired-end" if paired_end else "") + " " +
-            BIAS_PWM_FILE + " " + reads_file)
-        writer.add_line(
-            "mv " + out_prefix + "." + reads_file + " " + reads_file)
+    reads_file = fs.get_reads_file(errors)
+    out_prefix = "bias"
+    writer.add_line(
+        _get_script_path(SIMULATE_BIAS_SCRIPT) +
+        " -n $FINAL_READS --out-prefix=" + out_prefix + " " +
+        ("--paired-end" if paired_end else "") + " " +
+        BIAS_PWM_FILE + " " + reads_file)
+    writer.add_line("mv " + out_prefix + "." + reads_file + " " + reads_file)
 
 
-def _add_separate_paired_end_reads(writer, paired_end, errors):
+def _add_separate_paired_end_reads(writer, errors):
     # If we've specified paired end reads, split the FASTA/Q file output by
     # Flux Simulator into separate files for forward and reverse reads
-    if paired_end:
-        writer.add_comment(
-            "We've produced paired-end reads - split the Flux Simulator " +
-            "output into files containing left and right reads.")
-        writer.add_pipe([
-            "paste " + ("- - - -" if errors else "- -") + " < " +
-            fs.get_reads_file(errors),
-            "awk -F '\\t' '$1~/\/1/ " +
-            "{print $0 > \"" + TMP_LEFT_READS_FILE + "\"} " +
-            "$1~/\/2/ {print $0 > \"" + TMP_RIGHT_READS_FILE + "\"}'"
-        ])
-        writer.add_line(
-            "tr '\\t' '\\n' < " + TMP_LEFT_READS_FILE + " > " +
-            fs.get_reads_file(errors, fs.LEFT_READS))
-        writer.add_line(
-            "tr '\\t' '\\n' < " + TMP_RIGHT_READS_FILE + " > " +
-            fs.get_reads_file(errors, fs.RIGHT_READS))
+    writer.add_comment(
+        "We've produced paired-end reads - split the Flux Simulator " +
+        "output into files containing left and right reads.")
+
+    reads_file = fs.get_reads_file(errors)
+    writer.add_pipe([
+        "paste " + ("- - - -" if errors else "- -") + " < " + reads_file,
+        "awk -F '\\t' '$1~/\/1/ " +
+        "{print $0 > \"" + TMP_LEFT_READS_FILE + "\"} " +
+        "$1~/\/2/ {print $0 > \"" + TMP_RIGHT_READS_FILE + "\"}'"
+    ])
+    writer.add_line("rm " + reads_file)
+
+    writer.add_line(
+        "tr '\\t' '\\n' < " + TMP_LEFT_READS_FILE + " > " +
+        fs.get_reads_file(errors, fs.LEFT_READS))
+    writer.add_line("rm " + TMP_LEFT_READS_FILE)
+    writer.add_line(
+        "tr '\\t' '\\n' < " + TMP_RIGHT_READS_FILE + " > " +
+        fs.get_reads_file(errors, fs.RIGHT_READS))
+    writer.add_line("rm " + TMP_RIGHT_READS_FILE)
 
 
 def _add_create_reads(
@@ -165,10 +167,22 @@ def _add_create_reads(
         _add_simulate_reads(writer)
     with writer.section():
         _add_shuffle_simulated_reads(writer, paired_end, errors)
-    with writer.section():
-        _add_simulate_read_bias(writer, paired_end, errors, bias)
 
-    _add_separate_paired_end_reads(writer, paired_end, errors)
+    if bias:
+        with writer.section():
+            _add_simulate_read_bias(writer, paired_end, errors)
+
+    if paired_end:
+        with writer.section():
+            _add_separate_paired_end_reads(writer, errors)
+
+
+def _add_cleanup_intermediate_files(writer):
+    with writer.section():
+        writer.add_comment(
+            "Remove intermediate files not necessary for quantification.")
+        writer.add_line("rm " + fs.SIMULATION_LIBRARY_FILE)
+        writer.add_line("rm " + fs.SIMULATED_READS_PREFIX + ".bed")
 
 
 def _create_simulator_parameter_files(
@@ -181,18 +195,21 @@ def _create_simulator_parameter_files(
 
 
 def _write_read_simulation_script(
-        reads_dir, read_length, read_depth, paired_end, errors, bias):
+        reads_dir, read_length, read_depth, paired_end, errors, bias, cleanup):
 
     writer = fw.BashScriptWriter()
-    with writer.section():
-        _add_create_reads(
-            writer, read_length, read_depth, paired_end, errors, bias)
+    _add_create_reads(
+        writer, read_length, read_depth, paired_end, errors, bias)
+
+    if cleanup:
+        _add_cleanup_intermediate_files(writer)
+
     writer.write_to_file(reads_dir, RUN_SCRIPT)
 
 
 def create_simulation_files(
         reads_dir, transcript_gtf_file, genome_fasta_dir,
-        num_fragments, read_length=30, read_depth=10,
+        num_fragments, cleanup, read_length=30, read_depth=10,
         paired_end=False, errors=False, bias=False):
 
     os.mkdir(reads_dir)
@@ -204,4 +221,4 @@ def create_simulation_files(
 
     # Write shell script to run read simulation
     _write_read_simulation_script(
-        reads_dir, read_length, read_depth, paired_end, errors, bias)
+        reads_dir, read_length, read_depth, paired_end, errors, bias, cleanup)

@@ -41,13 +41,19 @@ def _add_run_prequantification(writer, quant_method, params_spec):
         quant_method.write_preparatory_commands(writer, params_spec)
 
 
-def _add_quantify_transcripts(writer, quant_method, params_spec):
+def _add_quantify_transcripts(writer, quant_method, params_spec, cleanup):
     # Use the specified quantification method to calculate per-transcript TPMs
     with writer.if_block("-n \"$QUANTIFY_TRANSCRIPTS\""):
-        writer.add_comment(
-            "Use {method} to calculate per-transcript TPMs.".format(
-                method=quant_method.get_name()))
-        quant_method.write_quantification_commands(writer, params_spec)
+        with writer.section():
+            writer.add_comment(
+                "Use {method} to calculate per-transcript TPMs.".format(
+                    method=quant_method.get_name()))
+            quant_method.write_quantification_commands(writer, params_spec)
+
+        if cleanup:
+            writer.add_comment(
+                "Remove files not necessary for analysis of quantification.")
+            quant_method.write_post_quantification_cleanup(writer)
 
 
 def _add_calculate_transcripts_per_gene(
@@ -181,7 +187,8 @@ def _update_params_spec(params_spec, input_dir, quantifier_dir,
 
 
 def _add_script_sections(
-        writer, run_dir, quantifier_dir, transcript_gtf_file, fs_pro_file,
+        writer, run_dir, quantifier_dir,
+        transcript_gtf_file, fs_pro_file, cleanup,
         quant_method, read_length, read_depth,
         paired_end, errors, bias, params_spec):
 
@@ -192,7 +199,7 @@ def _add_script_sections(
         _add_run_prequantification(writer, quant_method, params_spec)
 
     with writer.section():
-        _add_quantify_transcripts(writer, quant_method, params_spec)
+        _add_quantify_transcripts(writer, quant_method, params_spec, cleanup)
 
     _add_analyse_results(
         writer, run_dir, quantifier_dir, transcript_gtf_file,
@@ -201,7 +208,8 @@ def _add_script_sections(
 
 
 def write_run_quantification_script(
-        input_dir, run_dir, quantifier_dir, transcript_gtf_file, params_spec,
+        input_dir, run_dir, quantifier_dir,
+        transcript_gtf_file, params_spec, cleanup,
         quant_method=None, read_length=50, read_depth=10,
         paired_end=False, errors=False, bias=False):
 
@@ -215,6 +223,6 @@ def write_run_quantification_script(
     writer = fw.BashScriptWriter()
     _add_script_sections(
         writer, run_dir, quantifier_dir, transcript_gtf_file,
-        fs_pro_file, quant_method, read_length, read_depth,
+        fs_pro_file, cleanup, quant_method, read_length, read_depth,
         paired_end, errors, bias, params_spec)
     writer.write_to_file(run_dir, RUN_SCRIPT)

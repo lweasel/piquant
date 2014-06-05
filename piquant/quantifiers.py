@@ -23,7 +23,6 @@ def _Quantifier(cls):
 
 @_Quantifier
 class _Cufflinks:
-    TOPHAT_OUTPUT_DIR = "tho"
     FPKM_COLUMN = "FPKM"
 
     CALCULATE_BOWTIE_INDEX_DIRECTORY = \
@@ -43,10 +42,16 @@ class _Cufflinks:
 
     MAP_READS_TO_GENOME_WITH_TOPHAT = \
         "tophat --library-type fr-unstranded --no-coverage-search -p 8 " + \
-        "-o {tophat_output_dir} {bowtie_index} {reads_spec}"
+        "-o tho {bowtie_index} {reads_spec}"
     QUANTIFY_ISOFORM_EXPRESSION = \
         "cufflinks -o transcriptome -u -b {bowtie_index}.fa -p 8 " + \
-        "--library-type fr-secondstrand -G {transcript_gtf} {mapped_reads}"
+        "--library-type fr-secondstrand -G {transcript_gtf} " + \
+        "tho/accepted_hits.bam"
+
+    REMOVE_TOPHAT_OUTPUT_DIRECTORY = \
+        "rm -rf tho"
+    REMOVE_CUFFLINKS_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
+        "find transcriptome \! -name 'isoforms.fpkm_tracking' -type f -delete"
 
     @classmethod
     def get_name(cls):
@@ -89,17 +94,18 @@ class _Cufflinks:
                 l=params[LEFT_SIMULATED_READS],
                 r=params[RIGHT_SIMULATED_READS])
 
-        mapped_reads = os.path.join(cls.TOPHAT_OUTPUT_DIR, "accepted_hits.bam")
-
         writer.add_line(cls.MAP_READS_TO_GENOME_WITH_TOPHAT.format(
-            tophat_output_dir=cls.TOPHAT_OUTPUT_DIR,
             bowtie_index=bowtie_index,
             reads_spec=reads_spec))
 
         writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
             bowtie_index=bowtie_index,
-            transcript_gtf=params[TRANSCRIPT_GTF_FILE],
-            mapped_reads=mapped_reads))
+            transcript_gtf=params[TRANSCRIPT_GTF_FILE]))
+
+    @classmethod
+    def write_post_quantification_cleanup(cls, writer):
+        writer.add_line(cls.REMOVE_TOPHAT_OUTPUT_DIRECTORY)
+        writer.add_line(cls.REMOVE_CUFFLINKS_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES)
 
     @classmethod
     def get_results_file(cls):
@@ -138,6 +144,9 @@ class _RSEM:
         "rsem-calculate-expression --time {qualities_spec} --p 32 " + \
         "--output-genome-bam --strand-specific {reads_spec} " + \
         "{ref_name} rsem_sample"
+
+    REMOVE_RSEM_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
+        "find . -name \"rsem_sample*\" \! -name rsem_sample.isoforms.results"
 
     @classmethod
     def get_name(cls):
@@ -184,6 +193,10 @@ class _RSEM:
             ref_name=ref_name))
 
     @classmethod
+    def write_post_quantification_cleanup(cls, writer):
+        writer.add_line(cls.REMOVE_RSEM_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES)
+
+    @classmethod
     def get_results_file(cls):
         return "rsem_sample.isoforms.results"
 
@@ -209,6 +222,11 @@ class _Express:
         "samtools view -Sb - > hits.bam"
     QUANTIFY_ISOFORM_EXPRESSION = \
         "express {stranded_spec} {ref_name}.transcripts.fa hits.bam"
+
+    REMOVE_MAPPED_READS = \
+        "rm hits.bam"
+    REMOVE_EXPRESS_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
+        "rm params.xprs"
 
     @classmethod
     def get_name(cls):
@@ -247,6 +265,11 @@ class _Express:
             ref_name=ref_name))
 
     @classmethod
+    def write_post_quantification_cleanup(cls, writer):
+        writer.add_line(cls.REMOVE_MAPPED_READS)
+        writer.add_line(cls.REMOVE_EXPRESS_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES)
+
+    @classmethod
     def get_results_file(cls):
         return "results.xprs"
 
@@ -274,6 +297,9 @@ class _Sailfish:
     FILTER_COMMENT_LINES = \
         "grep -v '^# \[' quant_bias_corrected.sf | " + \
         "sed -e 's/# //'i > quant_filtered.csv"
+
+    REMOVE_SAILFISH_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
+        "rm quant_bias_corrected.sf quant.sf reads.count_info reads.sfc"
 
     @classmethod
     def get_name(cls):
@@ -319,6 +345,10 @@ class _Sailfish:
             library_spec=library_spec,
             reads_spec=reads_spec))
         writer.add_line(cls.FILTER_COMMENT_LINES)
+
+    @classmethod
+    def write_post_quantification_cleanup(cls, writer):
+        writer.add_line(cls.REMOVE_SAILFISH_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES)
 
     @classmethod
     def get_results_file(cls):
