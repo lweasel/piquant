@@ -20,6 +20,11 @@ def _get_script_path(script_name):
         os.path.abspath(os.path.dirname(__file__)), script_name)
 
 
+def _add_create_flux_simulator_temporary_directory(writer):
+    writer.add_comment("Create temporary directory for FluxSimulator")
+    writer.add_line("mkdir " + fs.TEMPORARY_DIRECTORY)
+
+
 def _add_create_expression_profiles(writer):
     writer.add_comment(
         "First run Flux Simulator to create expression profiles.")
@@ -84,6 +89,11 @@ def _add_simulate_reads(writer):
     writer.add_comment("Now use Flux Simulator to simulate reads.")
     writer.add_line(
         "flux-simulator -t simulator -l -s -p " + fs.SIMULATION_PARAMS_FILE)
+
+    # I can't see why we'd ever want to retain FluxSimulator's temporary files,
+    # but if that became necessary, these lines could be moved to
+    # _add_cleanup_intermediate_files()
+    writer.add_line("rm -rf " + fs.TEMPORARY_DIRECTORY)
 
 
 def _add_shuffle_simulated_reads(writer, paired_end, errors):
@@ -154,6 +164,8 @@ def _add_separate_paired_end_reads(writer, errors):
 def _add_create_reads(
         writer, read_length, read_depth, paired_end, errors, bias):
 
+    with writer.section():
+        _add_create_flux_simulator_temporary_directory(writer)
     with writer.section():
         _add_create_expression_profiles(writer)
     with writer.section():

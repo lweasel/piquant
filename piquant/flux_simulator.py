@@ -30,6 +30,7 @@ SIMULATION_PARAMS_FILE = "flux_simulator_simulation.par"
 SIMULATION_LIBRARY_FILE = SIMULATION_PARAMS_FILE.replace("par", "lib")
 SIMULATED_READS_PREFIX = "reads"
 READ_NUMBER_PLACEHOLDER = "READ_NUMBER_PLACEHOLDER"
+TEMPORARY_DIRECTORY = "flux_simulator_tmp"
 
 _PRO_FILE_COLS = [
     0,
@@ -57,7 +58,8 @@ def _get_common_flux_simulator_params(
         "GEN_DIR": genome_fasta_dir,
         "NB_MOLECULES": int(num_fragments / _FRAGMENTS_PER_MOLECULE),
         "POLYA_SCALE": "NaN",
-        "POLYA_SHAPE": "NaN"
+        "POLYA_SHAPE": "NaN",
+        "TMP_DIR": TEMPORARY_DIRECTORY
     }
 
 
