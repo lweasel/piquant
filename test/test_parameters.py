@@ -7,13 +7,19 @@ def _get_test_parameter(
         name="name", title="The Name",
         option_name="--option-name", option_validator=int,
         is_numeric=False, value_namer=None, file_namer=None):
-    return parameters._Parameter(
+
+    param = parameters._Parameter(
         name, title, option_name, option_validator, is_numeric,
         value_namer, file_namer)
 
+    parameters._PARAMETERS.remove(param)
+    parameters._RUN_PARAMETERS.remove(param)
 
-def test_get_parameters_returns_parameters_instances():
-    params = parameters.get_parameters()
+    return param
+
+
+def test_get_run_parameters_returns_parameters_instances():
+    params = parameters.get_run_parameters()
     assert all([isinstance(p, parameters._Parameter) for p in params])
 
 
@@ -83,7 +89,16 @@ def test_validate_command_line_parameter_sets_returns_correct_number_of_param_se
         "--read-length": "10,20",
     }
 
-    ignore_params = ["read_depth", "paired_end", "errors", "bias"]
+    ignore_params = [
+        parameters.READ_DEPTH,
+        parameters.PAIRED_END,
+        parameters.ERRORS,
+        parameters.BIAS,
+        parameters.TRANSCRIPT_GTF,
+        parameters.GENOME_FASTA_DIR,
+        parameters.NUM_FRAGMENTS
+    ]
+
     param_vals = parameters.validate_command_line_parameter_sets(
         None, options, ignore_params)
     assert len(param_vals) == 2
@@ -95,8 +110,17 @@ def test_validate_command_line_parameter_sets_returns_correct_number_of_transfor
         "--read-length": ",".join([str(i) for i in range(0, num_values)])
     }
 
-    ignore_params = ["quant_method", "read_depth",
-                     "paired_end", "errors", "bias"]
+    ignore_params = [
+        parameters.QUANT_METHOD,
+        parameters.READ_DEPTH,
+        parameters.PAIRED_END,
+        parameters.ERRORS,
+        parameters.BIAS,
+        parameters.TRANSCRIPT_GTF,
+        parameters.GENOME_FASTA_DIR,
+        parameters.NUM_FRAGMENTS
+    ]
+
     param_vals = parameters.validate_command_line_parameter_sets(
         None, options, ignore_params)
     assert len(param_vals[parameters.READ_LENGTH.name]) == num_values
@@ -109,8 +133,17 @@ def test_validate_command_line_parameter_sets_returns_correct_transformed_values
         "--read-length": str(len1) + "," + str(len2)
     }
 
-    ignore_params = ["quant_method", "read_depth",
-                     "paired_end", "errors", "bias"]
+    ignore_params = [
+        parameters.QUANT_METHOD,
+        parameters.READ_DEPTH,
+        parameters.PAIRED_END,
+        parameters.ERRORS,
+        parameters.BIAS,
+        parameters.TRANSCRIPT_GTF,
+        parameters.GENOME_FASTA_DIR,
+        parameters.NUM_FRAGMENTS
+    ]
+
     param_vals = parameters.validate_command_line_parameter_sets(
         None, options, ignore_params)
     assert len1 in param_vals[parameters.READ_LENGTH.name]
@@ -136,9 +169,9 @@ def test_execute_for_param_sets_executes_for_correct_number_of_parameter_sets():
     len2 = 5
     len3 = 7
     params_values = {
-        "param1": [1]*len1,
-        "param2": [2]*len2,
-        "param3": [3]*len3
+        "read_length": [1]*len1,
+        "read_depth": [2]*len2,
+        "errors": [True]*len3
     }
 
     execute_counter = []
@@ -167,11 +200,11 @@ def test_execute_for_param_sets_executes_all_callables():
 
 
 def test_execute_for_param_sets_executes_for_correct_sets_of_parameters():
-    params1 = [1, 2]
-    params2 = ["a", "b"]
+    params1 = [75, 100]
+    params2 = [30, 50]
     params_values = {
-        "param1": params1,
-        "param2": params2
+        "read_length": params1,
+        "read_depth": params2
     }
 
     execute_record = []
@@ -186,4 +219,3 @@ def test_execute_for_param_sets_executes_for_correct_sets_of_parameters():
     assert set([params1[0], params2[1]]) in execute_record
     assert set([params1[1], params2[0]]) in execute_record
     assert set([params1[1], params2[1]]) in execute_record
-
