@@ -3,3 +3,5 @@
 
 piquant
 =======
+
+The latest piquant documentation can be found [here](http://piquant.readthedocs.org/).
