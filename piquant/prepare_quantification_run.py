@@ -112,7 +112,8 @@ def _add_analyse_quantification_results(writer, run_dir, **params):
     # Finally perform analysis on the calculated TPMs
     writer.add_comment("Perform analysis on calculated TPMs.")
 
-    options_dict = {p.name: p.option_name for p in parameters.get_parameters()}
+    options_dict = {p.name: p.option_name for
+                    p in parameters.get_run_parameters()}
 
     params_spec = ""
     for param_name, param_val in params.items():
@@ -208,12 +209,18 @@ def _add_script_sections(
 
 
 def write_run_quantification_script(
-        input_dir, run_dir, quantifier_dir,
-        transcript_gtf_file, params_spec, cleanup,
+        input_dir, run_dir, quantifier_dir, cleanup,
         quant_method=None, read_length=50, read_depth=10,
-        paired_end=False, errors=False, bias=False):
+        paired_end=False, errors=False, bias=False,
+        transcript_gtf=None, genome_fasta=None):
 
     fs_pro_file = os.path.join(input_dir, fs.EXPRESSION_PROFILE_FILE)
+
+    # TODO: poorly-named variable
+    params_spec = {
+        qs.TRANSCRIPT_GTF_FILE: transcript_gtf,
+        qs.GENOME_FASTA_DIR: genome_fasta
+    }
 
     _update_params_spec(params_spec, input_dir, quantifier_dir,
                         paired_end, errors)
@@ -222,7 +229,7 @@ def write_run_quantification_script(
 
     writer = fw.BashScriptWriter()
     _add_script_sections(
-        writer, run_dir, quantifier_dir, transcript_gtf_file,
+        writer, run_dir, quantifier_dir, transcript_gtf,
         fs_pro_file, cleanup, quant_method, read_length, read_depth,
         paired_end, errors, bias, params_spec)
     writer.write_to_file(run_dir, RUN_SCRIPT)

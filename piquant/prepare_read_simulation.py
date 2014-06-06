@@ -220,15 +220,15 @@ def _write_read_simulation_script(
 
 
 def create_simulation_files(
-        reads_dir, transcript_gtf_file, genome_fasta_dir,
-        num_fragments, cleanup, read_length=30, read_depth=10,
-        paired_end=False, errors=False, bias=False):
+        reads_dir, cleanup, read_length=30, read_depth=10, paired_end=False,
+        errors=False, bias=False, transcript_gtf=None, genome_fasta=None,
+        num_fragments=1000000000):
 
     os.mkdir(reads_dir)
 
     # Write Flux Simulator parameters files
     _create_simulator_parameter_files(
-        reads_dir, transcript_gtf_file, genome_fasta_dir,
+        reads_dir, transcript_gtf, genome_fasta,
         num_fragments, read_length, paired_end, errors)
 
     # Write shell script to run read simulation

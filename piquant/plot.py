@@ -286,14 +286,15 @@ def draw_overall_stats_graphs(stats_dir, overall_stats, param_values):
     graph_file_basename = os.path.join(
         stats_dir, statistics.OVERALL_STATS_PREFIX)
 
-    numerical_params = [p for p in parameters.get_parameters() if p.is_numeric]
+    numerical_params = \
+        [p for p in parameters.get_run_parameters() if p.is_numeric]
 
     for param in get_non_degenerate_params(
-            parameters.get_parameters(), param_values):
+            parameters.get_run_parameters(), param_values):
         for num_p in get_non_degenerate_params(
                 remove_from(numerical_params, param), param_values):
             fixed_params, fp_values_sets = \
-                get_fixed_params(parameters.get_parameters(),
+                get_fixed_params(parameters.get_run_parameters(),
                                  [param, num_p], param_values)
 
             for fp_values_set in fp_values_sets:
@@ -327,9 +328,9 @@ def draw_grouped_stats_graphs(stats_dir, param_values):
         clsfr_stats = pd.read_csv(stats_file)
 
         for param in get_non_degenerate_params(
-                parameters.get_parameters(), param_values):
+                parameters.get_run_parameters(), param_values):
             fixed_params, fp_values_sets = \
-                get_fixed_params(parameters.get_parameters(),
+                get_fixed_params(parameters.get_run_parameters(),
                                  param, param_values)
 
             for fp_values_set in fp_values_sets:
@@ -361,9 +362,9 @@ def draw_distribution_graphs(stats_dir, param_values):
         clsfr_stats = pd.read_csv(stats_file)
 
         for param in get_non_degenerate_params(
-                parameters.get_parameters(), param_values):
+                parameters.get_run_parameters(), param_values):
             fixed_params, fp_values_sets = \
-                get_fixed_params(parameters.get_parameters(),
+                get_fixed_params(parameters.get_run_parameters(),
                                  param, param_values)
 
             for fp_values_set in fp_values_sets:

@@ -4,10 +4,10 @@
 # TODO: rename out-dir
 
 """Usage:
-    piquant prepare_read_dirs [--log-level=<log-level> --out-dir=<out_dir> --num-fragments=<num-fragments> --nocleanup --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> <transcript-gtf-file> <genome-fasta-dir>]
+    piquant prepare_read_dirs [--log-level=<log-level> --out-dir=<out_dir> --num-fragments=<num-fragments> --nocleanup --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir>]
     piquant create_reads [--log-level=<log-level> --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant check_reads [--log-level=<log-level> --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
-    piquant prepare_quant_dirs [--log-level=<log-level> --out-dir=<out-dir> --nocleanup --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>] <transcript-gtf-file> <genome-fasta-dir>
+    piquant prepare_quant_dirs [--log-level=<log-level> --out-dir=<out-dir> --nocleanup --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir>]
     piquant prequantify [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant quantify [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant check_quant [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
@@ -43,7 +43,6 @@ import pandas as pd
 import parameters
 import prepare_quantification_run as prq
 import prepare_read_simulation as prs
-import quantifiers as qs
 import schema
 import statistics
 import sys
@@ -54,7 +53,6 @@ LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
 OUTPUT_DIRECTORY = "--out-dir"
 STATS_DIRECTORY = "--stats-dir"
-NUM_FRAGMENTS = "--num-fragments"
 NO_CLEANUP = "--nocleanup"
 PARAMS_FILE = "--params-file"
 PREPARE_READ_DIRS = "prepare_read_dirs"
@@ -65,8 +63,6 @@ PREQUANTIFY = "prequantify"
 QUANTIFY = "quantify"
 CHECK_QUANTIFICATION = "check_quant"
 ANALYSE_RUNS = "analyse_runs"
-TRANSCRIPT_GTF_FILE = "<transcript-gtf-file>"
-GENOME_FASTA_DIR = "<genome-fasta-dir>"
 
 # Read in command-line options
 __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
@@ -80,16 +76,6 @@ try:
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
     opt.validate_dir_option(
         options[OUTPUT_DIRECTORY], "Output parent directory does not exist")
-    options[NUM_FRAGMENTS] = opt.validate_int_option(
-        options[NUM_FRAGMENTS],
-        "Number of fragments must be a positive integer",
-        nonneg=True, nullable=True)
-
-    if options[PREPARE_READ_DIRS] or options[PREPARE_QUANT_DIRS]:
-        opt.validate_file_option(
-            options[TRANSCRIPT_GTF_FILE], "Transcript GTF file does not exist")
-        opt.validate_dir_option(
-            options[GENOME_FASTA_DIR], "Genome FASTA directory does not exist")
 
     opt.validate_file_option(
         options[PARAMS_FILE],
@@ -99,7 +85,15 @@ try:
     processing_reads = options[PREPARE_READ_DIRS] or \
         options[CREATE_READS] or options[CHECK_READS]
 
-    ignore_params = [parameters.QUANT_METHOD.name] if processing_reads else []
+    ignore_params = [parameters.QUANT_METHOD] if processing_reads else []
+
+    if not (options[PREPARE_READ_DIRS] or options[PREPARE_QUANT_DIRS]):
+        ignore_params += [parameters.TRANSCRIPT_GTF,
+                          parameters.GENOME_FASTA_DIR]
+
+    if not options[PREPARE_READ_DIRS]:
+        ignore_params.append(parameters.NUM_FRAGMENTS)
+
     param_values = parameters.validate_command_line_parameter_sets(
         options[PARAMS_FILE], options, ignore_params=ignore_params)
 
@@ -136,9 +130,7 @@ def reads_directory_checker(should_exist):
 def prepare_read_simulation(**params):
     reads_dir = get_parameters_dir(**params)
     cleanup = not options[NO_CLEANUP]
-    prs.create_simulation_files(
-        reads_dir, options[TRANSCRIPT_GTF_FILE], options[GENOME_FASTA_DIR],
-        options[NUM_FRAGMENTS], cleanup, **params)
+    prs.create_simulation_files(reads_dir, cleanup, **params)
 
 
 def create_reads(**params):
@@ -181,17 +173,10 @@ def prepare_quantification(**params):
     quantifier_dir = os.path.join(
         options[OUTPUT_DIRECTORY], "quantifier_scratch")
 
-    # TODO: poorly named variable
-    params_spec = {
-        qs.TRANSCRIPT_GTF_FILE: options[TRANSCRIPT_GTF_FILE],
-        qs.GENOME_FASTA_DIR: options[GENOME_FASTA_DIR]
-    }
-
     cleanup = not options[NO_CLEANUP]
 
     prq.write_run_quantification_script(
-        reads_dir, run_dir, quantifier_dir, options[TRANSCRIPT_GTF_FILE],
-        params_spec, cleanup, **params)
+        reads_dir, run_dir, quantifier_dir, cleanup, **params)
 
 quantifiers_used = []
 
@@ -294,8 +279,9 @@ if options[ANALYSE_RUNS]:
         options[STATS_DIRECTORY], statistics.OVERALL_STATS_PREFIX)
     overall_stats = pd.read_csv(overall_stats_file)
 
+    # TODO: rename variable (confusing)
     param_values = {}
-    for param in parameters.get_parameters():
+    for param in parameters.get_run_parameters():
         param_series = overall_stats[param.name]
         param_values[param] = param_series.value_counts().index.tolist()
 

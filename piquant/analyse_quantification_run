@@ -101,7 +101,7 @@ logger.info("Writing overall statistics...")
 
 
 def add_overall_stats(stats):
-    for param in parameters.get_parameters():
+    for param in parameters.get_run_parameters():
         stats[param.name] = options[param.option_name]
 
 stats_types = statistics.get_statistics()
