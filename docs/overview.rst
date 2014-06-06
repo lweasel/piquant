@@ -35,8 +35,12 @@ Finally, transcript abundances are estimated using specified transcriptome quant
 
 The ``piquant`` command ``check_quant`` provides an easy way to check that the transcript quantification processes completed correctly for specified combinations of tools and read sequencing parameters.
 
-Assess accuracy
----------------
+Assess quantification accuracy
+------------------------------
 
 TODO.
 
+Requirements
+------------
+
+TODO.
