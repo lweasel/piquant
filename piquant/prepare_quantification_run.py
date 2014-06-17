@@ -33,12 +33,22 @@ def _get_unique_sequence_file(quantifier_dir):
     return os.path.join(quantifier_dir, UNIQUE_SEQUENCE_FILE)
 
 
-def _add_run_prequantification(writer, quant_method, params_spec):
-    # Perform preparatory tasks required by a particular quantification method
-    # prior to calculating abundances; for example, this might include mapping
-    # reads to the genome with TopHat
+def _add_run_prequantification(
+        writer, quant_method, params_spec,
+        quantifier_dir, transcript_gtf_file):
+
     with writer.if_block("-n \"$RUN_PREQUANTIFICATION\""):
+        # Perform preparatory tasks required by a particular quantification
+        # method prior to calculating abundances; for example, this might
+        # include mapping reads to the genome with TopHat
         quant_method.write_preparatory_commands(writer, params_spec)
+
+        with writer.section():
+            _add_calculate_transcripts_per_gene(
+                writer, quantifier_dir, transcript_gtf_file)
+        with writer.section():
+            _add_calculate_unique_sequence_length(
+                writer, quantifier_dir, transcript_gtf_file)
 
 
 def _add_quantify_transcripts(writer, quant_method, params_spec, cleanup):
@@ -152,17 +162,11 @@ def _add_process_command_line_options(writer):
 
 
 def _add_analyse_results(
-        writer, run_dir, quantifier_dir, transcript_gtf_file, fs_pro_file,
+        writer, run_dir, quantifier_dir, fs_pro_file,
         quant_method, read_length, read_depth,
         paired_end, errors, bias):
 
     with writer.if_block("-n \"$ANALYSE_RESULTS\""):
-        with writer.section():
-            _add_calculate_transcripts_per_gene(
-                writer, quantifier_dir, transcript_gtf_file)
-        with writer.section():
-            _add_calculate_unique_sequence_length(
-                writer, quantifier_dir, transcript_gtf_file)
         with writer.section():
             _add_assemble_quantification_data(
                 writer, quantifier_dir, fs_pro_file, quant_method)
@@ -197,14 +201,16 @@ def _add_script_sections(
         _add_process_command_line_options(writer)
 
     with writer.section():
-        _add_run_prequantification(writer, quant_method, params_spec)
+        _add_run_prequantification(
+            writer, quant_method, params_spec,
+            quantifier_dir, transcript_gtf_file)
 
     with writer.section():
         _add_quantify_transcripts(writer, quant_method, params_spec, cleanup)
 
     _add_analyse_results(
-        writer, run_dir, quantifier_dir, transcript_gtf_file,
-        fs_pro_file, quant_method, read_length, read_depth,
+        writer, run_dir, quantifier_dir, fs_pro_file,
+        quant_method, read_length, read_depth,
         paired_end, errors, bias)
 
 
