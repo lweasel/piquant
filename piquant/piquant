@@ -168,7 +168,7 @@ def prepare_quantification(**params):
 
     reads_params = dict(params)
     del reads_params[parameters.QUANT_METHOD.name]
-    reads_dir = get_parameters_dir(**params)
+    reads_dir = get_parameters_dir(**reads_params)
 
     quantifier_dir = os.path.join(
         options[OUTPUT_DIRECTORY], "quantifier_scratch")
@@ -189,7 +189,7 @@ def prequantify(**params):
         quantifiers_used.append(quant_method)
         logger.info("Executing prequantification for " +
                     quant_method.get_name())
-        execute_quantification_script(run_dir, "-p")
+        execute_quantification_script(run_dir, ["-p"])
         time.sleep(1)
 
 
@@ -197,7 +197,7 @@ def quantify(**params):
     run_dir = get_parameters_dir(**params)
 
     logger.info("Executing shell script to run quantification analysis.")
-    execute_quantification_script(run_dir, "-qa")
+    execute_quantification_script(run_dir, ["-qa"])
 
 
 def check_quantification_completed(**params):
