@@ -4,8 +4,8 @@ import os.path
 
 RUN_SCRIPT = "run_simulation.sh"
 
-CALC_READ_DEPTH_SCRIPT = "calculate_reads_for_depth"
-SIMULATE_BIAS_SCRIPT = "simulate_read_bias"
+CALC_READ_DEPTH_SCRIPT = "calculate_reads_for_depth.py"
+SIMULATE_BIAS_SCRIPT = "simulate_read_bias.py"
 BIAS_PWM_FILE = "bias_motif.pwm"
 
 TMP_READS_FILE = "reads.tmp"

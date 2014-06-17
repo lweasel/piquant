@@ -6,10 +6,10 @@ import parameters
 
 RUN_SCRIPT = "run_quantification.sh"
 
-TRANSCRIPT_COUNTS_SCRIPT = "count_transcripts_for_genes"
-UNIQUE_SEQUENCE_SCRIPT = "calculate_unique_transcript_sequence"
-ASSEMBLE_DATA_SCRIPT = "assemble_quantification_data"
-ANALYSE_DATA_SCRIPT = "analyse_quantification_run"
+TRANSCRIPT_COUNTS_SCRIPT = "count_transcripts_for_genes.py"
+UNIQUE_SEQUENCE_SCRIPT = "calculate_unique_transcript_sequence.py"
+ASSEMBLE_DATA_SCRIPT = "assemble_quantification_data.py"
+ANALYSE_DATA_SCRIPT = "analyse_quantification_run.py"
 
 RUN_PREQUANTIFICATION_VARIABLE = "RUN_PREQUANTIFICATION"
 QUANTIFY_TRANSCRIPTS_VARIABLE = "QUANTIFY_TRANSCRIPTS"
