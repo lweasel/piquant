@@ -3,9 +3,10 @@
 """Usage:
     count_transcripts_for_genes [--log-level=<log-level>] <gtf-file>
 
--h --help     Show this message.
--v --version  Show version.
-<gtf-file>    GTF file containing genes and transcripts.
+-h --help                 Show this message.
+-v --version              Show version.
+--log-level=<log-level>   Set logging level (one of {log_level_vals}) [default: info].
+<gtf-file>                GTF file containing genes and transcripts.
 """
 
 import collections
