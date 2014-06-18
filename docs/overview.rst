@@ -56,9 +56,16 @@ By default, *piquant* has the ability to run four different quantification tools
 
 and these tools are required to be installed, and their relevant executables added to the executable path, if they are to be used within *piquant*. The pipeline has been tested with the following versions of these quantification tools:
 
-* Cufflinks version 2.2.0
-* RSEM version 1.2.12
-* eXpress version 1.5.1
-* Sailfish version 0.6.3
+* Cufflinks: version 2.2.0
+* RSEM: version 1.2.12
+* eXpress: version 1.5.1
+* Sailfish: version 0.6.3
 
+In addition, the use of each quantification tool within the *piquant* pipeline has additional dependencies, which are enumerated below:
 
+* Cufflinks: Bowtie [Bowtie]_ and TopHat [TopHat]_ are required to map simulated reads to the genome. 
+* RSEM: Bowtie [Bowtie]_ is required by RSEM to map simulated reads to the transcriptome.
+* eXpress: Bowtie [Bowtie]_ is required to map simulated reads to the transcriptome. In this case, *piquant* creates transcriptome sequences using a tool from the RSEM package (``rsem-prepare-reference``).
+* Sailfish: *piquant* again uses ``rsem-prepare-reference`` from the RSEM package to create transcriptome sequences.
+
+*piquant* has been tested with Bowtie version 1.0.0 and TopHat version 2.0.10.
