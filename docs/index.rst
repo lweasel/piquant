@@ -6,7 +6,7 @@
 Welcome to piquant's documentation
 ==================================
 
-*piquant* is a **pi**\ peline to assess the **quan**\ tification of **t**\ ranscripts.
+*piquant* is a pipeline to assess the quantification of transcripts.
 
 Contents:
 
