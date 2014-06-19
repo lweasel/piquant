@@ -15,6 +15,7 @@ Contents:
 
    intro
    overview
+   installation
    commands
    quantifiers
    assessment
