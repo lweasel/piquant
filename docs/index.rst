@@ -17,6 +17,8 @@ Contents:
    overview
    installation
    commands
+   simulation
+   quantification
    quantifiers
    assessment
    support_scripts
