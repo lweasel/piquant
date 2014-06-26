@@ -3,20 +3,20 @@
 
 Stages of the *piquant* pipeline are executed via the following commands of the ``piquant.py`` script:
 
-* Simulate reads
+* Simulating reads
 
   * ``prepare_read_dirs``
   * ``create_reads``
   * ``check_reads``
 
-* Quantify transcript expression
+* Quantifying transcript expression
 
   * ``prepare_quant_dirs``
   * ``prequantify``
-  * ``quantify```
+  * ``quantify``
   * ``check_quant``
 
-* Produce statistics and graphs
+* Producing statistics and graphs
 
   * ``analyse_runs``
 
@@ -25,14 +25,14 @@ Further information on each command is given in the sections below. Note first, 
 Common options
 --------------
 
-The following common command line options control which combinations of sequencing parameters and quantification tools the particular ``piquant.py`` command will be executed for. The value of each option should be a comma-separated list:
+The following command line options control which combinations of sequencing parameters and quantification tools the particular ``piquant.py`` command will be executed for. The value of each option should be a comma-separated list:
 
-* ``--read-length``: A comma-separated list of integer read lengths to simulate reads or perform quantification for.
-* ``--read-depth``: A comma-separated list of integer read depths to simulated reads or perform quantification for.
-* ``--paired-end``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quanfication should be performed for single- or paired-end reads.
+* ``--read-length``: A comma-separated list of integer read lengths for which to simulate reads or perform quantification.
+* ``--read-depth``: A comma-separated list of integer read depths for which to simulate reads or perform quantification.
+* ``--paired-end``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed for single- or paired-end reads.
 * ``--error``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed without or with sequencing errors introduced into the reads.
 * ``--bias``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed without or with sequence bias introduced into the reads.
-* ``--quant-method``: A comma-separated list of quantification methods for which transcript quantification should be performed. By default, *piquant* can quantify via the methods "Cufflinks", "RSEM", "Express" and "Sailfish". This option is not relevant for the simulatiopn of reads.
+* ``--quant-method``: A comma-separated list of quantification methods for which transcript quantification should be performed. By default, *piquant* can quantify via the methods "Cufflinks", "RSEM", "Express" and "Sailfish". (Note that this option is not relevant for the simulation of reads).
 
 Prepare read directories (``prepare_read_dirs``)
 ------------------------------------------------
