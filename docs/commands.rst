@@ -80,9 +80,9 @@ Within each read simulation directory, three files are written:
 * ``flux_simulator_simulation.par``: A FluxSimulator parameters file suitable for simulating RNA-seq reads according to this created transcript expression profile.
 * ``run_simulation.sh``: A Bash script which, when executed, will use FluxSimulator and the above two parameters files to simulate reads for the appropriate combination of sequencing parameters.
 
-Note that it is possible to execute ``run_simulation.sh`` directly; however using the ``piquant.py`` command ``create_reads``, reads for several combinations of sequencing parameters can be created simultaneously as a batch (see :ref:`_simulate-reads` below).
+Note that it is possible to execute ``run_simulation.sh`` directly; however using the ``piquant.py`` command ``create_reads``, reads for several combinations of sequencing parameters can be created simultaneously as a batch (see :ref:`simulate-reads` below).
 
-In addition to the command line options common to all ``piquant.py`` commands (see :ref:`_common-options` above), the ``prepare-read-dirs`` command takes the following additional options:
+In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``prepare-read-dirs`` command takes the following additional options:
 
 * ``--transcript-gtf``: The path to a GTF formatted file describing the transcripts to be simulated by FluxSimulator. This GTF file location must be supplied, however the specification can also be placed in the parameters file determined by the option ``--params-file``.
 * ``--genome-fasta``: The path to a directory containing per-chromosome genome sequences in FASTA files. This directory location must be supplied, however the specification can also be placed in the parameters file determined by the option ``--params-file``.
