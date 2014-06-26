@@ -78,7 +78,7 @@ Within each read simulation directory, three files are written:
 
 * ``flux_simulator_expression.par``: A FluxSimulator [FluxSimulator]_ parameters file suitable for creating a transcript expression profile.
 * ``flux_simulator_simulation.par``: A FluxSimulator parameters file suitable for simulating RNA-seq reads according to this created transcript expression profile.
-* ``run_simulation.sh``: A Bash script which, when executed, will use FluxSimulator and the above two parameters files to simulate reads for the appropriate combination of sequencing parameters.
+* ``run_simulation.sh``: A Bash script which, when executed, will use FluxSimulator and the above two parameters files to simulate reads for the appropriate combination of sequencing parameters. For more details on the process of read simulation, see :doc:`simulation`.
 
 Note that it is possible to execute ``run_simulation.sh`` directly; however using the ``piquant.py`` command ``create_reads``, reads for several combinations of sequencing parameters can be created simultaneously as a batch (see :ref:`simulate-reads` below).
 
