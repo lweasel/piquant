@@ -34,6 +34,22 @@ The following command line options control which combinations of sequencing para
 * ``--bias``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed without or with sequence bias introduced into the reads.
 * ``--quant-method``: A comma-separated list of quantification methods for which transcript quantification should be performed. By default, *piquant* can quantify via the methods "Cufflinks", "RSEM", "Express" and "Sailfish". (Note that this option is not relevant for the simulation of reads).
 
+Except in the case the ``--quant-method`` option when simulating reads, values for each of these options *must* be specified; otherwise ``piquant.py`` will exit with an error. For ease of use, however, the options can also be specified in a parameters file, via the common command line option ``--params-file``. Such a parameters file should take the form of one option and its value per-line, with option and value separated by whitespace, e.g.::
+
+  --quant-method Cufflinks,RSEM,Express,Sailfish
+  --read-length 35,50,75,100
+  --read-depth 10,30
+  --paired-end False,True
+  --error False,True
+  --bias False
+
+Sequencing parameters can be specified in both a parameters file, and via individual command line options, in which case the values specified on the command line override those in the parameters file. 
+
+``piquant.py`` commands also share the following common command line options:
+
+* ``--log-level``: One of the strings "debug", "info", "warning", "error", "critical" (default "info"), determining the maximum severity level at which log messages should b e written to standard out.
+* ``--out-dir``: The parent directory into which directories in which reads will be simulated, or quantification be performed, will be written (default "output").
+
 Prepare read directories (``prepare_read_dirs``)
 ------------------------------------------------
 
