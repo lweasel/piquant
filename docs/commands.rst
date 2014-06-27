@@ -105,6 +105,8 @@ Check reads were successfully created (``check_reads``)
 
 The ``check_reads`` command is used to confirm that simulation of RNA-seq reads via ``run_simulation.sh`` scripts successfully completed. For each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error`` and ``--bias``, the appropriate read simulation directory is checked for the existence of the appropriate FASTA or FASTQ files containing simulated reads. A message is printed to standard error for those combinations of sequencing parameters for which read simulation has not yet finished, or for which simulation terminated unsuccessfully.
 
+.. _prepare-quant-dirs:
+
 Prepare quantification directories (``prepare_quant_dirs``)
 -----------------------------------------------------------
 
@@ -152,7 +154,9 @@ Note that prequantification can, if necessary, be run manually for any particula
 Perform quantification (``quantify``)
 -------------------------------------
 
-TODO.
+The ``quantify`` command is used to quantify transcript expression via the ``run_quantification.sh`` scripts that have been written by the ``prepare_quant_dirs`` command (see :ref:`Prepare quantification directories <prepare-quant-dirs>` above). For each possible combination of parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias`` and ``--quant-method``, the appropriate ``run_quantification.sh`` script is launched as a background process, ignoring hangup signals (via the ``nohup`` command). After launching the scripts, ``piquant.py`` exits.
+
+For details on the process of quantification executed via ``run_quantification.sh``, see :doc:`quantification`.
 
 Check quantification was successfully completed (``check_quant``)
 -----------------------------------------------------------------
