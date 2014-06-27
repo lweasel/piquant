@@ -143,7 +143,9 @@ In addition to the command line options common to all ``piquant.py`` commands (s
 Prepare for quantification (``prequantify``)
 --------------------------------------------
 
-TODO.
+Some quantification tools may require some action to be taken prior to quantifying transcript expression which, however, only needs to be executed once for a particular set of transcripts and genome sequences - for example, preparing a Bowtie [Bowtie]_ index for the genome, or creating transcript sequences. The ``piquant.py`` command ``prequantify`` will execute these pre-quantification actions for any quantification tools specified by the command line option ``--quant-method``.
+
+Note that prequantification can, if necessary, be run manually for any particular quantification tool by executing the appropriate ``run_simulation.sh`` script with the ``-p`` command line option.
 
 .. _quantify:
 
