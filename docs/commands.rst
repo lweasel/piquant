@@ -49,7 +49,7 @@ Sequencing parameters can be specified in both a parameters file, and via indivi
 
 ``piquant.py`` commands also share the following additional common command line options:
 
-* ``--log-level``: One of the strings "debug", "info", "warning", "error" or "critical" (default "info"), determining the maximum severity level at which log messages will be written to standard out.
+* ``--log-level``: One of the strings "debug", "info", "warning", "error" or "critical" (default "info"), determining the maximum severity level at which log messages will be written to standard error.
 * ``--out-dir``: The parent directory into which directories in which reads will be simulated, or quantification performed, will be written (default "output"). This directory must already exist.
 
 .. _prepare-read-dirs:
@@ -103,7 +103,7 @@ For details on the process of read simulation executed via ``run_simulation.sh``
 Check reads were successfully created (``check_reads``)
 -------------------------------------------------------
 
-TODO.
+The ``check_reads`` command is used to confirm that simulation of RNA-seq reads via ``run_simulation.sh`` scripts successfully completed. For each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error`` and ``--bias``, the appropriate read simulation directory is checked for the existence of the appropriate FASTA or FASTQ files containing simulated reads. A message is printed to standard error for those combinations of sequencing parameters for which read simulation has not yet finished, or for which simulation terminated unsuccessfully.
 
 Prepare quantification directories (``prepare_quant_dirs``)
 -----------------------------------------------------------
