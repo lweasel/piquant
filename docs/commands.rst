@@ -108,7 +108,31 @@ The ``check_reads`` command is used to confirm that simulation of RNA-seq reads 
 Prepare quantification directories (``prepare_quant_dirs``)
 -----------------------------------------------------------
 
-TODO.
+The ``prepare_quant_dirs`` command is used to prepare the directories in which transcript quantification will take place - one such directory is created for each possible combination of sequencing and quantification parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias`` and ``--quant-method``, and each directory is anmed according to its particular set of parameters. For example with the following command line options specified:
+
+* ``--quant-method``: Cufflinks, RSEM, Express, Sailfish
+* ``--read-length``: 50
+* ``--read-depth``: 30
+* ``--paired-end``: False,True
+* ``--error``: True
+* ``--bias``: True
+
+eight quantification directories will be created:
+
+* ``Cufflinks_30x_50b_se_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, single-end reads with both errors and bias, with transcripts quantified by Cufflinks.
+* ``Cufflinks_30x_50b_pe_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, paired-end reads with both errors and bias, with transcripts quantified by Cufflinks.
+* ``RSEM_30x_50b_se_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, single-end reads with both errors and bias, with transcripts quantified by RSEM.
+* ``RSEM_30x_50b_pe_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, paired-end reads with both errors and bias, with transcripts quantified by RSEM.
+* ``Express_30x_50b_se_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, single-end reads with both errors and bias, with transcripts quantified by eXpress.
+* ``Express_30x_50b_pe_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, paired-end reads with both errors and bias, with transcripts quantified by eXpress.
+* ``Sailfish_30x_50b_se_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, single-end reads with both errors and bias, with transcripts quantified by Sailfish.
+* ``Sailfish_30x_50b_pe_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, paired-end reads with both errors and bias, with transcripts quantified by Sailfish.
+
+Within each quantification directory, a single file is written:
+
+* ``run_quantification.sh``: A Bash script which, when executed, will use the appropriate tool and simulated RNA-seq reads to quantify transcript expression.
+
+As is the case when simulating reads, it is possible to execute the ``run_quantification.sh`` script directly; however, by using the ``piquant.py`` command ``quantify``, quantification for several combinations for sequencing parameters and quantification tools can be executed simultaneously as a batch (see :ref:`Perform quantification quantify` below).
 
 In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``prepare-quant-dirs`` command takes the following additional options:
 
@@ -120,6 +144,8 @@ Prepare for quantification (``prequantify``)
 --------------------------------------------
 
 TODO.
+
+.. _quantify:
 
 Perform quantification (``quantify``)
 -------------------------------------
