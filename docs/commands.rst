@@ -103,7 +103,9 @@ For details on the process of read simulation executed via ``run_simulation.sh``
 Check reads were successfully created (``check_reads``)
 -------------------------------------------------------
 
-The ``check_reads`` command is used to confirm that simulation of RNA-seq reads via ``run_simulation.sh`` scripts successfully completed. For each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error`` and ``--bias``, the appropriate read simulation directory is checked for the existence of the appropriate FASTA or FASTQ files containing simulated reads. A message is printed to standard error for those combinations of sequencing parameters for which read simulation has not yet finished, or for which simulation terminated unsuccessfully.
+The ``check_reads`` command is used to confirm that simulation of RNA-seq reads via ``run_simulation.sh`` scripts successfully completed. For each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error`` and ``--bias``, the relevant read simulation directory is checked for the existence of the appropriate FASTA or FASTQ files containing simulated reads. A message is printed to standard error for those combinations of sequencing parameters for which read simulation has not yet finished, or for which simulation terminated unsuccessfully.
+
+In the case of unsuccessful termination, the file ``nohup.out`` in the relevant simulation directory contains the messages output by both FluxSimulator and the *piquant* scripts executed, and this file can be examined for the source of error.
 
 .. _prepare-quant-dirs:
 
@@ -161,7 +163,9 @@ For details on the process of quantification executed via ``run_quantification.s
 Check quantification was successfully completed (``check_quant``)
 -----------------------------------------------------------------
 
-TODO.
+The ``check_quant`` command is used to confirm that quantification of transcript expression via ``run_quantification.sh`` scripts successfully completed. For each possible combination of parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias`` and ``--quant-method``, the relevant quantification directory is checked for the existence of the appropriate output files of the quantification tool that will subsequently be used for assessing quantification accuracy. A message is printed to standard error for those combinations of parameters for which quantification has not yet finished, or for which quantification terminated unsuccessfully.
+
+In the case of unsuccessful termination, the file ``nohup.out`` in the relevant quantification directory contains the messages output by both the quantification tool and the *piquant* scripts executed, and this file can be examined for the source of error.
 
 Analyse quantification results (``analyse_runs``)
 -------------------------------------------------
