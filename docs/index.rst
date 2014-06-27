@@ -21,6 +21,7 @@ Contents:
    quantification
    quantifiers
    assessment
+   typical_usage
    support_scripts
    extending
    references
