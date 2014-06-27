@@ -170,7 +170,9 @@ In the case of unsuccessful termination, the file ``nohup.out`` in the relevant 
 Analyse quantification results (``analyse_runs``)
 -------------------------------------------------
 
-TODO.
+The ``analyse_runs`` command is used to gather and calculate statistics, and to draw graphs, pertaining to the accuracy of quantification of transcript expression. Statistics are calculated, and graphs drawn, for those combinations of quantification tools and sequencing parameters determined by the options ``--read-length``,  ``--read-depth``, ``--paired-end``, ``--error``, ``--bias`` and ``--quant-method``.
+
+For more details on the statistics calculated and the graphs drawn, see :doc:`assessment`.
 
 In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``analyse_runs`` command takes the following additional option:
 
