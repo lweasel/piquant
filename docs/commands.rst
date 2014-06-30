@@ -1,5 +1,5 @@
 ``piquant.py`` commands
-====================
+=======================
 
 Stages of the *piquant* pipeline are executed via the following commands of the ``piquant.py`` script:
 
