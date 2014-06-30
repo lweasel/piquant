@@ -34,7 +34,7 @@ Note that:
 Shuffle reads
 ^^^^^^^^^^^^^
 
-TODO.
+Some transcript quantification tools require reads to be presented in a random sequence. However the reads output by FluxSimulator have an inherent order, and hence are randomly shuffled at this stage.
 
 Apply sequence bias
 ^^^^^^^^^^^^^^^^^^^
