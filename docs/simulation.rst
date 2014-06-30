@@ -3,7 +3,7 @@ Simulating reads
 
 For a each particular combination of sequencing parameters - sequencing depth, read length, single- or paired-end reads, and lack or presence of errors and bias - reads are simulated by running the ``run_simulation.sh`` script in the relevant directory that has been created by the ``piquant.py`` command ``prepare_read_dirs``.
 
-Simualuation process
+Simulation process
 --------------------
 
 Running ``run_simulation.sh`` results in the following main steps being executed:
@@ -18,7 +18,7 @@ For more information on the model and algorithm used by FluxSimulator to create 
 Calculate required number of reads
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Given a particular read length and (approximate) desired sequencing depth, a certain number of reads will need to be simulated. This number is calculated by the support script ``calculate_reads_for_depth.py`` (see :ref:`Calculate reads for depth <calculate-reads-for-depth>` for more details) and the FluxSimulator simulation parameters file  ``flux_simulator_simulation.par`` updated accordingly.
+Given a particular read length and (approximate) desired sequencing depth, a certain number of reads will need to be simulated. This number is calculated by the support script ``calculate_reads_for_depth.py`` (see :ref:`calculate-reads-for-depth` for more details) and the FluxSimulator simulation parameters file  ``flux_simulator_simulation.par`` updated accordingly.
 
 Simulated reads
 ^^^^^^^^^^^^^^^
