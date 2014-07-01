@@ -23,12 +23,16 @@ Any actions particular to the quantification tool to be used that must be taken 
 
 For more details on the prequantification actions performed for each particular quantification tool, see :doc:`quantifiers`.
 
+.. _quantification-calculate-transcripts-per-gene:
+
 Calculate number of transcripts per gene
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Next, the support script ``count_transcripts_for_genes.py`` (see :ref:`count-transcripts-for-genes`) is used to calculate the number of transcripts shared by each gene in the set determined by the transcript GTF file indicated when the ``run_quantification.sh`` script was created. This data is stored in the file ``transcript_counts.csv`` in the directory ``quantifier_scratch``, as described above.
 
 Note that this action will only be performed once, regardless of how many ``run_quantification.sh`` scripts are run. The per-gene transcript counts thus calculated will be used when assessing the accuracy of transcript abundance estimation (see :doc:`assessment`). 
+
+.. _quantification-calculate-unique-sequence:
 
 Calculate unique sequence per transcript
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -47,10 +51,17 @@ For more details on the particular commmands executed for each particular quanti
 Assessing quantification accuracy
 ---------------------------------
 
+Running ``run_quantification.sh`` with the ``-a`` flag results in the following two steps being executed. As above, for performing quantification itself, re-running ``run_quantification.sh`` with this flag will repeat the assessment of quantification accuracy.
+
 Assemble data
 ^^^^^^^^^^^^^
 
-TODO.
+The support script ``assemble_quantification_data.py`` (see :ref:`assemble-quantification-accuracy`) assembles the data required to assess the accuracy of transcript abundance estimation from the following sources:
+
+* The FluxSimulator [FluxSimulator]_ expression profile file created during read simulation, containing the 'ground truth' relative transcript abundances.
+* A quantification tool-specific output file containing estimated transcript abundances.
+* The file ``transcript_counts.csv`` containing per-gene transcript counts, created by the step :ref:`quantification-calculate-transcripts-per-gene` above.
+* The file ``unique_sequence.csv`` containing lengths of sequence unique to each transcript, created by the step :ref:`quantification-calculate-unique-sequence` above.
 
 Perform accuracy analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^
