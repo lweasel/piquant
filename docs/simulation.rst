@@ -1,7 +1,7 @@
 Simulating reads
 ================
 
-For a each particular combination of sequencing parameters - sequencing depth, read length, single- or paired-end reads, and lack or presence of errors and bias - reads are simulated by running the ``run_simulation.sh`` script in the relevant directory that has been created by the ``piquant.py`` command ``prepare_read_dirs``.
+For each particular combination of sequencing parameters - sequencing depth, read length, single- or paired-end reads, and lack or presence of errors and bias - reads are simulated by running the ``run_simulation.sh`` script in the relevant directory that has been created by the ``piquant.py`` command ``prepare_read_dirs``.
 
 Running ``run_simulation.sh`` results in the following main steps being executed:
 
@@ -24,9 +24,9 @@ Next, FluxSimulator is used to simulate the required number of reads for the des
 
 Note that:
 
-* Reads are not simulated from the poly-A tails of transcripts (controlled by the FluxSimulator parameters ``POLYA_SHAPE`` and ``POLYA_SCALE``), as the multi-mapping of such reads was found to cause problems for certain quantification tools (for more details on FluxSimulator's transcript modifications, see `here http://sammeth.net/confluence/display/SIM/4.1.2+-+Transcript+Modifications`).
-* If sequencing errors have been specified, such errors are simulated with whichever of FluxSimulator's 35bp or 76bp error models is closer in length the the reads being produced. FluxSimulator then scales the error model appropriately (for more details on FluxSimulator's error models, see `here http://sammeth.net/confluence/display/SIM/4.5.4+-+Error+Models`).
-* PCR amplification of fragments, controlled by the FluxSimulator parameter ``PCR_DISTRIBUTION`` is not enabled (for more details on FluxSimulator's simulation of PCR, see `here http://sammeth.net/confluence/display/SIM/4.4.2+-+PCR+Amplification`). 
+* Reads are not simulated from the poly-A tails of transcripts (controlled by the FluxSimulator parameters ``POLYA_SHAPE`` and ``POLYA_SCALE``), as the multi-mapping of such reads was found to cause problems for certain quantification tools (for more details on FluxSimulator's transcript modifications, see `here http://sammeth.net/confluence/display/SIM/4.1.2+-+Transcript+Modifications`_).
+* If sequencing errors have been specified, such errors are simulated with whichever of FluxSimulator's 35bp or 76bp error models is closer in length the the reads being produced. FluxSimulator then scales the error model appropriately (for more details on FluxSimulator's error models, see `here http://sammeth.net/confluence/display/SIM/4.5.4+-+Error+Models`_).
+* PCR amplification of fragments, controlled by the FluxSimulator parameter ``PCR_DISTRIBUTION`` is not enabled (for more details on FluxSimulator's simulation of PCR, see `here http://sammeth.net/confluence/display/SIM/4.4.2+-+PCR+Amplification`_). 
 
 Shuffle reads
 ^^^^^^^^^^^^^
@@ -36,9 +36,9 @@ Some transcript quantification tools require reads to be presented in a random s
 Apply sequence bias
 ^^^^^^^^^^^^^^^^^^^
 
-In a real RNA-seq experiment, there are many sources of potential bias, some only poorly understood, that may lead to non-uniform coverage of expressed transcripts by sequenced reads; for example the biases in nucleotide composition at the beginning of reads sequenced in certain Illumina protocols, as described by Hansen et al. [Hansen]_.
+In a real RNA-seq experiment, there are many sources of potential bias, some only poorly understood, that may lead to non-uniform coverage of expressed transcripts by sequenced reads; for example the biases in nucleotide composition at the beginning of reads sequenced in certain Illumina protocols, as described by Hansen *et al.* [Hansen]_.
 
-If sequencing bias has been specified, then, here, the support script ``simulate_read_bias.py`` (see :ref:`simulate-read-bias` for more details) is executed to approximate one form of such bias. A position weight matrix is used to preferentially select reads for output with a nucleotide composition at their beginning similar to that observed by Hansen et al.
+If sequencing bias has been specified, then, here, the support script ``simulate_read_bias.py`` (see :ref:`simulate-read-bias` for more details) is executed to approximate one form of such bias. A position weight matrix is used to preferentially select reads for output with a nucleotide composition at their beginning similar to that observed by Hansen *et al.*
 
 Finalise output files
 ^^^^^^^^^^^^^^^^^^^^^
