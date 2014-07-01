@@ -33,14 +33,16 @@ Note that this action will only be performed once, regardless of how many ``run_
 Calculate unique sequence per transcript
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Finally, the support script ``calculate_unique_transcript_sequence.py`` (see :ref:`calculate-unique-transcript-sequence`) is used to calculate the length of sequence in base pairs that is unique to each transcript enumerated in the transcript GTF file indicated when the ``run_quantification.sh`` script was created. This data is stored in the file ``unique_sequence.csv`` in the directory ``quantifier_scratch``, as described above (see `assessment`).
+Finally, the support script ``calculate_unique_transcript_sequence.py`` (see :ref:`calculate-unique-transcript-sequence`) is used to calculate the length of sequence in base pairs that is unique to each transcript enumerated in the transcript GTF file indicated when the ``run_quantification.sh`` script was created. This data is stored in the file ``unique_sequence.csv`` in the directory ``quantifier_scratch``, as described above (see :doc:`assessment`).
 
 Again, this action will only be performed once for any particular set of input transcripts. The unique sequence lengths thus calculated will be used when assessing abundance estimation accuracy.
 
 Performing quantification
 -------------------------
 
-TODO.
+Running ``run_quantification.sh`` with the ``-q`` flag causes the relevant quantification tool to be run on the appropriate set of simulated RNA-seq reads, to estimate transcript abundance (depending on the particular quantification tool, this can be time, memory and/or CPU intensive). Note that in contrast to the case of pre-quantification tasks, re-running ``run-quantification.sh`` with this flag will cause transcript abundance estimates to be recalculated.
+
+For more details on the particular commmands executed for each particular quantification tool, see :doc:`quantifiers`.
 
 Assessing quantification accuracy
 ---------------------------------
