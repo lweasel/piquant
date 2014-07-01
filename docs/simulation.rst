@@ -20,7 +20,7 @@ Given a particular read length and (approximate) desired sequencing depth, a cer
 Simulate reads
 ^^^^^^^^^^^^^^
 
-Next, FluxSimulator is used to simulate the required number of reads for the desired sequencing depth, according to the previously created transcript expression profile.
+Next, FluxSimulator is used to simulate the required number of reads for the desired sequencing depth, according to the previously created transcript expression profile. Note that depending on the number of reads being simulated, this step can take some time.
 
 Note that:
 
