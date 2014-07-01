@@ -66,4 +66,4 @@ The support script ``assemble_quantification_data.py`` (see :ref:`assemble-quant
 Perform accuracy analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-TODO.
+Finally, the support script ``analyse_quantification_run.py`` is used to assess the accuracy of transcript abundance estimation by the particular quantification tool. The statistics calculated, transcript classification measures used, and graphs drawn are described in full in :doc:`assessment.rst`.
