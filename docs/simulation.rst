@@ -17,6 +17,8 @@ Calculate required number of reads
 
 Given a particular read length and (approximate) desired sequencing depth, a certain number of reads will need to be simulated. This number is calculated by the support script ``calculate_reads_for_depth.py`` (see :ref:`calculate-reads-for-depth` for more details) and the FluxSimulator simulation parameters file  ``flux_simulator_simulation.par`` updated accordingly.
 
+.. _simulate-reads:
+
 Simulate reads
 ^^^^^^^^^^^^^^
 

@@ -3,6 +3,8 @@ Extending piquant
 
 TODO.
 
+.. _adding-new-quantifiers:
+
 Adding new quantifiers
 ----------------------
 
