@@ -41,12 +41,11 @@ class _Cufflinks:
         "bowtie-inspect {bowtie_index} > {bowtie_index}.fa"
 
     MAP_READS_TO_GENOME_WITH_TOPHAT = \
-        "tophat --library-type fr-secondstrand --no-coverage-search -p 8 " + \
+        "tophat {stranded_spec} --no-coverage-search -p 8 " + \
         "-o tho {bowtie_index} {reads_spec}"
     QUANTIFY_ISOFORM_EXPRESSION = \
         "cufflinks -o transcriptome -u -b {bowtie_index}.fa -p 8 " + \
-        "--library-type fr-secondstrand -G {transcript_gtf} " + \
-        "tho/accepted_hits.bam"
+        "{stranded_spec} -G {transcript_gtf} tho/accepted_hits.bam"
 
     REMOVE_TOPHAT_OUTPUT_DIRECTORY = \
         "rm -rf tho"
@@ -94,13 +93,19 @@ class _Cufflinks:
                 l=params[LEFT_SIMULATED_READS],
                 r=params[RIGHT_SIMULATED_READS])
 
+        stranded_spec = "--library-type " + \
+            ("fr-unstranded" if SIMULATED_READS in params
+             else "fr-secondstrand")
+
         writer.add_line(cls.MAP_READS_TO_GENOME_WITH_TOPHAT.format(
             bowtie_index=bowtie_index,
-            reads_spec=reads_spec))
+            reads_spec=reads_spec,
+            stranded_spec=stranded_spec))
 
         writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
             bowtie_index=bowtie_index,
-            transcript_gtf=params[TRANSCRIPT_GTF_FILE]))
+            transcript_gtf=params[TRANSCRIPT_GTF_FILE],
+            stranded_spec=stranded_spec))
 
     @classmethod
     def write_post_quantification_cleanup(cls, writer):
@@ -142,7 +147,7 @@ class _RSEM:
 
     QUANTIFY_ISOFORM_EXPRESSION = \
         "rsem-calculate-expression --time {qualities_spec} --p 32 " + \
-        "--output-genome-bam --strand-specific {reads_spec} " + \
+        "--output-genome-bam {stranded_spec} {reads_spec} " + \
         "{ref_name} rsem_sample"
 
     REMOVE_RSEM_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
@@ -185,11 +190,15 @@ class _RSEM:
                 l=params[LEFT_SIMULATED_READS],
                 r=params[RIGHT_SIMULATED_READS])
 
+        stranded_spec = "" if SIMULATED_READS in params \
+            else "--strand-specific"
+
         ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
 
         writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
             qualities_spec=qualities_spec,
             reads_spec=reads_spec,
+            stranded_spec=stranded_spec,
             ref_name=ref_name))
 
     @classmethod
