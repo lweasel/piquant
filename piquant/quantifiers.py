@@ -150,7 +150,8 @@ class _RSEM:
         "{stranded_spec} {reads_spec} {ref_name} rsem_sample"
 
     REMOVE_RSEM_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
-        "find . -name \"rsem_sample*\" \! -name rsem_sample.isoforms.results"
+        "find . -name \"rsem_sample*\" \! " + \
+        "-name rsem_sample.isoforms.results -type f -delete"
 
     @classmethod
     def get_name(cls):
