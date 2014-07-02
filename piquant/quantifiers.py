@@ -41,7 +41,7 @@ class _Cufflinks:
         "bowtie-inspect {bowtie_index} > {bowtie_index}.fa"
 
     MAP_READS_TO_GENOME_WITH_TOPHAT = \
-        "tophat --library-type fr-unstranded --no-coverage-search -p 8 " + \
+        "tophat --library-type fr-secondstrand --no-coverage-search -p 8 " + \
         "-o tho {bowtie_index} {reads_spec}"
     QUANTIFY_ISOFORM_EXPRESSION = \
         "cufflinks -o transcriptome -u -b {bowtie_index}.fa -p 8 " + \
@@ -365,3 +365,13 @@ class _Sailfish:
     def get_transcript_abundance(self, transcript_id):
         return self.abundances.ix[transcript_id]["TPM"] \
             if transcript_id in self.abundances.index else 0
+
+
+#@_Quantifier
+#class _RNASkim:
+    # ~/tools/RNASkim/src/rs_cluster -gene_fasta=rna_skim.fasta -num_threads=4 -output=clustered.fa -rs_length=60
+    # ~/tools/RNASkim/src/rs_index -gene_fasta=clustered.fa -index_file=clustered_gene.fa.pb -rs_length=60 -num_threads 4
+    # ~/tools/RNASkim/src/rs_select -index_file=clustered_gene.fa.pb -selected_keys_file=clustered_gene.fa.sk -rs_length=60
+    # ~/tools/RNASkim/src/rs_count -selected_keys_file=clustered_gene.fa.sk -count_file=clustered_gene.fa.cf -read_files1=/home/odando/projects/assess_isoform_quantification/piquant/output/30x_75b_se_no_errors_no_bias/reads.fasta -num_threads=4
+    # ~/tools/RNASkim/src/rs_estimate -count_file=clustered_gene.fa.cf > estimation
+    #pass
