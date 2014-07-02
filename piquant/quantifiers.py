@@ -147,8 +147,7 @@ class _RSEM:
 
     QUANTIFY_ISOFORM_EXPRESSION = \
         "rsem-calculate-expression --time {qualities_spec} --p 32 " + \
-        "--output-genome-bam {stranded_spec} {reads_spec} " + \
-        "{ref_name} rsem_sample"
+        "{stranded_spec} {reads_spec} {ref_name} rsem_sample"
 
     REMOVE_RSEM_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
         "find . -name \"rsem_sample*\" \! -name rsem_sample.isoforms.results"
