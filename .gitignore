@@ -1,6 +1,7 @@
-piquant.egg-info
+piquant_pipeline.egg-info
 *.pyc
 *.swp
 .ipynb_checkpoints
 output
 old-files
+dist
