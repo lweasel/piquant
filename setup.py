@@ -47,10 +47,6 @@ setup(
     long_description=long_description,
     author="Owen Dando",
     author_email='owen.dando@ed.ac.uk',
-    install_requires=['docopt>=0.6.1',
-                      'py>=1.4.20',
-                      'pytest>=2.5.2',
-                      'schema>=0.2.0'],
     tests_require=['pytest'],
     cmdclass={'test': PyTest},
     extras_require={
