@@ -56,14 +56,25 @@ Running ``run_quantification.sh`` with the ``-a`` flag results in the following 
 Assemble data
 ^^^^^^^^^^^^^
 
-The support script ``assemble_quantification_data.py`` (see :ref:`assemble-quantification-accuracy`) assembles the data required to assess the accuracy of transcript abundance estimation from the following sources:
+The support script ``assemble_quantification_data.py`` (see :ref:`assemble-quantification-data`) assembles the data required to assess the accuracy of transcript abundance estimation from the following sources:
 
 * The FluxSimulator [FluxSimulator]_ expression profile file created during read simulation, containing the 'ground truth' relative transcript abundances.
 * A quantification tool-specific output file containing estimated transcript abundances.
 * The file ``transcript_counts.csv`` containing per-gene transcript counts, created by the step :ref:`quantification-calculate-transcripts-per-gene` above.
 * The file ``unique_sequence.csv`` containing lengths of sequence unique to each transcript, created by the step :ref:`quantification-calculate-unique-sequence` above.
 
+Assembled data is written to a CSV file ``tpms.csv`` in the quantification directory. This contains, for each transcript in the input set:
+
+* the transcript identifier
+* the transcript sequence length in bases
+* the number of bases that are unique to the transcript
+* the number of isoform count of the transcript's gene of origin
+* the "real" transcript abundance used by FluxSimulator to simulate reads (measured in transcripts per million)
+* the transcript abundance estimated by the quantification tool (measured in transcripts per million)
+
+.. _quantification-perform-accuracy-analysis:
+
 Perform accuracy analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Finally, the support script ``analyse_quantification_run.py`` is used to assess the accuracy of transcript abundance estimation by the particular quantification tool. The statistics calculated, transcript classification measures used, and graphs drawn are described in full in :doc:`assessment`.
+Finally, the support script ``analyse_quantification_run.py`` reads the CSV file ``tpms.csv`` produced by the assembly step above, and calculates statistics and plots graphs to assess the accuracy of transcript abundance estimation by the particular quantification tool. The statistics calculated, transcript classification measures used, and graphs drawn are described in full in :doc:`assessment`.

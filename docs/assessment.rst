@@ -6,12 +6,17 @@ After reads have been simulated for a set of input transcripts, and quantificati
 Assessment of a single quantification run
 -----------------------------------------
 
-TODO
+Statistics and plots for a single execution of a quantification tool are produced by the support script ``analyse_quantification_run.py`` (see :ref:`quantification-perform-accuracy-analysis`) that is run by invoking ``run_quantification`` with the ``-a`` command line option (see :doc:`quantification`). The following CSV files and plots (written as PDF files) are produced:
+
+* ``<run-id>_stats.csv``: A CSV file containing a single row, with a field for each defined statistic (see :ref:`assessment-statistics` below) which has been calculated over the whole set of input transcripts. CSV fields are also present describing the quantification tool and sequencing parameters used (i.e. read length, sequencing depth etc.).
+* ``<run-id>_by_<classifier>.csv``: A CSV file is created for each of a particular subset of transcript classifiers (see :ref:`assessment-transcript-classifiers` below); the transcript classifiers are those able to create "grouped" statistics (see :ref:`assessment-grouped-classifiers`). Each CSV file contains the same fields as ``<run-id>_stats.csv``; however, statistics are now calculated for distinct subsets of transcripts as determined by the transcript classifier, and the CSV file contains one row for each such group. For example, the CSV file ``<run-id>_by_gene_trancript_number.csv`` contains statistics calculated over those transcripts whose originating gene has only one isoform, those for which the gene has two isoforms, and so on.
 
 Assessment of multiple quantification runs
 ------------------------------------------
 
 TODO
+
+.. _assessment-statistics:
 
 Statistics
 ----------
@@ -53,8 +58,20 @@ Specificity
 
 TODO
 
+.. _assessment-transcript-classifiers:
+
 Transcript classifiers
 ----------------------
+
+.. _assessment-grouped-classifiers:
+
+"Grouped" classifiers
+^^^^^^^^^^^^^^^^^^^^^
+
+TODO
+
+"Distribution" classifiers
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 TODO
 
