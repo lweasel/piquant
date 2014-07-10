@@ -1,6 +1,16 @@
 Assessing quantification performance
 ====================================
 
+After reads have been simulated for a set of input transcripts, and quantification tools have been executed to estimate transcript abundance, the final stage of the *piquant* pipeline is to calculate statistics and draw graphs to aid the assessment of transcript quantification performance. Note that performance is assessed both at the level of individual quantification runs (i.e. a particular transcript quantification tool executed for reads simulated according to a certain set of sequencing parameters), and across multiple quantification runs for comparison of performance. The data and plots generated in each case are detailed below.
+
+Assessment of a single quantification run
+-----------------------------------------
+
+TODO
+
+Assessment of multiple quantification runs
+------------------------------------------
+
 TODO
 
 Statistics
