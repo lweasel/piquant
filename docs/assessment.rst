@@ -1,24 +1,35 @@
 Assessing quantification performance
 ====================================
 
-After reads have been simulated for a set of input transcripts, and quantification tools have been executed to estimate transcript abundance, the final stage of the *piquant* pipeline is to calculate statistics and draw graphs to aid the assessment of transcript quantification performance. Note that performance is assessed both at the level of individual quantification runs (i.e. a particular transcript quantification tool executed for reads simulated according to a certain set of sequencing parameters), and across multiple quantification runs for comparison of performance. The data and plots generated in each case are detailed below (see :ref:`assessment-single-run` and :ref:`assessment-multiple-runs`); however, we first describe the statistics calculated, and the classifiers used to split transcripts into groups sharing similar properties.
+After reads have been simulated for a set of input transcripts, and quantification tools have been executed to estimate transcript abundance, the final stage of the *piquant* pipeline is to calculate statistics and draw graphs to aid the assessment of transcript quantification performance. Note that performance is assessed both at the level of individual quantification runs (i.e. a particular transcript quantification tool executed once for reads simulated according to a certain set of sequencing parameters), and also across multiple quantification runs for comparison of performance. The data and plots generated in each case are detailed below (see :ref:`assessment-single-run` and :ref:`assessment-multiple-runs`); however, we first describe the statistics calculated, and the classifiers used to split transcripts into groups sharing similar properties.
 
 .. _assessment-statistics:
 
 Statistics
 ----------
 
-TODO
+For each execution of a particular transcript quantification tool for reads simulated according to a certain set of sequencing parameters, a number of statistics are calculated from the real and estimated transcript abundances. Those calculated by default are listed below; however it is easy to extend *piquant* to calculate additional statistics (see :ref:`extending-adding-new-statistics`).
+
+Note that each statistic is calculated both for the set of estimated transcript abundances as a whole, and for each group of transcripts determined to share similar properties by each transcript classifier (see :ref:`assessment-transcript-classifiers`).
 
 Number of TPMs
 ^^^^^^^^^^^^^^
 
-TODO
+This is simply the number of TPMs ("transcripts per million" values) calculated, corresponding to the total number of transcripts in the transcript group, or as a whole.
 
 Number of 'true positive' TPMs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-TODO
+Since estimating the abundance of very rare transcripts is difficult, *piquant* defines a cut-off value for the number of transcripts per million below which a transcript is considered not to be present. The cut-off is set at 0.1 transcripts per million (TODO: `allow <://github.com/lweasel/piquant/issues/26>`_ the user to change this value).
+
+Given this cut-off, it is possible to split transcripts into four sets:
+
+* *"true negatives"*: transcripts for which both real and estimated abundances are below the cut-off
+* *"false negatives"*: transcripts whose real abundance is above the cut-off, but whose calculated abundance lies below it
+* *"false positives"*: transcripts whose real abundance is below the cut-off, but whose calculated abundance lies above it
+* *"true positives"*: transcripts for which both real and estimated abundances are above the cut-off
+
+Some of the remaining statistics detailed below are calculated only for transcripts considered to be "true positives", to avoid punishing quantification tools through rare transcripts whose abundance is difficult to calculate. The current statistic merely counts the number of such "true positive" transcripts (either in a particular transcript group as determined by a transcript classifier, or for the set of input transcripts as a whole).
 
 Spearman correlation
 ^^^^^^^^^^^^^^^^^^^^

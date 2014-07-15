@@ -10,6 +10,8 @@ Adding new quantifiers
 
 TODO.
 
+.. _extending-adding-new-statistics:
+
 Adding new statistics
 ---------------------
 
