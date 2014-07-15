@@ -20,9 +20,9 @@ This is simply the number of TPMs ("transcripts per million" values) calculated,
 Number of 'true positive' TPMs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Since estimating the abundance of very rare transcripts is difficult, *piquant* defines a cut-off value for the number of transcripts per million below which a transcript is considered not to be present. The cut-off is set at 0.1 transcripts per million (TODO: `allow <https://github.com/lweasel/piquant/issues/26>`_ the user to change this value).
+Since estimating the abundance of very rare transcripts is difficult, *piquant* defines a cut-off value for the number of transcripts per million below which a transcript is considered not to be present. The cut-off is set at 0.1 transcripts per million.
 
-.. todo::  Allow `<https://github.com/lweasel/piquant/issues/26>`_ the user to change this value
+.. todo::  `Allow <https://github.com/lweasel/piquant/issues/26>`_ the user to change this cut-off value.
 
 Given this cut-off, it is possible to split transcripts into four sets:
 
@@ -41,7 +41,9 @@ The `Spearman rank correlation coefficient <http://en.wikipedia.org/wiki/Spearma
 Error fraction
 ^^^^^^^^^^^^^^
 
-The percentage of transcripts considered to be "true positives" for which the estimated TPM is greater than 10% higher or lower than the real TPM; when assessing quantification performance, a lower error fraction is considered to be better (TODO: `allow <https://github.com/lweasel/piquant/issues/27>`_ the user to change the threshold value of 10%). 
+The percentage of transcripts considered to be "true positives" for which the estimated TPM is greater than 10% higher or lower than the real TPM; when assessing quantification performance, a lower error fraction is considered to be better.
+
+.. todo:: `Allow <https://github.com/lweasel/piquant/issues/27>`_ the user to change the threshold value of 10%. 
 
 Median percent error
 ^^^^^^^^^^^^^^^^^^^^
