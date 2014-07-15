@@ -44,12 +44,16 @@ The percentage of transcripts considered to be "true positives" for which the es
 Median percent error
 ^^^^^^^^^^^^^^^^^^^^
 
-TODO
+For transcripts considered to be "true positives", the median value of the percentage errors of estimated compared to real TPMs; when assessing quantification performance, a median percent error closer to zero is considered to be better. This statistics can also indicate whether a particular quantification tool tends to over- or under-estimate transcript abundances, for transcripts as a whole, or for certain classes of transcript.
 
 Sensitivity
 ^^^^^^^^^^^
 
-TODO
+The sensitivity of a transcript quantification method is calculated to be the fraction of all transcripts marked as "present" (that is both "true positives" and "false positives") which truly were present (that is, just the "true positives"):
+
+.. math::
+
+    sensitivity = \frac{TP}{TP + FP}
 
 Specificity
 ^^^^^^^^^^^
