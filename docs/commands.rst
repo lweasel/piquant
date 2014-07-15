@@ -67,14 +67,14 @@ The ``prepare_read_dirs`` command is used to prepare the directories in which RN
 
 eight read simulation directories will be created:
 
-* ``30x_50b_se_no_errors_no_bias``: i.e. 30x read depth, 50 base-pairs read length, single-end reads, no read errors or sequence bias
-* ``30x_50b_se_errors_no_bias``: i.e. 30x read depth, 50 base-pairs read length, single-end reads, with read errors, no sequence bias
-* ``30x_50b_se_no_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, single-end reads, no read errors, with sequence bias
-* ``30x_50b_se_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, single-end reads, with read errors and sequence bias
-* ``30x_50b_pe_no_errors_no_bias``: i.e. 30x read depth, 50 base-pairs read length, paired-reads, no read errors or sequence bias
-* ``30x_50b_pe_errors_no_bias``: i.e. 30x read depth, 50 base-pairs read length, paired-end reads, with read errors, no sequence bias
-* ``30x_50b_pe_no_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, paired-end reads, no read errors, with sequence bias
-* ``30x_50b_pe_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, paired-end reads, with read errors and sequence bias
+* ``30x_50b_se_no_errors_no_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, single-end reads, no read errors or sequence bias
+* ``30x_50b_se_errors_no_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, single-end reads, with read errors, no sequence bias
+* ``30x_50b_se_no_errors_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, single-end reads, no read errors, with sequence bias
+* ``30x_50b_se_errors_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, single-end reads, with read errors and sequence bias
+* ``30x_50b_pe_no_errors_no_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, paired-reads, no read errors or sequence bias
+* ``30x_50b_pe_errors_no_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, paired-end reads, with read errors, no sequence bias
+* ``30x_50b_pe_no_errors_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, paired-end reads, no read errors, with sequence bias
+* ``30x_50b_pe_errors_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, paired-end reads, with read errors and sequence bias
 
 Within each read simulation directory, three files are written:
 
