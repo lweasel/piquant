@@ -22,6 +22,8 @@ Number of 'true positive' TPMs
 
 Since estimating the abundance of very rare transcripts is difficult, *piquant* defines a cut-off value for the number of transcripts per million below which a transcript is considered not to be present. The cut-off is set at 0.1 transcripts per million (TODO: `allow <https://github.com/lweasel/piquant/issues/26>`_ the user to change this value).
 
+.. todo::  Allow `<https://github.com/lweasel/piquant/issues/26>`_ the user to change this value
+
 Given this cut-off, it is possible to split transcripts into four sets:
 
 * *"true negatives"*: transcripts for which both real and estimated abundances are below the cut-off
