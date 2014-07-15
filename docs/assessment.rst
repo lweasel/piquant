@@ -49,16 +49,20 @@ For transcripts considered to be "true positives", the median value of the perce
 Sensitivity
 ^^^^^^^^^^^
 
-The sensitivity of a transcript quantification method is calculated to be the fraction of all transcripts marked as "present" (that is both "true positives" and "false positives") which truly were present (that is, just the "true positives"):
+The sensitivity (or true positive rate) of a transcript quantification method is calculated to be the fraction of all transcripts considered to be "present" in the simulated RNA-seq data (that is both "true positives" and "false negatives") which were correctly identified as being present (that is, just the "true positives"):
 
 .. math::
 
-    sensitivity = \frac{TP}{TP + FP}
+    sensitivity = \frac{TP}{TP + FN}
 
 Specificity
 ^^^^^^^^^^^
 
-TODO
+The specificity (or true negative rate) of a transcript quantification method is calculated to be the fraction of all transcripts considered to be "not present" in the simulated RNA-seq data (that is both "true negatives" and "false positives") which were correctly identified as being not present (that is, just the "true negatives"):
+
+.. math::
+
+    specificity = \frac{TN}{TN + FP}
 
 .. _assessment-transcript-classifiers:
 

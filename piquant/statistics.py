@@ -247,9 +247,10 @@ class _MedianPercentError(_BaseStatistic):
 @_Statistic
 class _Sensitivity(_BaseStatistic):
     # Calculates the "sensitivity" of the transcript quantification method -
-    # that is, the fraction of all transcripts marked as 'present' (their
-    # calculated TPM above a threshold value) which truly were 'present'
-    # (their real TPM above a threshold value).
+    # that is, the fraction of all transcripts considered to be 'present'
+    # (their real TPM above a threshold value - that is, both true positives
+    # and false negatives), which were correctly identified as being present
+    # (just the true positives).
     def __init__(self):
         _BaseStatistic.__init__(self, "sensitivity", "Sensitivity",
                                 stat_range=_ZERO_TO_ONE_STAT_RANGE)
@@ -273,9 +274,10 @@ class _Sensitivity(_BaseStatistic):
 @_Statistic
 class _Specificity(_BaseStatistic):
     # Calculates the "specificity" of the transcript quantification method -
-    # that is, the fraction of all transcripts marked as 'not present' (their
-    # calculated TPM below a threshold value) which truly were 'not present'
-    # (their real TPM below a threshold value).
+    # that is, the fraction of all transcripts considered to be 'not present'
+    # (their real TPM below a threshold value - that is, both true negatives
+    # and false positives), which were correctly identified as being present
+    # (just the true negatives).
     def __init__(self):
         _BaseStatistic.__init__(self, "specificity", "Specificity",
                                 stat_range=_ZERO_TO_ONE_STAT_RANGE)
