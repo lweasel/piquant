@@ -7,6 +7,7 @@ import pandas as pd
 import parameters
 import seaborn as sb
 import statistics
+import sys
 import tpms as t
 
 NO_FILTER_LABEL = "no filter"
@@ -71,6 +72,12 @@ def _plot_statistic_for_grouped_param_values(
 
     group_param_vals = _get_group_param_values(stats_df, group_param)
 
+    ymin = sys.maxint
+    ymax = -sys.maxint - 1
+
+    xmin = sys.maxint
+    xmax = -sys.maxint - 1
+
     for group_param_value in group_param_vals:
         group_stats = stats_df[stats_df[group_param.name] == group_param_value]
         group_stats.sort(columns=xcol, axis=0, inplace=True)
@@ -79,18 +86,40 @@ def _plot_statistic_for_grouped_param_values(
         plt.plot(xvals, yvals, '-o',
                  label=group_param.get_value_name(group_param_value))
 
+        group_ymin = yvals.min()
+        if group_ymin < ymin:
+            ymin = group_ymin
+
+        group_ymax = yvals.max()
+        if group_ymax > ymax:
+            ymax = group_ymax
+
+        group_xmin = xvals.min()
+        if group_xmin < xmin:
+            xmin = group_xmin
+
+        group_xmax = xvals.max()
+        if group_xmax > xmax:
+            xmax = group_xmax
+
+    xvals_range = xmax - xmin
+    xvals_margin = 2 * xvals_range / 100.0
+    plt.xlim(xmin=xmin - xvals_margin, xmax=xmax + xvals_margin)
+
+    return (ymin, ymax)
+
 
 def _plot_statistic(
         stats_df, statistic, group_param, xcol, xlabel, fixed_param_info):
 
-    _plot_statistic_for_grouped_param_values(
+    yval_range = _plot_statistic_for_grouped_param_values(
         stats_df, statistic.name, group_param, xcol)
 
     plt.xlabel(xlabel)
     plt.ylabel(statistic.title)
     plt.legend(title=group_param.title, loc=4)
 
-    stat_range = statistic.stat_range
+    stat_range = statistic.stat_range(yval_range)
     if stat_range is not None:
         min_val = stat_range[0]
         max_val = stat_range[1]
@@ -301,11 +330,16 @@ def draw_overall_stats_graphs(stats_dir, overall_stats, param_values):
 
     for param in get_non_degenerate_params(
             parameters.get_run_parameters(), param_values):
+
+        non_degenerate_numerical_params = get_non_degenerate_params(
+            remove_from(numerical_params, param), param_values)
+        if len(non_degenerate_numerical_params) == 0:
+            continue
+
         param_stats_dir = _get_plot_subdirectory(
             overall_stats_dir, "per_" + param.name)
 
-        for num_p in get_non_degenerate_params(
-                remove_from(numerical_params, param), param_values):
+        for num_p in non_degenerate_numerical_params:
             num_param_stats_dir = _get_plot_subdirectory(
                 param_stats_dir, "by_" + num_p.name)
 
