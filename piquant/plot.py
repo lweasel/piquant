@@ -11,6 +11,7 @@ import sys
 import tpms as t
 
 NO_FILTER_LABEL = "no filter"
+GROUPED_STATS_NUM_TPMS_FILTER = 3000
 ORDER_VALUES = [True, False]
 
 
@@ -29,6 +30,10 @@ class _NewPlot:
 
 def _capitalized(text):
     return text[:1].upper() + text[1:]
+
+
+def _decapitalized(text):
+    return text[:1].lower() + text[1:]
 
 
 def _get_group_param_values(stats_df, group_param):
@@ -61,7 +66,7 @@ def _get_grouped_stats_plot_title(
 
     title_elements = [plotted]
     if versus:
-        title_elements += ["vs", versus.lower()]
+        title_elements += ["vs", _decapitalized(versus)]
     title_elements += ["per", group_param.title.lower()]
 
     return " ".join(title_elements) + ": " + ", ".join(fixed_param_info)
@@ -216,15 +221,14 @@ def plot_statistic_by_transcript_classifier_values(
         versus=clsfr_col)
 
     with _NewPlot(*name_elements):
-        xlabel = _capitalized(clsfr_col)
+        xlabel = _capitalized(classifier.get_plot_title())
         _plot_statistic(
             stats, statistic, group_param, clsfr_col, xlabel, fixed_param_info)
 
         min_xval = stats[clsfr_col].min()
         max_xval = stats[clsfr_col].max()
-        plt.xlim(xmin=min_xval, xmax=max_xval)
-
         tick_range = np.arange(min_xval, max_xval + 1)
+
         plt.xticks(np.arange(min_xval, max_xval + 1),
                    classifier.get_value_labels(len(tick_range)))
 
@@ -372,7 +376,8 @@ def draw_grouped_stats_graphs(stats_dir, param_values):
     grouped_stats_dir = _get_plot_subdirectory(
         stats_dir, "grouped_stats_graphs")
 
-    more_than_100_filter = lambda x: x[statistics.NUM_TPMS] > 100
+    num_tpms_filter = \
+        lambda x: x[statistics.NUM_TPMS] > GROUPED_STATS_NUM_TPMS_FILTER
 
     clsfrs = classifiers.get_classifiers()
     grp_clsfrs = [c for c in clsfrs if c.produces_grouped_stats()]
@@ -406,8 +411,7 @@ def draw_grouped_stats_graphs(stats_dir, param_values):
                     graph_file_basename = os.path.join(
                         statistic_dir, "grouped")
 
-                    filtered_stats_df = \
-                        stats_df[more_than_100_filter(stats_df)]
+                    filtered_stats_df = stats_df[num_tpms_filter(stats_df)]
                     plot_statistic_by_transcript_classifier_values(
                         filtered_stats_df, graph_file_basename, stat, param,
                         clsfr, fixed_param_values)

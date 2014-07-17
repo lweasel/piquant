@@ -3,14 +3,19 @@ import tpms as t
 
 class _Classifier():
     def __init__(self, column_name, value_extractor,
-                 grouped_stats=True, distribution_plot_range=None):
+                 grouped_stats=True, distribution_plot_range=None,
+                 plot_title=None):
         self.column_name = column_name
         self.value_extractor = value_extractor
         self.grouped_stats = grouped_stats
         self.distribution_plot_range = distribution_plot_range
+        self.plot_title = plot_title if plot_title else column_name
 
     def get_column_name(self):
         return self.column_name
+
+    def get_plot_title(self):
+        return self.plot_title
 
     def get_value(self, row):
         return self.value_extractor(row)
@@ -38,8 +43,11 @@ class _Classifier():
 
 
 class _LevelsClassifier(_Classifier):
-    def __init__(self, column_name, value_extractor, levels, closed=False):
-        _Classifier.__init__(self, column_name, value_extractor)
+    def __init__(self, column_name, value_extractor, levels,
+                 closed=False, plot_title=None):
+
+        _Classifier.__init__(self, column_name, value_extractor,
+                             plot_title=plot_title)
 
         self.levels = levels
         self.closed = closed
@@ -70,7 +78,8 @@ _CLASSIFIERS.append(_Classifier(
 
 _CLASSIFIERS.append(_LevelsClassifier(
     "log10 real TPM", lambda x: x[t.LOG10_REAL_TPM],
-    [0, 0.5, 1, 1.5]))
+    [0, 0.5, 1, 1.5],
+    plot_title=r"$log_{10}$ real TPM"))
 
 _CLASSIFIERS.append(_LevelsClassifier(
     "transcript length", lambda x: x[t.LENGTH],
