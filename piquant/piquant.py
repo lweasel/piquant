@@ -18,7 +18,7 @@ Options:
 -v --version                       Show version.
 --log-level=<log-level>            Set logging level (one of {log_level_vals}) [default: info].
 --out-dir=<out-dir>                Parent output directory to which quantification run directories will be written [default: output].
---stats-dir=<stats-dir>            Directory to output assembled stats and graphs to [default: output/overall_stats].
+--stats-dir=<stats-dir>            Directory to output assembled stats and graphs to [default: output/analysis].
 --num-fragments=<num-fragments>    Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
 --nocleanup                        If not specified, files non-essential for subsequent quantification (when creating reads) and assessing quantification accuracy (when quantifying) will be deleted.
 -f --params-file=<params-file>     File containing specification of quantification methods, read-lengths, read-depths and end, error and bias parameter values to create reads for.

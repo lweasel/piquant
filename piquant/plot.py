@@ -7,6 +7,7 @@ import pandas as pd
 import parameters
 import seaborn as sb
 import statistics
+import sys
 import tpms as t
 
 NO_FILTER_LABEL = "no filter"
@@ -71,6 +72,12 @@ def _plot_statistic_for_grouped_param_values(
 
     group_param_vals = _get_group_param_values(stats_df, group_param)
 
+    ymin = sys.maxint
+    ymax = -sys.maxint - 1
+
+    xmin = sys.maxint
+    xmax = -sys.maxint - 1
+
     for group_param_value in group_param_vals:
         group_stats = stats_df[stats_df[group_param.name] == group_param_value]
         group_stats.sort(columns=xcol, axis=0, inplace=True)
@@ -79,18 +86,40 @@ def _plot_statistic_for_grouped_param_values(
         plt.plot(xvals, yvals, '-o',
                  label=group_param.get_value_name(group_param_value))
 
+        group_ymin = yvals.min()
+        if group_ymin < ymin:
+            ymin = group_ymin
+
+        group_ymax = yvals.max()
+        if group_ymax > ymax:
+            ymax = group_ymax
+
+        group_xmin = xvals.min()
+        if group_xmin < xmin:
+            xmin = group_xmin
+
+        group_xmax = xvals.max()
+        if group_xmax > xmax:
+            xmax = group_xmax
+
+    xvals_range = xmax - xmin
+    xvals_margin = 2 * xvals_range / 100.0
+    plt.xlim(xmin=xmin - xvals_margin, xmax=xmax + xvals_margin)
+
+    return (ymin, ymax)
+
 
 def _plot_statistic(
         stats_df, statistic, group_param, xcol, xlabel, fixed_param_info):
 
-    _plot_statistic_for_grouped_param_values(
+    yval_range = _plot_statistic_for_grouped_param_values(
         stats_df, statistic.name, group_param, xcol)
 
     plt.xlabel(xlabel)
     plt.ylabel(statistic.title)
     plt.legend(title=group_param.title, loc=4)
 
-    stat_range = statistic.stat_range
+    stat_range = statistic.stat_range(yval_range)
     if stat_range is not None:
         min_val = stat_range[0]
         max_val = stat_range[1]
@@ -278,21 +307,42 @@ def get_stats_for_fixed_params(stats_df, fixed_params, fp_values_set):
     return stats_df, fixed_param_values
 
 
+# Making plots over multiple sets of sequencing and quantification parameters
+
+
+def _get_plot_subdirectory(parent_dir, sub_dir_name):
+    sub_dir = os.path.join(parent_dir, sub_dir_name)
+    if not os.path.exists(sub_dir):
+        os.mkdir(sub_dir)
+    return sub_dir
+
+
 def draw_overall_stats_graphs(stats_dir, overall_stats, param_values):
     # Draw graphs derived from statistics calculated for the whole set of TPMs.
     # e.g. the Spearman correlation of calculated and real TPMs graphed as
     # read-depth varies, for each quantification method, in the case of
     # paired-end reads with errors and bias.
-    graph_file_basename = os.path.join(
-        stats_dir, statistics.OVERALL_STATS_PREFIX)
+    overall_stats_dir = _get_plot_subdirectory(
+        stats_dir, "overall_stats_graphs")
 
     numerical_params = \
         [p for p in parameters.get_run_parameters() if p.is_numeric]
 
     for param in get_non_degenerate_params(
             parameters.get_run_parameters(), param_values):
-        for num_p in get_non_degenerate_params(
-                remove_from(numerical_params, param), param_values):
+
+        non_degenerate_numerical_params = get_non_degenerate_params(
+            remove_from(numerical_params, param), param_values)
+        if len(non_degenerate_numerical_params) == 0:
+            continue
+
+        param_stats_dir = _get_plot_subdirectory(
+            overall_stats_dir, "per_" + param.name)
+
+        for num_p in non_degenerate_numerical_params:
+            num_param_stats_dir = _get_plot_subdirectory(
+                param_stats_dir, "by_" + num_p.name)
+
             fixed_params, fp_values_sets = \
                 get_fixed_params(parameters.get_run_parameters(),
                                  [param, num_p], param_values)
@@ -302,6 +352,11 @@ def draw_overall_stats_graphs(stats_dir, overall_stats, param_values):
                     overall_stats, fixed_params, fp_values_set)
 
                 for stat in statistics.get_graphable_statistics():
+                    statistic_dir = _get_plot_subdirectory(
+                        num_param_stats_dir, stat.name)
+
+                    graph_file_basename = os.path.join(
+                        statistic_dir, statistics.OVERALL_STATS_PREFIX)
                     plot_statistic_by_parameter_values(
                         stats_df, graph_file_basename,
                         stat, param, num_p, fixed_param_values)
@@ -314,8 +369,8 @@ def draw_grouped_stats_graphs(stats_dir, param_values):
     # the percentage of unique sequence per-transcript varies, for single and
     # paired-end reads, in the case of reads with errors and bias, and a
     # particular quantification method.
-    graph_file_basename = os.path.join(
-        stats_dir, statistics.OVERALL_STATS_PREFIX)
+    grouped_stats_dir = _get_plot_subdirectory(
+        stats_dir, "grouped_stats_graphs")
 
     more_than_100_filter = lambda x: x[statistics.NUM_TPMS] > 100
 
@@ -327,8 +382,15 @@ def draw_grouped_stats_graphs(stats_dir, param_values):
             stats_dir, statistics.OVERALL_STATS_PREFIX, clsfr)
         clsfr_stats = pd.read_csv(stats_file)
 
+        clsfr_dir = _get_plot_subdirectory(
+            grouped_stats_dir,
+            "grouped_by_" + clsfr.get_column_name().replace(' ', '_'))
+
         for param in get_non_degenerate_params(
                 parameters.get_run_parameters(), param_values):
+            param_stats_dir = _get_plot_subdirectory(
+                clsfr_dir, "per_" + param.name)
+
             fixed_params, fp_values_sets = \
                 get_fixed_params(parameters.get_run_parameters(),
                                  param, param_values)
@@ -339,6 +401,11 @@ def draw_grouped_stats_graphs(stats_dir, param_values):
 
                 for stat in \
                         statistics.get_graphable_by_classifier_statistics():
+                    statistic_dir = _get_plot_subdirectory(
+                        param_stats_dir, stat.name)
+                    graph_file_basename = os.path.join(
+                        statistic_dir, "grouped")
+
                     filtered_stats_df = \
                         stats_df[more_than_100_filter(stats_df)]
                     plot_statistic_by_transcript_classifier_values(
@@ -351,8 +418,8 @@ def draw_distribution_graphs(stats_dir, param_values):
     # some threshold as that threshold changes. e.g. the percentage of TPMs
     # whose absolute percentage error in calculated TPM, as compared to real
     # TPM, is below a particular threshold.
-    graph_file_basename = os.path.join(
-        stats_dir, statistics.OVERALL_STATS_PREFIX)
+    distribution_stats_dir = _get_plot_subdirectory(
+        stats_dir, "distribution_stats_graphs")
 
     clsfrs = classifiers.get_classifiers()
     dist_clsfrs = [c for c in clsfrs if c.produces_distribution_plots()]
@@ -361,8 +428,18 @@ def draw_distribution_graphs(stats_dir, param_values):
             stats_dir, statistics.OVERALL_STATS_PREFIX, clsfr, asc)
         clsfr_stats = pd.read_csv(stats_file)
 
+        clsfr_dir = _get_plot_subdirectory(
+            distribution_stats_dir,
+            clsfr.get_column_name().replace(' ', '_') + "_distribution")
+
         for param in get_non_degenerate_params(
                 parameters.get_run_parameters(), param_values):
+
+            param_stats_dir = _get_plot_subdirectory(
+                clsfr_dir, "per_" + param.name)
+            graph_file_basename = os.path.join(
+                param_stats_dir, "distribution")
+
             fixed_params, fp_values_sets = \
                 get_fixed_params(parameters.get_run_parameters(),
                                  param, param_values)

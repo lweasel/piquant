@@ -52,7 +52,7 @@ NUM_FRAGMENTS = _Parameter(
 
 # TODO: get rid of isinstance() ASAP
 QUANT_METHOD = _Parameter(
-    "quant_method", "Method", "--quant-method",
+    "quant_method", "Quantifier", "--quant-method",
     lambda x: quantifiers.get_quantification_methods()[x],
     value_namer=lambda x: x if isinstance(x, basestring) else x.get_name())
 

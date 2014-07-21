@@ -10,6 +10,7 @@ graphing by a classifier.
 
 import classifiers
 import itertools
+import math
 import os.path
 import tpms as t
 
@@ -93,12 +94,11 @@ def _Statistic(cls):
 class _BaseStatistic():
     # Base for classes capable of calculating a statistic
     def __init__(self, name, title, graphable=True,
-                 graphable_by_classifier=True, stat_range=None):
+                 graphable_by_classifier=True):
         self.name = name
         self.title = title
         self.graphable = graphable
         self.graphable_by_classifier = graphable_by_classifier
-        self.stat_range = stat_range
 
     def calculate(self, tpms, tp_tpms):
         """Calculate the statistic for a set of TPMs.
@@ -133,6 +133,9 @@ class _BaseStatistic():
         """
         raise NotImplementedError
 
+    def stat_range(self, vals_range):
+        # TODO: documentation
+        return None
 
 @_Statistic
 class _NumberOfTPMs(_BaseStatistic):
@@ -140,8 +143,7 @@ class _NumberOfTPMs(_BaseStatistic):
     def __init__(self):
         _BaseStatistic.__init__(
             self, NUM_TPMS, "No. TPMs",
-            graphable=False, graphable_by_classifier=False,
-            stat_range=(0, None))
+            graphable=False, graphable_by_classifier=False)
 
     def calculate(self, tpms, tp_tpms):
         return len(tpms)
@@ -151,6 +153,9 @@ class _NumberOfTPMs(_BaseStatistic):
         stats = grp_summary[t.REAL_TPM].unstack()
         return stats[_SUMMARY_COUNT]
 
+    def stat_range(self, vals_range):
+        return (0, None)
+
 
 @_Statistic
 class _NumberOfTruePositiveTPMs(_BaseStatistic):
@@ -159,8 +164,8 @@ class _NumberOfTruePositiveTPMs(_BaseStatistic):
     # 'presence' of the transcript.
     def __init__(self):
         _BaseStatistic.__init__(
-            self, "tp-num-tpms", "No. true pos. TPMs",
-            graphable_by_classifier=False, stat_range=(0, None))
+            self, "tp-num-tpms", "No. true positive TPMs",
+            graphable_by_classifier=False)
 
     def calculate(self, tpms, tp_tpms):
         return len(tp_tpms)
@@ -169,6 +174,9 @@ class _NumberOfTruePositiveTPMs(_BaseStatistic):
             self, grouped, grp_summary, tp_grouped, tp_grp_summary):
         stats = tp_grp_summary[t.REAL_TPM].unstack()
         return stats[_SUMMARY_COUNT]
+
+    def stat_range(self, vals_range):
+        return (0, None)
 
 
 @_Statistic
@@ -179,8 +187,7 @@ class _SpearmanCorrelation(_BaseStatistic):
     # 'presence' of the transcript).
     def __init__(self):
         _BaseStatistic.__init__(
-            self, "tp-log-tpm-rho", "Spearman's rho",
-            stat_range=_ZERO_TO_ONE_STAT_RANGE)
+            self, "tp-log-tpm-rho", "Spearman's rho")
 
     @staticmethod
     def _calculate(tpms):
@@ -194,6 +201,10 @@ class _SpearmanCorrelation(_BaseStatistic):
             self, grouped, grp_summary, tp_grouped, tp_grp_summary):
         return tp_grouped.apply(_SpearmanCorrelation._calculate)
 
+    def stat_range(self, vals_range):
+        min_val = math.floor(vals_range[0] * 5) / 5.0
+        return (min_val - 0.01, 1.01)
+
 
 @_Statistic
 class _TruePositiveErrorFraction(_BaseStatistic):
@@ -206,8 +217,7 @@ class _TruePositiveErrorFraction(_BaseStatistic):
 
     def __init__(self):
         _BaseStatistic.__init__(
-            self, "tp-error-frac", "True pos. error fraction",
-            stat_range=_ZERO_TO_ONE_STAT_RANGE)
+            self, "tp-error-frac", "True positive error fraction")
 
     @staticmethod
     def _calculate(tpms, error_percent):
@@ -224,6 +234,9 @@ class _TruePositiveErrorFraction(_BaseStatistic):
             _TruePositiveErrorFraction._calculate,
             _TruePositiveErrorFraction.ERROR_PERCENTAGE_THRESHOLD)
 
+    def stat_range(self, vals_range):
+        return _ZERO_TO_ONE_STAT_RANGE
+
 
 @_Statistic
 class _MedianPercentError(_BaseStatistic):
@@ -233,7 +246,7 @@ class _MedianPercentError(_BaseStatistic):
     # 'presence' of the transcript).
     def __init__(self):
         _BaseStatistic.__init__(
-            self, "tp-median-percent-error", "True pos. median % error")
+            self, "tp-median-percent-error", "True positive median % error")
 
     def calculate(self, tpms, tp_tpms):
         return tp_tpms[t.PERCENT_ERROR].median()
@@ -242,6 +255,17 @@ class _MedianPercentError(_BaseStatistic):
             self, grouped, grp_summary, tp_grouped, tp_grp_summary):
         stats = tp_grp_summary[t.PERCENT_ERROR].unstack()
         return stats[_SUMMARY_MEDIAN]
+
+    def stat_range(self, vals_range):
+        division = 5.0
+        closest_div = lambda x: math.floor(x / division) * division
+        ymin, ymax = vals_range
+        if ymin > 0 and ymax > 0:
+            return (0, closest_div(ymax) + division)
+        elif ymin < 0 and ymax < 0:
+            return (closest_div(ymin), 0)
+        else:
+            return (closest_div(ymin), closest_div(ymax) + division)
 
 
 @_Statistic
@@ -252,8 +276,7 @@ class _Sensitivity(_BaseStatistic):
     # and false negatives), which were correctly identified as being present
     # (just the true positives).
     def __init__(self):
-        _BaseStatistic.__init__(self, "sensitivity", "Sensitivity",
-                                stat_range=_ZERO_TO_ONE_STAT_RANGE)
+        _BaseStatistic.__init__(self, "sensitivity", "Sensitivity")
 
     @staticmethod
     def _calculate(tpms):
@@ -270,6 +293,10 @@ class _Sensitivity(_BaseStatistic):
             self, grouped, grp_summary, tp_grouped, tp_grp_summary):
         return grouped.apply(_Sensitivity._calculate)
 
+    def stat_range(self, vals_range):
+        min_val = math.floor(vals_range[0] * 5) / 5.0
+        return (min_val - 0.01, 1.01)
+
 
 @_Statistic
 class _Specificity(_BaseStatistic):
@@ -279,8 +306,7 @@ class _Specificity(_BaseStatistic):
     # and false positives), which were correctly identified as being present
     # (just the true negatives).
     def __init__(self):
-        _BaseStatistic.__init__(self, "specificity", "Specificity",
-                                stat_range=_ZERO_TO_ONE_STAT_RANGE)
+        _BaseStatistic.__init__(self, "specificity", "Specificity")
 
     @staticmethod
     def _calculate(tpms):
@@ -296,3 +322,7 @@ class _Specificity(_BaseStatistic):
     def calculate_grouped(
             self, grouped, grp_summary, tp_grouped, tp_grp_summary):
         return grouped.apply(_Specificity._calculate)
+
+    def stat_range(self, vals_range):
+        min_val = math.floor(vals_range[0] * 5) / 5.0
+        return (min_val - 0.01, 1.01)
