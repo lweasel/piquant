@@ -68,6 +68,6 @@ logger.info("Retained {n} transcripts with non-zero expression.".
 # read depth
 total_transcript_length = profiles[fs.PRO_FILE_LENGTH_COL].sum()
 bases_to_sequence = total_transcript_length * options[READ_DEPTH]
-num_reads = bases_to_sequence / options[READ_LENGTH]
+num_reads = bases_to_sequence // options[READ_LENGTH]
 
 print(num_reads)
