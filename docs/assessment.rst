@@ -73,12 +73,23 @@ The specificity (or true negative rate) of a transcript quantification method is
 Transcript classifiers
 ----------------------
 
+Transcript classifiers split the whole set of input transcripts into discrete groups, those groups sharing some similar properties; such a division of transcripts then allows the performance of quantification tools to be assessed across different types of transcripts. The transcript classifiers provided by default are listed below; however it is easy to extend *piquant* to add additional classifiers (see :ref:`extending-adding-new-classifiers`).
+
+Note, however, that transcript classifiers fall into one of two distinct types, and these types are described first.
+
 .. _assessment-grouped-classifiers:
 
 "Grouped" classifiers
 ^^^^^^^^^^^^^^^^^^^^^
 
-TODO
+The first type of transcript classifiers generally split the set of input transcripts into fixed groups dependent on some property inherent in the transcripts (or their simulated abundances) themselves. For example, one could consider "short", "medium" or "long" transcripts, or those expressed at "low", "medium" or "high" simulated abundance.
+
+The following "grouped" classifiers are provided:
+
+* :ref:`assessment-number-of-transcripts`
+* :ref:`assessment-real-transcript-abundance`
+* :ref:`assessment-transcript-length`
+* :ref:`assessment-transcript-sequence-uniqueness`
 
 .. _assessment-distribution-classifiers:
 
@@ -87,20 +98,28 @@ TODO
 
 TODO
 
+.. _assessment-number-of-transcripts:
+
 Number of transcripts of originating gene
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 TODO
+
+.. _assessment-real-transcript-abundance:
 
 Real transcript abundance
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 TODO
 
+.. _assessment-transcript-length:
+
 Transcript length
 ^^^^^^^^^^^^^^^^^
 
 TODO
+
+.. _assessment-transcript-sequence-uniqueness:
 
 Transcript sequence uniqueness
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
