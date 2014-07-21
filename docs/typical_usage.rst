@@ -47,3 +47,11 @@ In this case, eight read directories are written into the default parent output 
 * ``30x_50b_pe_errors_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, paired-end reads
 * ``30x_100b_se_errors_bias``: i.e. 30x sequencing depth, 100 base-pairs read length, single-end reads
 * ``30x_100b_pe_errors_bias``: i.e. 30x sequencing depth, 100 base-pairs read length, paired-end reads
+
+3. Create reads
+---------------
+
+We're now ready to simulate RNA-seq reads for our chosen sets of sequencing parameters. Note that the number of experiments that can simulated simultaneously will depend on the memory and processing capabilities of the hardware on which *piquant* is run. Here we'll assume we only have enough memory and processing power available to simulate four experiments at a time; hence we'll execute the following pair of commands to simulate reads for each sequencing depth, allowing all FluxSimulator processes to terminate in the first case before initiating the next batch of simulations::
+
+    python piquant.py create_reads --params-file=output/params.txt --read-depth=10
+    python piquant.py create_reads --params-file=output/params.txt --read-depth=30
