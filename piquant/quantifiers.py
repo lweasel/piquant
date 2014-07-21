@@ -133,8 +133,7 @@ class _Cufflinks:
         return self.norm_constant * fpkm
 
 
-@_Quantifier
-class _RSEM:
+class _RSEMBase:
     CALCULATE_TRANSCRIPT_REFERENCE_DIRECTORY = \
         "REF_DIR=$(dirname {ref_name})"
     CHECK_TRANSCRIPT_REFERENCE_DIRECTORY_EXISTS = \
@@ -143,23 +142,20 @@ class _RSEM:
         "mkdir -p $REF_DIR"
     PREPARE_TRANSCRIPT_REFERENCE = \
         "rsem-prepare-reference --gtf {transcript_gtf} --no-polyA " + \
-        "{genome_fasta_dir} {ref_name}"
+        "{bowtie_spec} {genome_fasta_dir} {ref_name}"
 
     QUANTIFY_ISOFORM_EXPRESSION = \
         "rsem-calculate-expression --time {qualities_spec} --p 32 " + \
-        "{stranded_spec} {reads_spec} {ref_name} rsem_sample"
+        "{bowtie_spec} {stranded_spec} {reads_spec} {ref_name} rsem_sample"
 
     REMOVE_RSEM_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
         "find . -name \"rsem_sample*\" \! " + \
         "-name rsem_sample.isoforms.results -type f -delete"
 
     @classmethod
-    def get_name(cls):
-        return "RSEM"
-
-    @classmethod
     def _get_ref_name(cls, quantifier_dir):
-        return os.path.join(quantifier_dir, "rsem", "rsem")
+        ref_name = cls.get_name().lower()
+        return os.path.join(quantifier_dir, ref_name, ref_name)
 
     @classmethod
     def write_preparatory_commands(cls, writer, params):
@@ -179,7 +175,8 @@ class _RSEM:
             writer.add_line(cls.PREPARE_TRANSCRIPT_REFERENCE.format(
                 transcript_gtf=params[TRANSCRIPT_GTF_FILE],
                 genome_fasta_dir=params[GENOME_FASTA_DIR],
-                ref_name=ref_name))
+                ref_name=ref_name,
+                bowtie_spec=cls.get_bowtie_spec()))
 
     @classmethod
     def write_quantification_commands(cls, writer, params):
@@ -199,7 +196,8 @@ class _RSEM:
             qualities_spec=qualities_spec,
             reads_spec=reads_spec,
             stranded_spec=stranded_spec,
-            ref_name=ref_name))
+            ref_name=ref_name,
+            bowtie_spec=cls.get_bowtie_spec()))
 
     @classmethod
     def write_post_quantification_cleanup(cls, writer):
@@ -222,6 +220,26 @@ class _RSEM:
             if transcript_id in self.abundances.index else 0
 
 
+@_Quantifier
+class _RSEM(_RSEMBase):
+    @classmethod
+    def get_name(cls):
+        return "RSEM"
+
+    @classmethod
+    def get_bowtie_spec(cls):
+        return ""
+
+
+@_Quantifier
+class _RSEM_Bowtie2(_RSEMBase):
+    @classmethod
+    def get_name(cls):
+        return "RSEM_Bowtie2"
+
+    @classmethod
+    def get_bowtie_spec(cls):
+        return "--bowtie2"
 @_Quantifier
 class _Express:
     MAP_READS_TO_TRANSCRIPT_REFERENCE = \

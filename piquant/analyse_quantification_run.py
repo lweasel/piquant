@@ -33,9 +33,8 @@ import schema
 import sys
 
 TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
-TRUE_POSITIVES_LABEL = "true positives"
-NON_ZERO_LABEL = "non-zero"
-ALL_LABEL = "all"
+TRUE_POSITIVES_LABEL = "true positive TPMs"
+NON_ZERO_LABEL = "non-zero real TPMs"
 
 LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
@@ -44,6 +43,8 @@ OUT_FILE_BASENAME = "<out-file>"
 SCATTER_MAX = "--scatter-max"
 LOG10_SCATTER_MIN = "--log10-scatter-min"
 LOG10_SCATTER_MAX = "--log10-scatter-max"
+
+BOXPLOT_NUM_TPMS_FILTER = 300
 
 # Read in command-line options
 __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
@@ -152,16 +153,16 @@ if options[OUT_FILE_BASENAME]:
 # Make boxplots of log ratios stratified by various classification measures
 # (e.g. the number of transcripts per-originating gene of each transcript)
 # TODO: need something in graph titles to indicate filter being applied
-more_than_100_filter = lambda x: len(x[t.REAL_TPM]) > 100
+num_tpms_filter = lambda x: len(x[t.REAL_TPM]) > BOXPLOT_NUM_TPMS_FILTER
 tpm_infos = [(non_zero, NON_ZERO_LABEL), (tp_tpms, TRUE_POSITIVES_LABEL)]
 
 if options[OUT_FILE_BASENAME]:
     classifiers = [c for c in clsfrs if c.produces_grouped_stats()]
-    filters = [None, more_than_100_filter]
-    for c, f, ti in itertools.product(classifiers, filters, tpm_infos):
+    for c, ti in itertools.product(classifiers, tpm_infos):
         plot.log_ratio_boxplot(
             ti[0], options[OUT_FILE_BASENAME],
-            parameters.QUANT_METHOD.option_name, ti[1], c, f)
+            options[parameters.QUANT_METHOD.option_name],
+            ti[1], c, num_tpms_filter)
 
 # Make plots showing the percentage of isoforms above or below threshold values
 # according to various classification measures
