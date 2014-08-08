@@ -17,6 +17,8 @@ Adding new statistics
 
 TODO.
 
+.. _extending-adding-new-classifiers:
+
 Adding new transcript classifiers
 ---------------------------------
 
