@@ -46,7 +46,6 @@ LEFT_READS = 'l'
 RIGHT_READS = 'r'
 
 _FRAGMENTS_PER_MOLECULE = 8.26
-_ERROR_MODEL_SHORT = 35
 _ERROR_MODEL_LONG = 76
 
 
@@ -92,9 +91,7 @@ def _write_flux_simulator_simulation_params(
         fs_params["UNIQUE_IDS"] = "YES"
 
     if errors:
-        fs_params["ERR_FILE"] = _ERROR_MODEL_LONG if \
-            read_length > 0.5*(_ERROR_MODEL_SHORT + _ERROR_MODEL_LONG) \
-            else _ERROR_MODEL_SHORT
+        fs_params["ERR_FILE"] = _ERROR_MODEL_LONG
 
     writer = fw.FluxSimulatorParamsWriter(fs_params)
     writer.write_to_file(output_dir, SIMULATION_PARAMS_FILE)
