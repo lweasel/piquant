@@ -102,21 +102,3 @@ def test_write_flux_simulator_params_files_writes_correct_params_when_paired_end
         d = _get_simulation_params_dict(dirname)
         assert d["PAIRED_END"] == "YES"
         assert d["UNIQUE_IDS"] == "YES"
-
-
-def test_write_flux_simulator_params_files_writes_correct_params_when_errors_and_short_reads_are_specified():
-    with TempDir() as dirname:
-        _write_flux_simulator_params_files(
-            dirname, errors=True, read_length=40)
-
-        d = _get_simulation_params_dict(dirname)
-        assert d["ERR_FILE"] == str(fs._ERROR_MODEL_SHORT)
-
-
-def test_write_flux_simulator_params_files_writes_correct_params_when_errors_and_long_reads_are_specified():
-    with TempDir() as dirname:
-        _write_flux_simulator_params_files(
-            dirname, errors=True, read_length=60)
-
-        d = _get_simulation_params_dict(dirname)
-        assert d["ERR_FILE"] == str(fs._ERROR_MODEL_LONG)
