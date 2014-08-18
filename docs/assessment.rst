@@ -107,35 +107,51 @@ The following "distribution" classifier is provided:
 Number of transcripts of originating gene
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-TODO
+This classifier simply groups transcripts according to the number of isoforms of their originating gene.
 
 .. _assessment-real-transcript-abundance:
 
 Real transcript abundance
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-TODO
+This classifier groups transcripts by a measure of their real abundance. Five categories of prevalence are defined according to the log (base 10) of their real abundance in transcripts per million:
+
+* Log real TPM <= 0 (<=1 transcript per million)
+* Log real TPM <= 0.5 (>1 and <=3.16 transcripts per million)
+* Log real TPM <= 1: (>3.16 and <=10 transcripts per million)
+* Log real TPM <= 1.5: (>10 and <=31.6 transcripts per million)
+* Log real TPM > 1.5: (>31.6 transcripts per million)
 
 .. _assessment-transcript-length:
 
 Transcript length
 ^^^^^^^^^^^^^^^^^
 
-TODO
+This classifier groups transcripts by their length in bases. Three categories are defined according to the log (base 10) of their length:
+
+* *short*: Log length <= 3 (<=1000 bases)
+* *medium*: Log length <= 3.5 (>1000 bases and <=3162 bases)
+* *long*: Log length > 3.5 (>3162 bases)
 
 .. _assessment-transcript-sequence-uniqueness:
 
 Transcript sequence uniqueness
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-TODO
+This classifier groups transcripts by the percentage of their sequence which they do not share with any other transcript within their gene of origin. Five categories of transcripts are defined:
+
+* >0 and <=20% unique sequence
+* >20 and <=40% unique sequence
+* >40 and <=60% unique sequence
+* >60 and <=80% unique sequence
+* >80 and <=100% unique sequence
 
 .. _assessment-absolute-percent-error:
 
 Absolute percent error
 ^^^^^^^^^^^^^^^^^^^^^^
 
-TODO
+This "distribution" classifier splits transcripts into two groups according to whether the absolute percentage difference between each transcripts estimated and real abundances is greater or less than a given amount.
 
 Plots
 -----
