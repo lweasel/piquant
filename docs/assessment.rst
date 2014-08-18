@@ -96,7 +96,11 @@ The following "grouped" classifiers are provided:
 "Distribution" classifiers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-TODO
+The second type of transcript classifiers split the set of input transcripts into two groups, those above and below some threshold, where that threshold is generally the value of some property of quantification. For example, one could consider transcripts whose estimated abundance is more or less than a certain percentage different from the real abundance. By varying the threshold value, these classifiers can be used to produce graphs of the distribution of the property in question.
+
+The following "distribution" classifier is provided:
+
+* :ref:`assessment-absolute-percent-error`
 
 .. _assessment-number-of-transcripts:
 
@@ -125,6 +129,8 @@ Transcript sequence uniqueness
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 TODO
+
+.. _assessment-absolute-percent-error:
 
 Absolute percent error
 ^^^^^^^^^^^^^^^^^^^^^^
