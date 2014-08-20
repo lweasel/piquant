@@ -1,6 +1,8 @@
 Overview
 ========
 
+For a poster overview of *piquant*, see :download:`here <poster.pdf>`.
+
 The *piquant* pipeline consists of three main stages:
 
 #. Simulate RNA-seq reads under specified combinations of sequencing parameters.
