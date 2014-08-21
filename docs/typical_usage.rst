@@ -73,3 +73,17 @@ Prepare the directories in which transcript quantification will be performed::
     python piquant.py prepare_quant_dirs --params-file=output/params.txt
 
 In this case, sixteen quantification directories are written into the default parent output directory ``output`` - one for each combination of the eight RNA-seq experiments simulated and the two quantification tools.
+
+6. Perform prequantification steps
+----------------------------------
+
+Prequantification steps appropriate to the eXpress and Sailfish tools (and for subsequent analysis of quantification accuracy) are performed using the *piquant* command ``prequantify``::
+
+    python piquant.py prequantify --params-file=output/params.txt
+
+In this case, the tasks performed are:
+
+* Construction of sequences for transcripts from the input transcript reference GTF file and genome sequence FASTA files.
+* Creation of a Sailfish kmer index for the transcripts
+* Calculation of the number of isoforms for each gene defined in the input transcript reference (see :ref:`count-transcripts-for-genes`).
+* Calculation of the unique sequence percentage for each transcript (see :ref:`calculate_unique_transcript_sequence`).
