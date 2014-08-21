@@ -86,4 +86,14 @@ In this case, the tasks performed are:
 * Construction of sequences for transcripts from the input transcript reference GTF file and genome sequence FASTA files.
 * Creation of a Sailfish kmer index for the transcripts
 * Calculation of the number of isoforms for each gene defined in the input transcript reference (see :ref:`count-transcripts-for-genes`).
-* Calculation of the unique sequence percentage for each transcript (see :ref:`calculate_unique_transcript_sequence`).
+* Calculation of the unique sequence percentage for each transcript (see :ref:`calculate-unique-transcript-sequence`).
+
+7. Quantify transcripts
+-----------------------
+
+We can now run our chosen transcriptome quantification tools on each set of simulated RNA-seq data. As in the case when simulating reads, the number of tool instances that can be run simultaneously will depend on the memory and processing capabilities of the hardware on which *piquant* is run. We'll assume that we only have enough resource available to run four quantification tool instances at a time; hence we'll execute the following four commands to run eXpress and Sailfish on our single-end and paired-end RNA-seq data sets, allowing all processes to terminate in each case before initiating the next batch of quantifications::
+
+    python piquant.py quantify --params-file=output/params.txt --quant-method=Express --paired-end=False
+    python piquant.py quantify --params-file=output/params.txt --quant-method=Express --paired-end=True
+    python piquant.py quantify --params-file=output/params.txt --quant-method=Sailfish --paired-end=False
+    python piquant.py quantify --params-file=output/params.txt --quant-method=Sailfish --paired-end=True
