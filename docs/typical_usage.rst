@@ -64,3 +64,12 @@ The *piquant* commmand ``check_reads`` can be used to confirm that read simulati
     python piquant.py check_reads --params-file=output/params.txt
 
 A message is output to standard error for each RNA-seq experiment simulation which failed to successfully complete; success in all cases is indicated by no output from the ``check_reads`` command.
+
+5. Prepare quantification directories
+-------------------------------------
+
+Prepare the directories in which transcript quantification will be performed::
+
+    python piquant.py prepare_quant_dirs --params-file=output/params.txt
+
+In this case, sixteen quantification directories are written into the default parent output directory ``output`` - one for each combination of the eight RNA-seq experiments simulated and the two quantification tools.
