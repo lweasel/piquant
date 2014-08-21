@@ -55,3 +55,12 @@ We're now ready to simulate RNA-seq reads for our chosen sets of sequencing para
 
     python piquant.py create_reads --params-file=output/params.txt --read-depth=10
     python piquant.py create_reads --params-file=output/params.txt --read-depth=30
+
+4. Check reads
+--------------
+
+The *piquant* commmand ``check_reads`` can be used to confirm that read simulation completed successfully::
+
+    python piquant.py check_reads --params-file=output/params.txt
+
+A message is output to standard error for each RNA-seq experiment simulation which failed to successfully complete; success in all cases is indicated by no output from the ``check_reads`` command.
