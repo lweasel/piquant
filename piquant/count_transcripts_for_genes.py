@@ -69,7 +69,7 @@ transcript_counts = get_transcript_counts_for_genes(
     transcript_to_gene_mappings)
 
 logger.info("Printing transcript counts for genes...")
-print "transcript,gene,transcript_count"
+print("transcript,gene,transcript_count")
 for transcript, gene in transcript_to_gene_mappings.items():
     print("{t},{g},{c}".format(
         t=transcript, g=gene, c=transcript_counts[gene]))
