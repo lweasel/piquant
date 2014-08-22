@@ -97,3 +97,12 @@ We can now run our chosen transcriptome quantification tools on each set of simu
     python piquant.py quantify --params-file=output/params.txt --quant-method=Express --paired-end=True
     python piquant.py quantify --params-file=output/params.txt --quant-method=Sailfish --paired-end=False
     python piquant.py quantify --params-file=output/params.txt --quant-method=Sailfish --paired-end=True
+
+8. Check quantification
+-----------------------
+
+The *piquant* command ``check_quant`` can be used to confirm that quantification completed successfully::
+
+    python piquant.py check_quant --params-file=output/params.txt
+
+A message is output to standard error for each quantification run which failed to successfully complete; success in all cases is indicated by no output from the ``check_quant`` command.
