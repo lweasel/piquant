@@ -77,11 +77,8 @@ def _plot_statistic_for_grouped_param_values(
 
     group_param_vals = _get_group_param_values(stats_df, group_param)
 
-    ymin = sys.maxint
-    ymax = -sys.maxint - 1
-
-    xmin = sys.maxint
-    xmax = -sys.maxint - 1
+    xmin = ymin = sys.maxsize
+    xmax = ymax = -sys.maxsize - 1
 
     for group_param_value in group_param_vals:
         group_stats = stats_df[stats_df[group_param.name] == group_param_value]
