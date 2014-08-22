@@ -45,7 +45,7 @@ In the final stage of the pipeline, run via the ``piquant`` command ``analyse_ru
 Requirements
 ------------
 
-The *piquant* pipeline is implemented as a set of Python scripts and modules; it has currently been tested against Python version 2.7.3 running under Ubuntu 12.04.4 LTS (Precise Pangolin).
+The *piquant* pipeline is implemented as a set of Python scripts and modules; it has currently been tested against Python versions 2.7.6 and 3.4.0 running under Ubuntu 12.04.4 LTS and 14.04.1 LTS.
 
 In order to simulate reads, the FluxSimulator RNA-seq experiment simulator [FluxSimulator]_ is required to be installed, and the ``flux-simulator`` executable be added to the executable path (e.g. via the Unix PATH variable). *piquant* has been tested with FluxSimulator version 1.2.2.
 
