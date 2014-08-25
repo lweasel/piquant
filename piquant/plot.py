@@ -14,6 +14,18 @@ NO_FILTER_LABEL = "no filter"
 GROUPED_STATS_NUM_TPMS_FILTER = 3000
 ORDER_VALUES = [True, False]
 
+# Don't embed characters as paths when outputting SVG - assume fonts are
+# installed on machine where SVG will be viewed (see
+# http://matplotlib.org/users/customizing.html)
+plt.rcParams['svg.fonttype'] = 'none'
+
+# matplotlib parameters appropriate for poster output
+#plt.rcParams['font.size'] = 16.0
+#plt.rcParams['axes.labelsize'] = 'medium'
+#plt.rcParams['xtick.labelsize'] = 'x-small'
+#plt.rcParams['ytick.labelsize'] = 'x-small'
+#plt.rcParams['legend.fontsize'] = 'small'
+
 
 class _NewPlot:
     def __init__(self, *file_name_elements):
@@ -24,7 +36,7 @@ class _NewPlot:
         plt.figure()
 
     def __exit__(self, type, value, traceback):
-        plt.savefig(self.file_name + ".pdf", format="pdf")
+        plt.savefig(self.file_name + ".svg", format="svg")
         plt.close()
 
 
