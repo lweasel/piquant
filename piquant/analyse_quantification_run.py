@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """Usage:
-    analyse_quantification_run [--log-level=<log-level> --scatter-max=<scatter-max-val> --log10-scatter-min=<log10-scatter-min-val> --log10-scatter-max=<log10-scatter-max-val>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> <tpm-file> [<out-file>]
+    analyse_quantification_run [--log-level=<log-level> --scatter-max=<scatter-max-val> --log10-scatter-min=<log10-scatter-min-val> --log10-scatter-max=<log10-scatter-max-val> --plot-format=<plot-format>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> <tpm-file> [<out-file>]
 
 -h --help                                    Show this message.
 -v --version                                 Show version.
@@ -9,6 +9,7 @@
 --scatter-max=<scatter-max-val>              Maximum x and y values for scatter plot; a value of 0 means do not impose a maximum [default: 0].
 --log10-scatter-min=<log10-scatter-min-val>  Minimum x and y values for log10 scatter plot; a value of 0 means do not impose a minimum [default: 0].
 --log10-scatter-max=<log10-scatter-max-val>  Maximum x and y values for log10 scatter plot; a value of 0 means do not impose a maximum [default: 0].
+--plot-format=<plot-format>                  Output format for graphs (one of {plot_formats}) [default: pdf].
 --quant-method=<quant-method>                Method used to quantify transcript abundances.
 --read-length=<read-length>                  The length of sequence reads.
 --read-depth=<read-depth>                    The depth of reads sequenced across the transcriptome.
@@ -22,6 +23,7 @@
 import classifiers
 import docopt
 import itertools
+import log
 import options as opt
 import pandas as pd
 import parameters
@@ -42,17 +44,22 @@ OUT_FILE_BASENAME = "<out-file>"
 SCATTER_MAX = "--scatter-max"
 LOG10_SCATTER_MIN = "--log10-scatter-min"
 LOG10_SCATTER_MAX = "--log10-scatter-max"
+PLOT_FORMAT = "--plot-format"
 
 BOXPLOT_NUM_TPMS_FILTER = 300
 
 # Read in command-line options
-__doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
+__doc__ = __doc__.format(
+    log_level_vals=LOG_LEVEL_VALS,
+    plot_formats=plot.PLOT_FORMATS)
 options = docopt.docopt(__doc__, version="assemble_quantification_data v0.1")
 
 # Validate command-line options
 try:
     opt.validate_dict_option(
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
+    opt.validate_list_option(
+        options[PLOT_FORMAT], plot.PLOT_FORMATS, "Invalid plot format")
 
     opt.validate_file_option(options[TPM_FILE], "Could not open TPM file")
     options[SCATTER_MAX] = opt.validate_int_option(
@@ -146,7 +153,7 @@ logger.info("Plotting graphs...")
 
 if options[OUT_FILE_BASENAME]:
     plot.log_tpm_scatter_plot(
-        tp_tpms, options[OUT_FILE_BASENAME],
+        options[PLOT_FORMAT], tp_tpms, options[OUT_FILE_BASENAME],
         options[parameters.QUANT_METHOD.option_name], TRUE_POSITIVES_LABEL)
 
 # Make boxplots of log ratios stratified by various classification measures
@@ -159,6 +166,7 @@ if options[OUT_FILE_BASENAME]:
     classifiers = [c for c in clsfrs if c.produces_grouped_stats()]
     for c, ti in itertools.product(classifiers, tpm_infos):
         plot.log_ratio_boxplot(
+            options[PLOT_FORMAT],
             ti[0], options[OUT_FILE_BASENAME],
             options[parameters.QUANT_METHOD.option_name],
             ti[1], c, num_tpms_filter)
@@ -170,5 +178,6 @@ if options[OUT_FILE_BASENAME]:
     ascending = [True, False]
     for c, asc, ti in itertools.product(classifiers, ascending, tpm_infos):
         plot.plot_cumulative_transcript_distribution(
+            options[PLOT_FORMAT],
             ti[0], options[OUT_FILE_BASENAME],
             options[parameters.QUANT_METHOD.option_name], ti[1], c, asc)

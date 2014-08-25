@@ -13,6 +13,7 @@
 
 import docopt
 import flux_simulator as fs
+import log
 import options as opt
 import schema
 import sys

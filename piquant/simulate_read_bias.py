@@ -15,6 +15,7 @@
 
 import collections
 import docopt
+import log
 import options as opt
 import os.path
 import pwm

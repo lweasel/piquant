@@ -118,7 +118,9 @@ def _add_assemble_quantification_data(
             unique_seq_file=_get_unique_sequence_file(quantifier_dir)))
 
 
-def _add_analyse_quantification_results(writer, run_dir, **params):
+def _add_analyse_quantification_results(
+        writer, run_dir, plot_format, **params):
+
     # Finally perform analysis on the calculated TPMs
     writer.add_comment("Perform analysis on calculated TPMs.")
 
@@ -132,8 +134,10 @@ def _add_analyse_quantification_results(writer, run_dir, **params):
             val=str(param_val))
 
     writer.add_line(
-        "{command} {params_spec} {tpms_file} {output_basename}".format(
+        ("{command} --plot-format={format} {params_spec} " +
+         "{tpms_file} {output_basename}").format(
             command=_get_script_path(ANALYSE_DATA_SCRIPT),
+            format=plot_format,
             params_spec=params_spec,
             tpms_file=TPMS_FILE,
             output_basename=os.path.basename(run_dir)))
@@ -162,7 +166,7 @@ def _add_process_command_line_options(writer):
 
 
 def _add_analyse_results(
-        writer, run_dir, quantifier_dir, fs_pro_file,
+        writer, run_dir, quantifier_dir, fs_pro_file, plot_format,
         quant_method, read_length, read_depth,
         paired_end, errors, bias):
 
@@ -171,7 +175,8 @@ def _add_analyse_results(
             _add_assemble_quantification_data(
                 writer, quantifier_dir, fs_pro_file, quant_method)
         _add_analyse_quantification_results(
-            writer, run_dir, quant_method=quant_method.get_name(),
+            writer, run_dir, plot_format,
+            quant_method=quant_method.get_name(),
             read_length=read_length, read_depth=read_depth,
             paired_end=paired_end, errors=errors, bias=bias)
 
@@ -192,8 +197,8 @@ def _update_params_spec(params_spec, input_dir, quantifier_dir,
 
 
 def _add_script_sections(
-        writer, run_dir, quantifier_dir,
-        transcript_gtf_file, fs_pro_file, cleanup,
+        writer, run_dir, quantifier_dir, transcript_gtf_file,
+        fs_pro_file, plot_format, cleanup,
         quant_method, read_length, read_depth,
         paired_end, errors, bias, params_spec):
 
@@ -209,13 +214,13 @@ def _add_script_sections(
         _add_quantify_transcripts(writer, quant_method, params_spec, cleanup)
 
     _add_analyse_results(
-        writer, run_dir, quantifier_dir, fs_pro_file,
+        writer, run_dir, quantifier_dir, fs_pro_file, plot_format,
         quant_method, read_length, read_depth,
         paired_end, errors, bias)
 
 
 def write_run_quantification_script(
-        input_dir, run_dir, quantifier_dir, cleanup,
+        input_dir, run_dir, quantifier_dir, plot_format, cleanup,
         quant_method=None, read_length=50, read_depth=10,
         paired_end=False, errors=False, bias=False,
         transcript_gtf=None, genome_fasta=None):
@@ -236,6 +241,6 @@ def write_run_quantification_script(
     writer = fw.BashScriptWriter()
     _add_script_sections(
         writer, run_dir, quantifier_dir, transcript_gtf,
-        fs_pro_file, cleanup, quant_method, read_length, read_depth,
-        paired_end, errors, bias, params_spec)
+        fs_pro_file, plot_format, cleanup, quant_method,
+        read_length, read_depth, paired_end, errors, bias, params_spec)
     writer.write_to_file(run_dir, RUN_SCRIPT)

@@ -11,6 +11,7 @@
 
 import docopt
 import gtf
+import log
 import options as opt
 import schema
 import sys

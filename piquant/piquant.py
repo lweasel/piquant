@@ -7,45 +7,48 @@
     piquant prepare_read_dirs [--log-level=<log-level> --out-dir=<out_dir> --num-fragments=<num-fragments> --nocleanup --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir>]
     piquant create_reads [--log-level=<log-level> --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant check_reads [--log-level=<log-level> --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
-    piquant prepare_quant_dirs [--log-level=<log-level> --out-dir=<out-dir> --nocleanup --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir>]
+    piquant prepare_quant_dirs [--log-level=<log-level> --out-dir=<out-dir> --nocleanup --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir> --plot-format=<plot-format>]
     piquant prequantify [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant quantify [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant check_quant [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
-    piquant analyse_runs [--log-level=<log-level> --out-dir=<out-dir> --stats-dir=<stats-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+    piquant analyse_runs [--log-level=<log-level> --out-dir=<out-dir> --stats-dir=<stats-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --plot-format=<plot-format>]
 
 Options:
--h --help                          Show this message.
--v --version                       Show version.
---log-level=<log-level>            Set logging level (one of {log_level_vals}) [default: info].
---out-dir=<out-dir>                Parent output directory to which quantification run directories will be written [default: output].
---stats-dir=<stats-dir>            Directory to output assembled stats and graphs to [default: output/analysis].
---num-fragments=<num-fragments>    Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
---nocleanup                        If not specified, files non-essential for subsequent quantification (when creating reads) and assessing quantification accuracy (when quantifying) will be deleted.
--f --params-file=<params-file>     File containing specification of quantification methods, read-lengths, read-depths and end, error and bias parameter values to create reads for.
--q --quant-method=<quant-methods>  Comma-separated list of quantification methods to run.
--l --read-length=<read-lengths>    Comma-separated list of read-lengths to perform quantification for.
--d --read-depth=<read-depths>      Comma-separated list of read-depths to perform quantification for.
--p --paired-end=<paired-ends>      Comma-separated list of True/False strings indicating whether quantification should be performed for single or paired-end reads.
--e --error=<errors>                Comma-separated list of True/False strings indicating whether quantification should be performed with or without read errors.
--b --bias=<biases>                 Comma-separated list of True/False strings indicating whether quantification should be performed with or without read sequence bias.
-<transcript-gtf-file>              GTF formatted file describing the transcripts to be simulated.
-<genome-fasta-dir>                 Directory containing per-chromosome sequences as FASTA files.
+-h --help                               Show this message.
+-v --version                            Show version.
+--log-level=<log-level>                 Set logging level (one of {log_level_vals}) [default: info].
+--out-dir=<out-dir>                     Parent output directory to which quantification run directories will be written [default: output].
+--stats-dir=<stats-dir>                 Directory to output assembled stats and graphs to [default: output/analysis].
+--num-fragments=<num-fragments>         Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
+--nocleanup                             If not specified, files non-essential for subsequent quantification (when creating reads) and assessing quantification accuracy (when quantifying) will be deleted.
+-f --params-file=<params-file>          File containing specification of quantification methods, read-lengths, read-depths and end, error and bias parameter values to create reads for.
+-q --quant-method=<quant-methods>       Comma-separated list of quantification methods to run.
+-l --read-length=<read-lengths>         Comma-separated list of read-lengths to perform quantification for.
+-d --read-depth=<read-depths>           Comma-separated list of read-depths to perform quantification for.
+-p --paired-end=<paired-ends>           Comma-separated list of True/False strings indicating whether quantification should be performed for single or paired-end reads.
+-e --error=<errors>                     Comma-separated list of True/False strings indicating whether quantification should be performed with or without read errors.
+-b --bias=<biases>                      Comma-separated list of True/False strings indicating whether quantification should be performed with or without read sequence bias.
+--transcript-gtf=<transcript-gtf-file>  GTF formatted file describing the transcripts to be simulated.
+--genome-fasta=<genome-fasta-dir>       Directory containing per-chromosome sequences as FASTA files.
+--plot-format=<plot-format>             Output format for graphs (one of {plot_formats}) [default: pdf].
 """
 
 import docopt
 import flux_simulator as fs
 import options as opt
+import log
 import os
 import os.path
 import pandas as pd
 import parameters
+import plot
 import prepare_quantification_run as prq
 import prepare_read_simulation as prs
+import process
 import schema
 import statistics
 import sys
 import time
-import plot
 
 LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
@@ -61,9 +64,12 @@ PREQUANTIFY = "prequantify"
 QUANTIFY = "quantify"
 CHECK_QUANTIFICATION = "check_quant"
 ANALYSE_RUNS = "analyse_runs"
+PLOT_FORMAT = "--plot-format"
 
 # Read in command-line options
-__doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
+__doc__ = __doc__.format(
+    log_level_vals=LOG_LEVEL_VALS,
+    plot_format=plot.PLOT_FORMATS)
 options = docopt.docopt(__doc__, version="piquant v0.1")
 
 # Validate and process command-line options
@@ -102,6 +108,9 @@ try:
                 raise schema.SchemaError(
                     None, "Quantification method " + qm.get_name() +
                     " does not support single-end reads.")
+
+    opt.validate_list_option(
+        options[PLOT_FORMAT], plot.PLOT_FORMATS, "Invalid plot format")
 except schema.SchemaError as exc:
     exit("Exiting. " + exc.code)
 
@@ -174,7 +183,8 @@ def prepare_quantification(**params):
     cleanup = not options[NO_CLEANUP]
 
     prq.write_run_quantification_script(
-        reads_dir, run_dir, quantifier_dir, cleanup, **params)
+        reads_dir, run_dir, quantifier_dir,
+        options[PLOT_FORMAT], cleanup, **params)
 
 quantifiers_used = []
 
@@ -286,11 +296,14 @@ if options[ANALYSE_RUNS]:
     logger.info("Drawing graphs derived from statistics calculated for the " +
                 "whole set of TPMs...")
     plot.draw_overall_stats_graphs(
-        options[STATS_DIRECTORY], overall_stats, param_values)
+        options[PLOT_FORMAT], options[STATS_DIRECTORY],
+        overall_stats, param_values)
 
     logger.info("Drawing graphs derived from statistics calculated on " +
                 "subsets of TPMs...")
-    plot.draw_grouped_stats_graphs(options[STATS_DIRECTORY], param_values)
+    plot.draw_grouped_stats_graphs(
+        options[PLOT_FORMAT], options[STATS_DIRECTORY], param_values)
 
     logger.info("Drawing distribution plots...")
-    plot.draw_distribution_graphs(options[STATS_DIRECTORY], param_values)
+    plot.draw_distribution_graphs(
+        options[PLOT_FORMAT], options[STATS_DIRECTORY], param_values)

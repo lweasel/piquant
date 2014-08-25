@@ -13,6 +13,7 @@ import tpms as t
 NO_FILTER_LABEL = "no filter"
 GROUPED_STATS_NUM_TPMS_FILTER = 3000
 ORDER_VALUES = [True, False]
+PLOT_FORMATS = ["pdf", "svg", "png"]
 
 # Don't embed characters as paths when outputting SVG - assume fonts are
 # installed on machine where SVG will be viewed (see
@@ -28,7 +29,8 @@ plt.rcParams['svg.fonttype'] = 'none'
 
 
 class _NewPlot:
-    def __init__(self, *file_name_elements):
+    def __init__(self, fformat, *file_name_elements):
+        self.fformat = fformat
         self.file_name = "_".join([str(el) for el in file_name_elements])
         self.file_name = self.file_name.replace(' ', '_')
 
@@ -36,7 +38,7 @@ class _NewPlot:
         plt.figure()
 
     def __exit__(self, type, value, traceback):
-        plt.savefig(self.file_name + ".svg", format="svg")
+        plt.savefig(self.file_name + "." + self.fformat, format=self.fformat)
         plt.close()
 
 
@@ -159,8 +161,75 @@ def _set_distribution_plot_labels(clsfr_col, ascending):
                ("less" if ascending else "greater") + " than threshold")
 
 
-def log_tpm_scatter_plot(tpms, base_name, quant_method, tpm_label):
-    with _NewPlot(base_name, tpm_label, "log10 scatter"):
+def _plot_statistic_by_parameter_values(
+        fformat, stats, base_name, statistic,
+        group_param, varying_param, fixed_param_values):
+
+    fixed_param_info = _get_fixed_param_info(fixed_param_values)
+
+    name_elements = _get_stats_plot_name_elements(
+        base_name, statistic.name,
+        group_param, fixed_param_info, versus=varying_param.name)
+
+    with _NewPlot(fformat, name_elements):
+        _plot_statistic(
+            stats, statistic, group_param, varying_param.name,
+            varying_param.title, fixed_param_info)
+
+
+def _plot_statistic_by_transcript_classifier_values(
+        fformat, stats, base_name, statistic, group_param,
+        classifier, fixed_param_values):
+
+    clsfr_col = classifier.get_column_name()
+    fixed_param_info = _get_fixed_param_info(fixed_param_values)
+
+    name_elements = _get_stats_plot_name_elements(
+        base_name, statistic.name, group_param, fixed_param_info,
+        versus=clsfr_col)
+
+    with _NewPlot(fformat, *name_elements):
+        xlabel = _capitalized(classifier.get_plot_title())
+        _plot_statistic(
+            stats, statistic, group_param, clsfr_col, xlabel, fixed_param_info)
+
+        min_xval = stats[clsfr_col].min()
+        max_xval = stats[clsfr_col].max()
+        tick_range = np.arange(min_xval, max_xval + 1)
+
+        plt.xticks(np.arange(min_xval, max_xval + 1),
+                   classifier.get_value_labels(len(tick_range)))
+
+
+def _plot_cumulative_transcript_distribution_grouped(
+        fformat, stats, base_name, group_param,
+        classifier, ascending, fixed_param_values):
+
+    clsfr_col = classifier.get_column_name()
+    fixed_param_info = _get_fixed_param_info(fixed_param_values)
+
+    name_elements = _get_stats_plot_name_elements(
+        base_name, clsfr_col, group_param, fixed_param_info,
+        ascending=ascending)
+
+    with _NewPlot(fformat, *name_elements):
+        _plot_statistic_for_grouped_param_values(
+            stats, t.TRUE_POSITIVE_PERCENTAGE, group_param, clsfr_col)
+
+        _set_distribution_plot_bounds(
+            stats[clsfr_col].min(), stats[clsfr_col].max())
+        _set_distribution_plot_labels(clsfr_col, ascending)
+
+        plt.legend(title=group_param.title, loc=4)
+
+        title = _get_grouped_stats_plot_title(
+            _capitalized(clsfr_col) + " threshold", group_param,
+            fixed_param_info)
+        plt.suptitle(title)
+
+
+def log_tpm_scatter_plot(fformat, tpms, base_name, quant_method, tpm_label):
+    with _NewPlot(fformat, base_name, tpm_label, "log10 scatter"):
         plt.scatter(tpms[t.LOG10_REAL_TPM].values,
                     tpms[t.LOG10_CALCULATED_TPM].values,
                     c="lightblue", alpha=0.4)
@@ -175,8 +244,9 @@ def log_tpm_scatter_plot(tpms, base_name, quant_method, tpm_label):
         plt.ylim(ymin=min_val)
 
 
-def log_ratio_boxplot(tpms, base_name, quant_method, tpm_label, classifier,
-                      filter=None, save_to_file=True):
+def log_ratio_boxplot(
+        fformat, tpms, base_name, quant_method, tpm_label, classifier,
+        filter=None, save_to_file=True):
 
     grouping_column = classifier.get_column_name()
     name_elements = [tpm_label]
@@ -188,7 +258,7 @@ def log_ratio_boxplot(tpms, base_name, quant_method, tpm_label, classifier,
         name_elements.append(NO_FILTER_LABEL)
 
     title_elements = [base_name, grouping_column] + name_elements + ["boxplot"]
-    with _NewPlot(*title_elements):
+    with _NewPlot(fformat, *title_elements):
         sb.boxplot(tpms[t.LOG10_RATIO], groupby=tpms[grouping_column],
                    sym='', color='lightblue')
 
@@ -202,52 +272,13 @@ def log_ratio_boxplot(tpms, base_name, quant_method, tpm_label, classifier,
         plt.xticks(locs, classifier.get_value_labels(len(labels)))
 
 
-def plot_statistic_by_parameter_values(
-        stats, base_name, statistic, group_param, varying_param,
-        fixed_param_values):
-
-    fixed_param_info = _get_fixed_param_info(fixed_param_values)
-
-    name_elements = _get_stats_plot_name_elements(
-        base_name, statistic.name,
-        group_param, fixed_param_info, versus=varying_param.name)
-
-    with _NewPlot(*name_elements):
-        _plot_statistic(
-            stats, statistic, group_param, varying_param.name,
-            varying_param.title, fixed_param_info)
-
-
-def plot_statistic_by_transcript_classifier_values(
-        stats, base_name, statistic, group_param,
-        classifier, fixed_param_values):
-
-    clsfr_col = classifier.get_column_name()
-    fixed_param_info = _get_fixed_param_info(fixed_param_values)
-
-    name_elements = _get_stats_plot_name_elements(
-        base_name, statistic.name, group_param, fixed_param_info,
-        versus=clsfr_col)
-
-    with _NewPlot(*name_elements):
-        xlabel = _capitalized(classifier.get_plot_title())
-        _plot_statistic(
-            stats, statistic, group_param, clsfr_col, xlabel, fixed_param_info)
-
-        min_xval = stats[clsfr_col].min()
-        max_xval = stats[clsfr_col].max()
-        tick_range = np.arange(min_xval, max_xval + 1)
-
-        plt.xticks(np.arange(min_xval, max_xval + 1),
-                   classifier.get_value_labels(len(tick_range)))
-
-
 def plot_cumulative_transcript_distribution(
-        tpms, base_name, quant_method, tpm_label, classifier, ascending):
+        fformat, tpms, base_name, quant_method,
+        tpm_label, classifier, ascending):
 
     clsfr_col = classifier.get_column_name()
 
-    with _NewPlot(base_name, clsfr_col, tpm_label,
+    with _NewPlot(fformat, base_name, clsfr_col, tpm_label,
                  ("asc" if ascending else "desc"), "distribution"):
         xvals, yvals = t.get_distribution(tpms, classifier, ascending)
         plt.plot(xvals, yvals, '-o')
@@ -257,33 +288,6 @@ def plot_cumulative_transcript_distribution(
 
         plt.suptitle(_capitalized(clsfr_col) + " threshold: " + quant_method +
                      ", " + tpm_label)
-
-
-def plot_cumulative_transcript_distribution_grouped(
-        stats, base_name, group_param,
-        classifier, ascending, fixed_param_values):
-
-    clsfr_col = classifier.get_column_name()
-    fixed_param_info = _get_fixed_param_info(fixed_param_values)
-
-    name_elements = _get_stats_plot_name_elements(
-        base_name, clsfr_col, group_param, fixed_param_info,
-        ascending=ascending)
-
-    with _NewPlot(*name_elements):
-        _plot_statistic_for_grouped_param_values(
-            stats, t.TRUE_POSITIVE_PERCENTAGE, group_param, clsfr_col)
-
-        _set_distribution_plot_bounds(
-            stats[clsfr_col].min(), stats[clsfr_col].max())
-        _set_distribution_plot_labels(clsfr_col, ascending)
-
-        plt.legend(title=group_param.title, loc=4)
-
-        title = _get_grouped_stats_plot_title(
-            _capitalized(clsfr_col) + " threshold", group_param,
-            fixed_param_info)
-        plt.suptitle(title)
 
 
 # Utility functions for manipulating sets of parameters
@@ -330,7 +334,7 @@ def _get_plot_subdirectory(parent_dir, sub_dir_name):
     return sub_dir
 
 
-def draw_overall_stats_graphs(stats_dir, overall_stats, param_values):
+def draw_overall_stats_graphs(fformat, stats_dir, overall_stats, param_values):
     # Draw graphs derived from statistics calculated for the whole set of TPMs.
     # e.g. the Spearman correlation of calculated and real TPMs graphed as
     # read-depth varies, for each quantification method, in the case of
@@ -370,12 +374,12 @@ def draw_overall_stats_graphs(stats_dir, overall_stats, param_values):
 
                     graph_file_basename = os.path.join(
                         statistic_dir, statistics.OVERALL_STATS_PREFIX)
-                    plot_statistic_by_parameter_values(
-                        stats_df, graph_file_basename,
+                    _plot_statistic_by_parameter_values(
+                        fformat, stats_df, graph_file_basename,
                         stat, param, num_p, fixed_param_values)
 
 
-def draw_grouped_stats_graphs(stats_dir, param_values):
+def draw_grouped_stats_graphs(fformat, stats_dir, param_values):
     # Draw graphs derived from statistics calculated on groups of TPMs that
     # have been stratified into sets based on some classifier of transcripts.
     # e.g. the median percentage error of calculated vs real TPMs graphed as
@@ -421,12 +425,12 @@ def draw_grouped_stats_graphs(stats_dir, param_values):
                         statistic_dir, "grouped")
 
                     filtered_stats_df = stats_df[num_tpms_filter(stats_df)]
-                    plot_statistic_by_transcript_classifier_values(
-                        filtered_stats_df, graph_file_basename, stat, param,
-                        clsfr, fixed_param_values)
+                    _plot_statistic_by_transcript_classifier_values(
+                        fformat, filtered_stats_df, graph_file_basename,
+                        stat, param, clsfr, fixed_param_values)
 
 
-def draw_distribution_graphs(stats_dir, param_values):
+def draw_distribution_graphs(fformat, stats_dir, param_values):
     # Draw distributions illustrating the percentage of TPMs above or below
     # some threshold as that threshold changes. e.g. the percentage of TPMs
     # whose absolute percentage error in calculated TPM, as compared to real
@@ -461,6 +465,6 @@ def draw_distribution_graphs(stats_dir, param_values):
                 stats_df, fixed_param_values = get_stats_for_fixed_params(
                     clsfr_stats, fixed_params, fp_values_set)
 
-                plot_cumulative_transcript_distribution_grouped(
-                    stats_df, graph_file_basename, param,
+                _plot_cumulative_transcript_distribution_grouped(
+                    fformat, stats_df, graph_file_basename, param,
                     clsfr, asc, fixed_param_values)
