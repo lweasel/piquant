@@ -11,6 +11,7 @@ install:
     - "pip install pytest"
     - "pip install schema"
     - "pip install seaborn"
+    - "pip install six"
     - "pip install -e git://github.com/lweasel/ord-utils.git#egg=ord-utils"
     - "pip install pandas"
     - "pip install coverage"
