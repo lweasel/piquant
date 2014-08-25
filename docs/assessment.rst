@@ -153,31 +153,6 @@ Absolute percent error
 
 This "distribution" classifier splits transcripts into two groups according to whether the absolute percentage difference between each transcripts estimated and real abundances is greater or less than a given amount.
 
-Plots
------
-
-TODO
-
-Statistics calculated for the whole set of TPMs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-TODO
-
-Statistics calculated on subsets of TPMs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-TODO
-
-Distribution plots
-^^^^^^^^^^^^^^^^^^
-
-TODO
-
-Plots for single quantification runs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-TODO
-
 .. _assessment-single-run:
 
 Assessment of a single quantification run
@@ -203,5 +178,20 @@ Plots
 
 Assessment of multiple quantification runs
 ------------------------------------------
+
+Plots
+^^^^^
+
+TODO
+
+Statistics calculated for the whole set of TPMs
+
+TODO
+
+Statistics calculated on subsets of TPMs
+
+TODO
+
+Distribution plots
 
 TODO
