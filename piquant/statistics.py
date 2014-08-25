@@ -187,7 +187,7 @@ class _SpearmanCorrelation(_BaseStatistic):
     # 'presence' of the transcript).
     def __init__(self):
         _BaseStatistic.__init__(
-            self, "tp-log-tpm-rho", r"Spearman's $\rho$")
+            self, "tp-log-tpm-rho", "Spearman's rho")
 
     @staticmethod
     def _calculate(tpms):
