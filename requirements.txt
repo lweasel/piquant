@@ -1,7 +1,6 @@
 Cython==0.20.1
 Jinja2==2.7.2
 MarkupSafe==0.23
--e git+https://github.com/lweasel/ord-utils.git@1d3acde55a60821dc1e93b5b6634735c4cfad9d2#egg=OrdUtils-master
 Pygments==1.6
 Sphinx==1.2.2
 argparse==1.2.1

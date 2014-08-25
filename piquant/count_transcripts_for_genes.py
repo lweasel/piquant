@@ -12,8 +12,7 @@
 import collections
 import docopt
 import gtf
-import ordutils.log as log
-import ordutils.options as opt
+import options as opt
 import schema
 import sys
 

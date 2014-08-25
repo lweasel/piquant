@@ -15,8 +15,7 @@
 
 import collections
 import docopt
-import ordutils.log as log
-import ordutils.options as opt
+import options as opt
 import os.path
 import pwm
 import random

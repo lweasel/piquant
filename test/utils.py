@@ -8,5 +8,4 @@ class TempDir:
         return self.dirname
 
     def __exit__(self, type, value, traceback):
-        pass
-        #shutil.rmtree(self.dirname)
+        shutil.rmtree(self.dirname)

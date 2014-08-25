@@ -34,9 +34,7 @@ Options:
 
 import docopt
 import flux_simulator as fs
-import ordutils.log as log
-import ordutils.options as opt
-import ordutils.process as process
+import options as opt
 import os
 import os.path
 import pandas as pd

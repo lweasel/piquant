@@ -22,8 +22,7 @@
 import classifiers
 import docopt
 import itertools
-import ordutils.log as log
-import ordutils.options as opt
+import options as opt
 import pandas as pd
 import parameters
 import statistics

@@ -1,5 +1,5 @@
 import itertools
-import ordutils.options as opt
+import options as opt
 import quantifiers
 import schema
 import six
@@ -110,7 +110,7 @@ def validate_command_line_parameter_sets(
         for values_dict in [file_param_vals, cl_options]:
             if param.option_name in values_dict and \
                     values_dict[param.option_name] is not None:
-                validated_vals = opt.validate_list_option(
+                validated_vals = opt.validate_options_list(
                     values_dict[param.option_name], param.option_validator)
                 param_vals[param.name] = set(validated_vals) \
                     if param.run_parameter else validated_vals[0]

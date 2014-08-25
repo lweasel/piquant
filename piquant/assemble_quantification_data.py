@@ -19,8 +19,7 @@ from docopt import docopt
 from schema import SchemaError
 
 import flux_simulator as fs
-import ordutils.log as log
-import ordutils.options as opt
+import options as opt
 import pandas
 import quantifiers as qs
 import sys
