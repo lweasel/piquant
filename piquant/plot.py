@@ -50,6 +50,34 @@ def _decapitalized(text):
     return text[:1].lower() + text[1:]
 
 
+def _set_distribution_plot_bounds(xmin, xmax, ymin, ymax):
+    xmargin = (xmax - xmin) / 40.0
+    plt.xlim(xmin=xmin-xmargin, xmax=xmax+xmargin)
+    plt.ylim(ymin=-2.5, ymax=102.5)
+
+
+def _get_statistic_plot_bounds_setter(statistic):
+    def _set_statistic_plot_bounds(xmin, xmax, ymin, ymax):
+        xmargin = 2 * (xmax - xmin) / 100.0
+        plt.xlim(xmin=xmin - xmargin, xmax=xmax + xmargin)
+
+        stat_range = statistic.stat_range((ymin, ymax))
+        if stat_range is not None:
+            min_val = stat_range[0]
+            max_val = stat_range[1]
+            if min_val is not None:
+                plt.ylim(ymin=min_val)
+            if max_val is not None:
+                plt.ylim(ymax=max_val)
+
+    return _set_statistic_plot_bounds
+
+
+def _get_distribution_plot_ylabel(ascending):
+    return "Percentage of isoforms " + \
+        ("less" if ascending else "greater") + " than threshold"
+
+
 def _get_group_param_values(stats_df, group_param):
     group_param_vals = stats_df[group_param.name].value_counts().index.tolist()
     group_param_vals.sort()
@@ -60,7 +88,7 @@ def _get_fixed_param_info(fixed_param_values):
     return [k.get_value_name(v) for k, v in fixed_param_values.items()]
 
 
-def _get_stats_plot_name_elements(
+def _get_grouped_by_param_stats_plot_file_name_elements(
         base_name, plotted, group_param, fixed_param_info,
         versus=None, ascending=None):
     name_elements = [base_name, plotted]
@@ -75,7 +103,7 @@ def _get_stats_plot_name_elements(
     return name_elements
 
 
-def _get_grouped_stats_plot_title(
+def _get_grouped_by_param_stats_plot_title(
         plotted, group_param, fixed_param_info, versus=None):
 
     title_elements = [plotted]
@@ -83,11 +111,16 @@ def _get_grouped_stats_plot_title(
         title_elements += ["vs", _decapitalized(versus)]
     title_elements += ["per", group_param.title.lower()]
 
-    return " ".join(title_elements) + ": " + ", ".join(fixed_param_info)
+    title = " ".join(title_elements)
+    if len(fixed_param_info) > 0:
+        title += ": " + ", ".join(fixed_param_info)
+
+    return title
 
 
-def _plot_statistic_for_grouped_param_values(
-        stats_df, ycol, group_param, xcol):
+def _plot_statistic_grouped_by_parameter(
+        stats_df, group_param, xcol, ycol, xlabel, ylabel,
+        plot_bounds_setter, title):
 
     group_param_vals = _get_group_param_values(stats_df, group_param)
 
@@ -118,114 +151,83 @@ def _plot_statistic_for_grouped_param_values(
         if group_xmax > xmax:
             xmax = group_xmax
 
-    xvals_range = xmax - xmin
-    xvals_margin = 2 * xvals_range / 100.0
-    plt.xlim(xmin=xmin - xvals_margin, xmax=xmax + xvals_margin)
+    plot_bounds_setter(xmin, xmax, ymin, ymax)
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.legend(title=group_param.title, loc=4)
+    plt.suptitle(title)
 
     return (ymin, ymax)
 
 
-def _plot_statistic(
-        stats_df, statistic, group_param, xcol, xlabel, fixed_param_info):
-
-    yval_range = _plot_statistic_for_grouped_param_values(
-        stats_df, statistic.name, group_param, xcol)
-
-    plt.xlabel(xlabel)
-    plt.ylabel(statistic.title)
-    plt.legend(title=group_param.title, loc=4)
-
-    stat_range = statistic.stat_range(yval_range)
-    if stat_range is not None:
-        min_val = stat_range[0]
-        max_val = stat_range[1]
-        if min_val is not None:
-            plt.ylim(ymin=min_val)
-        if max_val is not None:
-            plt.ylim(ymax=max_val)
-
-    title = _get_grouped_stats_plot_title(
-        statistic.title, group_param, fixed_param_info, versus=xlabel)
-    plt.suptitle(title)
-
-
-def _set_distribution_plot_bounds(xmin, xmax):
-    xmargin = (xmax - xmin) / 40.0
-    plt.xlim(xmin=xmin-xmargin, xmax=xmax+xmargin)
-    plt.ylim(ymin=-2.5, ymax=102.5)
-
-
-def _set_distribution_plot_labels(clsfr_col, ascending):
-    plt.xlabel(_capitalized(clsfr_col))
-    plt.ylabel("Percentage of isoforms " +
-               ("less" if ascending else "greater") + " than threshold")
-
-
-def _plot_statistic_by_parameter_values(
+def _plot_statistic_vs_varying_param_grouped_by_param(
         fformat, stats, base_name, statistic,
         group_param, varying_param, fixed_param_values):
 
     fixed_param_info = _get_fixed_param_info(fixed_param_values)
 
-    name_elements = _get_stats_plot_name_elements(
+    name_elements = _get_grouped_by_param_stats_plot_file_name_elements(
         base_name, statistic.name,
         group_param, fixed_param_info, versus=varying_param.name)
 
-    with _NewPlot(fformat, name_elements):
-        _plot_statistic(
-            stats, statistic, group_param, varying_param.name,
-            varying_param.title, fixed_param_info)
+    with _NewPlot(fformat, *name_elements):
+        title = _get_grouped_by_param_stats_plot_title(
+            statistic.title, group_param, fixed_param_info,
+            versus=varying_param.title)
+        _plot_statistic_grouped_by_parameter(
+            stats, group_param, varying_param.name, statistic.name,
+            varying_param.title, statistic.title,
+            _get_statistic_plot_bounds_setter(statistic), title)
 
 
-def _plot_statistic_by_transcript_classifier_values(
+def _plot_statistic_vs_transcript_classifier_grouped_by_param(
         fformat, stats, base_name, statistic, group_param,
         classifier, fixed_param_values):
 
     clsfr_col = classifier.get_column_name()
     fixed_param_info = _get_fixed_param_info(fixed_param_values)
 
-    name_elements = _get_stats_plot_name_elements(
+    name_elements = _get_grouped_by_param_stats_plot_file_name_elements(
         base_name, statistic.name, group_param, fixed_param_info,
         versus=clsfr_col)
 
     with _NewPlot(fformat, *name_elements):
         xlabel = _capitalized(classifier.get_plot_title())
-        _plot_statistic(
-            stats, statistic, group_param, clsfr_col, xlabel, fixed_param_info)
+        title = _get_grouped_by_param_stats_plot_title(
+            statistic.title, group_param, fixed_param_info, versus=xlabel)
+
+        _plot_statistic_grouped_by_parameter(
+            stats, group_param, clsfr_col, statistic.name,
+            xlabel, statistic.title,
+            _get_statistic_plot_bounds_setter(statistic), title)
 
         min_xval = stats[clsfr_col].min()
         max_xval = stats[clsfr_col].max()
         tick_range = np.arange(min_xval, max_xval + 1)
-
-        plt.xticks(np.arange(min_xval, max_xval + 1),
-                   classifier.get_value_labels(len(tick_range)))
+        plt.xticks(tick_range, classifier.get_value_labels(len(tick_range)))
 
 
-def _plot_cumulative_transcript_distribution_grouped(
+def _plot_cumulative_transcript_distribution_grouped_by_param(
         fformat, stats, base_name, group_param,
         classifier, ascending, fixed_param_values):
 
     clsfr_col = classifier.get_column_name()
     fixed_param_info = _get_fixed_param_info(fixed_param_values)
 
-    name_elements = _get_stats_plot_name_elements(
+    name_elements = _get_grouped_by_param_stats_plot_file_name_elements(
         base_name, clsfr_col, group_param, fixed_param_info,
         ascending=ascending)
 
     with _NewPlot(fformat, *name_elements):
-        _plot_statistic_for_grouped_param_values(
-            stats, t.TRUE_POSITIVE_PERCENTAGE, group_param, clsfr_col)
-
-        _set_distribution_plot_bounds(
-            stats[clsfr_col].min(), stats[clsfr_col].max())
-        _set_distribution_plot_labels(clsfr_col, ascending)
-
-        plt.legend(title=group_param.title, loc=4)
-
-        title = _get_grouped_stats_plot_title(
+        title = _get_grouped_by_param_stats_plot_title(
             _capitalized(clsfr_col) + " threshold", group_param,
             fixed_param_info)
-        plt.suptitle(title)
+        _plot_statistic_grouped_by_parameter(
+            stats, group_param, clsfr_col, t.TRUE_POSITIVE_PERCENTAGE,
+            _capitalized(clsfr_col),
+            _get_distribution_plot_ylabel(ascending),
+            _set_distribution_plot_bounds, title)
 
 
 def log_tpm_scatter_plot(fformat, tpms, base_name, quant_method, tpm_label):
@@ -284,7 +286,9 @@ def plot_cumulative_transcript_distribution(
         plt.plot(xvals, yvals, '-o')
 
         _set_distribution_plot_bounds(xvals[0], xvals[-1])
-        _set_distribution_plot_labels(clsfr_col, ascending)
+
+        plt.xlabel(_capitalized(clsfr_col))
+        plt.ylabel(_get_distribution_plot_ylabel(ascending))
 
         plt.suptitle(_capitalized(clsfr_col) + " threshold: " + quant_method +
                      ", " + tpm_label)
@@ -293,29 +297,29 @@ def plot_cumulative_transcript_distribution(
 # Utility functions for manipulating sets of parameters
 
 
-def degenerate_param(param, param_values):
+def _degenerate_param(param, param_values):
     return len(param_values[param]) <= 1
 
 
-def get_non_degenerate_params(params, param_values):
-    return [p for p in params if not degenerate_param(p, param_values)]
+def _get_non_degenerate_params(params, param_values):
+    return [p for p in params if not _degenerate_param(p, param_values)]
 
 
-def remove_from(params, to_remove):
+def _remove_from(params, to_remove):
     get_pset = lambda x: x if isinstance(x, set) \
         else (set(x) if isinstance(x, list) else set([x]))
     return get_pset(params) - get_pset(to_remove)
 
 
-def get_fixed_params(all_params, non_fixed, param_values):
-    fixed_params = [p for p in remove_from(all_params, non_fixed)
-                    if not degenerate_param(p, param_values)]
+def _get_fixed_params(all_params, non_fixed, param_values):
+    fixed_params = [p for p in _remove_from(all_params, non_fixed)
+                    if not _degenerate_param(p, param_values)]
     value_sets = [v for v in itertools.product(
                   *[param_values[p] for p in fixed_params])]
     return fixed_params, value_sets
 
 
-def get_stats_for_fixed_params(stats_df, fixed_params, fp_values_set):
+def _get_stats_for_fixed_params(stats_df, fixed_params, fp_values_set):
     fixed_param_values = {}
     for i, fp in enumerate(fixed_params):
         fp_value = fp_values_set[i]
@@ -345,11 +349,11 @@ def draw_overall_stats_graphs(fformat, stats_dir, overall_stats, param_values):
     numerical_params = \
         [p for p in parameters.get_run_parameters() if p.is_numeric]
 
-    for param in get_non_degenerate_params(
+    for param in _get_non_degenerate_params(
             parameters.get_run_parameters(), param_values):
 
-        non_degenerate_numerical_params = get_non_degenerate_params(
-            remove_from(numerical_params, param), param_values)
+        non_degenerate_numerical_params = _get_non_degenerate_params(
+            _remove_from(numerical_params, param), param_values)
         if len(non_degenerate_numerical_params) == 0:
             continue
 
@@ -361,11 +365,11 @@ def draw_overall_stats_graphs(fformat, stats_dir, overall_stats, param_values):
                 param_stats_dir, "by_" + num_p.name)
 
             fixed_params, fp_values_sets = \
-                get_fixed_params(parameters.get_run_parameters(),
-                                 [param, num_p], param_values)
+                _get_fixed_params(parameters.get_run_parameters(),
+                                  [param, num_p], param_values)
 
             for fp_values_set in fp_values_sets:
-                stats_df, fixed_param_values = get_stats_for_fixed_params(
+                stats_df, fixed_param_values = _get_stats_for_fixed_params(
                     overall_stats, fixed_params, fp_values_set)
 
                 for stat in statistics.get_graphable_statistics():
@@ -374,7 +378,7 @@ def draw_overall_stats_graphs(fformat, stats_dir, overall_stats, param_values):
 
                     graph_file_basename = os.path.join(
                         statistic_dir, statistics.OVERALL_STATS_PREFIX)
-                    _plot_statistic_by_parameter_values(
+                    _plot_statistic_vs_varying_param_grouped_by_param(
                         fformat, stats_df, graph_file_basename,
                         stat, param, num_p, fixed_param_values)
 
@@ -404,17 +408,17 @@ def draw_grouped_stats_graphs(fformat, stats_dir, param_values):
             grouped_stats_dir,
             "grouped_by_" + clsfr.get_column_name().replace(' ', '_'))
 
-        for param in get_non_degenerate_params(
+        for param in _get_non_degenerate_params(
                 parameters.get_run_parameters(), param_values):
             param_stats_dir = _get_plot_subdirectory(
                 clsfr_dir, "per_" + param.name)
 
             fixed_params, fp_values_sets = \
-                get_fixed_params(parameters.get_run_parameters(),
-                                 param, param_values)
+                _get_fixed_params(parameters.get_run_parameters(),
+                                  param, param_values)
 
             for fp_values_set in fp_values_sets:
-                stats_df, fixed_param_values = get_stats_for_fixed_params(
+                stats_df, fixed_param_values = _get_stats_for_fixed_params(
                     clsfr_stats, fixed_params, fp_values_set)
 
                 for stat in \
@@ -425,7 +429,7 @@ def draw_grouped_stats_graphs(fformat, stats_dir, param_values):
                         statistic_dir, "grouped")
 
                     filtered_stats_df = stats_df[num_tpms_filter(stats_df)]
-                    _plot_statistic_by_transcript_classifier_values(
+                    _plot_statistic_vs_transcript_classifier_grouped_by_param(
                         fformat, filtered_stats_df, graph_file_basename,
                         stat, param, clsfr, fixed_param_values)
 
@@ -449,7 +453,7 @@ def draw_distribution_graphs(fformat, stats_dir, param_values):
             distribution_stats_dir,
             clsfr.get_column_name().replace(' ', '_') + "_distribution")
 
-        for param in get_non_degenerate_params(
+        for param in _get_non_degenerate_params(
                 parameters.get_run_parameters(), param_values):
 
             param_stats_dir = _get_plot_subdirectory(
@@ -458,13 +462,13 @@ def draw_distribution_graphs(fformat, stats_dir, param_values):
                 param_stats_dir, "distribution")
 
             fixed_params, fp_values_sets = \
-                get_fixed_params(parameters.get_run_parameters(),
-                                 param, param_values)
+                _get_fixed_params(parameters.get_run_parameters(),
+                                  param, param_values)
 
             for fp_values_set in fp_values_sets:
-                stats_df, fixed_param_values = get_stats_for_fixed_params(
+                stats_df, fixed_param_values = _get_stats_for_fixed_params(
                     clsfr_stats, fixed_params, fp_values_set)
 
-                _plot_cumulative_transcript_distribution_grouped(
+                _plot_cumulative_transcript_distribution_grouped_by_param(
                     fformat, stats_df, graph_file_basename, param,
                     clsfr, asc, fixed_param_values)
