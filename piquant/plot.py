@@ -50,7 +50,12 @@ def _decapitalized(text):
     return text[:1].lower() + text[1:]
 
 
-def _set_distribution_plot_bounds(xmin, xmax, ymin, ymax):
+def _get_distribution_plot_ylabel(ascending):
+    return "Percentage of isoforms " + \
+        ("less" if ascending else "greater") + " than threshold"
+
+
+def _set_distribution_plot_bounds(xmin, xmax, ymin=None, ymax=None):
     xmargin = (xmax - xmin) / 40.0
     plt.xlim(xmin=xmin-xmargin, xmax=xmax+xmargin)
     plt.ylim(ymin=-2.5, ymax=102.5)
@@ -73,9 +78,8 @@ def _get_statistic_plot_bounds_setter(statistic):
     return _set_statistic_plot_bounds
 
 
-def _get_distribution_plot_ylabel(ascending):
-    return "Percentage of isoforms " + \
-        ("less" if ascending else "greater") + " than threshold"
+def _set_ticks_for_transcript_classifier_plot(locations, classifier):
+    plt.xticks(locations, classifier.get_value_labels(len(locations)))
 
 
 def _get_group_param_values(stats_df, group_param):
@@ -100,6 +104,16 @@ def _get_grouped_by_param_stats_plot_file_name_elements(
     name_elements += fixed_param_info
     if ascending is not None:
         name_elements.append("distribution")
+    return name_elements
+
+
+def _get_stats_plot_file_name_elements(
+        base_name, plotted, versus=None, ascending=None):
+    name_elements = [base_name, plotted]
+    if versus:
+        name_elements += ["vs", versus]
+    if ascending is not None:
+        name_elements += ["asc" if ascending else "desc", "distribution"]
     return name_elements
 
 
@@ -204,8 +218,8 @@ def _plot_statistic_vs_transcript_classifier_grouped_by_param(
 
         min_xval = stats[clsfr_col].min()
         max_xval = stats[clsfr_col].max()
-        tick_range = np.arange(min_xval, max_xval + 1)
-        plt.xticks(tick_range, classifier.get_value_labels(len(tick_range)))
+        _set_ticks_for_transcript_classifier_plot(
+            np.arange(min_xval, max_xval + 1), classifier)
 
 
 def _plot_cumulative_transcript_distribution_grouped_by_param(
@@ -270,8 +284,33 @@ def log_ratio_boxplot(
         plt.xlabel(_capitalized(grouping_column))
         plt.ylabel("Log ratio (calculated/real TPM)")
 
-        locs, labels = plt.xticks()
-        plt.xticks(locs, classifier.get_value_labels(len(labels)))
+        _set_ticks_for_transcript_classifier_plot(plt.xticks()[0], classifier)
+
+
+def plot_statistic_vs_transcript_classifier(
+        fformat, stats, base_name, statistic, classifier):
+
+    stats = stats[stats[statistics.NUM_TPMS] > GROUPED_STATS_NUM_TPMS_FILTER]
+
+    clsfr_col = classifier.get_column_name()
+
+    with _NewPlot(fformat, base_name, statistic.name, "vs", clsfr_col):
+        xvals = stats[clsfr_col]
+        min_xval = xvals.min()
+        max_xval = xvals.max()
+        yvals = stats[statistic.name]
+
+        plt.plot(xvals, yvals, '-o')
+
+        _get_statistic_plot_bounds_setter(statistic)(
+            min_xval, max_xval, yvals.min(), yvals.max())
+
+        plt.xlabel(_capitalized(classifier.get_plot_title()))
+        plt.ylabel(statistic.title)
+        plt.suptitle(statistic.title + " vs " + _decapitalized(clsfr_col))
+
+        _set_ticks_for_transcript_classifier_plot(
+            np.arange(min_xval, max_xval + 1), classifier)
 
 
 def plot_cumulative_transcript_distribution(

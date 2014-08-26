@@ -122,6 +122,8 @@ statistics.write_stats_data(stats_file_name, stats, index=False)
 # Write statistics for TPMS stratified by various classification measures
 logger.info("Writing statistics for stratified TPMs")
 
+clsfr_stats = {}
+
 non_zero = tpms[(tpms[t.REAL_TPM] > 0) & (tpms[t.CALCULATED_TPM] > 0)]
 
 for classifier in clsfrs:
@@ -130,6 +132,7 @@ for classifier in clsfrs:
         stats = t.get_grouped_stats(tpms, tp_tpms,
                                     column_name, stats_types)
         add_overall_stats(stats)
+        clsfr_stats[classifier] = stats
 
         stats_file_name = statistics.get_stats_file(
             ".", options[OUT_FILE_BASENAME], classifier)
@@ -166,6 +169,15 @@ for c, ti in itertools.product(classifiers, tpm_infos):
         ti[0], options[OUT_FILE_BASENAME],
         options[parameters.QUANT_METHOD.option_name],
         ti[1], c, num_tpms_filter)
+
+# Make plots of statistics calculated on groups of transcripts stratified by
+# classification measures
+for classifier, stats in clsfr_stats.items():
+    stats.reset_index(level=0, inplace=True)
+    for statistic in statistics.get_graphable_by_classifier_statistics():
+        plot.plot_statistic_vs_transcript_classifier(
+            options[PLOT_FORMAT], stats,
+            options[OUT_FILE_BASENAME], statistic, classifier)
 
 # Make plots showing the percentage of isoforms above or below threshold values
 # according to various classification measures
