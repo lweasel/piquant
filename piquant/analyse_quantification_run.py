@@ -73,6 +73,95 @@ try:
 except schema.SchemaError as exc:
     exit(exc.code)
 
+
+def _get_non_zero_tpms(tpms):
+    return tpms[(tpms[t.REAL_TPM] > 0) & (tpms[t.CALCULATED_TPM] > 0)]
+
+
+def _get_tpm_infos(non_zero, tp_tpms):
+    return [(non_zero, NON_ZERO_LABEL), (tp_tpms, TRUE_POSITIVES_LABEL)]
+
+
+def _add_parameter_values_to_stats(stats):
+    for param in parameters.get_run_parameters():
+        stats[param.name] = options[param.option_name]
+
+
+def _write_overall_stats(tpms, tp_tpms, options):
+    stats = t.get_stats(tpms, tp_tpms, statistics.get_statistics())
+    _add_parameter_values_to_stats(stats)
+
+    stats_file_name = statistics.get_stats_file(
+        ".", options[OUT_FILE_BASENAME])
+    statistics.write_stats_data(stats_file_name, stats, index=False)
+
+
+def _write_stratified_stats(tpms, tp_tpms, non_zero, clsfrs, options):
+    clsfr_stats = {}
+
+    for classifier in clsfrs:
+        if classifier.produces_grouped_stats():
+            column_name = classifier.get_column_name()
+            stats = t.get_grouped_stats(
+                tpms, tp_tpms, column_name, statistics.get_statistics())
+            _add_parameter_values_to_stats(stats)
+            clsfr_stats[classifier] = stats
+
+            stats_file_name = statistics.get_stats_file(
+                ".", options[OUT_FILE_BASENAME], classifier)
+            statistics.write_stats_data(stats_file_name, stats)
+
+        elif classifier.produces_distribution_plots():
+            for ascending in [True, False]:
+                stats = t.get_distribution_stats(
+                    non_zero, tp_tpms, classifier, ascending)
+                _add_parameter_values_to_stats(stats)
+
+                stats_file_name = statistics.get_stats_file(
+                    ".", options[OUT_FILE_BASENAME], classifier, ascending)
+                statistics.write_stats_data(
+                    stats_file_name, stats, index=False)
+
+    return clsfr_stats
+
+
+def _draw_tpm_scatter_plot(tp_tpms, options):
+    plot.log_tpm_scatter_plot(
+        options[PLOT_FORMAT], tp_tpms,
+        options[OUT_FILE_BASENAME], TRUE_POSITIVES_LABEL)
+
+
+def _draw_stratified_log_ratio_boxplots(non_zero, tp_tpms, clsfrs, options):
+    tpm_infos = _get_tpm_infos(non_zero, tp_tpms)
+    classifiers = [c for c in clsfrs if c.produces_grouped_stats()]
+
+    for c, ti in itertools.product(classifiers, tpm_infos):
+        plot.log_ratio_boxplot(
+            options[PLOT_FORMAT], ti[0], options[OUT_FILE_BASENAME], ti[1], c)
+
+
+def _draw_stats_vs_transcript_classifier_graphs(clsfr_stats, options):
+    for classifier, stats in clsfr_stats.items():
+        stats.reset_index(level=0, inplace=True)
+        for statistic in statistics.get_graphable_by_classifier_statistics():
+            plot.plot_statistic_vs_transcript_classifier(
+                options[PLOT_FORMAT], stats,
+                options[OUT_FILE_BASENAME], statistic, classifier)
+
+
+def _draw_cumulative_transcript_distribution_graphs(
+        tp_tpms, non_zero, clsfrs, options):
+
+    tpm_infos = _get_tpm_infos(non_zero, tp_tpms)
+    classifiers = [c for c in clsfrs if c.produces_distribution_plots()]
+    ascending = [True, False]
+
+    for c, asc, ti in itertools.product(classifiers, ascending, tpm_infos):
+        plot.plot_cumulative_transcript_distribution(
+            options[PLOT_FORMAT], ti[0],
+            options[OUT_FILE_BASENAME], ti[1], c, asc)
+
+
 # Set up logger
 logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
 
@@ -100,87 +189,35 @@ logger.info("Applying classifiers...")
 clsfrs = classifiers.get_classifiers()
 t.apply_classifiers(tpms, clsfrs)
 
-# Get a data frame containing only true positive TPMs
+# Get data frames containing only true positive TPMs and TPMs with non-zero
+# real and estimated abundances
+logger.info("Getting filtered TPMs...")
 tp_tpms = t.get_true_positives(tpms)
+non_zero = _get_non_zero_tpms(tpms)
 
 # Write statistics pertaining to the set of quantified transcripts as a whole.
 logger.info("Writing overall statistics...")
-
-
-def add_overall_stats(stats):
-    for param in parameters.get_run_parameters():
-        stats[param.name] = options[param.option_name]
-
-stats_types = statistics.get_statistics()
-
-stats = t.get_stats(tpms, tp_tpms, stats_types)
-add_overall_stats(stats)
-
-stats_file_name = statistics.get_stats_file(".", options[OUT_FILE_BASENAME])
-statistics.write_stats_data(stats_file_name, stats, index=False)
+_write_overall_stats(tpms, tp_tpms, options)
 
 # Write statistics for TPMS stratified by various classification measures
 logger.info("Writing statistics for stratified TPMs")
+clsfr_stats = _write_stratified_stats(tpms, tp_tpms, non_zero, clsfrs, options)
 
-clsfr_stats = {}
-
-non_zero = tpms[(tpms[t.REAL_TPM] > 0) & (tpms[t.CALCULATED_TPM] > 0)]
-
-for classifier in clsfrs:
-    if classifier.produces_grouped_stats():
-        column_name = classifier.get_column_name()
-        stats = t.get_grouped_stats(tpms, tp_tpms,
-                                    column_name, stats_types)
-        add_overall_stats(stats)
-        clsfr_stats[classifier] = stats
-
-        stats_file_name = statistics.get_stats_file(
-            ".", options[OUT_FILE_BASENAME], classifier)
-        statistics.write_stats_data(stats_file_name, stats)
-
-    elif classifier.produces_distribution_plots():
-        for ascending in [True, False]:
-            stats = t.get_distribution_stats(
-                non_zero, tp_tpms, classifier, ascending)
-            add_overall_stats(stats)
-
-            stats_file_name = statistics.get_stats_file(
-                ".", options[OUT_FILE_BASENAME], classifier, ascending)
-            statistics.write_stats_data(
-                stats_file_name, stats, index=False)
-
-# Make a scatter plot of log transformed calculated vs real TPMs
+# Draw graphs
 logger.info("Plotting graphs...")
 
-plot.log_tpm_scatter_plot(
-    options[PLOT_FORMAT], tp_tpms,
-    options[OUT_FILE_BASENAME], TRUE_POSITIVES_LABEL)
+# Make a scatter plot of log transformed calculated vs real TPMs
+_draw_tpm_scatter_plot(tp_tpms, options)
 
 # Make boxplots of log ratios stratified by various classification measures
 # (e.g. the number of transcripts per-originating gene of each transcript)
-# TODO: need something in graph titles to indicate filter being applied
-num_tpms_filter = lambda x: len(x[t.REAL_TPM]) > BOXPLOT_NUM_TPMS_FILTER
-tpm_infos = [(non_zero, NON_ZERO_LABEL), (tp_tpms, TRUE_POSITIVES_LABEL)]
-
-classifiers = [c for c in clsfrs if c.produces_grouped_stats()]
-for c, ti in itertools.product(classifiers, tpm_infos):
-    plot.log_ratio_boxplot(
-        options[PLOT_FORMAT], ti[0], options[OUT_FILE_BASENAME],
-        ti[1], c, num_tpms_filter)
+_draw_stratified_log_ratio_boxplots(non_zero, tp_tpms, clsfrs, options)
 
 # Make plots of statistics calculated on groups of transcripts stratified by
 # classification measures
-for classifier, stats in clsfr_stats.items():
-    stats.reset_index(level=0, inplace=True)
-    for statistic in statistics.get_graphable_by_classifier_statistics():
-        plot.plot_statistic_vs_transcript_classifier(
-            options[PLOT_FORMAT], stats,
-            options[OUT_FILE_BASENAME], statistic, classifier)
+_draw_stats_vs_transcript_classifier_graphs(clsfr_stats, options)
 
 # Make plots showing the percentage of isoforms above or below threshold values
 # according to various classification measures
-classifiers = [c for c in clsfrs if c.produces_distribution_plots()]
-ascending = [True, False]
-for c, asc, ti in itertools.product(classifiers, ascending, tpm_infos):
-    plot.plot_cumulative_transcript_distribution(
-        options[PLOT_FORMAT], ti[0], options[OUT_FILE_BASENAME], ti[1], c, asc)
+_draw_cumulative_transcript_distribution_graphs(
+    tp_tpms, non_zero, clsfrs, options)

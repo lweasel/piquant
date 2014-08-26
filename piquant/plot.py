@@ -11,6 +11,7 @@ import sys
 import tpms as t
 
 NO_FILTER_LABEL = "no filter"
+BOXPLOT_NUM_TPMS_FILTER = 300
 GROUPED_STATS_NUM_TPMS_FILTER = 3000
 ORDER_VALUES = [True, False]
 PLOT_FORMATS = ["pdf", "svg", "png"]
@@ -260,10 +261,11 @@ def log_tpm_scatter_plot(fformat, tpms, base_name, tpm_label):
         plt.ylim(ymin=min_val)
 
 
-def log_ratio_boxplot(fformat, tpms, base_name, tpm_label, classifier, filter):
+def log_ratio_boxplot(fformat, tpms, base_name, tpm_label, classifier):
     grouping_column = classifier.get_column_name()
     grouped_tpms = tpms.groupby(grouping_column)
-    tpms = grouped_tpms.filter(filter)
+    tpms = grouped_tpms.filter(
+        lambda x: len(x[t.REAL_TPM]) > BOXPLOT_NUM_TPMS_FILTER)
 
     with _NewPlot(fformat, base_name, grouping_column, tpm_label, "boxplot"):
         sb.boxplot(tpms[t.LOG10_RATIO], groupby=tpms[grouping_column],
