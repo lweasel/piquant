@@ -132,6 +132,15 @@ def get_file_name(**params):
     return "_".join(elements)
 
 
+def get_value_names(param_values):
+    value_names = []
+    for param in _RUN_PARAMETERS:
+        if param in param_values:
+            value = param_values[param]
+            value_names.append(param.get_value_name(value))
+    return value_names
+
+
 def execute_for_param_sets(callables, **params_values):
     all_run_param_names = [p.name for p in _RUN_PARAMETERS]
 

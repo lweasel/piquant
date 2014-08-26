@@ -89,10 +89,6 @@ def _get_group_param_values(stats_df, group_param):
     return group_param_vals
 
 
-def _get_fixed_param_info(fixed_param_values):
-    return [k.get_value_name(v) for k, v in fixed_param_values.items()]
-
-
 def _get_grouped_by_param_stats_plot_file_name_elements(
         base_name, plotted, group_param, fixed_param_info,
         versus=None, ascending=None):
@@ -180,7 +176,7 @@ def _plot_statistic_vs_varying_param_grouped_by_param(
         fformat, stats, base_name, statistic,
         group_param, varying_param, fixed_param_values):
 
-    fixed_param_info = _get_fixed_param_info(fixed_param_values)
+    fixed_param_info = parameters.get_value_names(fixed_param_values)
 
     name_elements = _get_grouped_by_param_stats_plot_file_name_elements(
         base_name, statistic.name,
@@ -201,7 +197,7 @@ def _plot_statistic_vs_transcript_classifier_grouped_by_param(
         classifier, fixed_param_values):
 
     clsfr_col = classifier.get_column_name()
-    fixed_param_info = _get_fixed_param_info(fixed_param_values)
+    fixed_param_info = parameters.get_value_names(fixed_param_values)
 
     name_elements = _get_grouped_by_param_stats_plot_file_name_elements(
         base_name, statistic.name, group_param, fixed_param_info,
@@ -228,7 +224,7 @@ def _plot_cumulative_transcript_distribution_grouped_by_param(
         classifier, ascending, fixed_param_values):
 
     clsfr_col = classifier.get_column_name()
-    fixed_param_info = _get_fixed_param_info(fixed_param_values)
+    fixed_param_info = parameters.get_value_names(fixed_param_values)
 
     name_elements = _get_grouped_by_param_stats_plot_file_name_elements(
         base_name, clsfr_col, group_param, fixed_param_info,
