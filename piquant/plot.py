@@ -244,14 +244,14 @@ def _plot_cumulative_transcript_distribution_grouped_by_param(
             _set_distribution_plot_bounds, title)
 
 
-def log_tpm_scatter_plot(fformat, tpms, base_name, quant_method, tpm_label):
+def log_tpm_scatter_plot(fformat, tpms, base_name, tpm_label):
     with _NewPlot(fformat, base_name, tpm_label, "log10 scatter"):
         plt.scatter(tpms[t.LOG10_REAL_TPM].values,
                     tpms[t.LOG10_CALCULATED_TPM].values,
                     c="lightblue", alpha=0.4)
 
         plt.suptitle("Scatter plot of log calculated vs real TPMs: " +
-                     quant_method + ", " + tpm_label)
+                     tpm_label)
         plt.xlabel("Log10 real TPM")
         plt.ylabel("Log10 calculated TPM")
 
@@ -261,7 +261,7 @@ def log_tpm_scatter_plot(fformat, tpms, base_name, quant_method, tpm_label):
 
 
 def log_ratio_boxplot(
-        fformat, tpms, base_name, quant_method, tpm_label, classifier,
+        fformat, tpms, base_name, tpm_label, classifier,
         filter=None, save_to_file=True):
 
     grouping_column = classifier.get_column_name()
@@ -279,7 +279,7 @@ def log_ratio_boxplot(
                    sym='', color='lightblue')
 
         plt.suptitle("Log ratios of calculated to real TPMs: " +
-                     ", ".join([quant_method] + name_elements))
+                     ", ".join(name_elements))
 
         plt.xlabel(_capitalized(grouping_column))
         plt.ylabel("Log ratio (calculated/real TPM)")
@@ -314,13 +314,13 @@ def plot_statistic_vs_transcript_classifier(
 
 
 def plot_cumulative_transcript_distribution(
-        fformat, tpms, base_name, quant_method,
-        tpm_label, classifier, ascending):
+        fformat, tpms, base_name, tpm_label, classifier, ascending):
 
     clsfr_col = classifier.get_column_name()
 
     with _NewPlot(fformat, base_name, clsfr_col, tpm_label,
                  ("asc" if ascending else "desc"), "distribution"):
+
         xvals, yvals = t.get_distribution(tpms, classifier, ascending)
         plt.plot(xvals, yvals, '-o')
 
@@ -328,9 +328,7 @@ def plot_cumulative_transcript_distribution(
 
         plt.xlabel(_capitalized(clsfr_col))
         plt.ylabel(_get_distribution_plot_ylabel(ascending))
-
-        plt.suptitle(_capitalized(clsfr_col) + " threshold: " + quant_method +
-                     ", " + tpm_label)
+        plt.suptitle(_capitalized(clsfr_col) + " threshold: " + tpm_label)
 
 
 # Utility functions for manipulating sets of parameters

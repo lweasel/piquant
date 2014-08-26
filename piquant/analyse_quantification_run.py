@@ -153,8 +153,8 @@ for classifier in clsfrs:
 logger.info("Plotting graphs...")
 
 plot.log_tpm_scatter_plot(
-    options[PLOT_FORMAT], tp_tpms, options[OUT_FILE_BASENAME],
-    options[parameters.QUANT_METHOD.option_name], TRUE_POSITIVES_LABEL)
+    options[PLOT_FORMAT], tp_tpms,
+    options[OUT_FILE_BASENAME], TRUE_POSITIVES_LABEL)
 
 # Make boxplots of log ratios stratified by various classification measures
 # (e.g. the number of transcripts per-originating gene of each transcript)
@@ -165,9 +165,7 @@ tpm_infos = [(non_zero, NON_ZERO_LABEL), (tp_tpms, TRUE_POSITIVES_LABEL)]
 classifiers = [c for c in clsfrs if c.produces_grouped_stats()]
 for c, ti in itertools.product(classifiers, tpm_infos):
     plot.log_ratio_boxplot(
-        options[PLOT_FORMAT],
-        ti[0], options[OUT_FILE_BASENAME],
-        options[parameters.QUANT_METHOD.option_name],
+        options[PLOT_FORMAT], ti[0], options[OUT_FILE_BASENAME],
         ti[1], c, num_tpms_filter)
 
 # Make plots of statistics calculated on groups of transcripts stratified by
@@ -185,6 +183,4 @@ classifiers = [c for c in clsfrs if c.produces_distribution_plots()]
 ascending = [True, False]
 for c, asc, ti in itertools.product(classifiers, ascending, tpm_infos):
     plot.plot_cumulative_transcript_distribution(
-        options[PLOT_FORMAT],
-        ti[0], options[OUT_FILE_BASENAME],
-        options[parameters.QUANT_METHOD.option_name], ti[1], c, asc)
+        options[PLOT_FORMAT], ti[0], options[OUT_FILE_BASENAME], ti[1], c, asc)
