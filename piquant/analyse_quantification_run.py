@@ -146,7 +146,8 @@ if options[OUT_FILE_BASENAME]:
 
                 stats_file_name = statistics.get_stats_file(
                     ".", options[OUT_FILE_BASENAME], classifier, ascending)
-                statistics.write_stats_data(stats_file_name, stats)
+                statistics.write_stats_data(
+                    stats_file_name, stats, index=False)
 
 # Make a scatter plot of log transformed calculated vs real TPMs
 logger.info("Plotting graphs...")
