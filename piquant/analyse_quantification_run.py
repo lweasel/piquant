@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """Usage:
-    analyse_quantification_run [--log-level=<log-level> --scatter-max=<scatter-max-val> --log10-scatter-min=<log10-scatter-min-val> --log10-scatter-max=<log10-scatter-max-val> --plot-format=<plot-format>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> <tpm-file> [<out-file>]
+    analyse_quantification_run [--log-level=<log-level> --scatter-max=<scatter-max-val> --log10-scatter-min=<log10-scatter-min-val> --log10-scatter-max=<log10-scatter-max-val> --plot-format=<plot-format>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> <tpm-file> <out-file>
 
 -h --help                                    Show this message.
 -v --version                                 Show version.
@@ -113,49 +113,45 @@ def add_overall_stats(stats):
 
 stats_types = statistics.get_statistics()
 
-if options[OUT_FILE_BASENAME]:
-    stats = t.get_stats(tpms, tp_tpms, stats_types)
-    add_overall_stats(stats)
+stats = t.get_stats(tpms, tp_tpms, stats_types)
+add_overall_stats(stats)
 
-    stats_file_name = \
-        statistics.get_stats_file(".", options[OUT_FILE_BASENAME])
-    statistics.write_stats_data(stats_file_name, stats, index=False)
+stats_file_name = statistics.get_stats_file(".", options[OUT_FILE_BASENAME])
+statistics.write_stats_data(stats_file_name, stats, index=False)
 
 # Write statistics for TPMS stratified by various classification measures
 logger.info("Writing statistics for stratified TPMs")
 
 non_zero = tpms[(tpms[t.REAL_TPM] > 0) & (tpms[t.CALCULATED_TPM] > 0)]
 
-if options[OUT_FILE_BASENAME]:
-    for classifier in clsfrs:
-        if classifier.produces_grouped_stats():
-            column_name = classifier.get_column_name()
-            stats = t.get_grouped_stats(tpms, tp_tpms,
-                                        column_name, stats_types)
+for classifier in clsfrs:
+    if classifier.produces_grouped_stats():
+        column_name = classifier.get_column_name()
+        stats = t.get_grouped_stats(tpms, tp_tpms,
+                                    column_name, stats_types)
+        add_overall_stats(stats)
+
+        stats_file_name = statistics.get_stats_file(
+            ".", options[OUT_FILE_BASENAME], classifier)
+        statistics.write_stats_data(stats_file_name, stats)
+
+    elif classifier.produces_distribution_plots():
+        for ascending in [True, False]:
+            stats = t.get_distribution_stats(
+                non_zero, tp_tpms, classifier, ascending)
             add_overall_stats(stats)
 
             stats_file_name = statistics.get_stats_file(
-                ".", options[OUT_FILE_BASENAME], classifier)
-            statistics.write_stats_data(stats_file_name, stats)
-
-        elif classifier.produces_distribution_plots():
-            for ascending in [True, False]:
-                stats = t.get_distribution_stats(
-                    non_zero, tp_tpms, classifier, ascending)
-                add_overall_stats(stats)
-
-                stats_file_name = statistics.get_stats_file(
-                    ".", options[OUT_FILE_BASENAME], classifier, ascending)
-                statistics.write_stats_data(
-                    stats_file_name, stats, index=False)
+                ".", options[OUT_FILE_BASENAME], classifier, ascending)
+            statistics.write_stats_data(
+                stats_file_name, stats, index=False)
 
 # Make a scatter plot of log transformed calculated vs real TPMs
 logger.info("Plotting graphs...")
 
-if options[OUT_FILE_BASENAME]:
-    plot.log_tpm_scatter_plot(
-        options[PLOT_FORMAT], tp_tpms, options[OUT_FILE_BASENAME],
-        options[parameters.QUANT_METHOD.option_name], TRUE_POSITIVES_LABEL)
+plot.log_tpm_scatter_plot(
+    options[PLOT_FORMAT], tp_tpms, options[OUT_FILE_BASENAME],
+    options[parameters.QUANT_METHOD.option_name], TRUE_POSITIVES_LABEL)
 
 # Make boxplots of log ratios stratified by various classification measures
 # (e.g. the number of transcripts per-originating gene of each transcript)
@@ -163,22 +159,20 @@ if options[OUT_FILE_BASENAME]:
 num_tpms_filter = lambda x: len(x[t.REAL_TPM]) > BOXPLOT_NUM_TPMS_FILTER
 tpm_infos = [(non_zero, NON_ZERO_LABEL), (tp_tpms, TRUE_POSITIVES_LABEL)]
 
-if options[OUT_FILE_BASENAME]:
-    classifiers = [c for c in clsfrs if c.produces_grouped_stats()]
-    for c, ti in itertools.product(classifiers, tpm_infos):
-        plot.log_ratio_boxplot(
-            options[PLOT_FORMAT],
-            ti[0], options[OUT_FILE_BASENAME],
-            options[parameters.QUANT_METHOD.option_name],
-            ti[1], c, num_tpms_filter)
+classifiers = [c for c in clsfrs if c.produces_grouped_stats()]
+for c, ti in itertools.product(classifiers, tpm_infos):
+    plot.log_ratio_boxplot(
+        options[PLOT_FORMAT],
+        ti[0], options[OUT_FILE_BASENAME],
+        options[parameters.QUANT_METHOD.option_name],
+        ti[1], c, num_tpms_filter)
 
 # Make plots showing the percentage of isoforms above or below threshold values
 # according to various classification measures
-if options[OUT_FILE_BASENAME]:
-    classifiers = [c for c in clsfrs if c.produces_distribution_plots()]
-    ascending = [True, False]
-    for c, asc, ti in itertools.product(classifiers, ascending, tpm_infos):
-        plot.plot_cumulative_transcript_distribution(
-            options[PLOT_FORMAT],
-            ti[0], options[OUT_FILE_BASENAME],
-            options[parameters.QUANT_METHOD.option_name], ti[1], c, asc)
+classifiers = [c for c in clsfrs if c.produces_distribution_plots()]
+ascending = [True, False]
+for c, asc, ti in itertools.product(classifiers, ascending, tpm_infos):
+    plot.plot_cumulative_transcript_distribution(
+        options[PLOT_FORMAT],
+        ti[0], options[OUT_FILE_BASENAME],
+        options[parameters.QUANT_METHOD.option_name], ti[1], c, asc)
