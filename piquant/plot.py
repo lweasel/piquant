@@ -260,27 +260,16 @@ def log_tpm_scatter_plot(fformat, tpms, base_name, tpm_label):
         plt.ylim(ymin=min_val)
 
 
-def log_ratio_boxplot(
-        fformat, tpms, base_name, tpm_label, classifier,
-        filter=None, save_to_file=True):
-
+def log_ratio_boxplot(fformat, tpms, base_name, tpm_label, classifier, filter):
     grouping_column = classifier.get_column_name()
-    name_elements = [tpm_label]
+    grouped_tpms = tpms.groupby(grouping_column)
+    tpms = grouped_tpms.filter(filter)
 
-    if filter:
-        grouped_tpms = tpms.groupby(grouping_column)
-        tpms = grouped_tpms.filter(filter)
-    else:
-        name_elements.append(NO_FILTER_LABEL)
-
-    title_elements = [base_name, grouping_column] + name_elements + ["boxplot"]
-    with _NewPlot(fformat, *title_elements):
+    with _NewPlot(fformat, base_name, grouping_column, tpm_label, "boxplot"):
         sb.boxplot(tpms[t.LOG10_RATIO], groupby=tpms[grouping_column],
                    sym='', color='lightblue')
 
-        plt.suptitle("Log ratios of calculated to real TPMs: " +
-                     ", ".join(name_elements))
-
+        plt.suptitle("Log ratios of calculated to real TPMs: " + tpm_label)
         plt.xlabel(_capitalized(grouping_column))
         plt.ylabel("Log ratio (calculated/real TPM)")
 
