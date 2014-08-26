@@ -69,7 +69,7 @@ PLOT_FORMAT = "--plot-format"
 # Read in command-line options
 __doc__ = __doc__.format(
     log_level_vals=LOG_LEVEL_VALS,
-    plot_format=plot.PLOT_FORMATS)
+    plot_formats=plot.PLOT_FORMATS)
 options = docopt.docopt(__doc__, version="piquant v0.1")
 
 # Validate and process command-line options

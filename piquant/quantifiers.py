@@ -133,7 +133,7 @@ class _Cufflinks:
         return self.norm_constant * fpkm
 
 
-class _RSEMBase:
+class _TranscriptomeBasedQuantifierBase(object):
     CALCULATE_TRANSCRIPT_REFERENCE_DIRECTORY = \
         "REF_DIR=$(dirname {ref_name})"
     CHECK_TRANSCRIPT_REFERENCE_DIRECTORY_EXISTS = \
@@ -142,15 +142,7 @@ class _RSEMBase:
         "mkdir -p $REF_DIR"
     PREPARE_TRANSCRIPT_REFERENCE = \
         "rsem-prepare-reference --gtf {transcript_gtf} --no-polyA " + \
-        "{bowtie_spec} {genome_fasta_dir} {ref_name}"
-
-    QUANTIFY_ISOFORM_EXPRESSION = \
-        "rsem-calculate-expression --time {qualities_spec} --p 32 " + \
-        "{bowtie_spec} {stranded_spec} {reads_spec} {ref_name} rsem_sample"
-
-    REMOVE_RSEM_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
-        "find . -name \"rsem_sample*\" \! " + \
-        "-name rsem_sample.isoforms.results -type f -delete"
+        "{genome_fasta_dir} {ref_name}"
 
     @classmethod
     def _get_ref_name(cls, quantifier_dir):
@@ -159,24 +151,41 @@ class _RSEMBase:
 
     @classmethod
     def write_preparatory_commands(cls, writer, params):
-        writer.add_comment(
-            "Prepare the transcript reference if it doesn't already " +
-            "exist. We create the transcript reference using a tool " +
-            "from the RSEM package. Note that this step only needs to " +
-            "be done once for a particular set of transcripts.")
+        with writer.section():
+            writer.add_comment(
+                "Prepare the transcript reference if it doesn't already " +
+                "exist. We create the transcript reference using a tool " +
+                "from the RSEM package. Note that this step only needs to " +
+                "be done once for a particular set of transcripts.")
 
-        ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
+            ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
 
-        writer.add_line(cls.CALCULATE_TRANSCRIPT_REFERENCE_DIRECTORY.format(
-            ref_name=ref_name))
+            writer.add_line(
+                cls.CALCULATE_TRANSCRIPT_REFERENCE_DIRECTORY.format(
+                    ref_name=ref_name))
 
-        with writer.if_block(cls.CHECK_TRANSCRIPT_REFERENCE_DIRECTORY_EXISTS):
-            writer.add_line(cls.MAKE_TRANSCRIPT_REFERENCE_DIRECTORY)
-            writer.add_line(cls.PREPARE_TRANSCRIPT_REFERENCE.format(
-                transcript_gtf=params[TRANSCRIPT_GTF_FILE],
-                genome_fasta_dir=params[GENOME_FASTA_DIR],
-                ref_name=ref_name,
-                bowtie_spec=cls.get_bowtie_spec()))
+            with writer.if_block(
+                    cls.CHECK_TRANSCRIPT_REFERENCE_DIRECTORY_EXISTS):
+                writer.add_line(cls.MAKE_TRANSCRIPT_REFERENCE_DIRECTORY)
+                writer.add_line(cls.PREPARE_TRANSCRIPT_REFERENCE.format(
+                    transcript_gtf=params[TRANSCRIPT_GTF_FILE],
+                    genome_fasta_dir=params[GENOME_FASTA_DIR],
+                    ref_name=ref_name))
+
+
+@_Quantifier
+class _RSEM(_TranscriptomeBasedQuantifierBase):
+    QUANTIFY_ISOFORM_EXPRESSION = \
+        "rsem-calculate-expression --time {qualities_spec} --p 32 " + \
+        "{stranded_spec} {reads_spec} {ref_name} rsem_sample"
+
+    REMOVE_RSEM_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
+        "find . -name \"rsem_sample*\" \! " + \
+        "-name rsem_sample.isoforms.results -type f -delete"
+
+    @classmethod
+    def get_name(cls):
+        return "RSEM"
 
     @classmethod
     def write_quantification_commands(cls, writer, params):
@@ -196,8 +205,7 @@ class _RSEMBase:
             qualities_spec=qualities_spec,
             reads_spec=reads_spec,
             stranded_spec=stranded_spec,
-            ref_name=ref_name,
-            bowtie_spec=cls.get_bowtie_spec()))
+            ref_name=ref_name))
 
     @classmethod
     def write_post_quantification_cleanup(cls, writer):
@@ -221,27 +229,7 @@ class _RSEMBase:
 
 
 @_Quantifier
-class _RSEM(_RSEMBase):
-    @classmethod
-    def get_name(cls):
-        return "RSEM"
-
-    @classmethod
-    def get_bowtie_spec(cls):
-        return ""
-
-
-@_Quantifier
-class _RSEM_Bowtie2(_RSEMBase):
-    @classmethod
-    def get_name(cls):
-        return "RSEM_Bowtie2"
-
-    @classmethod
-    def get_bowtie_spec(cls):
-        return "--bowtie2"
-@_Quantifier
-class _Express:
+class _Express(_TranscriptomeBasedQuantifierBase):
     MAP_READS_TO_TRANSCRIPT_REFERENCE = \
         "bowtie {qualities_spec} -e 99999999 -l 25 -I 1 -X 1000 -a -S " + \
         "-m 200 -p 32 {ref_name} {reads_spec}"
@@ -260,15 +248,8 @@ class _Express:
         return "Express"
 
     @classmethod
-    def write_preparatory_commands(cls, writer, params):
-        # For convenience, we use a tool from the RSEM package to create the
-        # transcript reference
-        with writer.section():
-            _RSEM().write_preparatory_commands(writer, params)
-
-    @classmethod
     def write_quantification_commands(cls, writer, params):
-        ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
+        ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
 
         qualities_spec = "-q" if params[FASTQ_READS] else "-f"
 
@@ -314,7 +295,7 @@ class _Express:
 
 
 @_Quantifier
-class _Sailfish:
+class _Sailfish(_TranscriptomeBasedQuantifierBase):
     CREATE_SAILFISH_TRANSCRIPT_INDEX = \
         "sailfish index -p 8 -t {ref_name}.transcripts.fa -k 20 -o {index_dir}"
 
@@ -334,20 +315,19 @@ class _Sailfish:
 
     @classmethod
     def _get_index_dir(cls, quantifier_dir):
-        return os.path.join(quantifier_dir, "sailfish")
+        return os.path.join(quantifier_dir, "sailfish/index")
 
     @classmethod
     def write_preparatory_commands(cls, writer, params):
         # For convenience, we use a tool from the RSEM package to create the
         # transcript reference
-        with writer.section():
-            _RSEM().write_preparatory_commands(writer, params)
+        super(_Sailfish, cls).write_preparatory_commands(writer, params)
 
         writer.add_comment(
             "Now create the Sailfish transcript index (this will only " +
             "perform indexing if the index does not already exist.")
 
-        ref_name = _RSEM._get_ref_name(params[QUANTIFIER_DIRECTORY])
+        ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
         index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
 
         writer.add_line(cls.CREATE_SAILFISH_TRANSCRIPT_INDEX.format(
