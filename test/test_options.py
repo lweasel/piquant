@@ -191,23 +191,33 @@ def test_validate_options_list_returns_correct_number_of_items():
     separator = ";"
     option_string = (("dummy" + separator) * num_items)[:-1]
     assert len(validate_options_list(
-        option_string, lambda x: x, separator)) == num_items
+        option_string, lambda x: x, "dummy_name", separator)) == num_items
 
 
 def test_validate_options_list_returns_transformed_objects():
     option_values = [1, 5, 10]
-    separator = ","
-    option_string = separator.join([str(v) for v in option_values])
-    assert validate_options_list(option_string, int, separator) \
-        == option_values
+    option_string = ",".join([str(v) for v in option_values])
+    assert validate_options_list(
+        option_string, int, "dummy_name") == option_values
 
 
 def test_validate_options_list_raises_exception_for_invalid_value():
     option_values = [1, 5, "ten"]
-    separator = ","
-    option_string = separator.join([str(v) for v in option_values])
+    option_string = ",".join([str(v) for v in option_values])
     with pytest.raises(SchemaError):
-        validate_options_list(option_string, int, separator)
+        validate_options_list(option_string, int, "dummy_name")
+
+
+def test_validate_options_list_exception_message_contains_correct_info():
+    option_name = "option_name"
+    invalid_option = "Three"
+    option_values = [1, 2, invalid_option]
+    option_string = ",".join([str(v) for v in option_values])
+
+    with pytest.raises(SchemaError) as exc_info:
+        validate_options_list(option_string, int, option_name)
+
+    check_exception_message(exc_info, option_name, invalid_option)
 
 
 def test_check_boolean_value_accepts_valid_true_strings():

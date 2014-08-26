@@ -62,7 +62,7 @@ def validate_dir_option(dir_option, msg, should_exist=True, nullable=False):
     Schema(validator, error=msg).validate(dir_option)
 
 
-def validate_options_list(option, item_validator, separator=','):
+def validate_options_list(option, item_validator, option_name, separator=','):
     """
     Check if each of a list of items is valid according to some validator.
 
@@ -77,13 +77,15 @@ def validate_options_list(option, item_validator, separator=','):
     item_validator: A type or callable to validate individual items in the
     option string. Should raise an exception if an item is not valid. May
     return transformed versions of items.
+    option_name: Name of the option being tested.
     separator: String which separates the command line option string into
     items.
     """
     items = option.split(separator)
 
     def validated_value(x):
-        validated = Schema(Use(item_validator)).validate(x)
+        msg = "'" + str(x) + "' is not a valid " + option_name + "."
+        validated = Schema(Use(item_validator), error=msg).validate(x)
         return validated if validated is not None else x
 
     return [validated_value(i) for i in items]

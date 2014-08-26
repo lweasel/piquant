@@ -111,7 +111,8 @@ def validate_command_line_parameter_sets(
             if param.option_name in values_dict and \
                     values_dict[param.option_name] is not None:
                 validated_vals = opt.validate_options_list(
-                    values_dict[param.option_name], param.option_validator)
+                    values_dict[param.option_name], param.option_validator,
+                    param.title.lower())
                 param_vals[param.name] = set(validated_vals) \
                     if param.run_parameter else validated_vals[0]
 
