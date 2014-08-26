@@ -143,6 +143,7 @@ In addition to the command line options common to all ``piquant.py`` commands (s
 * ``--transcript-gtf``: The path to a GTF formatted file describing the transcripts that were simulated by FluxSimulator. This GTF file location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``. The transcripts GTF file should be the same as were supplied to the ``prepare_read_dirs`` command (see :ref:`Prepare read directories <prepare-read-dirs>` above).
 * ``--genome-fasta``: The path to a directory containing per-chromosome genome sequences in FASTA-formatted files. This directory location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``. The genome sequences should be the same as were supplied to the ``prepare_read_dirs`` command.
 * ``--nocleanup``: When run, quantification tools may create a number of output files. Unless ``--nocleanup`` is specified, the  ``run_quantification`` Bash script will be constructed so as to delete all of these, except those essential for *piquant* to calculate the accuracy with which quantification has been performed. 
+* ``--plot-format``: The file format in which graphs produced during the analysis of this quantification run will be written to - one of "pdf", "svg" or "png" (default "pdf").
 
 Prepare for quantification (``prequantify``)
 --------------------------------------------
@@ -177,3 +178,4 @@ For more details on the statistics calculated and the graphs drawn, see :doc:`as
 In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``analyse_runs`` command takes the following additional option:
 
 * ``--stats-dir``: The path to a directory into which statistics and graph files will be written. The directory will be created if it does not already exist.
+* ``--plot-format``: The file format in which graphs produced during analysis will be written to - one of "pdf", "svg" or "png" (default "pdf").
