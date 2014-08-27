@@ -21,6 +21,7 @@
 """
 
 import classifiers
+import collections
 import docopt
 import itertools
 import log
@@ -35,8 +36,6 @@ import sys
 
 TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
 TRUE_POSITIVES_LABEL = "true positive TPMs"
-NON_ZERO_LABEL = "non-zero real TPMs"
-
 LOG_LEVEL = "--log-level"
 LOG_LEVEL_VALS = str(log.LEVELS.keys())
 TPM_FILE = "<tpm-file>"
@@ -73,13 +72,16 @@ try:
 except schema.SchemaError as exc:
     exit(exc.code)
 
+TpmInfo = collections.NamedTuple("TpmInfo", ["tpms", "label"])
+
 
 def _get_non_zero_tpms(tpms):
     return tpms[(tpms[t.REAL_TPM] > 0) & (tpms[t.CALCULATED_TPM] > 0)]
 
 
 def _get_tpm_infos(non_zero, tp_tpms):
-    return [(non_zero, NON_ZERO_LABEL), (tp_tpms, TRUE_POSITIVES_LABEL)]
+    return [TpmInfo(non_zero, "non-zero real TPMs"),
+            TpmInfo(tp_tpms, TRUE_POSITIVES_LABEL)]
 
 
 def _add_parameter_values_to_stats(stats):
@@ -137,7 +139,8 @@ def _draw_stratified_log_ratio_boxplots(non_zero, tp_tpms, clsfrs, options):
 
     for c, ti in itertools.product(classifiers, tpm_infos):
         plot.log_ratio_boxplot(
-            options[PLOT_FORMAT], ti[0], options[OUT_FILE_BASENAME], ti[1], c)
+            options[PLOT_FORMAT], ti.tpms,
+            options[OUT_FILE_BASENAME], ti.label, c)
 
 
 def _draw_stats_vs_transcript_classifier_graphs(clsfr_stats, options):
@@ -158,8 +161,8 @@ def _draw_cumulative_transcript_distribution_graphs(
 
     for c, asc, ti in itertools.product(classifiers, ascending, tpm_infos):
         plot.plot_cumulative_transcript_distribution(
-            options[PLOT_FORMAT], ti[0],
-            options[OUT_FILE_BASENAME], ti[1], c, asc)
+            options[PLOT_FORMAT], ti.tpms,
+            options[OUT_FILE_BASENAME], ti.label, c, asc)
 
 
 # Set up logger
