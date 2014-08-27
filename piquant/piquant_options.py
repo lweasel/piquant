@@ -1,5 +1,6 @@
 import log
 import options as opt
+import os.path
 import parameters
 import plot
 import schema
@@ -26,8 +27,10 @@ ANALYSE_RUNS = "analyse_runs"
 def validate_command_line_options(options):
     opt.validate_dict_option(
         options[LOG_LEVEL], log.LEVELS, "Invalid log level")
+
     opt.validate_dir_option(
         options[OUTPUT_DIRECTORY], "Output parent directory does not exist")
+    options[OUTPUT_DIRECTORY] = os.path.abspath(options[OUTPUT_DIRECTORY])
 
     opt.validate_file_option(
         options[PARAMS_FILE],

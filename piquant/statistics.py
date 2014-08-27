@@ -56,7 +56,7 @@ def get_graphable_by_classifier_statistics():
     return set([s for s in get_statistics() if s.graphable_by_classifier])
 
 
-def get_stats_param_sets():
+def get_stratified_stats_types():
     # TODO: documentation
     # TODO: tests
     clsfrs = classifiers.get_classifiers()

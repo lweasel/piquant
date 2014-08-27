@@ -51,19 +51,6 @@ import statistics
 import sys
 import time
 
-# Read in command-line options
-__doc__ = __doc__.format(
-    log_level_vals=str(log.LEVELS.keys()),
-    plot_formats=plot.PLOT_FORMATS)
-options = docopt.docopt(__doc__, version="piquant v0.1")
-
-# Validate and process command-line options
-param_values = None
-try:
-    options, param_values = po.validate_command_line_options(options)
-except schema.SchemaError as exc:
-    exit("Exiting. " + exc.code)
-
 
 def get_parameters_dir(**params):
     return os.path.join(options[po.OUTPUT_DIRECTORY],
@@ -162,91 +149,105 @@ def check_quantification_completed(**params):
 
 
 class StatsAccumulator:
-    def __init__(self, pset):
+    ACCUMULATORS = []
+
+    def __init__(self, stratified_stats_type):
         self.overall_stats_df = pd.DataFrame()
-        self.pset = pset
+        self.stratified_stats_type = stratified_stats_type
+        StatsAccumulator.ACCUMULATORS.append(self)
 
     def __call__(self, **params):
         # TODO: get rid of need to pass run_name into get_stats_file()
         run_name = parameters.get_file_name(**params)
         run_dir = get_parameters_dir(**params)
 
-        stats_file = statistics.get_stats_file(run_dir, run_name, **self.pset)
+        stats_file = statistics.get_stats_file(
+            run_dir, run_name, **self.stratified_stats_type)
         stats_df = pd.read_csv(stats_file)
         self.overall_stats_df = self.overall_stats_df.append(stats_df)
 
     def write_stats(self):
         overall_stats_file = statistics.get_stats_file(
             options[po.STATS_DIRECTORY], statistics.OVERALL_STATS_PREFIX,
-            **self.pset)
+            **self.stratified_stats_type)
         statistics.write_stats_data(
             overall_stats_file, self.overall_stats_df, index=False)
 
 
+def get_executables_for_commands():
+    execs = {}
+    execs[po.PREPARE_READ_DIRS] = \
+        [reads_directory_checker(False), prepare_read_simulation]
+    execs[po.CREATE_READS] = \
+        [reads_directory_checker(True), create_reads]
+    execs[po.CHECK_READS] = \
+        [reads_directory_checker(True), check_reads_created]
+    execs[po.PREPARE_QUANT_DIRS] = \
+        [run_directory_checker(False), prepare_quantification]
+    execs[po.PREQUANTIFY] = \
+        [prequantify]
+    execs[po.QUANTIFY] = \
+        [reads_directory_checker(True), run_directory_checker(True), quantify]
+    execs[po.CHECK_QUANTIFICATION] = \
+        [run_directory_checker(True), check_quantification_completed]
+    execs[po.ANALYSE_RUNS] = \
+        [run_directory_checker(True)] + \
+        [StatsAccumulator(t) for t in statistics.get_stratified_stats_types()]
+    return execs
+
+
+def get_piquant_command(options):
+    return [opt for opt, val in options.items()
+            if (val and opt in get_executables_for_commands())][0]
+
+
+# Read in command-line options
+__doc__ = __doc__.format(
+    log_level_vals=str(log.LEVELS.keys()),
+    plot_formats=plot.PLOT_FORMATS)
+options = docopt.docopt(__doc__, version="piquant v0.1")
+
+# Validate and process command-line options
+param_values = None
+try:
+    options, param_values = po.validate_command_line_options(options)
+except schema.SchemaError as exc:
+    exit("Exiting. " + exc.code)
+
 # Set up logger
 logger = log.get_logger(sys.stderr, options[po.LOG_LEVEL])
 
-options[po.OUTPUT_DIRECTORY] = os.path.abspath(options[po.OUTPUT_DIRECTORY])
+piquant_command = get_piquant_command(options)
+parameters.execute_for_param_sets(
+    get_executables_for_commands()[piquant_command], **param_values)
 
-stats_accumulators = []
-
-if options[po.PREPARE_READ_DIRS]:
-    to_execute = [reads_directory_checker(False),
-                  prepare_read_simulation]
-elif options[po.CREATE_READS]:
-    to_execute = [reads_directory_checker(True),
-                  create_reads]
-elif options[po.CHECK_READS]:
-    to_execute = [reads_directory_checker(True),
-                  check_reads_created]
-elif options[po.PREPARE_QUANT_DIRS]:
-    to_execute = [run_directory_checker(False),
-                  prepare_quantification]
-elif options[po.PREQUANTIFY]:
-    to_execute = [prequantify]
-elif options[po.QUANTIFY]:
-    to_execute = [reads_directory_checker(True),
-                  run_directory_checker(True),
-                  quantify]
-elif options[po.CHECK_QUANTIFICATION]:
-    to_execute = [run_directory_checker(True),
-                  check_quantification_completed]
-elif options[po.ANALYSE_RUNS]:
-    to_execute = [run_directory_checker(True)]
-    for pset in statistics.get_stats_param_sets():
-        stats_acc = StatsAccumulator(pset)
-        to_execute.append(stats_acc)
-        stats_accumulators.append(stats_acc)
-
-parameters.execute_for_param_sets(to_execute, **param_values)
-
-if options[po.ANALYSE_RUNS]:
+if piquant_command == po.ANALYSE_RUNS:
     if not os.path.exists(options[po.STATS_DIRECTORY]):
         os.mkdir(options[po.STATS_DIRECTORY])
-    for stats_acc in stats_accumulators:
+    for stats_acc in StatsAccumulator.ACCUMULATORS:
         stats_acc.write_stats()
 
     overall_stats_file = statistics.get_stats_file(
         options[po.STATS_DIRECTORY], statistics.OVERALL_STATS_PREFIX)
     overall_stats = pd.read_csv(overall_stats_file)
 
-    # TODO: rename variable (confusing)
-    param_values = {}
-    for param in parameters.get_run_parameters():
-        param_series = overall_stats[param.name]
-        param_values[param] = param_series.value_counts().index.tolist()
+    stats_param_values = \
+        {p: overall_stats[p.name].value_counts().index.tolist()
+            for p in parameters.get_run_parameters()}
 
     logger.info("Drawing graphs derived from statistics calculated for the " +
                 "whole set of TPMs...")
     plot.draw_overall_stats_graphs(
         options[po.PLOT_FORMAT], options[po.STATS_DIRECTORY],
-        overall_stats, param_values)
+        overall_stats, stats_param_values)
 
     logger.info("Drawing graphs derived from statistics calculated on " +
                 "subsets of TPMs...")
     plot.draw_grouped_stats_graphs(
-        options[po.PLOT_FORMAT], options[po.STATS_DIRECTORY], param_values)
+        options[po.PLOT_FORMAT], options[po.STATS_DIRECTORY],
+        stats_param_values)
 
     logger.info("Drawing distribution plots...")
     plot.draw_distribution_graphs(
-        options[po.PLOT_FORMAT], options[po.STATS_DIRECTORY], param_values)
+        options[po.PLOT_FORMAT], options[po.STATS_DIRECTORY],
+        stats_param_values)
