@@ -34,15 +34,14 @@ def _get_unique_sequence_file(quantifier_dir):
 
 
 def _add_run_prequantification(
-        writer, quant_method, params_spec,
+        writer, quant_method, quant_params,
         quantifier_dir, transcript_gtf_file):
 
     with writer.if_block("-n \"$RUN_PREQUANTIFICATION\""):
         # Perform preparatory tasks required by a particular quantification
         # method prior to calculating abundances; for example, this might
         # include mapping reads to the genome with TopHat
-        quant_method.write_preparatory_commands(writer, params_spec)
-
+        quant_method.write_preparatory_commands(writer, quant_params)
         with writer.section():
             _add_calculate_transcripts_per_gene(
                 writer, quantifier_dir, transcript_gtf_file)
@@ -51,14 +50,14 @@ def _add_run_prequantification(
                 writer, quantifier_dir, transcript_gtf_file)
 
 
-def _add_quantify_transcripts(writer, quant_method, params_spec, cleanup):
+def _add_quantify_transcripts(writer, quant_method, quant_params, cleanup):
     # Use the specified quantification method to calculate per-transcript TPMs
     with writer.if_block("-n \"$QUANTIFY_TRANSCRIPTS\""):
         with writer.section():
             writer.add_comment(
                 "Use {method} to calculate per-transcript TPMs.".format(
                     method=quant_method.get_name()))
-            quant_method.write_quantification_commands(writer, params_spec)
+            quant_method.write_quantification_commands(writer, quant_params)
 
         if cleanup:
             writer.add_comment(
@@ -166,9 +165,10 @@ def _add_process_command_line_options(writer):
 
 
 def _add_analyse_results(
-        writer, run_dir, quantifier_dir, fs_pro_file, plot_format,
-        quant_method, read_length, read_depth,
-        paired_end, errors, bias):
+        writer, reads_dir, run_dir, quantifier_dir, plot_format,
+        quant_method, read_length, read_depth, paired_end, errors, bias):
+
+    fs_pro_file = os.path.join(reads_dir, fs.EXPRESSION_PROFILE_FILE)
 
     with writer.if_block("-n \"$ANALYSE_RESULTS\""):
         with writer.section():
@@ -181,42 +181,26 @@ def _add_analyse_results(
             paired_end=paired_end, errors=errors, bias=bias)
 
 
-def _update_params_spec(params_spec, input_dir, quantifier_dir,
-                        paired_end, errors):
+def _get_quant_params(input_dir, quantifier_dir, transcript_gtf,
+                     genome_fasta, paired_end, errors):
+
+    quant_params = {
+        qs.TRANSCRIPT_GTF_FILE: transcript_gtf,
+        qs.GENOME_FASTA_DIR: genome_fasta,
+        qs.QUANTIFIER_DIRECTORY: quantifier_dir,
+        qs.FASTQ_READS: errors
+    }
+
     if paired_end:
-        params_spec[qs.LEFT_SIMULATED_READS] = \
+        quant_params[qs.LEFT_SIMULATED_READS] = \
             os.path.join(input_dir, fs.get_reads_file(errors, fs.LEFT_READS))
-        params_spec[qs.RIGHT_SIMULATED_READS] = \
+        quant_params[qs.RIGHT_SIMULATED_READS] = \
             os.path.join(input_dir, fs.get_reads_file(errors, fs.RIGHT_READS))
     else:
-        params_spec[qs.SIMULATED_READS] = \
+        quant_params[qs.SIMULATED_READS] = \
             os.path.join(input_dir, fs.get_reads_file(errors))
 
-    params_spec[qs.QUANTIFIER_DIRECTORY] = quantifier_dir
-    params_spec[qs.FASTQ_READS] = errors
-
-
-def _add_script_sections(
-        writer, run_dir, quantifier_dir, transcript_gtf_file,
-        fs_pro_file, plot_format, cleanup,
-        quant_method, read_length, read_depth,
-        paired_end, errors, bias, params_spec):
-
-    with writer.section():
-        _add_process_command_line_options(writer)
-
-    with writer.section():
-        _add_run_prequantification(
-            writer, quant_method, params_spec,
-            quantifier_dir, transcript_gtf_file)
-
-    with writer.section():
-        _add_quantify_transcripts(writer, quant_method, params_spec, cleanup)
-
-    _add_analyse_results(
-        writer, run_dir, quantifier_dir, fs_pro_file, plot_format,
-        quant_method, read_length, read_depth,
-        paired_end, errors, bias)
+    return quant_params
 
 
 def write_run_quantification_script(
@@ -225,22 +209,26 @@ def write_run_quantification_script(
         paired_end=False, errors=False, bias=False,
         transcript_gtf=None, genome_fasta=None):
 
-    fs_pro_file = os.path.join(input_dir, fs.EXPRESSION_PROFILE_FILE)
-
-    # TODO: poorly-named variable
-    params_spec = {
-        qs.TRANSCRIPT_GTF_FILE: transcript_gtf,
-        qs.GENOME_FASTA_DIR: genome_fasta
-    }
-
-    _update_params_spec(params_spec, input_dir, quantifier_dir,
-                        paired_end, errors)
-
     os.mkdir(run_dir)
 
-    writer = fw.BashScriptWriter()
-    _add_script_sections(
-        writer, run_dir, quantifier_dir, transcript_gtf,
-        fs_pro_file, plot_format, cleanup, quant_method,
-        read_length, read_depth, paired_end, errors, bias, params_spec)
-    writer.write_to_file(run_dir, RUN_SCRIPT)
+    with fw.writing_to_file(
+            fw.BashScriptWriter, run_dir, RUN_SCRIPT) as writer:
+        with writer.section():
+            _add_process_command_line_options(writer)
+
+        quant_params = _get_quant_params(
+            input_dir, quantifier_dir, transcript_gtf,
+            genome_fasta, paired_end, errors)
+
+        with writer.section():
+            _add_run_prequantification(
+                writer, quant_method, quant_params,
+                quantifier_dir, transcript_gtf)
+
+        with writer.section():
+            _add_quantify_transcripts(
+                writer, quant_method, quant_params, cleanup)
+
+        _add_analyse_results(
+            writer, input_dir, run_dir, quantifier_dir, plot_format,
+            quant_method, read_length, read_depth, paired_end, errors, bias)

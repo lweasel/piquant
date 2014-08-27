@@ -209,14 +209,14 @@ def _create_simulator_parameter_files(
 def _write_read_simulation_script(
         reads_dir, read_length, read_depth, paired_end, errors, bias, cleanup):
 
-    writer = fw.BashScriptWriter()
-    _add_create_reads(
-        writer, read_length, read_depth, paired_end, errors, bias)
+    with fw.writing_to_file(
+            fw.BashScriptWriter, reads_dir, RUN_SCRIPT) as writer:
 
-    if cleanup:
-        _add_cleanup_intermediate_files(writer)
+        _add_create_reads(writer, read_length, read_depth,
+                          paired_end, errors, bias)
 
-    writer.write_to_file(reads_dir, RUN_SCRIPT)
+        if cleanup:
+            _add_cleanup_intermediate_files(writer)
 
 
 def create_simulation_files(

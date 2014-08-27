@@ -68,8 +68,9 @@ def _write_flux_simulator_expression_params(
     fs_params = _get_common_flux_simulator_params(
         transcript_gtf_file, genome_fasta_dir, num_fragments)
 
-    writer = fw.FluxSimulatorParamsWriter(fs_params)
-    writer.write_to_file(output_dir, EXPRESSION_PARAMS_FILE)
+    with fw.writing_to_file(fw.FluxSimulatorParamsWriter, output_dir,
+                            EXPRESSION_PARAMS_FILE) as writer:
+        writer.add_vars(fs_params)
 
 
 def _write_flux_simulator_simulation_params(
@@ -93,8 +94,9 @@ def _write_flux_simulator_simulation_params(
     if errors:
         fs_params["ERR_FILE"] = _ERROR_MODEL_LONG
 
-    writer = fw.FluxSimulatorParamsWriter(fs_params)
-    writer.write_to_file(output_dir, SIMULATION_PARAMS_FILE)
+    with fw.writing_to_file(fw.FluxSimulatorParamsWriter, output_dir,
+                            SIMULATION_PARAMS_FILE) as writer:
+        writer.add_vars(fs_params)
 
 
 def read_expression_profiles(pro_file):

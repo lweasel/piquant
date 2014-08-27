@@ -5,6 +5,15 @@ import stat
 import textwrap
 
 
+@contextlib.contextmanager
+def writing_to_file(writer_cls, directory, filename):
+    writer = writer_cls()
+    try:
+        yield writer
+    finally:
+        writer.write_to_file(directory, filename)
+
+
 class _Writer:
     def __init__(self):
         self.lines = []
@@ -18,9 +27,10 @@ class _Writer:
 
 
 class FluxSimulatorParamsWriter(_Writer):
-    def __init__(self, vars_dict):
+    def __init__(self):
         _Writer.__init__(self)
 
+    def add_vars(self, vars_dict):
         for name, value in vars_dict.items():
             self._add_line("{n} {v}".format(n=name, v=value))
 
