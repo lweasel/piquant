@@ -1,3 +1,4 @@
+import contextlib
 import os
 import os.path
 import stat
@@ -22,41 +23,6 @@ class FluxSimulatorParamsWriter(_Writer):
 
         for name, value in vars_dict.items():
             self._add_line("{n} {v}".format(n=name, v=value))
-
-
-class _BashSection:
-    def __init__(self, writer):
-        self.writer = writer
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self.writer._add_line("")
-
-
-class _BashBlock:
-    def __init__(self, writer, start_prefix, start_suffix,
-                 details, end, predeindent):
-        self.writer = writer
-        self.start_prefix = start_prefix
-        self.start_suffix = start_suffix
-        self.details = details
-        self.end = end
-        self.predeindent = predeindent
-
-    def __enter__(self):
-        self.writer.add_line("{p}{d}{s}".format(
-            p=self.start_prefix, d=self.details, s=self.start_suffix))
-        self.writer.indent()
-        return self
-
-    def __exit__(self, type, value, traceback):
-        if self.predeindent:
-            self.writer.deindent()
-        self.writer.add_line(self.end)
-        if not self.predeindent:
-            self.writer.deindent()
 
 
 class BashScriptWriter(_Writer):
@@ -84,26 +50,45 @@ class BashScriptWriter(_Writer):
         line_string = BashScriptWriter.INDENT * self.indent_level + line_string
         _Writer._add_line(self, line_string)
 
+    @contextlib.contextmanager
     def section(self):
-        return _BashSection(self)
+        try:
+            yield
+        finally:
+            self._add_line("")
 
-    def block(self, block_start_prefix, block_start_suffix,
-              block_end, details, predeindent=True):
+    def _adding_bash_block(
+            self, start_prefix, start_suffix, end, details, predeindent=True):
 
-        return _BashBlock(self, block_start_prefix, block_start_suffix,
-                          details, block_end, predeindent)
+        self.add_line("{p}{d}{s}".format(
+            p=start_prefix, d=details, s=start_suffix))
+        self.indent()
 
+        try:
+            yield
+        finally:
+            if predeindent:
+                self.deindent()
+            self.add_line(end)
+            if not predeindent:
+                self.deindent()
+
+    @contextlib.contextmanager
     def if_block(self, details):
-        return self.block("if [ ", " ]; then", "fi", details)
+        return self._adding_bash_block("if [ ", " ]; then", "fi", details)
 
+    @contextlib.contextmanager
     def while_block(self, details):
-        return self.block("while ", "; do", "done", details)
+        return self._adding_bash_block("while ", "; do", "done", details)
 
+    @contextlib.contextmanager
     def case_block(self, details):
-        return self.block("case ", " in", "esac", details)
+        return self._adding_bash_block("case ", " in", "esac", details)
 
+    @contextlib.contextmanager
     def case_option_block(self, option):
-        return self.block("", ")", ";;", option, predeindent=False)
+        return self._adding_bash_block(
+            "", ")", ";;", option, predeindent=False)
 
     def add_comment(self, comment):
         lines = textwrap.wrap(

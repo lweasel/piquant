@@ -1,3 +1,4 @@
+import contextlib
 import classifiers
 import itertools
 import matplotlib.pyplot as plt
@@ -29,17 +30,15 @@ plt.rcParams['svg.fonttype'] = 'none'
 #plt.rcParams['legend.fontsize'] = 'small'
 
 
-class _NewPlot:
-    def __init__(self, fformat, *file_name_elements):
-        self.fformat = fformat
-        self.file_name = "_".join([str(el) for el in file_name_elements])
-        self.file_name = self.file_name.replace(' ', '_')
-
-    def __enter__(self):
-        plt.figure()
-
-    def __exit__(self, type, value, traceback):
-        plt.savefig(self.file_name + "." + self.fformat, format=self.fformat)
+@contextlib.contextmanager
+def _saving_new_plot(fformat, *file_name_elements):
+    plt.figure()
+    try:
+        yield
+    finally:
+        file_name = "_".join([str(el) for el in file_name_elements])
+        file_name = file_name.replace(' ', '_')
+        plt.savefig(file_name + "." + fformat, format=fformat)
         plt.close()
 
 
@@ -182,7 +181,7 @@ def _plot_statistic_vs_varying_param_grouped_by_param(
         base_name, statistic.name,
         group_param, fixed_param_info, versus=varying_param.name)
 
-    with _NewPlot(fformat, *name_elements):
+    with _saving_new_plot(fformat, *name_elements):
         title = _get_grouped_by_param_stats_plot_title(
             statistic.title, group_param, fixed_param_info,
             versus=varying_param.title)
@@ -203,7 +202,7 @@ def _plot_statistic_vs_transcript_classifier_grouped_by_param(
         base_name, statistic.name, group_param, fixed_param_info,
         versus=clsfr_col)
 
-    with _NewPlot(fformat, *name_elements):
+    with _saving_new_plot(fformat, *name_elements):
         xlabel = _capitalized(classifier.get_plot_title())
         title = _get_grouped_by_param_stats_plot_title(
             statistic.title, group_param, fixed_param_info, versus=xlabel)
@@ -230,7 +229,7 @@ def _plot_cumulative_transcript_distribution_grouped_by_param(
         base_name, clsfr_col, group_param, fixed_param_info,
         ascending=ascending)
 
-    with _NewPlot(fformat, *name_elements):
+    with _saving_new_plot(fformat, *name_elements):
         title = _get_grouped_by_param_stats_plot_title(
             _capitalized(clsfr_col) + " threshold", group_param,
             fixed_param_info)
@@ -242,7 +241,7 @@ def _plot_cumulative_transcript_distribution_grouped_by_param(
 
 
 def log_tpm_scatter_plot(fformat, tpms, base_name, tpm_label):
-    with _NewPlot(fformat, base_name, tpm_label, "log10 scatter"):
+    with _saving_new_plot(fformat, base_name, tpm_label, "log10 scatter"):
         plt.scatter(tpms[t.LOG10_REAL_TPM].values,
                     tpms[t.LOG10_CALCULATED_TPM].values,
                     c="lightblue", alpha=0.4)
@@ -263,7 +262,8 @@ def log_ratio_boxplot(fformat, tpms, base_name, tpm_label, classifier):
     tpms = grouped_tpms.filter(
         lambda x: len(x[t.REAL_TPM]) > BOXPLOT_NUM_TPMS_FILTER)
 
-    with _NewPlot(fformat, base_name, grouping_column, tpm_label, "boxplot"):
+    with _saving_new_plot(
+            fformat, base_name, grouping_column, tpm_label, "boxplot"):
         sb.boxplot(tpms[t.LOG10_RATIO], groupby=tpms[grouping_column],
                    sym='', color='lightblue')
 
@@ -281,7 +281,7 @@ def plot_statistic_vs_transcript_classifier(
 
     clsfr_col = classifier.get_column_name()
 
-    with _NewPlot(fformat, base_name, statistic.name, "vs", clsfr_col):
+    with _saving_new_plot(fformat, base_name, statistic.name, "vs", clsfr_col):
         xvals = stats[clsfr_col]
         min_xval = xvals.min()
         max_xval = xvals.max()
@@ -305,8 +305,9 @@ def plot_cumulative_transcript_distribution(
 
     clsfr_col = classifier.get_column_name()
 
-    with _NewPlot(fformat, base_name, clsfr_col, tpm_label,
-                 ("asc" if ascending else "desc"), "distribution"):
+    with _saving_new_plot(
+            fformat, base_name, clsfr_col, tpm_label,
+            ("asc" if ascending else "desc"), "distribution"):
 
         xvals, yvals = t.get_distribution(tpms, classifier, ascending)
         plt.plot(xvals, yvals, '-o')
