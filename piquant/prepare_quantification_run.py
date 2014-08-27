@@ -3,6 +3,7 @@ import flux_simulator as fs
 import quantifiers as qs
 import os.path
 import parameters
+import piquant_options as po
 
 RUN_SCRIPT = "run_quantification.sh"
 
@@ -118,7 +119,7 @@ def _add_assemble_quantification_data(
 
 
 def _add_analyse_quantification_results(
-        writer, run_dir, plot_format, **params):
+        writer, run_dir, piquant_options, **params):
 
     # Finally perform analysis on the calculated TPMs
     writer.add_comment("Perform analysis on calculated TPMs.")
@@ -133,10 +134,12 @@ def _add_analyse_quantification_results(
             val=str(param_val))
 
     writer.add_line(
-        ("{command} --plot-format={format} {params_spec} " +
+        ("{command} --plot-format={format} " +
+         "--boxplot-threshold={bp_threshold} {params_spec} " +
          "{tpms_file} {output_basename}").format(
             command=_get_script_path(ANALYSE_DATA_SCRIPT),
-            format=plot_format,
+            format=piquant_options[po.PLOT_FORMAT],
+            bp_threshold=piquant_options[po.BOXPLOT_THRESHOLD],
             params_spec=params_spec,
             tpms_file=TPMS_FILE,
             output_basename=os.path.basename(run_dir)))
@@ -165,7 +168,7 @@ def _add_process_command_line_options(writer):
 
 
 def _add_analyse_results(
-        writer, reads_dir, run_dir, quantifier_dir, plot_format,
+        writer, reads_dir, run_dir, quantifier_dir, piquant_options,
         quant_method, read_length, read_depth, paired_end, errors, bias):
 
     fs_pro_file = os.path.join(reads_dir, fs.EXPRESSION_PROFILE_FILE)
@@ -175,14 +178,14 @@ def _add_analyse_results(
             _add_assemble_quantification_data(
                 writer, quantifier_dir, fs_pro_file, quant_method)
         _add_analyse_quantification_results(
-            writer, run_dir, plot_format,
+            writer, run_dir, piquant_options,
             quant_method=quant_method.get_name(),
             read_length=read_length, read_depth=read_depth,
             paired_end=paired_end, errors=errors, bias=bias)
 
 
-def _get_quant_params(input_dir, quantifier_dir, transcript_gtf,
-                     genome_fasta, paired_end, errors):
+def _get_quant_params(reads_dir, quantifier_dir, transcript_gtf,
+                      genome_fasta, paired_end, errors):
 
     quant_params = {
         qs.TRANSCRIPT_GTF_FILE: transcript_gtf,
@@ -193,18 +196,18 @@ def _get_quant_params(input_dir, quantifier_dir, transcript_gtf,
 
     if paired_end:
         quant_params[qs.LEFT_SIMULATED_READS] = \
-            os.path.join(input_dir, fs.get_reads_file(errors, fs.LEFT_READS))
+            os.path.join(reads_dir, fs.get_reads_file(errors, fs.LEFT_READS))
         quant_params[qs.RIGHT_SIMULATED_READS] = \
-            os.path.join(input_dir, fs.get_reads_file(errors, fs.RIGHT_READS))
+            os.path.join(reads_dir, fs.get_reads_file(errors, fs.RIGHT_READS))
     else:
         quant_params[qs.SIMULATED_READS] = \
-            os.path.join(input_dir, fs.get_reads_file(errors))
+            os.path.join(reads_dir, fs.get_reads_file(errors))
 
     return quant_params
 
 
 def write_run_quantification_script(
-        input_dir, run_dir, quantifier_dir, plot_format, cleanup,
+        reads_dir, run_dir, piquant_options,
         quant_method=None, read_length=50, read_depth=10,
         paired_end=False, errors=False, bias=False,
         transcript_gtf=None, genome_fasta=None):
@@ -216,8 +219,11 @@ def write_run_quantification_script(
         with writer.section():
             _add_process_command_line_options(writer)
 
+        quantifier_dir = os.path.join(
+            piquant_options[po.OUTPUT_DIRECTORY], "quantifier_scratch")
+
         quant_params = _get_quant_params(
-            input_dir, quantifier_dir, transcript_gtf,
+            reads_dir, quantifier_dir, transcript_gtf,
             genome_fasta, paired_end, errors)
 
         with writer.section():
@@ -226,9 +232,10 @@ def write_run_quantification_script(
                 quantifier_dir, transcript_gtf)
 
         with writer.section():
+            cleanup = not piquant_options[po.NO_CLEANUP]
             _add_quantify_transcripts(
                 writer, quant_method, quant_params, cleanup)
 
         _add_analyse_results(
-            writer, input_dir, run_dir, quantifier_dir, plot_format,
+            writer, reads_dir, run_dir, quantifier_dir, piquant_options,
             quant_method, read_length, read_depth, paired_end, errors, bias)

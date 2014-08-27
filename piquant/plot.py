@@ -256,11 +256,11 @@ def log_tpm_scatter_plot(fformat, tpms, base_name, tpm_label):
         plt.ylim(ymin=min_val)
 
 
-def log_ratio_boxplot(fformat, tpms, base_name, tpm_label, classifier):
+def log_ratio_boxplot(fformat, tpms, base_name, tpm_label, classifier, threshold):
     grouping_column = classifier.get_column_name()
     grouped_tpms = tpms.groupby(grouping_column)
     tpms = grouped_tpms.filter(
-        lambda x: len(x[t.REAL_TPM]) > BOXPLOT_NUM_TPMS_FILTER)
+        lambda x: len(x[t.REAL_TPM]) > threshold)
 
     with _saving_new_plot(
             fformat, base_name, grouping_column, tpm_label, "boxplot"):
