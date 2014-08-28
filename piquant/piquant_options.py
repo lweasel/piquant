@@ -11,7 +11,7 @@ STATS_DIRECTORY = "--stats-dir"
 NO_CLEANUP = "--nocleanup"
 PARAMS_FILE = "--params-file"
 PLOT_FORMAT = "--plot-format"
-BOXPLOT_THRESHOLD = "--boxplot-threshold"
+GROUPED_THRESHOLD = "--grouped-threshold"
 
 # commands
 PREPARE_READ_DIRS = "prepare_read_dirs"
@@ -62,8 +62,8 @@ def validate_command_line_options(options):
 
     opt.validate_list_option(
         options[PLOT_FORMAT], plot.PLOT_FORMATS, "Invalid plot format")
-    opt.validate_int_option(
-        options[BOXPLOT_THRESHOLD],
+    options[GROUPED_THRESHOLD] = opt.validate_int_option(
+        options[GROUPED_THRESHOLD],
         "Invalid minimum value for number of data points for boxplots")
 
     return options, param_values

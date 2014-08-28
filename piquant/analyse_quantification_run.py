@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """Usage:
-    analyse_quantification_run [--log-level=<log-level> --scatter-max=<scatter-max-val> --log10-scatter-min=<log10-scatter-min-val> --log10-scatter-max=<log10-scatter-max-val> --plot-format=<plot-format> --boxplot-threshold=<boxplot-threshold>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> <tpm-file> <out-file>
+    analyse_quantification_run [--log-level=<log-level> --scatter-max=<scatter-max-val> --log10-scatter-min=<log10-scatter-min-val> --log10-scatter-max=<log10-scatter-max-val> --plot-format=<plot-format> --grouped-threshold=<threshold>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> <tpm-file> <out-file>
 
 -h --help                                    Show this message.
 -v --version                                 Show version.
@@ -10,7 +10,7 @@
 --log10-scatter-min=<log10-scatter-min-val>  Minimum x and y values for log10 scatter plot; a value of 0 means do not impose a minimum [default: 0].
 --log10-scatter-max=<log10-scatter-max-val>  Maximum x and y values for log10 scatter plot; a value of 0 means do not impose a maximum [default: 0].
 --plot-format=<plot-format>                  Output format for graphs (one of {plot_formats}) [default: pdf].
---boxplot-threshold=<boxplot-threshold>      Minimum number of data points required for a group of transcripts to be shown on a boxplot [default: 300].
+--grouped-threshold=<threshold>              Minimum number of data points required for a group of transcripts to be shown on a plot [default: 300].
 --quant-method=<quant-method>                Method used to quantify transcript abundances.
 --read-length=<read-length>                  The length of sequence reads.
 --read-depth=<read-depth>                    The depth of reads sequenced across the transcriptome.
@@ -45,7 +45,7 @@ SCATTER_MAX = "--scatter-max"
 LOG10_SCATTER_MIN = "--log10-scatter-min"
 LOG10_SCATTER_MAX = "--log10-scatter-max"
 PLOT_FORMAT = "--plot-format"
-BOXPLOT_THRESHOLD = "--boxplot-threshold"
+GROUPED_THRESHOLD = "--grouped-threshold"
 
 # Read in command-line options
 __doc__ = __doc__.format(
@@ -69,8 +69,8 @@ try:
     options[LOG10_SCATTER_MAX] = opt.validate_int_option(
         options[LOG10_SCATTER_MAX],
         "Invalid maximum value for log10 scatter plot axes")
-    options[BOXPLOT_THRESHOLD] = opt.validate_int_option(
-        options[BOXPLOT_THRESHOLD],
+    options[GROUPED_THRESHOLD] = opt.validate_int_option(
+        options[GROUPED_THRESHOLD],
         "Invalid minimum value for number of data points for boxplots")
 except schema.SchemaError as exc:
     exit(exc.code)
@@ -144,7 +144,7 @@ def _draw_stratified_log_ratio_boxplots(non_zero, tp_tpms, clsfrs, options):
         plot.log_ratio_boxplot(
             options[PLOT_FORMAT], ti.tpms,
             options[OUT_FILE_BASENAME], ti.label, c,
-            options[BOXPLOT_THRESHOLD])
+            options[GROUPED_THRESHOLD])
 
 
 def _draw_stats_vs_transcript_classifier_graphs(clsfr_stats, options):
@@ -153,7 +153,8 @@ def _draw_stats_vs_transcript_classifier_graphs(clsfr_stats, options):
         for statistic in statistics.get_graphable_by_classifier_statistics():
             plot.plot_statistic_vs_transcript_classifier(
                 options[PLOT_FORMAT], stats,
-                options[OUT_FILE_BASENAME], statistic, classifier)
+                options[OUT_FILE_BASENAME], statistic, classifier,
+                options[GROUPED_THRESHOLD])
 
 
 def _draw_cumulative_transcript_distribution_graphs(

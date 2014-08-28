@@ -11,10 +11,6 @@ import statistics
 import sys
 import tpms as t
 
-NO_FILTER_LABEL = "no filter"
-BOXPLOT_NUM_TPMS_FILTER = 300
-GROUPED_STATS_NUM_TPMS_FILTER = 3000
-ORDER_VALUES = [True, False]
 PLOT_FORMATS = ["pdf", "svg", "png"]
 
 # Don't embed characters as paths when outputting SVG - assume fonts are
@@ -256,7 +252,9 @@ def log_tpm_scatter_plot(fformat, tpms, base_name, tpm_label):
         plt.ylim(ymin=min_val)
 
 
-def log_ratio_boxplot(fformat, tpms, base_name, tpm_label, classifier, threshold):
+def log_ratio_boxplot(
+        fformat, tpms, base_name, tpm_label, classifier, threshold):
+
     grouping_column = classifier.get_column_name()
     grouped_tpms = tpms.groupby(grouping_column)
     tpms = grouped_tpms.filter(
@@ -275,10 +273,9 @@ def log_ratio_boxplot(fformat, tpms, base_name, tpm_label, classifier, threshold
 
 
 def plot_statistic_vs_transcript_classifier(
-        fformat, stats, base_name, statistic, classifier):
+        fformat, stats, base_name, statistic, classifier, threshold):
 
-    stats = stats[stats[statistics.NUM_TPMS] > GROUPED_STATS_NUM_TPMS_FILTER]
-
+    stats = stats[stats[statistics.TP_NUM_TPMS] > threshold]
     clsfr_col = classifier.get_column_name()
 
     with _saving_new_plot(fformat, base_name, statistic.name, "vs", clsfr_col):
@@ -408,7 +405,7 @@ def draw_overall_stats_graphs(fformat, stats_dir, overall_stats, param_values):
                         stat, param, num_p, fixed_param_values)
 
 
-def draw_grouped_stats_graphs(fformat, stats_dir, param_values):
+def draw_grouped_stats_graphs(fformat, stats_dir, param_values, threshold):
     # Draw graphs derived from statistics calculated on groups of TPMs that
     # have been stratified into sets based on some classifier of transcripts.
     # e.g. the median percentage error of calculated vs real TPMs graphed as
@@ -418,8 +415,7 @@ def draw_grouped_stats_graphs(fformat, stats_dir, param_values):
     grouped_stats_dir = _get_plot_subdirectory(
         stats_dir, "grouped_stats_graphs")
 
-    num_tpms_filter = \
-        lambda x: x[statistics.NUM_TPMS] > GROUPED_STATS_NUM_TPMS_FILTER
+    num_tpms_filter = lambda x: x[statistics.TP_NUM_TPMS] > threshold
 
     clsfrs = classifiers.get_classifiers()
     grp_clsfrs = [c for c in clsfrs if c.produces_grouped_stats()]
@@ -469,7 +465,7 @@ def draw_distribution_graphs(fformat, stats_dir, param_values):
 
     clsfrs = classifiers.get_classifiers()
     dist_clsfrs = [c for c in clsfrs if c.produces_distribution_plots()]
-    for clsfr, asc in itertools.product(dist_clsfrs, ORDER_VALUES):
+    for clsfr, asc in itertools.product(dist_clsfrs, [True, False]):
         stats_file = statistics.get_stats_file(
             stats_dir, statistics.OVERALL_STATS_PREFIX, clsfr, asc)
         clsfr_stats = pd.read_csv(stats_file)

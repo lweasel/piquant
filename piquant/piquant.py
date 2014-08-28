@@ -7,7 +7,7 @@
     piquant prepare_read_dirs [--log-level=<log-level> --out-dir=<out_dir> --num-fragments=<num-fragments> --nocleanup --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir>]
     piquant create_reads [--log-level=<log-level> --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant check_reads [--log-level=<log-level> --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
-    piquant prepare_quant_dirs [--log-level=<log-level> --out-dir=<out-dir> --nocleanup --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir> --plot-format=<plot-format> --boxplot-threshold=<boxplot-threshold>]
+    piquant prepare_quant_dirs [--log-level=<log-level> --out-dir=<out-dir> --nocleanup --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir> --plot-format=<plot-format> --grouped-threshold=<threshold>]
     piquant prequantify [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant quantify [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant check_quant [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
@@ -31,7 +31,7 @@ Options:
 --transcript-gtf=<transcript-gtf-file>   GTF formatted file describing the transcripts to be simulated.
 --genome-fasta=<genome-fasta-dir>        Directory containing per-chromosome sequences as FASTA files.
 --plot-format=<plot-format>              Output format for graphs (one of {plot_formats}) [default: pdf].
---boxplot-threshold=<boxplot-threshold>  Minimum number of data points required for a group of transcripts to be shown on a boxplot [default: 300].
+--grouped-threshold=<threshold>  Minimum number of data points required for a group of transcripts to be shown on a plot [default: 300].
 """
 
 import docopt
@@ -156,7 +156,7 @@ class _StatsAccumulator:
         self.stratified_stats_type = stratified_stats_type
         _StatsAccumulator.ACCUMULATORS.append(self)
 
-    def __call__(self, **params):
+    def __call__(self, logger, options, **params):
         # TODO: get rid of need to pass run_name into get_stats_file()
         run_name = parameters.get_file_name(**params)
         run_dir = _get_parameters_dir(options, **params)
@@ -206,7 +206,7 @@ def _write_accumulated_stats(options):
     if not os.path.exists(options[po.STATS_DIRECTORY]):
         os.mkdir(options[po.STATS_DIRECTORY])
     for stats_acc in _StatsAccumulator.ACCUMULATORS:
-        stats_acc.write_stats()
+        stats_acc._write_stats()
 
 
 def _get_overall_stats(options):
@@ -233,7 +233,7 @@ def _draw_grouped_stats_graphs(options, stats_param_values):
                 "subsets of TPMs...")
     plot.draw_grouped_stats_graphs(
         options[po.PLOT_FORMAT], options[po.STATS_DIRECTORY],
-        stats_param_values)
+        stats_param_values, options[po.GROUPED_THRESHOLD])
 
 
 def _draw_distribution_graphs(options, stats_param_values):

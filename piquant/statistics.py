@@ -14,7 +14,7 @@ import math
 import os.path
 import tpms as t
 
-NUM_TPMS = "num-tpms"
+TP_NUM_TPMS = "tp-num-tpms"
 OVERALL_STATS_PREFIX = "overall"
 
 _SUMMARY_COUNT = "count"
@@ -142,7 +142,7 @@ class _NumberOfTPMs(_BaseStatistic):
     # Calculates the total number of transcript TPMs in the results.
     def __init__(self):
         _BaseStatistic.__init__(
-            self, NUM_TPMS, "No. TPMs",
+            self, "num-tpms", "No. TPMs",
             graphable=False, graphable_by_classifier=False)
 
     def calculate(self, tpms, tp_tpms):
@@ -164,7 +164,7 @@ class _NumberOfTruePositiveTPMs(_BaseStatistic):
     # 'presence' of the transcript.
     def __init__(self):
         _BaseStatistic.__init__(
-            self, "tp-num-tpms", "No. true positive TPMs",
+            self, TP_NUM_TPMS, "No. true positive TPMs",
             graphable_by_classifier=False)
 
     def calculate(self, tpms, tp_tpms):

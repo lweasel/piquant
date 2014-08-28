@@ -144,6 +144,7 @@ In addition to the command line options common to all ``piquant.py`` commands (s
 * ``--genome-fasta``: The path to a directory containing per-chromosome genome sequences in FASTA-formatted files. This directory location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``. The genome sequences should be the same as were supplied to the ``prepare_read_dirs`` command.
 * ``--nocleanup``: When run, quantification tools may create a number of output files. Unless ``--nocleanup`` is specified, the  ``run_quantification`` Bash script will be constructed so as to delete all of these, except those essential for *piquant* to calculate the accuracy with which quantification has been performed. 
 * ``--plot-format``: The file format in which graphs produced during the analysis of this quantification run will be written to - one of "pdf", "svg" or "png" (default "pdf").
+* ``--grouped-threshold``: When producing graphs against groups of transcripts determined by a transcript classifier, only groups with greater than this number of transcripts will contribute to the plot.
 
 Prepare for quantification (``prequantify``)
 --------------------------------------------
@@ -179,3 +180,4 @@ In addition to the command line options common to all ``piquant.py`` commands (s
 
 * ``--stats-dir``: The path to a directory into which statistics and graph files will be written. The directory will be created if it does not already exist.
 * ``--plot-format``: The file format in which graphs produced during analysis will be written to - one of "pdf", "svg" or "png" (default "pdf").
+* ``--grouped-threshold``: When producing graphs against groups of transcripts determined by a transcript classifier, only groups with greater than this number of transcripts will contribute to the plot.
