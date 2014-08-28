@@ -31,7 +31,7 @@ Options:
 --transcript-gtf=<transcript-gtf-file>   GTF formatted file describing the transcripts to be simulated.
 --genome-fasta=<genome-fasta-dir>        Directory containing per-chromosome sequences as FASTA files.
 --plot-format=<plot-format>              Output format for graphs (one of {plot_formats}) [default: pdf].
---grouped-threshold=<threshold>  Minimum number of data points required for a group of transcripts to be shown on a plot [default: 300].
+--grouped-threshold=<threshold>          Minimum number of data points required for a group of transcripts to be shown on a plot [default: 300].
 """
 
 import docopt
