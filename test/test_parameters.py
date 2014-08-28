@@ -176,23 +176,26 @@ def test_execute_for_param_sets_executes_for_correct_number_of_parameter_sets():
 
     execute_counter = []
 
-    def count_incrementer(**params):
+    def count_incrementer(logger, options, **params):
         execute_counter.append(1)
 
-    parameters.execute_for_param_sets([count_incrementer], **params_values)
+    parameters.execute_for_param_sets(
+        [count_incrementer], None, None, **params_values)
+
     assert len(execute_counter) == len1 * len2 * len3
 
 
 def test_execute_for_param_sets_executes_all_callables():
     execute_record = []
 
-    def callable1(**params):
+    def callable1(logger, options, **params):
         execute_record.append(1)
 
-    def callable2(**params):
+    def callable2(logger, options, **params):
         execute_record.append(2)
 
-    parameters.execute_for_param_sets([callable1, callable2], param=["a"])
+    parameters.execute_for_param_sets(
+        [callable1, callable2], None, None, param=["a"])
 
     assert 1 in execute_record
     assert 2 in execute_record
@@ -209,10 +212,10 @@ def test_execute_for_param_sets_executes_for_correct_sets_of_parameters():
 
     execute_record = []
 
-    def callable1(**params):
+    def callable1(logger, options, **params):
         execute_record.append([v for v in params.values()])
 
-    parameters.execute_for_param_sets([callable1], **params_values)
+    parameters.execute_for_param_sets([callable1], None, None, **params_values)
 
     execute_record = [set(params) for params in execute_record]
     assert set([params1[0], params2[0]]) in execute_record
