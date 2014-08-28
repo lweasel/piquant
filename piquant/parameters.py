@@ -141,7 +141,7 @@ def get_value_names(param_values):
     return value_names
 
 
-def execute_for_param_sets(callables, **params_values):
+def execute_for_param_sets(callables, logger, options, **params_values):
     all_run_param_names = [p.name for p in _RUN_PARAMETERS]
 
     run_param_values = {}
@@ -157,4 +157,4 @@ def execute_for_param_sets(callables, **params_values):
         for param_set in itertools.product(*run_param_values.values()):
             param_map = dict(zip(run_param_names, param_set))
             param_map.update(non_run_param_values)
-            to_call(**param_map)
+            to_call(logger, options, **param_map)

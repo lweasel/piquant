@@ -52,18 +52,18 @@ import sys
 import time
 
 
-def get_parameters_dir(**params):
+def _get_parameters_dir(options, **params):
     return os.path.join(options[po.OUTPUT_DIRECTORY],
                         parameters.get_file_name(**params))
 
 
-def reads_directory_checker(should_exist):
-    def check_reads_directory(**params):
+def _reads_directory_checker(should_exist):
+    def check_reads_directory(logger, options, **params):
         params = dict(params)
         if parameters.QUANT_METHOD.name in params:
             del params[parameters.QUANT_METHOD.name]
 
-        reads_dir = get_parameters_dir(**params)
+        reads_dir = _get_parameters_dir(options, **params)
         if should_exist != os.path.exists(reads_dir):
             sys.exit("Reads directory '{d}' should {n}already exist.".
                      format(d=reads_dir, n=("" if should_exist else "not ")))
@@ -71,19 +71,19 @@ def reads_directory_checker(should_exist):
     return check_reads_directory
 
 
-def prepare_read_simulation(**params):
-    reads_dir = get_parameters_dir(**params)
+def _prepare_read_simulation(logger, options, **params):
+    reads_dir = _get_parameters_dir(options, **params)
     cleanup = not options[po.NO_CLEANUP]
     prs.create_simulation_files(reads_dir, cleanup, **params)
 
 
-def create_reads(**params):
-    run_dir = get_parameters_dir(**params)
+def _create_reads(logger, options, **params):
+    run_dir = _get_parameters_dir(options, **params)
     process.run_in_directory(run_dir, './run_simulation.sh')
 
 
-def check_reads_created(**params):
-    reads_dir = get_parameters_dir(**params)
+def _check_reads_created(logger, options, **params):
+    reads_dir = _get_parameters_dir(options, **params)
     reads_file = fs.get_reads_file(
         params[parameters.ERRORS.name],
         fs.LEFT_READS if params[parameters.PAIRED_END.name] else None)
@@ -93,9 +93,9 @@ def check_reads_created(**params):
         logger.error("Run " + run_name + " did not complete.")
 
 
-def run_directory_checker(should_exist):
-    def check_run_directory(**params):
-        run_dir = get_parameters_dir(**params)
+def _run_directory_checker(should_exist):
+    def check_run_directory(logger, options, **params):
+        run_dir = _get_parameters_dir(options, **params)
         if should_exist != os.path.exists(run_dir):
             sys.exit("Run directory '{d}' should {n}already exist.".
                      format(d=run_dir, n=("" if should_exist else "not ")))
@@ -103,43 +103,43 @@ def run_directory_checker(should_exist):
     return check_run_directory
 
 
-def execute_quantification_script(run_dir, cl_opts):
+def _execute_quantification_script(run_dir, cl_opts):
     process.run_in_directory(run_dir, './run_quantification.sh', cl_opts)
 
 
-def prepare_quantification(**params):
-    run_dir = get_parameters_dir(**params)
+def _prepare_quantification(logger, options, **params):
+    run_dir = _get_parameters_dir(options, **params)
 
     reads_params = dict(params)
     del reads_params[parameters.QUANT_METHOD.name]
-    reads_dir = get_parameters_dir(**reads_params)
+    reads_dir = _get_parameters_dir(options, **reads_params)
 
     prq.write_run_quantification_script(reads_dir, run_dir, options, **params)
 
 quantifiers_used = []
 
 
-def prequantify(**params):
-    run_dir = get_parameters_dir(**params)
+def _prequantify(logger, options, **params):
+    run_dir = _get_parameters_dir(options, **params)
 
     quant_method = params[parameters.QUANT_METHOD.name]
     if quant_method not in quantifiers_used:
         quantifiers_used.append(quant_method)
         logger.info("Executing prequantification for " +
                     quant_method.get_name())
-        execute_quantification_script(run_dir, ["-p"])
+        _execute_quantification_script(run_dir, ["-p"])
         time.sleep(1)
 
 
-def quantify(**params):
-    run_dir = get_parameters_dir(**params)
+def _quantify(logger, options, **params):
+    run_dir = _get_parameters_dir(options, **params)
 
     logger.info("Executing shell script to run quantification analysis.")
-    execute_quantification_script(run_dir, ["-qa"])
+    _execute_quantification_script(run_dir, ["-qa"])
 
 
-def check_quantification_completed(**params):
-    run_dir = get_parameters_dir(**params)
+def _check_quantification_completed(logger, options, **params):
+    run_dir = _get_parameters_dir(options, **params)
 
     main_stats_file = statistics.get_stats_file(
         run_dir, os.path.basename(run_dir))
@@ -148,25 +148,25 @@ def check_quantification_completed(**params):
         logger.error("Run " + run_name + " did not complete")
 
 
-class StatsAccumulator:
+class _StatsAccumulator:
     ACCUMULATORS = []
 
     def __init__(self, stratified_stats_type):
         self.overall_stats_df = pd.DataFrame()
         self.stratified_stats_type = stratified_stats_type
-        StatsAccumulator.ACCUMULATORS.append(self)
+        _StatsAccumulator.ACCUMULATORS.append(self)
 
     def __call__(self, **params):
         # TODO: get rid of need to pass run_name into get_stats_file()
         run_name = parameters.get_file_name(**params)
-        run_dir = get_parameters_dir(**params)
+        run_dir = _get_parameters_dir(options, **params)
 
         stats_file = statistics.get_stats_file(
             run_dir, run_name, **self.stratified_stats_type)
         stats_df = pd.read_csv(stats_file)
         self.overall_stats_df = self.overall_stats_df.append(stats_df)
 
-    def write_stats(self):
+    def _write_stats(self):
         overall_stats_file = statistics.get_stats_file(
             options[po.STATS_DIRECTORY], statistics.OVERALL_STATS_PREFIX,
             **self.stratified_stats_type)
@@ -174,80 +174,113 @@ class StatsAccumulator:
             overall_stats_file, self.overall_stats_df, index=False)
 
 
-def get_executables_for_commands():
+def _get_executables_for_commands():
     execs = {}
     execs[po.PREPARE_READ_DIRS] = \
-        [reads_directory_checker(False), prepare_read_simulation]
+        [_reads_directory_checker(False), _prepare_read_simulation]
     execs[po.CREATE_READS] = \
-        [reads_directory_checker(True), create_reads]
+        [_reads_directory_checker(True), _create_reads]
     execs[po.CHECK_READS] = \
-        [reads_directory_checker(True), check_reads_created]
+        [_reads_directory_checker(True), _check_reads_created]
     execs[po.PREPARE_QUANT_DIRS] = \
-        [run_directory_checker(False), prepare_quantification]
+        [_run_directory_checker(False), _prepare_quantification]
     execs[po.PREQUANTIFY] = \
-        [prequantify]
+        [_prequantify]
     execs[po.QUANTIFY] = \
-        [reads_directory_checker(True), run_directory_checker(True), quantify]
+        [_reads_directory_checker(True),
+         _run_directory_checker(True), _quantify]
     execs[po.CHECK_QUANTIFICATION] = \
-        [run_directory_checker(True), check_quantification_completed]
+        [_run_directory_checker(True), _check_quantification_completed]
     execs[po.ANALYSE_RUNS] = \
-        [run_directory_checker(True)] + \
-        [StatsAccumulator(t) for t in statistics.get_stratified_stats_types()]
+        [_run_directory_checker(True)] + \
+        [_StatsAccumulator(t) for t in statistics.get_stratified_stats_types()]
     return execs
 
 
-def get_piquant_command(options):
+def _get_piquant_command(options):
     return [opt for opt, val in options.items()
-            if (val and opt in get_executables_for_commands())][0]
+            if (val and opt in _get_executables_for_commands())][0]
 
 
-# Read in command-line options
-__doc__ = __doc__.format(
-    log_level_vals=str(log.LEVELS.keys()),
-    plot_formats=plot.PLOT_FORMATS)
-options = docopt.docopt(__doc__, version="piquant v0.1")
-
-# Validate and process command-line options
-param_values = None
-try:
-    options, param_values = po.validate_command_line_options(options)
-except schema.SchemaError as exc:
-    exit("Exiting. " + exc.code)
-
-# Set up logger
-logger = log.get_logger(sys.stderr, options[po.LOG_LEVEL])
-
-piquant_command = get_piquant_command(options)
-parameters.execute_for_param_sets(
-    get_executables_for_commands()[piquant_command], **param_values)
-
-if piquant_command == po.ANALYSE_RUNS:
+def _write_accumulated_stats(options):
     if not os.path.exists(options[po.STATS_DIRECTORY]):
         os.mkdir(options[po.STATS_DIRECTORY])
-    for stats_acc in StatsAccumulator.ACCUMULATORS:
+    for stats_acc in _StatsAccumulator.ACCUMULATORS:
         stats_acc.write_stats()
 
+
+def _get_overall_stats(options):
     overall_stats_file = statistics.get_stats_file(
         options[po.STATS_DIRECTORY], statistics.OVERALL_STATS_PREFIX)
-    overall_stats = pd.read_csv(overall_stats_file)
+    return pd.read_csv(overall_stats_file)
 
-    stats_param_values = \
-        {p: overall_stats[p.name].value_counts().index.tolist()
+
+def _get_stats_param_values(overall_stats):
+    return {p: overall_stats[p.name].value_counts().index.tolist()
             for p in parameters.get_run_parameters()}
 
+
+def _draw_overall_stats_graphs(options, overall_stats, stats_param_values):
     logger.info("Drawing graphs derived from statistics calculated for the " +
                 "whole set of TPMs...")
     plot.draw_overall_stats_graphs(
         options[po.PLOT_FORMAT], options[po.STATS_DIRECTORY],
         overall_stats, stats_param_values)
 
+
+def _draw_grouped_stats_graphs(options, stats_param_values):
     logger.info("Drawing graphs derived from statistics calculated on " +
                 "subsets of TPMs...")
     plot.draw_grouped_stats_graphs(
         options[po.PLOT_FORMAT], options[po.STATS_DIRECTORY],
         stats_param_values)
 
+
+def _draw_distribution_graphs(options, stats_param_values):
     logger.info("Drawing distribution plots...")
     plot.draw_distribution_graphs(
         options[po.PLOT_FORMAT], options[po.STATS_DIRECTORY],
         stats_param_values)
+
+
+def _analyse_runs():
+    _write_accumulated_stats(options)
+
+    overall_stats = _get_overall_stats(options)
+    stats_param_values = _get_stats_param_values(overall_stats)
+
+    _draw_overall_stats_graphs(options, overall_stats, stats_param_values)
+    _draw_grouped_stats_graphs(options, stats_param_values)
+    _draw_distribution_graphs(options, stats_param_values)
+
+
+def _run_piquant_command(logger, options):
+    piquant_command = _get_piquant_command(options)
+
+    parameters.execute_for_param_sets(
+        _get_executables_for_commands()[piquant_command],
+        logger, options, **param_values)
+
+    if piquant_command == po.ANALYSE_RUNS:
+        _analyse_runs()
+
+
+if __name__ == "__main__":
+    # Read in command-line options
+    __doc__ = __doc__.format(
+        log_level_vals=str(log.LEVELS.keys()),
+        plot_formats=plot.PLOT_FORMATS)
+    options = docopt.docopt(__doc__, version="piquant v0.1")
+
+    # Validate and process command-line options
+    param_values = None
+    try:
+        options, param_values = po.validate_command_line_options(options)
+    except schema.SchemaError as exc:
+        exit("Exiting. " + exc.code)
+
+    # Set up logger
+    logger = log.get_logger(sys.stderr, options[po.LOG_LEVEL])
+
+    # Run the specified piquant command
+    _run_piquant_command(logger, options)
