@@ -2,7 +2,7 @@ import os.path
 import piquant.flux_simulator as fs
 import subprocess
 
-from utils import TempDir
+from utils import temp_dir_created
 
 TRANSCRIPT_GTF_FILE = "transcript_gtf_file"
 GENOME_FASTA_DIR = "genome_fasta_dir"
@@ -54,13 +54,13 @@ def test_read_expression_profiles_returns_data_frame_with_correct_number_of_rows
 
 
 def test_write_flux_simulator_params_files_writes_expression_params_file():
-    with TempDir() as dirname:
+    with temp_dir_created() as dirname:
         _write_flux_simulator_params_files(dirname)
         assert os.path.exists(_get_expression_params_file(dirname))
 
 
 def test_write_flux_simulator_params_files_writes_correct_common_params():
-    with TempDir() as dirname:
+    with temp_dir_created() as dirname:
         _write_flux_simulator_params_files(dirname)
 
         for d in [_get_expression_params_dict(dirname),
@@ -74,13 +74,13 @@ def test_write_flux_simulator_params_files_writes_correct_common_params():
 
 
 def test_write_flux_simulator_params_files_writes_simulation_params_file():
-    with TempDir() as dirname:
+    with temp_dir_created() as dirname:
         _write_flux_simulator_params_files(dirname)
         assert os.path.exists(_get_simulation_params_file(dirname))
 
 
 def test_write_flux_simulator_params_files_writes_correct_simulation_params():
-    with TempDir() as dirname:
+    with temp_dir_created() as dirname:
         _write_flux_simulator_params_files(dirname)
 
         d = _get_simulation_params_dict(dirname)
@@ -96,7 +96,7 @@ def test_write_flux_simulator_params_files_writes_correct_simulation_params():
 
 
 def test_write_flux_simulator_params_files_writes_correct_params_when_paired_ends_are_specified():
-    with TempDir() as dirname:
+    with temp_dir_created() as dirname:
         _write_flux_simulator_params_files(dirname, paired_end=True)
 
         d = _get_simulation_params_dict(dirname)
