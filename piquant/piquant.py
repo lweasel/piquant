@@ -53,6 +53,16 @@ import time
 
 
 def _get_parameters_dir(options, **params):
+    """
+    Return the path of a read or quantification directory.
+
+    Return the path of a read or quantification directory given a dictionary of
+    run parameters (e.g. quantification method, read depth etc.).
+    options: A dictionary mapping from piquant command line option names to
+    option values.
+    params: A dictionary mapping from parameters._Parameter instances to
+    parameter values.
+    """
     return os.path.join(options[po.OUTPUT_DIRECTORY],
                         parameters.get_file_name(**params))
 
