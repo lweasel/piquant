@@ -1,3 +1,4 @@
+import classifiers
 import pandas as pd
 import numpy as np
 
@@ -53,8 +54,8 @@ def calculate_log_ratios(tpms):
         tpms[LOG10_CALCULATED_TPM] - tpms[LOG10_REAL_TPM]
 
 
-def apply_classifiers(tpms, clsfrs):
-    for classifier in clsfrs:
+def apply_classifiers(tpms):
+    for classifier in classifiers.get_classifiers():
         column_name = classifier.get_column_name()
         tpms[column_name] = tpms.apply(
             classifier.get_classification_value, axis=1)

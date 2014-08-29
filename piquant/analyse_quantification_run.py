@@ -47,35 +47,32 @@ LOG10_SCATTER_MAX = "--log10-scatter-max"
 PLOT_FORMAT = "--plot-format"
 GROUPED_THRESHOLD = "--grouped-threshold"
 
-# Read in command-line options
-__doc__ = __doc__.format(
-    log_level_vals=LOG_LEVEL_VALS,
-    plot_formats=plot.PLOT_FORMATS)
-options = docopt.docopt(__doc__, version="assemble_quantification_data v0.1")
-
-# Validate command-line options
-try:
-    opt.validate_dict_option(
-        options[LOG_LEVEL], log.LEVELS, "Invalid log level")
-    opt.validate_list_option(
-        options[PLOT_FORMAT], plot.PLOT_FORMATS, "Invalid plot format")
-
-    opt.validate_file_option(options[TPM_FILE], "Could not open TPM file")
-    options[SCATTER_MAX] = opt.validate_int_option(
-        options[SCATTER_MAX], "Invalid maximum value for scatter plot axes")
-    options[LOG10_SCATTER_MIN] = opt.validate_int_option(
-        options[LOG10_SCATTER_MIN],
-        "Invalid minimum value for log10 scatter plot axes")
-    options[LOG10_SCATTER_MAX] = opt.validate_int_option(
-        options[LOG10_SCATTER_MAX],
-        "Invalid maximum value for log10 scatter plot axes")
-    options[GROUPED_THRESHOLD] = opt.validate_int_option(
-        options[GROUPED_THRESHOLD],
-        "Invalid minimum value for number of data points for boxplots")
-except schema.SchemaError as exc:
-    exit(exc.code)
-
 TpmInfo = collections.namedtuple("TpmInfo", ["tpms", "label"])
+
+
+def _validate_command_line_options(options):
+    try:
+        opt.validate_dict_option(
+            options[LOG_LEVEL], log.LEVELS, "Invalid log level")
+        opt.validate_list_option(
+            options[PLOT_FORMAT], plot.PLOT_FORMATS, "Invalid plot format")
+
+        opt.validate_file_option(options[TPM_FILE], "Could not open TPM file")
+
+        options[SCATTER_MAX] = opt.validate_int_option(
+            options[SCATTER_MAX],
+            "Invalid maximum value for scatter plot axes")
+        options[LOG10_SCATTER_MIN] = opt.validate_int_option(
+            options[LOG10_SCATTER_MIN],
+            "Invalid minimum value for log10 scatter plot axes")
+        options[LOG10_SCATTER_MAX] = opt.validate_int_option(
+            options[LOG10_SCATTER_MAX],
+            "Invalid maximum value for log10 scatter plot axes")
+        options[GROUPED_THRESHOLD] = opt.validate_int_option(
+            options[GROUPED_THRESHOLD],
+            "Invalid minimum value for number of data points for boxplots")
+    except schema.SchemaError as exc:
+        exit(exc.code)
 
 
 def _get_non_zero_tpms(tpms):
@@ -101,10 +98,10 @@ def _write_overall_stats(tpms, tp_tpms, options):
     statistics.write_stats_data(stats_file_name, stats, index=False)
 
 
-def _write_stratified_stats(tpms, tp_tpms, non_zero, clsfrs, options):
+def _write_stratified_stats(tpms, tp_tpms, non_zero, options):
     clsfr_stats = {}
 
-    for classifier in clsfrs:
+    for classifier in classifiers.get_classifiers():
         if classifier.produces_grouped_stats():
             column_name = classifier.get_column_name()
             stats = t.get_grouped_stats(
@@ -136,11 +133,12 @@ def _draw_tpm_scatter_plot(tp_tpms, options):
         options[OUT_FILE_BASENAME], TRUE_POSITIVES_LABEL)
 
 
-def _draw_stratified_log_ratio_boxplots(non_zero, tp_tpms, clsfrs, options):
+def _draw_stratified_log_ratio_boxplots(non_zero, tp_tpms, options):
     tpm_infos = _get_tpm_infos(non_zero, tp_tpms)
-    classifiers = [c for c in clsfrs if c.produces_grouped_stats()]
+    clsfrs = [c for c in classifiers.get_classifiers()
+              if c.produces_grouped_stats()]
 
-    for c, ti in itertools.product(classifiers, tpm_infos):
+    for c, ti in itertools.product(clsfrs, tpm_infos):
         plot.log_ratio_boxplot(
             options[PLOT_FORMAT], ti.tpms,
             options[OUT_FILE_BASENAME], ti.label, c,
@@ -158,74 +156,101 @@ def _draw_stats_vs_transcript_classifier_graphs(clsfr_stats, options):
 
 
 def _draw_cumulative_transcript_distribution_graphs(
-        tp_tpms, non_zero, clsfrs, options):
+        tp_tpms, non_zero, options):
 
     tpm_infos = _get_tpm_infos(non_zero, tp_tpms)
-    classifiers = [c for c in clsfrs if c.produces_distribution_plots()]
+    clsfrs = [c for c in classifiers.get_classifiers()
+              if c.produces_distribution_plots()]
     ascending = [True, False]
 
-    for c, asc, ti in itertools.product(classifiers, ascending, tpm_infos):
+    for c, asc, ti in itertools.product(clsfrs, ascending, tpm_infos):
         plot.plot_cumulative_transcript_distribution(
             options[PLOT_FORMAT], ti.tpms,
             options[OUT_FILE_BASENAME], ti.label, c, asc)
 
 
-# Set up logger
-logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
+def _prepare_data(tpms):
+    # Determine whether each TPM measurement is a true/false positive/negative.
+    # For our purposes, marking an TPM as positive or negative is determined by
+    # whether it is greater or less than an "isoform not present" cutoff value.
+    logger.info("Marking positives and negatives...")
+    t.mark_positives_and_negatives(tpms)
 
-# Read TPMs into a data frame
-logger.info("Reading TPMs...")
-tpms = pd.read_csv(options[TPM_FILE])
+    # Calculate the percent error (positive or negative) of the calculated TPM
+    # values from the real values
+    logger.info("Calculating TPM percentage errors...")
+    t.calculate_percent_error(tpms)
 
-# Determine whether each TPM measurement is a true/false positive/negative.
-# For our purposes, marking an TPM as positive or negative is determined
-# by whether it is greater or less than an "isoform not present" cutoff value.
-logger.info("Marking positives and negatives...")
-t.mark_positives_and_negatives(tpms)
+    # Calculate log ratio of calculated and real TPMs
+    logger.info("Calculating TPM log ratios...")
+    t.calculate_log_ratios(tpms)
 
-# Calculate the percent error (positive or negative) of the calculated TPM
-# values from the real values
-logger.info("Calculating TPM percentage errors...")
-t.calculate_percent_error(tpms)
+    # Apply various classification measures to the TPM data
+    logger.info("Applying classifiers...")
+    t.apply_classifiers(tpms)
 
-# Calculate log ratio of calculated and real TPMs
-logger.info("Calculating TPM log ratios...")
-t.calculate_log_ratios(tpms)
 
-# Apply various classification measures to the TPM data
-logger.info("Applying classifiers...")
-clsfrs = classifiers.get_classifiers()
-t.apply_classifiers(tpms, clsfrs)
+def _write_statistics(options, tpms, tp_tpms, non_zero):
+    # Write statistics pertaining to the set of quantified transcripts as a
+    # whole.
+    logger.info("Writing overall statistics...")
+    _write_overall_stats(tpms, tp_tpms, options)
 
-# Get data frames containing only true positive TPMs and TPMs with non-zero
-# real and estimated abundances
-logger.info("Getting filtered TPMs...")
-tp_tpms = t.get_true_positives(tpms)
-non_zero = _get_non_zero_tpms(tpms)
+    # Write statistics for TPMS stratified by various classification measures
+    logger.info("Writing statistics for stratified TPMs")
+    return _write_stratified_stats(tpms, tp_tpms, non_zero, options)
 
-# Write statistics pertaining to the set of quantified transcripts as a whole.
-logger.info("Writing overall statistics...")
-_write_overall_stats(tpms, tp_tpms, options)
 
-# Write statistics for TPMS stratified by various classification measures
-logger.info("Writing statistics for stratified TPMs")
-clsfr_stats = _write_stratified_stats(tpms, tp_tpms, non_zero, clsfrs, options)
+def _draw_graphs(options, tp_tpms, non_zero, clsfr_stats):
+    # Make a scatter plot of log transformed calculated vs real TPMs
+    _draw_tpm_scatter_plot(tp_tpms, options)
 
-# Draw graphs
-logger.info("Plotting graphs...")
+    # Make boxplots of log ratios stratified by various classification measures
+    # (e.g. the number of transcripts per-originating gene of each transcript)
+    _draw_stratified_log_ratio_boxplots(non_zero, tp_tpms, options)
 
-# Make a scatter plot of log transformed calculated vs real TPMs
-_draw_tpm_scatter_plot(tp_tpms, options)
+    # Make plots of statistics calculated on groups of transcripts stratified
+    # by classification measures
+    _draw_stats_vs_transcript_classifier_graphs(clsfr_stats, options)
 
-# Make boxplots of log ratios stratified by various classification measures
-# (e.g. the number of transcripts per-originating gene of each transcript)
-_draw_stratified_log_ratio_boxplots(non_zero, tp_tpms, clsfrs, options)
+    # Make plots showing the percentage of isoforms above or below threshold
+    # values according to various classification measures
+    _draw_cumulative_transcript_distribution_graphs(tp_tpms, non_zero, options)
 
-# Make plots of statistics calculated on groups of transcripts stratified by
-# classification measures
-_draw_stats_vs_transcript_classifier_graphs(clsfr_stats, options)
 
-# Make plots showing the percentage of isoforms above or below threshold values
-# according to various classification measures
-_draw_cumulative_transcript_distribution_graphs(
-    tp_tpms, non_zero, clsfrs, options)
+def _analyse_run(logger, options):
+    # Read TPMs into a data frame
+    logger.info("Reading TPMs...")
+    tpms = pd.read_csv(options[TPM_FILE])
+
+    _prepare_data(tpms)
+
+    # Get data frames containing only true positive TPMs and TPMs with non-zero
+    # real and estimated abundances
+    logger.info("Getting filtered TPMs...")
+    tp_tpms = t.get_true_positives(tpms)
+    non_zero = _get_non_zero_tpms(tpms)
+
+    clsfr_stats = _write_statistics(options, tpms, tp_tpms, non_zero)
+
+    # Draw graphs
+    logger.info("Plotting graphs...")
+    _draw_graphs(options, tp_tpms, non_zero, clsfr_stats)
+
+
+if __name__ == "__main__":
+    # Read in command-line options
+    __doc__ = __doc__.format(
+        log_level_vals=LOG_LEVEL_VALS,
+        plot_formats=plot.PLOT_FORMATS)
+    options = docopt.docopt(
+        __doc__, version="analyse_quantification_run v0.1")
+
+    # Validate command-line options
+    _validate_command_line_options(options)
+
+    # Set up logger
+    logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
+
+    # Write statistics and graphs for the quantification run
+    _analyse_run(logger, options)
