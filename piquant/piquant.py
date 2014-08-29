@@ -54,10 +54,10 @@ import time
 
 def _get_parameters_dir(options, **params):
     """
-    Return the path of a read or quantification directory.
+    Return the path of a reads or quantification directory.
 
-    Return the path of a read or quantification directory given a dictionary of
-    run parameters (e.g. quantification method, read depth etc.).
+    Return the path of a reads or quantification directory given a dictionary
+    of run parameters (e.g. quantification method, read depth etc.).
     options: A dictionary mapping from piquant command line option names to
     option values.
     params: A dictionary mapping from parameters._Parameter instances to
@@ -68,6 +68,15 @@ def _get_parameters_dir(options, **params):
 
 
 def _reads_directory_checker(should_exist):
+    """
+    Return a function checking the existence of a run directory.
+
+    Return a function which, when called, will exit the Python interpreter if
+    the specified reads or quantification directory does or doesn't exists.
+    should_exist: If True, the returned function will exit if the specified
+    reads or quantification directory does not exist. If False, the function
+    will exit if the reads or quantification directory does already exist.
+    """
     def check_reads_directory(logger, options, **params):
         params = dict(params)
         if parameters.QUANT_METHOD.name in params:
