@@ -4,19 +4,19 @@
 # TODO: rename out-dir
 
 """Usage:
-    piquant prepare_read_dirs [--log-level=<log-level> --out-dir=<out_dir> --num-fragments=<num-fragments> --nocleanup --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir>]
-    piquant create_reads [--log-level=<log-level> --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
-    piquant check_reads [--log-level=<log-level> --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
-    piquant prepare_quant_dirs [--log-level=<log-level> --out-dir=<out-dir> --nocleanup --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir> --plot-format=<plot-format> --grouped-threshold=<threshold>]
-    piquant prequantify [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
-    piquant quantify [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
-    piquant check_quant [--log-level=<log-level> --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
-    piquant analyse_runs [--log-level=<log-level> --out-dir=<out-dir> --stats-dir=<stats-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --plot-format=<plot-format>]
+    piquant prepare_read_dirs [{log_option_spec} --out-dir=<out_dir> --num-fragments=<num-fragments> --nocleanup --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir>]
+    piquant create_reads [{log_option_spec} --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+    piquant check_reads [{log_option_spec} --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+    piquant prepare_quant_dirs [{log_option_spec} --out-dir=<out-dir> --nocleanup --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir> --plot-format=<plot-format> --grouped-threshold=<threshold>]
+    piquant prequantify [{log_option_spec} --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+    piquant quantify [{log_option_spec} --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+    piquant check_quant [{log_option_spec} --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+    piquant analyse_runs [{log_option_spec} --out-dir=<out-dir> --stats-dir=<stats-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --plot-format=<plot-format>]
 
 Options:
 -h --help                                Show this message.
 -v --version                             Show version.
---log-level=<log-level>                  Set logging level (one of {log_level_vals}) [default: info].
+{log_option_spec}                  {log_option_description}
 --out-dir=<out-dir>                      Parent output directory to which quantification run directories will be written [default: output].
 --stats-dir=<stats-dir>                  Directory to output assembled stats and graphs to [default: output/analysis].
 --num-fragments=<num-fragments>          Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
@@ -37,6 +37,7 @@ Options:
 import docopt
 import flux_simulator as fs
 import log
+import options as opt
 import os
 import os.path
 import pandas as pd
@@ -286,9 +287,8 @@ def _run_piquant_command(logger, options):
 
 if __name__ == "__main__":
     # Read in command-line options
-    __doc__ = __doc__.format(
-        log_level_vals=str(log.LEVELS.keys()),
-        plot_formats=plot.PLOT_FORMATS)
+    __doc__ = opt.substitute_into_usage(
+        __doc__, plot_formats=plot.PLOT_FORMATS)
     options = docopt.docopt(__doc__, version="piquant v0.1")
 
     # Validate and process command-line options
@@ -299,7 +299,7 @@ if __name__ == "__main__":
         exit("Exiting. " + exc.code)
 
     # Set up logger
-    logger = log.get_logger(sys.stderr, options[po.LOG_LEVEL])
+    logger = opt.get_logger_for_options(options)
 
     # Run the specified piquant command
     _run_piquant_command(logger, options)

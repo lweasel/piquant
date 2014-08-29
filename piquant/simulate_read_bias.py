@@ -15,7 +15,6 @@
 
 import collections
 import docopt
-import log
 import options as opt
 import os.path
 import pwm
@@ -23,8 +22,6 @@ import random
 import schema
 import sys
 
-LOG_LEVEL = "--log-level"
-LOG_LEVEL_VALS = str(log.LEVELS.keys())
 NUM_READS = "--num-reads"
 OUT_PREFIX = "--out-prefix"
 PAIRED_END = "--paired-end"
@@ -32,13 +29,13 @@ PWM_FILE = "<pwm-file>"
 READS_FILE = "<reads_file>"
 
 # Read in command-line options
-__doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
+__doc__ = opt.substitute_into_usage(__doc__)
 options = docopt.docopt(__doc__, version="simulate_read_bias v0.1")
 
 # Validate command-line options
 try:
-    opt.validate_dict_option(
-        options[LOG_LEVEL], log.LEVELS, "Invalid log level")
+    opt.validate_log_level(options)
+
     options[NUM_READS] = opt.validate_int_option(
         options[NUM_READS],
         "Number of reads must be non-negative", nonneg=True)
@@ -50,7 +47,7 @@ except schema.SchemaError as exc:
     exit(exc.code)
 
 # Set up logger
-logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
+logger = opt.get_logger_for_options(options)
 
 # Read PWM file
 logger.info("Reading PWM file " + options[PWM_FILE])

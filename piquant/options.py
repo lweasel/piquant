@@ -9,11 +9,16 @@ validate_dict_option: Check if a string option is a dictionary key.
 validate_options_list: Check if each of a list of items is valid.
 validate_int_option: Check if a string option represents an integer.
 check_boolean_value: Validates an option string represents a boolean value.
+get_logger_for_options: Return a Logger with option-specified severity level.
+validate_log_level: Check an option-specified logging level is valid.
+substitute_into_usage: Substitute interpolations into a tool's usage message.
 """
 
 from schema import And, Or, Schema, Use
 
+import log
 import os.path
+import sys
 
 
 def validate_file_option(file_option, msg, should_exist=True, nullable=False):
@@ -173,3 +178,47 @@ def check_boolean_value(option_string):
 
 def _nullable_validator(validator):
     return Or(validator, None)
+
+
+def get_logger_for_options(options):
+    """
+    Return a Logger instance with a command-line specified severity threshold.
+
+    Return a Logger instance with severity threshold specified by the command
+    line option log.LOG_LEVEL. Log messages will be written to standard out.
+    options: Dictionary mapping from command-line option strings to option
+    values.
+    """
+    return log.get_logger(sys.stderr, options[log.LOG_LEVEL])
+
+
+def validate_log_level(options):
+    """
+    Check a command-line option specified logging level is valid.
+
+    Check that the logging level specified through the command-line option
+    log.LOG_LEVEL is one of the keys of the LEVELS dictionary.
+    options: Dictionary mapping from command-line option strings to option
+    values.
+    """
+    validate_dict_option(
+        options[log.LOG_LEVEL], log.LEVELS, "Invalid log level")
+
+
+def substitute_into_usage(usage_msg, **substitutions):
+    """
+    Substitute log option and other interpolations into a tool's usage message.
+
+    Substitute a logging level option specification and description into a
+    script's usage message; also substitute any other interpolations specified
+    by additional keyword arguments.
+    usage_msg: A script's usage message.
+    substitutions: Additional key=value interpolations to substitute into the
+    usage message.
+    """
+    spec = "--{log_option}=<{log_option}>".format(log_option=log.LOG_LEVEL)
+    desc = ("Set logging level " +
+            "(one of {log_level_vals}) [default: info].").format(
+        log_level_vals=str(log.LEVELS.keys()))
+    return usage_msg.format(
+        log_option_spec=spec, log_option_description=desc, **substitutions)

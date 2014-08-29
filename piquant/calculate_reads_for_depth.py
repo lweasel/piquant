@@ -13,13 +13,8 @@
 
 import docopt
 import flux_simulator as fs
-import log
 import options as opt
 import schema
-import sys
-
-LOG_LEVEL = "--log-level"
-LOG_LEVEL_VALS = str(log.LEVELS.keys())
 
 PRO_FILE = "<pro-file>"
 READ_LENGTH = "<read-length>"
@@ -28,8 +23,8 @@ READ_DEPTH = "<read-depth>"
 
 def _validate_command_line_options(options):
     try:
-        opt.validate_dict_option(
-            options[LOG_LEVEL], log.LEVELS, "Invalid log level")
+        opt.validate_log_level(options)
+
         opt.validate_file_option(
             options[PRO_FILE], "Could not open expression profile file")
         options[READ_LENGTH] = opt.validate_int_option(
@@ -65,14 +60,14 @@ def _calculate_reads_for_depth(profiles, read_length, required_depth):
 
 if __name__ == "__main__":
     # Read in command-line options
-    __doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
+    __doc__ = opt.substitute_into_usage(__doc__)
     options = docopt.docopt(__doc__, version="calculate_reads_for_depth v0.1")
 
     # Validate and process command-line options
     _validate_command_line_options(options)
 
     # Set up logger
-    logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
+    logger = opt.get_logger_for_options(options)
 
     # Read in Flux Simulator expression profiles
     profiles = _read_expression_profiles(logger, options[PRO_FILE])

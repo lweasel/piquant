@@ -5,6 +5,8 @@ get_logger: Return a logger with a specified severity threshold.
 """
 
 import logging
+import options as opt
+import sys
 
 LEVELS = {
     "debug": logging.DEBUG,
@@ -13,6 +15,8 @@ LEVELS = {
     "error": logging.ERROR,
     "critical": logging.CRITICAL
     }
+
+LOG_LEVEL = "log-level"
 
 
 def get_logger(stream, level):
@@ -34,3 +38,5 @@ def get_logger(stream, level):
     logger.setLevel(LEVELS[level])
     logger.addHandler(handler)
     return logger
+
+

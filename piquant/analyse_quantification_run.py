@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 """Usage:
-    analyse_quantification_run [--log-level=<log-level> --scatter-max=<scatter-max-val> --log10-scatter-min=<log10-scatter-min-val> --log10-scatter-max=<log10-scatter-max-val> --plot-format=<plot-format> --grouped-threshold=<threshold>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> <tpm-file> <out-file>
+    analyse_quantification_run [{log_option_spec} --scatter-max=<scatter-max-val> --log10-scatter-min=<log10-scatter-min-val> --log10-scatter-max=<log10-scatter-max-val> --plot-format=<plot-format> --grouped-threshold=<threshold>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> <tpm-file> <out-file>
 
 -h --help                                    Show this message.
 -v --version                                 Show version.
+{log_option_description}
 --log-level=<log-level>                      Set logging level (one of {log_level_vals}) [default: info].
 --scatter-max=<scatter-max-val>              Maximum x and y values for scatter plot; a value of 0 means do not impose a maximum [default: 0].
 --log10-scatter-min=<log10-scatter-min-val>  Minimum x and y values for log10 scatter plot; a value of 0 means do not impose a minimum [default: 0].
@@ -25,7 +26,6 @@ import classifiers
 import collections
 import docopt
 import itertools
-import log
 import options as opt
 import pandas as pd
 import parameters
@@ -33,12 +33,9 @@ import statistics
 import tpms as t
 import plot
 import schema
-import sys
 
 TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
 TRUE_POSITIVES_LABEL = "true positive TPMs"
-LOG_LEVEL = "--log-level"
-LOG_LEVEL_VALS = str(log.LEVELS.keys())
 TPM_FILE = "<tpm-file>"
 OUT_FILE_BASENAME = "<out-file>"
 SCATTER_MAX = "--scatter-max"
@@ -52,8 +49,8 @@ TpmInfo = collections.namedtuple("TpmInfo", ["tpms", "label"])
 
 def _validate_command_line_options(options):
     try:
-        opt.validate_dict_option(
-            options[LOG_LEVEL], log.LEVELS, "Invalid log level")
+        opt.validate_log_level(options)
+
         opt.validate_list_option(
             options[PLOT_FORMAT], plot.PLOT_FORMATS, "Invalid plot format")
 
@@ -240,8 +237,7 @@ def _analyse_run(logger, options):
 
 if __name__ == "__main__":
     # Read in command-line options
-    __doc__ = __doc__.format(
-        log_level_vals=LOG_LEVEL_VALS,
+    __doc__ = opt.substitute_into_usage(__doc__).format(
         plot_formats=plot.PLOT_FORMATS)
     options = docopt.docopt(
         __doc__, version="analyse_quantification_run v0.1")
@@ -250,7 +246,7 @@ if __name__ == "__main__":
     _validate_command_line_options(options)
 
     # Set up logger
-    logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
+    logger = opt.get_logger_for_options(options)
 
     # Write statistics and graphs for the quantification run
     _analyse_run(logger, options)

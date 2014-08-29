@@ -19,15 +19,11 @@ from docopt import docopt
 from schema import SchemaError
 
 import flux_simulator as fs
-import log
 import options as opt
 import pandas
 import quantifiers as qs
-import sys
 import tpms
 
-LOG_LEVEL = "--log-level"
-LOG_LEVEL_VALS = str(log.LEVELS.keys())
 QUANT_METHOD = "--method"
 OUT_FILE = "--out"
 PRO_FILE = "<pro-file>"
@@ -43,13 +39,13 @@ SORTED_PREFIX = "sorted"
 SORTED_BAM_FILE = SORTED_PREFIX + ".bam"
 
 # Read in command-line options
-__doc__ = __doc__.format(log_level_vals=LOG_LEVEL_VALS)
+__doc__ = opt.substitute_into_usage(__doc__)
 options = docopt(__doc__, version="assemble_quantification_data v0.1")
 
 # Validate command-line options
 try:
-    opt.validate_dict_option(
-        options[LOG_LEVEL], log.LEVELS, "Invalid log level")
+    opt.validate_log_level(options)
+
     opt.validate_file_option(
         options[PRO_FILE], "Could not open expression profile file")
     opt.validate_file_option(
@@ -66,7 +62,7 @@ except SchemaError as exc:
     exit(exc.code)
 
 # Set up logger
-logger = log.get_logger(sys.stderr, options[LOG_LEVEL])
+logger = opt.get_logger_for_options(options)
 
 # Read in the expression profile file, and calculate the true TPM
 # for each transcript

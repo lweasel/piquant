@@ -1,4 +1,3 @@
-import log
 import options as opt
 import os.path
 import parameters
@@ -25,8 +24,7 @@ ANALYSE_RUNS = "analyse_runs"
 
 
 def validate_command_line_options(options):
-    opt.validate_dict_option(
-        options[LOG_LEVEL], log.LEVELS, "Invalid log level")
+    opt.validate_log_level(options)
 
     opt.validate_dir_option(
         options[OUTPUT_DIRECTORY], "Output parent directory does not exist")
