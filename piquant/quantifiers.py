@@ -120,7 +120,7 @@ class _Cufflinks:
     def requires_paired_end_reads(cls):
         return False
 
-    def calculate_transcript_abundances(self, quant_file):
+    def read_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
                                       index_col="tracking_id")
 
@@ -219,7 +219,7 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
     def requires_paired_end_reads(cls):
         return False
 
-    def calculate_transcript_abundances(self, quant_file):
+    def read_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
                                       index_col="transcript_id")
 
@@ -285,7 +285,7 @@ class _Express(_TranscriptomeBasedQuantifierBase):
     def requires_paired_end_reads(cls):
         return False
 
-    def calculate_transcript_abundances(self, quant_file):
+    def read_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
                                       index_col="target_id")
 
@@ -365,7 +365,7 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
     def requires_paired_end_reads(cls):
         return False
 
-    def calculate_transcript_abundances(self, quant_file):
+    def read_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
                                       index_col="Transcript")
 
