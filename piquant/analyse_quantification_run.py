@@ -187,7 +187,7 @@ def _prepare_data(tpms):
 
     # Apply various classification measures to the TPM data
     logger.info("Applying classifiers...")
-    t.apply_classifiers(tpms)
+    t.apply_classifiers(tpms, classifiers.get_classifiers())
 
 
 def _write_statistics(options, tpms, tp_tpms, non_zero):
