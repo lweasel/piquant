@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 """Usage:
-    count_transcripts_for_genes [--log-level=<log-level>] <gtf-file>
+    count_transcripts_for_genes [{log_option_spec}] <gtf-file>
 
 -h --help                 Show this message.
 -v --version              Show version.
---log-level=<log-level>   Set logging level (one of {log_level_vals}) [default: info].
+{log_option_spec}         {log_option_description}
 <gtf-file>                GTF file containing genes and transcripts.
 """
 

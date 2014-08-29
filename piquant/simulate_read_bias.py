@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 """Usage:
-    simulate_read_bias [--log-level=<log-level>] --num-reads=<num-reads> [--out-prefix=<out-prefix>] [--paired-end] <pwm-file> <reads_file>
+    simulate_read_bias [{log_option_spec}] --num-reads=<num-reads> [--out-prefix=<out-prefix>] [--paired-end] <pwm-file> <reads_file>
 
 -h --help                   Show this message.
 -v --version                Show version.
---log-level=<log-level>     Set logging level (one of {log_level_vals}) [default: info].
+{log_option_spec}     {log_option_description}
 -n --num-reads=<num-reads>  Number of reads to output.
 --out-prefix=<out-prefix>   String to be prepended to input file names for output [default: bias]
 --paired-end                Indicates the reads file contains paired-end reads.

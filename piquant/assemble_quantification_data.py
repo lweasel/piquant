@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 """Usage:
-    assemble_quantification_data [--log-level=<log-level>] --method=<quantification-method> --out=<output-file> <pro-file> <quantification-file> <transcript-count-file> <unique-sequence-file>
+    assemble_quantification_data [{log_option_spec} --method=<quantification-method> --out=<output-file> <pro-file> <quantification-file> <transcript-count-file> <unique-sequence-file>
 
 -h --help                    Show this message.
 -v --version                 Show version.
---log-level=<log-level>      Set logging level (one of {log_level_vals}) [default: info].
+{log_option_spec}      {log_option_description}
 -m --method=<quant-method>   Method used to quantify transcript abundances.
 -o <output-file> --out=<output-file>
                              Output file for real and calculated TPMs.

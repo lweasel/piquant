@@ -5,8 +5,7 @@
 
 -h --help                                    Show this message.
 -v --version                                 Show version.
-{log_option_description}
---log-level=<log-level>                      Set logging level (one of {log_level_vals}) [default: info].
+{log_option_spec}                      {log_option_description}
 --scatter-max=<scatter-max-val>              Maximum x and y values for scatter plot; a value of 0 means do not impose a maximum [default: 0].
 --log10-scatter-min=<log10-scatter-min-val>  Minimum x and y values for log10 scatter plot; a value of 0 means do not impose a minimum [default: 0].
 --log10-scatter-max=<log10-scatter-max-val>  Maximum x and y values for log10 scatter plot; a value of 0 means do not impose a maximum [default: 0].

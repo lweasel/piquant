@@ -4,7 +4,6 @@ import parameters
 import plot
 import schema
 
-LOG_LEVEL = "--log-level"
 OUTPUT_DIRECTORY = "--out-dir"
 STATS_DIRECTORY = "--stats-dir"
 NO_CLEANUP = "--nocleanup"

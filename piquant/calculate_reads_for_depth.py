@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 """Usage:
-    calculate_reads_for_depth [--log-level=<log-level>] <pro-file> <read-length> <read-depth>
+    calculate_reads_for_depth [{log_option_spec} <pro-file> <read-length> <read-depth>
 
 -h --help                           Show this message.
 -v --version                        Show version.
---log-level=<log-level>             Set logging level (one of {log_level_vals}) [default: info].
+{log_option_spec}                   {log_option_description}
 <pro-file>                          Flux Simulator gene expression profile file.
 <read-length>                       The length of simulated reads.
 <read-depth>                        The (approximate) read depth that is required given the specified read length.
