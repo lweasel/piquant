@@ -14,8 +14,8 @@
     piquant analyse_runs [{log_option_spec} --out-dir=<out-dir> --stats-dir=<stats-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --plot-format=<plot-format>]
 
 Options:
--h --help                                Show this message.
--v --version                             Show version.
+{help_option_spec}                                {help_option_description}
+{ver_option_spec}                             {ver_option_description}
 {log_option_spec}                  {log_option_description}
 --out-dir=<out-dir>                      Parent output directory to which quantification run directories will be written [default: output].
 --stats-dir=<stats-dir>                  Directory to output assembled stats and graphs to [default: output/analysis].
@@ -36,7 +36,6 @@ Options:
 
 import docopt
 import flux_simulator as fs
-import log
 import options as opt
 import os
 import os.path
@@ -287,7 +286,7 @@ def _run_piquant_command(logger, options):
 
 if __name__ == "__main__":
     # Read in command-line options
-    __doc__ = opt.substitute_into_usage(
+    __doc__ = opt.substitute_common_options_into_usage(
         __doc__, plot_formats=plot.PLOT_FORMATS)
     options = docopt.docopt(__doc__, version="piquant v0.1")
 

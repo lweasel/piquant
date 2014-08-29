@@ -3,9 +3,9 @@
 """Usage:
     count_transcripts_for_genes [{log_option_spec}] <gtf-file>
 
--h --help                 Show this message.
--v --version              Show version.
-{log_option_spec}         {log_option_description}
+{help_option_spec}                 {help_option_description}
+{ver_option_spec}              {ver_option_description}
+{log_option_spec}   {log_option_description}
 <gtf-file>                GTF file containing genes and transcripts.
 """
 
@@ -40,7 +40,7 @@ def get_transcript_counts_for_genes(transcript_to_gene_mappings):
 
 
 # Read in command-line options
-__doc__ = opt.substitute_into_usage(__doc__)
+__doc__ = opt.substitute_common_options_into_usage(__doc__)
 options = docopt.docopt(__doc__, version="count_transcripts_for_genes.py")
 
 # Validate command-line options

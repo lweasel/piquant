@@ -11,7 +11,7 @@ validate_int_option: Check if a string option represents an integer.
 check_boolean_value: Validates an option string represents a boolean value.
 get_logger_for_options: Return a Logger with option-specified severity level.
 validate_log_level: Check an option-specified logging level is valid.
-substitute_into_usage: Substitute interpolations into a tool's usage message.
+substitute_common_options_into_usage: Substitute interpolations into a usage message.
 """
 
 from schema import And, Or, Schema, Use
@@ -205,20 +205,30 @@ def validate_log_level(options):
         options[log.LOG_LEVEL], log.LEVELS, "Invalid log level")
 
 
-def substitute_into_usage(usage_msg, **substitutions):
+def substitute_common_options_into_usage(usage_msg, **substitutions):
     """
-    Substitute log option and other interpolations into a tool's usage message.
+    Substitute common option and other interpolations into a usage message.
 
-    Substitute a logging level option specification and description into a
-    script's usage message; also substitute any other interpolations specified
-    by additional keyword arguments.
+    Substitute help, version and logging level option specifications and
+    descriptions into a script's usage message; also substitute any other
+    interpolations specified by additional keyword arguments.
     usage_msg: A script's usage message.
     substitutions: Additional key=value interpolations to substitute into the
     usage message.
     """
-    spec = "--{log_option}=<{log_option}>".format(log_option=log.LOG_LEVEL)
-    desc = ("Set logging level " +
-            "(one of {log_level_vals}) [default: info].").format(
+    help_spec = "-h --help"
+    help_desc = "Show this message."
+
+    ver_spec = "-v --version"
+    ver_desc = "Show version."
+
+    log_spec = "--{log_option}=<{log_option}>".format(log_option=log.LOG_LEVEL)
+    log_desc = ("Set logging level " +
+                "(one of {log_level_vals}) [default: info].").format(
         log_level_vals=str(log.LEVELS.keys()))
+
     return usage_msg.format(
-        log_option_spec=spec, log_option_description=desc, **substitutions)
+        log_option_spec=log_spec, log_option_description=log_desc,
+        help_option_spec=help_spec, help_option_description=help_desc,
+        ver_option_spec=ver_spec, ver_option_description=ver_desc,
+        **substitutions)

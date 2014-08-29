@@ -3,8 +3,8 @@
 """Usage:
     analyse_quantification_run [{log_option_spec} --scatter-max=<scatter-max-val> --log10-scatter-min=<log10-scatter-min-val> --log10-scatter-max=<log10-scatter-max-val> --plot-format=<plot-format> --grouped-threshold=<threshold>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> <tpm-file> <out-file>
 
--h --help                                    Show this message.
--v --version                                 Show version.
+{help_option_spec}                                    {help_option_description}
+{ver_option_spec}                                 {ver_option_description}
 {log_option_spec}                      {log_option_description}
 --scatter-max=<scatter-max-val>              Maximum x and y values for scatter plot; a value of 0 means do not impose a maximum [default: 0].
 --log10-scatter-min=<log10-scatter-min-val>  Minimum x and y values for log10 scatter plot; a value of 0 means do not impose a minimum [default: 0].
@@ -236,8 +236,8 @@ def _analyse_run(logger, options):
 
 if __name__ == "__main__":
     # Read in command-line options
-    __doc__ = opt.substitute_into_usage(__doc__).format(
-        plot_formats=plot.PLOT_FORMATS)
+    __doc__ = opt.substitute_common_options_into_usage(
+        __doc__, plot_formats=plot.PLOT_FORMATS)
     options = docopt.docopt(
         __doc__, version="analyse_quantification_run v0.1")
 

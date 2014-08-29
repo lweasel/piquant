@@ -3,8 +3,8 @@
 """Usage:
     calculate_unique_transcript_sequence [{log_option_spec}] <gtf-file>
 
--h --help                 Show this message.
--v --version              Show version.
+{help_option_spec}                 {help_option_description}
+{ver_option_spec}              {ver_option_description}
 {log_option_spec}   {log_option_description}
 <gtf-file>                GTF file containing genes and transcripts.
 """
@@ -19,7 +19,7 @@ from collections import defaultdict, namedtuple
 GTF_FILE = "<gtf-file>"
 
 # Read in command-line options
-__doc__ = opt.substitute_into_usage(__doc__)
+__doc__ = opt.substitute_common_options_into_usage(__doc__)
 options = docopt.docopt(
     __doc__, version="calculate_unique_transcript_sequence v0.1")
 

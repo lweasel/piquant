@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 """Usage:
-    calculate_reads_for_depth [{log_option_spec} <pro-file> <read-length> <read-depth>
+    calculate_reads_for_depth [{log_option_spec}] <pro-file> <read-length> <read-depth>
 
--h --help                           Show this message.
--v --version                        Show version.
-{log_option_spec}                   {log_option_description}
+{help_option_spec}                           {help_option_description}
+{ver_option_spec}                        {ver_option_description}
+{log_option_spec}             {log_option_description}
 <pro-file>                          Flux Simulator gene expression profile file.
 <read-length>                       The length of simulated reads.
 <read-depth>                        The (approximate) read depth that is required given the specified read length.
@@ -60,7 +60,7 @@ def _calculate_reads_for_depth(profiles, read_length, required_depth):
 
 if __name__ == "__main__":
     # Read in command-line options
-    __doc__ = opt.substitute_into_usage(__doc__)
+    __doc__ = opt.substitute_common_options_into_usage(__doc__)
     options = docopt.docopt(__doc__, version="calculate_reads_for_depth v0.1")
 
     # Validate and process command-line options

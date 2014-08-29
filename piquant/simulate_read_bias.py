@@ -3,8 +3,8 @@
 """Usage:
     simulate_read_bias [{log_option_spec}] --num-reads=<num-reads> [--out-prefix=<out-prefix>] [--paired-end] <pwm-file> <reads_file>
 
--h --help                   Show this message.
--v --version                Show version.
+{help_option_spec}                   {help_option_description}
+{ver_option_spec}                {ver_option_description}
 {log_option_spec}     {log_option_description}
 -n --num-reads=<num-reads>  Number of reads to output.
 --out-prefix=<out-prefix>   String to be prepended to input file names for output [default: bias]
@@ -29,7 +29,7 @@ PWM_FILE = "<pwm-file>"
 READS_FILE = "<reads_file>"
 
 # Read in command-line options
-__doc__ = opt.substitute_into_usage(__doc__)
+__doc__ = opt.substitute_common_options_into_u(__doc__)
 options = docopt.docopt(__doc__, version="simulate_read_bias v0.1")
 
 # Validate command-line options

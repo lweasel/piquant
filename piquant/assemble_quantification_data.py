@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 """Usage:
-    assemble_quantification_data [{log_option_spec} --method=<quantification-method> --out=<output-file> <pro-file> <quantification-file> <transcript-count-file> <unique-sequence-file>
+    assemble_quantification_data [{log_option_spec}] --method=<quantification-method> --out=<output-file> <pro-file> <quantification-file> <transcript-count-file> <unique-sequence-file>
 
--h --help                    Show this message.
--v --version                 Show version.
+{help_option_spec}                    {help_option_description}
+{ver_option_spec}                 {ver_option_description}
 {log_option_spec}      {log_option_description}
 -m --method=<quant-method>   Method used to quantify transcript abundances.
 -o <output-file> --out=<output-file>
@@ -39,7 +39,7 @@ SORTED_PREFIX = "sorted"
 SORTED_BAM_FILE = SORTED_PREFIX + ".bam"
 
 # Read in command-line options
-__doc__ = opt.substitute_into_usage(__doc__)
+__doc__ = opt.substitute_common_options_into_usage(__doc__)
 options = docopt(__doc__, version="assemble_quantification_data v0.1")
 
 # Validate command-line options
