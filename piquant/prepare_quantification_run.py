@@ -135,11 +135,11 @@ def _add_analyse_quantification_results(
 
     writer.add_line(
         ("{command} --plot-format={format} " +
-         "--boxplot-threshold={bp_threshold} {params_spec} " +
+         "--grouped-threshold={gp_threshold} {params_spec} " +
          "{tpms_file} {output_basename}").format(
             command=_get_script_path(ANALYSE_DATA_SCRIPT),
             format=piquant_options[po.PLOT_FORMAT],
-            bp_threshold=piquant_options[po.BOXPLOT_THRESHOLD],
+            gp_threshold=piquant_options[po.GROUPED_THRESHOLD],
             params_spec=params_spec,
             tpms_file=TPMS_FILE,
             output_basename=os.path.basename(run_dir)))

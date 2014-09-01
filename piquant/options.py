@@ -20,6 +20,8 @@ import log
 import os.path
 import sys
 
+_LOG_LEVEL_OPTION = "--" + log.LOG_LEVEL
+
 
 def validate_file_option(file_option, msg, should_exist=True, nullable=False):
     """
@@ -189,7 +191,7 @@ def get_logger_for_options(options):
     options: Dictionary mapping from command-line option strings to option
     values.
     """
-    return log.get_logger(sys.stderr, options[log.LOG_LEVEL])
+    return log.get_logger(sys.stderr, options[_LOG_LEVEL_OPTION])
 
 
 def validate_log_level(options):
@@ -202,7 +204,7 @@ def validate_log_level(options):
     values.
     """
     validate_dict_option(
-        options[log.LOG_LEVEL], log.LEVELS, "Invalid log level")
+        options[_LOG_LEVEL_OPTION], log.LEVELS, "Invalid log level")
 
 
 def substitute_common_options_into_usage(usage_msg, **substitutions):
@@ -222,7 +224,8 @@ def substitute_common_options_into_usage(usage_msg, **substitutions):
     ver_spec = "-v --version"
     ver_desc = "Show version."
 
-    log_spec = "--{log_option}=<{log_option}>".format(log_option=log.LOG_LEVEL)
+    log_spec = "{log_option}=<{log_level}>".format(
+        log_option=_LOG_LEVEL_OPTION, log_level=log.LOG_LEVEL)
     log_desc = ("Set logging level " +
                 "(one of {log_level_vals}) [default: info].").format(
         log_level_vals=str(log.LEVELS.keys()))
