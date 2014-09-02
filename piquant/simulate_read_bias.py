@@ -29,7 +29,7 @@ PWM_FILE = "<pwm-file>"
 READS_FILE = "<reads_file>"
 
 # Read in command-line options
-__doc__ = opt.substitute_common_options_into_u(__doc__)
+__doc__ = opt.substitute_common_options_into_usage(__doc__)
 options = docopt.docopt(__doc__, version="simulate_read_bias v0.1")
 
 # Validate command-line options
