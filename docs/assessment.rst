@@ -184,19 +184,14 @@ Plots
 Assessment of multiple quantification runs
 ------------------------------------------
 
+Statistics and plots comparing multiple quantification runs are produced by executing the *piquant* command ``analyse_runs`` (see :ref:`commands-analyse-runs`). The following CSV files and plots (written as PDF files by default) are produced:
+
+CSV files
+^^^^^^^^^
+
+* ``overall_stats.csv``: A CSV file with a field for each defined statistic which has been calculated over the whole set of input transcripts for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_stats.csv`` files described above.
+* ``overall_stats_by_<classifier>.csv``: A CSV file for each "grouped" transcript classifier, containing the same fields as ``overall_stats.csv``, with statistics calculated for distinct subsets of transcripts as determined by the classifier, for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_stats_by_<classifier>.csv`` files described above.
+* ``overall_distribution_stats_<asc|desc>_by_<classifier>.csv``: Two CSV files ("ascending" and "descending") for each "distribution" transcript classifier, indicating the fractino of transcripts lying above or below values of the classifier threshold variable, for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_distribution_stats_<asc|desc>_by_<classifier>.csv`` files.
+
 Plots
 ^^^^^
-
-TODO
-
-Statistics calculated for the whole set of TPMs
-
-TODO
-
-Statistics calculated on subsets of TPMs
-
-TODO
-
-Distribution plots
-
-TODO

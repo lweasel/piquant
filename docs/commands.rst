@@ -169,6 +169,8 @@ The ``check_quant`` command is used to confirm that quantification of transcript
 
 In the case of unsuccessful termination, the file ``nohup.out`` in the relevant quantification directory contains the messages output by both the quantification tool and the *piquant* scripts executed, and this file can be examined for the source of error.
 
+.. _commands-analyse-runs:
+
 Analyse quantification results (``analyse_runs``)
 -------------------------------------------------
 
