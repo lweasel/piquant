@@ -232,6 +232,6 @@ Within each ``<classifier>_distribution`` directory, a sub-directory ``per_<para
 
     distribution_<classifier>_per_<parameter>_<asc|desc>_<other_parameter_values>.pdf
 
- As before, a plot will be produced for every combination of values of quantification and read simulation parameters, excluding the "per" parameter.
+As before, a plot will be produced for every combination of values of quantification and read simulation parameters, excluding the "per" parameter.
 
 
