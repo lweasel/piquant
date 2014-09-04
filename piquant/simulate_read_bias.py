@@ -28,49 +28,8 @@ PAIRED_END = "--paired-end"
 PWM_FILE = "<pwm-file>"
 READS_FILE = "<reads_file>"
 
-# Read in command-line options
-__doc__ = opt.substitute_common_options_into_usage(__doc__)
-options = docopt.docopt(__doc__, version="simulate_read_bias v0.1")
 
-# Validate command-line options
-try:
-    opt.validate_log_level(options)
-
-    options[NUM_READS] = opt.validate_int_option(
-        options[NUM_READS],
-        "Number of reads must be non-negative", nonneg=True)
-    opt.validate_file_option(
-        options[PWM_FILE], "PWM file should exist")
-    opt.validate_file_option(
-        options[READS_FILE], "Reads file should exist")
-except schema.SchemaError as exc:
-    exit(exc.code)
-
-# Set up logger
-logger = opt.get_logger_for_options(options)
-
-# Read PWM file
-logger.info("Reading PWM file " + options[PWM_FILE])
-
-bias_pwm = pwm.PWM(options[PWM_FILE])
-
-# Iterate through fragments, storing positions and scores
-logger.info("Scoring fragments according to PWM")
-
-with_errors = options[READS_FILE].endswith("fastq")
-
-num_fragments = options[NUM_READS]
-lines_per_fragment = 2
-if with_errors:
-    lines_per_fragment *= 2
-if options[PAIRED_END]:
-    num_fragments /= 2
-    lines_per_fragment *= 2
-
-
-def yield_elements(enumerable, element_picker):
-    return (elem for elem_no, elem in enumerate(enumerable)
-            if element_picker(elem_no, elem))
+ReadScore = collections.namedtuple("ReadScore", ["read_number", "score"])
 
 
 class SequenceLinePicker:
@@ -79,36 +38,6 @@ class SequenceLinePicker:
 
     def __call__(self, line_no, line):
         return (line_no - 1) % self.lines_per_fragment == 0
-
-ReadScore = collections.namedtuple("ReadScore", ["read_number", "score"])
-
-scores = []
-with open(options[READS_FILE], 'r') as f:
-    for i, line in enumerate(
-            yield_elements(f, SequenceLinePicker(lines_per_fragment))):
-        score = ReadScore(i, random.random() * bias_pwm.score(line.strip()))
-        scores.append(score)
-
-logger.info("...scored {n} fragments.".format(n=len(scores)))
-
-if num_fragments > len(scores):
-    sys.exit("Input file(s) did not contain enough fragments " +
-             "({ni} found, {no} required)".
-             format(ni=len(scores), no=num_fragments))
-
-# Sort fragments by score and select the required number of highest-scoring
-# fragments
-logger.info("Sorting and selecting scored fragments")
-
-scores.sort(key=lambda x: x.score, reverse=True)
-
-logger.info("...selecting {n} highest scoring fragments ".
-            format(n=num_fragments))
-scores = scores[0: num_fragments]
-scores.sort(key=lambda x: x.read_number)
-
-# Write selected fragments to output file(s)
-logger.info("Writing selected fragments to output files")
 
 
 class OutputPicker:
@@ -130,14 +59,112 @@ class OutputPicker:
         return self.scores[self.index].read_number == read_number
 
 
-def write_output_file(input_file, scores):
+def _validate_command_line_options(options):
+    try:
+        opt.validate_log_level(options)
+
+        options[NUM_READS] = opt.validate_int_option(
+            options[NUM_READS],
+            "Number of reads must be non-negative", nonneg=True)
+        opt.validate_file_option(
+            options[PWM_FILE], "PWM file should exist")
+        opt.validate_file_option(
+            options[READS_FILE], "Reads file should exist")
+    except schema.SchemaError as exc:
+        exit(exc.code)
+
+
+def _get_fragment_counts(reads_file, num_reads, paired_end):
+    with_errors = reads_file.endswith("fastq")
+
+    num_fragments = num_reads
+    lines_per_fragment = 2
+    if with_errors:
+        lines_per_fragment *= 2
+    if paired_end:
+        num_fragments /= 2
+        lines_per_fragment *= 2
+
+    return num_fragments, lines_per_fragment
+
+
+def _yield_elements(enumerable, element_picker):
+    return (elem for elem_no, elem in enumerate(enumerable)
+            if element_picker(elem_no, elem))
+
+
+def _score_fragments(reads_file, bias_pwm, num_fragments, lines_per_fragment):
+    scores = []
+    with open(reads_file, 'r') as f:
+        for i, line in enumerate(
+                _yield_elements(f, SequenceLinePicker(lines_per_fragment))):
+            score = ReadScore(
+                i, random.random() * bias_pwm.score(line.strip()))
+            scores.append(score)
+
+    if num_fragments > len(scores):
+        sys.exit("Input file(s) did not contain enough fragments " +
+                 "({ni} found, {no} required)".
+                 format(ni=len(scores), no=num_fragments))
+
+    return scores
+
+
+def _select_scores(scores, num_fragments):
+    selected_scores = scores[:]
+    selected_scores.sort(key=lambda x: x.score, reverse=True)
+    selected_scores = selected_scores[1: num_fragments]
+    selected_scores.sort(key=lambda x: x.read_number)
+    return selected_scores
+
+
+def _write_output_file(input_file, scores, lines_per_fragment):
     dirname = os.path.dirname(os.path.abspath(input_file))
     basename = os.path.basename(input_file)
     output_file = os.path.join(dirname, options[OUT_PREFIX] + "." + basename)
 
     with open(input_file, 'r') as in_f, open(output_file, 'w') as out_f:
-        for i, line in enumerate(yield_elements(
+        for i, line in enumerate(_yield_elements(
                 in_f, OutputPicker(scores, lines_per_fragment))):
             out_f.write(line)
 
-write_output_file(options[READS_FILE], scores)
+
+def _simulate_bias(logger, options):
+    # Read PWM file
+    logger.info("Reading PWM file " + options[PWM_FILE])
+    bias_pwm = pwm.PWM(options[PWM_FILE])
+
+    # Iterate through fragments, storing positions and scores
+    logger.info("Scoring fragments according to PWM")
+    num_fragments, lines_per_fragment = _get_fragment_counts(
+        options[READS_FILE], options[NUM_READS], options[PAIRED_END])
+    scores = _score_fragments(
+        options[READS_FILE], bias_pwm, num_fragments, lines_per_fragment)
+    logger.info("...scored {n} fragments.".format(n=len(scores)))
+
+    # Sort fragments by score and select the required number of highest-scoring
+    # fragments
+    logger.info("Sorting and selecting {n} highest scoring fragments ".
+                format(n=num_fragments))
+    selected_scores = _select_scores(scores, num_fragments)
+
+    # Write selected fragments to output file(s)
+    logger.info("Writing selected fragments to output files")
+    _write_output_file(options[READS_FILE], selected_scores,
+                       lines_per_fragment)
+
+
+if __name__ == "__main__":
+    # Read in command-line options
+    __doc__ = opt.substitute_common_options_into_usage(__doc__)
+    options = docopt.docopt(__doc__, version="simulate_read_bias v0.1")
+
+    # Validate command-line options
+    _validate_command_line_options(options)
+
+    # Set up logger
+    logger = opt.get_logger_for_options(options)
+
+    # Simulate bias by preferentially selecting reads according to a position
+    # weight matrix
+    _simulate_bias(logger, options)
