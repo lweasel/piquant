@@ -144,7 +144,7 @@ def _draw_stratified_log_ratio_boxplots(non_zero, tp_tpms, options):
 def _draw_stats_vs_transcript_classifier_graphs(clsfr_stats, options):
     for classifier, stats in clsfr_stats.items():
         stats.reset_index(level=0, inplace=True)
-        for statistic in statistics.get_graphable_by_classifier_statistics():
+        for statistic in statistics.get_graphable_statistics():
             plot.plot_statistic_vs_transcript_classifier(
                 options[PLOT_FORMAT], stats,
                 options[OUT_FILE_BASENAME], statistic, classifier,

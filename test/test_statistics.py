@@ -87,17 +87,6 @@ def test_get_graphable_statistics_returns_graphable_instances():
     assert all([s.graphable for s in g_stats])
 
 
-def test_get_graphable_by_classifier_statistics_returns_subset_of_statistics():
-    stats = statistics.get_statistics()
-    g_stats = statistics.get_graphable_by_classifier_statistics()
-    assert g_stats <= stats
-
-
-def test_get_graphable_by_classifier_statistics_return_graphable_by_classifier_instances():
-    g_stats = statistics.get_graphable_by_classifier_statistics()
-    assert all([s.graphable_by_classifier for s in g_stats])
-
-
 def _number_of_tpms(tpm_pairs):
     return len(tpm_pairs)
 

@@ -442,8 +442,7 @@ def draw_grouped_stats_graphs(fformat, stats_dir, param_values, threshold):
                 stats_df, fixed_param_values = _get_stats_for_fixed_params(
                     clsfr_stats, fixed_params, fp_values_set)
 
-                for stat in \
-                        statistics.get_graphable_by_classifier_statistics():
+                for stat in statistics.get_graphable_statistics():
                     statistic_dir = _get_plot_subdirectory(
                         param_stats_dir, stat.name)
                     graph_file_basename = os.path.join(

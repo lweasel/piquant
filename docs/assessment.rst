@@ -12,10 +12,14 @@ For each execution of a particular transcript quantification tool for reads simu
 
 Note that each statistic is calculated both for the set of estimated transcript abundances as a whole, and for each group of transcripts determined to share similar properties by each transcript classifier (see :ref:`assessment-transcript-classifiers`).
 
+Note also that each statistic can be marked as being suitable for producing interesting graphs or not; all statistics described below are suitable for graphing unless stated otherwise.
+
 Number of TPMs
 ^^^^^^^^^^^^^^
 
 This is simply the number of TPMs ("transcripts per million" values) calculated, corresponding to the total number of transcripts in the transcript group, or as a whole.
+
+This statistic is marked as being not suitable for producing graphs.
 
 Number of 'true positive' TPMs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -158,7 +162,7 @@ This "distribution" classifier splits transcripts into two groups according to w
 Assessment of a single quantification run
 -----------------------------------------
 
-Statistics and plots for a single execution of a quantification tool are produced by the support script ``analyse_quantification_run.py`` (see :ref:`quantification-perform-accuracy-analysis`) that is run by invoking ``run_quantification`` with the ``-a`` command line option (see :doc:`quantification`). The following CSV files and plots (written as PDF files) are produced:
+Statistics and plots for a single execution of a quantification tool are produced by the support script ``analyse_quantification_run.py`` (see :ref:`quantification-perform-accuracy-analysis`) that is run by invoking ``run_quantification`` with the ``-a`` command line option (see :doc:`quantification`). The following CSV files and plots (written as PDF files by default) are produced:
 
 CSV files
 ^^^^^^^^^
@@ -171,6 +175,7 @@ Plots
 ^^^^^
 
 * ``<run-id>_true_positive_TPMs_log10_scatter.pdf``: A scatter plot of log-transformed (base 10) estimated against real abundances measured in transcripts per million, for "true positive" transcripts. 
+* ``<run-id>_<statistic>_by_<classifier>.pdf``: For each "grouped" transcript classifier, and each statistic marked as being suitable for producing graphs (see :ref:`assessment-statistics` above), a plot is created showing the value of that statistic for each group of transcripts determind by the classifier.
 * ``<run-id>_<classifier>_<non-zero_real|true_positive>_TPMs_boxplot.pdf``: Two boxplots are created for each "grouped" transcript classifier. Each boxplot shows, for each group of transcripts determined by the classifier, the characteristics of the distribution of log (base 10) ratios of estimated to real transcript abundances for transcripts within that group. One boxplot pertains to "true positive" transcripts, while the other is calculated from all transcripts with non-zero real abundance.
 * ``<run-id>_<classifier>_<non-zero_real|true_positive>_TPMs_<asc|desc>_distribution.pdf``: Four plots are drawn for each "distribution" transcript classifier. These correspond to the data in the CSV files described above for these classifiers, and show - either for all transcripts with non-zero real abundance, or for "true positive" transcripts - the cumulative distribution of the fraction of transcripts lying below or above the threshold determined by the classifier.
 

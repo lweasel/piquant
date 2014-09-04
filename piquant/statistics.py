@@ -4,8 +4,6 @@ transcript quantification run. Exports:
 
 get_statistics: Return all statistic instances.
 get_graphable_statistics: Return statistic instances suitable for graphing.
-get_graphable_by_classifier_statistics: Return statistic instances suitable for
-graphing by a classifier.
 """
 
 import classifiers
@@ -45,17 +43,6 @@ def get_graphable_statistics():
     return set([s for s in get_statistics() if s.graphable])
 
 
-def get_graphable_by_classifier_statistics():
-    """Return a set of statistics suitable for graphing by a classifier.
-
-    Return a set of objects each of which can calculate a certain statistic
-    from the results of a transcript quantification run, and is interesting to
-    plot when TPMs are grouped by a classifier (e.g. by the number of isoforms
-    for each transcript's originating gene).
-    """
-    return set([s for s in get_statistics() if s.graphable_by_classifier])
-
-
 def get_stratified_stats_types():
     # TODO: documentation
     # TODO: tests
@@ -93,12 +80,10 @@ def _Statistic(cls):
 
 class _BaseStatistic():
     # Base for classes capable of calculating a statistic
-    def __init__(self, name, title, graphable=True,
-                 graphable_by_classifier=True):
+    def __init__(self, name, title, graphable=True):
         self.name = name
         self.title = title
         self.graphable = graphable
-        self.graphable_by_classifier = graphable_by_classifier
 
     def calculate(self, tpms, tp_tpms):
         """Calculate the statistic for a set of TPMs.
@@ -137,13 +122,12 @@ class _BaseStatistic():
         # TODO: documentation
         return None
 
+
 @_Statistic
 class _NumberOfTPMs(_BaseStatistic):
     # Calculates the total number of transcript TPMs in the results.
     def __init__(self):
-        _BaseStatistic.__init__(
-            self, "num-tpms", "No. TPMs",
-            graphable=False, graphable_by_classifier=False)
+        _BaseStatistic.__init__(self, "num-tpms", "No. TPMs", graphable=False)
 
     def calculate(self, tpms, tp_tpms):
         return len(tpms)
@@ -163,9 +147,7 @@ class _NumberOfTruePositiveTPMs(_BaseStatistic):
     # both real and calculated TPMs are above a threshold value indicating
     # 'presence' of the transcript.
     def __init__(self):
-        _BaseStatistic.__init__(
-            self, TP_NUM_TPMS, "No. true positive TPMs",
-            graphable_by_classifier=False)
+        _BaseStatistic.__init__(self, TP_NUM_TPMS, "No. true positive TPMs")
 
     def calculate(self, tpms, tp_tpms):
         return len(tp_tpms)
