@@ -12,8 +12,6 @@ Further information on each script and their command line options is given in th
 Analyse a single quantification run
 -----------------------------------
 
-.. ``analyse_quantification_run``
-
 TODO - description.
 
 Usage::
@@ -46,42 +44,49 @@ while these command-line parameters are optional:
 Assemble data for a single quantification run
 ---------------------------------------------
 
-.. ``assemble_quantification_data``
+TODO - description.
 
-TODO.
+Usage::
+
+    assemble_quantification_data 
+        [--log-level=<log-level>] 
+        --method=<quantification-method> --out=<output-file> 
+        <pro-file> <quantification-file> 
+        <transcript-count-file> <unique-sequence-file>
+
+The following command-line options and positional arguments are required:
+
+* ``--method=<quantification-method>``:
+* ``--out=<output-file>``:
+* ``<pro-file>``:
+* ``<quantification-file>``:
+* ``<transcript-count-file>``:
+* ``<unique-sequence-file>``:
 
 .. _calculate-reads-for-depth:
 
 Calculate reads required for sequencing depth
 ---------------------------------------------
 
-.. ``calculate_reads_for_depth``
-
-TODO.
+TODO - description.
 
 .. _calculate-unique-transcript-sequence:
 
 Calculate unique transcript sequence
 ------------------------------------
 
-.. ``calculate_unique_transcript_sequence``
-
-TODO.
+TODO - description.
 
 .. _count-transcripts-for-genes:
 
 Count transcripts for genes
 ---------------------------
 
-.. ``count_transcripts_for_genes``
-
-TODO.
+TODO - description.
 
 .. _simulate-read-bias:
 
 Simulate sequence bias in reads
 -------------------------------
 
-.. ``simulate_read_bias``
-
-TODO.
+TODO - description.
