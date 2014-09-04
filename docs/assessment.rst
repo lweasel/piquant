@@ -175,7 +175,7 @@ Plots
 ^^^^^
 
 * ``<run-id>_true_positive_TPMs_log10_scatter.pdf``: A scatter plot of log-transformed (base 10) estimated against real abundances measured in transcripts per million, for "true positive" transcripts. 
-* ``<run-id>_<statistic>_by_<classifier>.pdf``: For each "grouped" transcript classifier, and each statistic marked as being suitable for producing graphs (see :ref:`assessment-statistics` above), a plot is created showing the value of that statistic for each group of transcripts determind by the classifier.
+* ``<run-id>_<statistic>_by_<classifier>.pdf``: For each "grouped" transcript classifier, and each statistic marked as being suitable for producing graphs (see :ref:`assessment-statistics` above), a plot is created showing the value of that statistic for each group of transcripts determined by the classifier.
 * ``<run-id>_<classifier>_<non-zero_real|true_positive>_TPMs_boxplot.pdf``: Two boxplots are created for each "grouped" transcript classifier. Each boxplot shows, for each group of transcripts determined by the classifier, the characteristics of the distribution of log (base 10) ratios of estimated to real transcript abundances for transcripts within that group. One boxplot pertains to "true positive" transcripts, while the other is calculated from all transcripts with non-zero real abundance.
 * ``<run-id>_<classifier>_<non-zero_real|true_positive>_TPMs_<asc|desc>_distribution.pdf``: Four plots are drawn for each "distribution" transcript classifier. These correspond to the data in the CSV files described above for these classifiers, and show - either for all transcripts with non-zero real abundance, or for "true positive" transcripts - the cumulative distribution of the fraction of transcripts lying below or above the threshold determined by the classifier.
 
@@ -214,6 +214,14 @@ A plot will be produced for every combination of values of quantification and re
 
 *"Grouped statistics" graphs*
 
-TODO
+In the sub-directory ``grouped_stats_graphs``, a sub-directory ``grouped_by_<classifier>`` is created for each "grouped" transcript classifier. Graphs written below this directory will plot statistics calculated for groups of transcripts determined by that classifier.
+
+Within each ``grouped_by_<classifier>`` directory, a sub-directory ``per_<parameter>`` is created for each quantification and simulation parameter for which quantification runs were performed for more than one value of that parameter. Graphs written below this directory will plot statistics with a separate, coloured line for each value of that parameter.
+
+Within each ``per_<parameter>`` directory, a ``<statistic>`` directory is created for each statistic marked as capable of producing graphs. Graphs written into this directory will be named::
+
+    grouped_<statistic>_vs_<classifier>_per_<parameter>_<other_parameter_values>.pdf
+
+A plot will be produced for every combination of values of quantification and read simulation parameters, excluding the "per" parameter described above. For example, the ``sensitivity`` directory below ``grouped_stats_graphs/grouped_by_transcript_length/per_read_length`` will contain a plot of sensitivity on the y-axis, against transcript length on the x-axis, with a line for each simulated read length, for each combination of quantification method, read depth, etc. as specified by the ``analyse_runs`` command that was executed.
 
 *"Distribution statistics" graphs*
