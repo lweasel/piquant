@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 
 """Usage:
-    analyse_quantification_run [{log_option_spec} --scatter-max=<scatter-max-val> --log10-scatter-min=<log10-scatter-min-val> --log10-scatter-max=<log10-scatter-max-val> --plot-format=<plot-format> --grouped-threshold=<threshold>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> <tpm-file> <out-file>
+    analyse_quantification_run [{log_option_spec} --plot-format=<plot-format> --grouped-threshold=<threshold>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> <tpm-file> <out-file>
 
 {help_option_spec}                                    {help_option_description}
 {ver_option_spec}                                 {ver_option_description}
 {log_option_spec}                      {log_option_description}
---scatter-max=<scatter-max-val>              Maximum x and y values for scatter plot; a value of 0 means do not impose a maximum [default: 0].
---log10-scatter-min=<log10-scatter-min-val>  Minimum x and y values for log10 scatter plot; a value of 0 means do not impose a minimum [default: 0].
---log10-scatter-max=<log10-scatter-max-val>  Maximum x and y values for log10 scatter plot; a value of 0 means do not impose a maximum [default: 0].
 --plot-format=<plot-format>                  Output format for graphs (one of {plot_formats}) [default: pdf].
 --grouped-threshold=<threshold>              Minimum number of data points required for a group of transcripts to be shown on a plot [default: 300].
 --quant-method=<quant-method>                Method used to quantify transcript abundances.
@@ -37,9 +34,6 @@ TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
 TRUE_POSITIVES_LABEL = "true positive TPMs"
 TPM_FILE = "<tpm-file>"
 OUT_FILE_BASENAME = "<out-file>"
-SCATTER_MAX = "--scatter-max"
-LOG10_SCATTER_MIN = "--log10-scatter-min"
-LOG10_SCATTER_MAX = "--log10-scatter-max"
 PLOT_FORMAT = "--plot-format"
 GROUPED_THRESHOLD = "--grouped-threshold"
 
@@ -50,20 +44,10 @@ def _validate_command_line_options(options):
     try:
         opt.validate_log_level(options)
 
-        opt.validate_list_option(
-            options[PLOT_FORMAT], plot.PLOT_FORMATS, "Invalid plot format")
-
         opt.validate_file_option(options[TPM_FILE], "Could not open TPM file")
 
-        options[SCATTER_MAX] = opt.validate_int_option(
-            options[SCATTER_MAX],
-            "Invalid maximum value for scatter plot axes")
-        options[LOG10_SCATTER_MIN] = opt.validate_int_option(
-            options[LOG10_SCATTER_MIN],
-            "Invalid minimum value for log10 scatter plot axes")
-        options[LOG10_SCATTER_MAX] = opt.validate_int_option(
-            options[LOG10_SCATTER_MAX],
-            "Invalid maximum value for log10 scatter plot axes")
+        opt.validate_list_option(
+            options[PLOT_FORMAT], plot.PLOT_FORMATS, "Invalid plot format")
         options[GROUPED_THRESHOLD] = opt.validate_int_option(
             options[GROUPED_THRESHOLD],
             "Invalid minimum value for number of data points for boxplots")
