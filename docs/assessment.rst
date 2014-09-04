@@ -225,3 +225,13 @@ Within each ``per_<parameter>`` directory, a ``<statistic>`` directory is create
 A plot will be produced for every combination of values of quantification and read simulation parameters, excluding the "per" parameter described above. For example, the ``sensitivity`` directory below ``grouped_stats_graphs/grouped_by_transcript_length/per_read_length`` will contain a plot of sensitivity on the y-axis, against transcript length on the x-axis, with a line for each simulated read length, for each combination of quantification method, read depth, etc. as specified by the ``analyse_runs`` command that was executed.
 
 *"Distribution statistics" graphs*
+
+In the sub-directory ``distribution_stats_graphs``, a sub-directory ``<classifier>_distribution`` is created for each "distribution" transcript classifier. Graphs written below this directory will plot the cumulative distribution of the fraction of transcript lying below or above values of the threshold determined by the classifier.
+
+Within each ``<classifier>_distribution`` directory, a sub-directory ``per_<parameter>`` is created for each quantification and simulation parameter for which quantification runs were performed for more than one value of that parameter. Graphs written into this directory will plot statistics with a separate, coloured line for each value of that parameter, and will be named::
+
+    distribution_<classifier>_per_<parameter>_<asc|desc>_<other_parameter_values>.pdf
+
+ As before, a plot will be produced for every combination of values of quantification and read simulation parameters, excluding the "per" parameter.
+
+
