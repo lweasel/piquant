@@ -18,7 +18,15 @@ import schema
 GTF_FILE = "<gtf-file>"
 
 
-def get_transcript_to_gene_mappings(gtf_info):
+def _validate_command_line_options(options):
+    try:
+        opt.validate_log_level(options)
+        opt.validate_file_option(options[GTF_FILE], "Could not open GTF file")
+    except schema.SchemaError as exc:
+        exit(exc.code)
+
+
+def _get_transcript_to_gene_mappings(gtf_info):
     transcript_to_gene_mappings = {}
 
     for index, row in gtf_info.iterrows():
@@ -31,7 +39,7 @@ def get_transcript_to_gene_mappings(gtf_info):
     return transcript_to_gene_mappings
 
 
-def get_transcript_counts_for_genes(transcript_to_gene_mappings):
+def _get_transcript_counts_for_genes(transcript_to_gene_mappings):
     transcript_counts = collections.Counter()
     for gene in transcript_to_gene_mappings.values():
         transcript_counts[gene] += 1
@@ -39,32 +47,41 @@ def get_transcript_counts_for_genes(transcript_to_gene_mappings):
     return transcript_counts
 
 
-# Read in command-line options
-__doc__ = opt.substitute_common_options_into_usage(__doc__)
-options = docopt.docopt(__doc__, version="count_transcripts_for_genes.py")
+def _output_transcript_counts_for_genes(
+        transcript_to_gene_mappings, transcript_counts):
 
-# Validate command-line options
-try:
-    opt.validate_log_level(options)
-    opt.validate_file_option(options[GTF_FILE], "Could not open GTF file")
-except schema.SchemaError as exc:
-    exit(exc.code)
+    print("transcript,gene,transcript_count")
+    for transcript, gene in transcript_to_gene_mappings.items():
+        print("{t},{g},{c}".format(
+            t=transcript, g=gene, c=transcript_counts[gene]))
 
-# Set up logger
-logger = opt.get_logger_for_options(options)
 
-logger.info("Reading GTF file {f}...".format(f=options[GTF_FILE]))
-gtf_info = gtf.read_gtf_file(options[GTF_FILE])
+def _count_transcripts_for_genes(logger, options):
+    logger.info("Reading GTF file {f}...".format(f=options[GTF_FILE]))
+    gtf_info = gtf.read_gtf_file(options[GTF_FILE])
 
-logger.info("Extracting transcript to gene mappings...")
-transcript_to_gene_mappings = get_transcript_to_gene_mappings(gtf_info)
+    logger.info("Extracting transcript to gene mappings...")
+    transcript_to_gene_mappings = _get_transcript_to_gene_mappings(gtf_info)
 
-logger.info("Calculating transcript counts for genes...")
-transcript_counts = get_transcript_counts_for_genes(
-    transcript_to_gene_mappings)
+    logger.info("Calculating transcript counts for genes...")
+    transcript_counts = _get_transcript_counts_for_genes(
+        transcript_to_gene_mappings)
 
-logger.info("Printing transcript counts for genes...")
-print("transcript,gene,transcript_count")
-for transcript, gene in transcript_to_gene_mappings.items():
-    print("{t},{g},{c}".format(
-        t=transcript, g=gene, c=transcript_counts[gene]))
+    logger.info("Printing transcript counts for genes...")
+    _output_transcript_counts_for_genes(
+        transcript_to_gene_mappings, transcript_counts)
+
+
+if __name__ == "__main__":
+    # Read in command-line options
+    __doc__ = opt.substitute_common_options_into_usage(__doc__)
+    options = docopt.docopt(__doc__, version="count_transcripts_for_genes.py")
+
+    # Validate command-line options
+    _validate_command_line_options(options)
+
+    # Set up logger
+    logger = opt.get_logger_for_options(options)
+
+    # Calculate and print per-gene transcript counts to standard out
+    _count_transcripts_for_genes(logger, options)
