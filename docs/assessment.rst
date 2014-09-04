@@ -184,7 +184,9 @@ Plots
 Assessment of multiple quantification runs
 ------------------------------------------
 
-Statistics and plots comparing multiple quantification runs are produced by executing the *piquant* command ``analyse_runs`` (see :ref:`commands-analyse-runs`). The following CSV files and plots (written as PDF files by default) are produced:
+Statistics and plots comparing multiple quantification runs are produced by executing the *piquant* command ``analyse_runs`` (see :ref:`commands-analyse-runs`). Note that depending on the number of combination of quantification and read simulation parameters that ``analyse_runs`` is executed for, a very large number of graphs may be produced; it may, therefore, be useful to concentrate attention on those parameter values which are of greatest interest.
+
+The following CSV files and plots (written as PDF files by default) are produced:
 
 CSV files
 ^^^^^^^^^
@@ -195,3 +197,23 @@ CSV files
 
 Plots
 ^^^^^
+
+Plots produced by the ``analyse_runs`` commands fall into three categories (and these are written into three sub-directories of the main analysis output directory):
+
+*"Overall statistics" graphs*
+
+In the sub-directory ``overall_stats_graphs``, a sub-directory ``per_<parameter_1>`` is created for each quantification and simulation parameter for which quantification runs were performed for more than one value of that parameter (for example, for read lengths of 35, 50 and 100 base pairs, or for single- and paired-end reads). Graphs written below this directory will plot statistics with a separate, coloured line for each value of that parameter (for example, graphs written below the directory ``per_paired_end`` will each have two lines, one for single-end reads, and one for paired-end).
+
+Within each ``per_<parameter_1>`` directory, a further ``by_<numerical_parameter_2>`` is created for each parameter that takes numerical values (for example, read length or read depth) for which quantification runs per were performed for more that one value of that parameter. Graphs written below this directory will plot statistics on the y-axis against values of that parameter on the x-axis.
+
+Within each ``by_<numerical_parameter_1>`` directory, a ``<statistic>`` directory is created for each statistic marked as capable of producing graphs. Graphs written into this directory will be named::
+
+    overall_<statistic>_vs_<numerical_parameter_2>_per_<parameter_1>_<other_parameter_values>.pdf
+
+A plot will be produced for every combination of values of quantification and read simulation parameters, excluding *parameter_1* and *numerical_parameter_2* described above. For example, the statistics directories below ``overall_stats_graphs/quant_method/by_read_depth/`` will, for each statistic, contain a plot of that statistic on the y-axis, against read depth on the x-axis, with a line for each quantification method, for each combination of read length, single- or paired-end read, etc. as specified by the ``analyse_runs`` command that was executed.
+
+*"Grouped statistics" graphs*
+
+TODO
+
+*"Distribution statistics" graphs*
