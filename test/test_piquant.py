@@ -2,24 +2,32 @@ import os
 import os.path
 import piquant.piquant as piq
 import piquant.piquant_options as po
+import piquant.quantifiers as quant
 import pytest
 import utils
 
-TEST_OUTPUT_DIR = "dummy"
 
-TEST_PARAMS = {
-    "read_depth": 30,
-    "read_length": 50,
-    "paired_end": True,
-    "bias": False
-}
-
-
-def _get_test_options(test_output_dir=TEST_OUTPUT_DIR):
+def _get_test_options(output_dir):
     return {
-        po.OUTPUT_DIRECTORY: test_output_dir,
-        po.NO_CLEANUP: True
+        po.OUTPUT_DIRECTORY: output_dir,
+        po.NO_CLEANUP: True,
+        po.PLOT_FORMAT: "pdf",
+        po.GROUPED_THRESHOLD: 3000
     }
+
+
+def _get_test_params(quant_method=None):
+    params = {
+        "read_depth": 30,
+        "read_length": 50,
+        "paired_end": True,
+        "bias": False
+    }
+
+    if quant_method:
+        params["quant_method"] = quant_method
+
+    return params
 
 
 def _check_file_exists(parent_dir, file_name):
@@ -27,18 +35,21 @@ def _check_file_exists(parent_dir, file_name):
 
 
 def test_get_parameters_dir_returns_correct_path():
-    assert piq._get_parameters_dir(_get_test_options(), **TEST_PARAMS) == \
-        TEST_OUTPUT_DIR + os.path.sep + "30x_50b_pe_no_bias"
+    output_dir = "dummy"
+    assert piq._get_parameters_dir(
+        _get_test_options(output_dir), **_get_test_params()) == \
+        output_dir + os.path.sep + "30x_50b_pe_no_bias"
 
 
 def test_read_directory_checker_returns_correct_checker_if_directory_should_exist_and_does_exist():
     with utils.temp_dir_created() as temp_dir:
         test_options = _get_test_options(temp_dir)
-        params_dir = piq._get_parameters_dir(test_options, **TEST_PARAMS)
+        params_dir = piq._get_parameters_dir(
+            test_options, **_get_test_params())
         os.mkdir(params_dir)
 
         directory_checker = piq._reads_directory_checker(True)
-        directory_checker(None, test_options, **TEST_PARAMS)
+        directory_checker(None, test_options, **_get_test_params())
 
 
 def test_read_directory_checker_returns_correct_checker_if_directory_should_exist_and_doesnt_exist():
@@ -47,32 +58,46 @@ def test_read_directory_checker_returns_correct_checker_if_directory_should_exis
 
         directory_checker = piq._reads_directory_checker(True)
         with pytest.raises(SystemExit):
-            directory_checker(None, test_options, **TEST_PARAMS)
+            directory_checker(None, test_options, **_get_test_params())
+
 
 def test_read_directory_checker_returns_correct_checker_if_directory_shouldnt_exist_and_doesnt_exist():
     with utils.temp_dir_created() as temp_dir:
         test_options = _get_test_options(temp_dir)
 
         directory_checker = piq._reads_directory_checker(False)
-        directory_checker(None, test_options, **TEST_PARAMS)
+        directory_checker(None, test_options, **_get_test_params())
 
 
 def test_read_directory_checker_returns_correct_checker_if_directory_shouldnt_exist_and_does_exist():
     with utils.temp_dir_created() as temp_dir:
         test_options = _get_test_options(temp_dir)
-        params_dir = piq._get_parameters_dir(test_options, **TEST_PARAMS)
+        params_dir = piq._get_parameters_dir(
+            test_options, **_get_test_params())
         os.mkdir(params_dir)
 
         directory_checker = piq._reads_directory_checker(False)
         with pytest.raises(SystemExit):
-            directory_checker(None, test_options, **TEST_PARAMS)
+            directory_checker(None, test_options, **_get_test_params())
 
 
 def test_prepare_read_simulation_creates_correct_files():
     with utils.temp_dir_created() as dir_path:
         options = _get_test_options(dir_path)
-        piq._prepare_read_simulation(None, options, **TEST_PARAMS)
-        reads_dir = dir_path + os.path.sep + "30x_50b_pe_no_bias"
+        params = _get_test_params()
+        piq._prepare_read_simulation(None, options, **params)
+
+        reads_dir = piq._get_parameters_dir(options, **params)
         _check_file_exists(reads_dir, "run_simulation.sh")
         _check_file_exists(reads_dir, "flux_simulator_expression.par")
         _check_file_exists(reads_dir, "flux_simulator_simulation.par")
+
+
+def test_prepare_quantification_creates_correct_file():
+    with utils.temp_dir_created() as dir_path:
+        options = _get_test_options(dir_path)
+        params = _get_test_params(quant_method=quant._Cufflinks())
+        piq._prepare_quantification(None, options, **params)
+
+        quant_dir = piq._get_parameters_dir(options, **params)
+        _check_file_exists(quant_dir, "run_quantification.sh")

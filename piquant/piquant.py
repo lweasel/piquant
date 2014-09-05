@@ -67,19 +67,14 @@ def _get_parameters_dir(options, **params):
 
 def _reads_directory_checker(should_exist):
     """
-    Return a function checking the existence of a run directory.
+    Return a function checking the existence of a reads directory.
 
     Return a function which, when called, will exit the Python interpreter if
-    the specified reads or quantification directory does or doesn't exists.
+    the specified reads directory does or doesn't exists.
+
     should_exist: If True, the returned function will exit if the specified
     reads or quantification directory does not exist. If False, the function
     will exit if the reads or quantification directory does already exist.
-
-    logger: Logs messages to standard error.
-    options: A dictionary mapping from piquant command line option names to
-    option values.
-    params: A dictionary mapping from parameters._Parameter instances to
-    parameter values.
     """
     def check_reads_directory(logger, options, **params):
         params = dict(params)
@@ -106,7 +101,8 @@ def _prepare_read_simulation(logger, options, **params):
     options: A dictionary mapping from piquant command line option names to
     option values.
     params: A dictionary mapping from parameters._Parameter instances to
-    parameter values.
+    parameter values, describing properties of the read simulation to be
+    performed.
     """
     reads_dir = _get_parameters_dir(options, **params)
     cleanup = not options[po.NO_CLEANUP]
@@ -144,6 +140,20 @@ def _execute_quantification_script(run_dir, cl_opts):
 
 
 def _prepare_quantification(logger, options, **params):
+    """
+    Write bash script to perform transcriptome quantification.
+
+    Write a bash script which, when executed, with use a specified
+    transcriptome quantification tool to estimate transcript abundances from a
+    set of simulated RNA-seq reads.
+
+    logger: Logs messages to standard error.
+    options: A dictionary mapping from piquant command line option names to
+    option values.
+    params: A dictionary mapping from parameters._Parameter instances to
+    parameter values, describing properties of the quantification run to be
+    performed.
+    """
     run_dir = _get_parameters_dir(options, **params)
 
     reads_params = dict(params)
