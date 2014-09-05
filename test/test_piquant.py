@@ -4,6 +4,7 @@ import piquant.piquant as piq
 import piquant.piquant_options as po
 import piquant.quantifiers as quant
 import pytest
+import time
 import utils
 
 
@@ -91,6 +92,24 @@ def test_prepare_read_simulation_creates_correct_files():
         _check_file_exists(reads_dir, "run_simulation.sh")
         _check_file_exists(reads_dir, "flux_simulator_expression.par")
         _check_file_exists(reads_dir, "flux_simulator_simulation.par")
+
+
+def test_create_reads_executes_run_simulation_script():
+    with utils.temp_dir_created() as dir_path:
+        options = _get_test_options(dir_path)
+        params = _get_test_params()
+
+        reads_dir = piq._get_parameters_dir(options, **params)
+        os.mkdir(reads_dir)
+
+        test_filename = "test"
+        utils.write_executable_script(
+            reads_dir, "run_simulation.sh", "touch " + test_filename)
+
+        piq._create_reads(None, options, **params)
+        time.sleep(0.1)
+
+        assert os.path.exists(reads_dir + os.path.sep + test_filename)
 
 
 def test_prepare_quantification_creates_correct_file():
