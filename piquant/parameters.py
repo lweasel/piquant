@@ -89,7 +89,6 @@ def get_run_parameters():
     return set(_RUN_PARAMETERS)
 
 
-# TODO: add tests for params_file and ignore_params options
 def validate_command_line_parameter_sets(
         params_file, cl_options, ignore_params=[]):
 

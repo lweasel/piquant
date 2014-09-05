@@ -1,6 +1,7 @@
 import piquant.parameters as parameters
 import pytest
 import schema
+import tempfile
 
 
 def _get_test_parameter(
@@ -16,6 +17,18 @@ def _get_test_parameter(
     parameters._RUN_PARAMETERS.remove(param)
 
     return param
+
+
+def _get_ignore_params():
+    return [
+        parameters.READ_DEPTH,
+        parameters.PAIRED_END,
+        parameters.ERRORS,
+        parameters.BIAS,
+        parameters.TRANSCRIPT_GTF,
+        parameters.GENOME_FASTA_DIR,
+        parameters.NUM_FRAGMENTS
+    ]
 
 
 def test_get_run_parameters_returns_parameters_instances():
@@ -89,15 +102,7 @@ def test_validate_command_line_parameter_sets_returns_correct_number_of_param_se
         "--read-length": "10,20",
     }
 
-    ignore_params = [
-        parameters.READ_DEPTH,
-        parameters.PAIRED_END,
-        parameters.ERRORS,
-        parameters.BIAS,
-        parameters.TRANSCRIPT_GTF,
-        parameters.GENOME_FASTA_DIR,
-        parameters.NUM_FRAGMENTS
-    ]
+    ignore_params = _get_ignore_params()
 
     param_vals = parameters.validate_command_line_parameter_sets(
         None, options, ignore_params)
@@ -110,16 +115,8 @@ def test_validate_command_line_parameter_sets_returns_correct_number_of_transfor
         "--read-length": ",".join([str(i) for i in range(0, num_values)])
     }
 
-    ignore_params = [
-        parameters.QUANT_METHOD,
-        parameters.READ_DEPTH,
-        parameters.PAIRED_END,
-        parameters.ERRORS,
-        parameters.BIAS,
-        parameters.TRANSCRIPT_GTF,
-        parameters.GENOME_FASTA_DIR,
-        parameters.NUM_FRAGMENTS
-    ]
+    ignore_params = _get_ignore_params()
+    ignore_params.append(parameters.QUANT_METHOD)
 
     param_vals = parameters.validate_command_line_parameter_sets(
         None, options, ignore_params)
@@ -133,16 +130,8 @@ def test_validate_command_line_parameter_sets_returns_correct_transformed_values
         "--read-length": str(len1) + "," + str(len2)
     }
 
-    ignore_params = [
-        parameters.QUANT_METHOD,
-        parameters.READ_DEPTH,
-        parameters.PAIRED_END,
-        parameters.ERRORS,
-        parameters.BIAS,
-        parameters.TRANSCRIPT_GTF,
-        parameters.GENOME_FASTA_DIR,
-        parameters.NUM_FRAGMENTS
-    ]
+    ignore_params = _get_ignore_params()
+    ignore_params.append(parameters.QUANT_METHOD)
 
     param_vals = parameters.validate_command_line_parameter_sets(
         None, options, ignore_params)
@@ -156,6 +145,58 @@ def test_validate_command_line_parameter_sets_raises_exception_for_invalid_param
     }
     with pytest.raises(schema.SchemaError):
         parameters.validate_command_line_parameter_sets(None, options)
+
+
+def test_validate_command_line_parameter_sets_raises_exception_if_param_values_not_supplied():
+    options = {
+        "--read-length": "10,20",
+    }
+
+    ignore_params = _get_ignore_params()
+
+    with pytest.raises(schema.SchemaError):
+        parameters.validate_command_line_parameter_sets(
+            None, options, ignore_params)
+
+
+def test_validate_command_line_parameter_sets_reads_parameters_from_file():
+    len1 = 10
+    len2 = 20
+    with tempfile.NamedTemporaryFile() as f:
+        f.write("--quant-method Cufflinks\n")
+        f.write("--read-length " + str(len1) + "," + str(len2) + "\n")
+        f.flush()
+
+        ignore_params = _get_ignore_params()
+
+        param_vals = parameters.validate_command_line_parameter_sets(
+            f.name, {}, ignore_params)
+
+        assert len1 in param_vals[parameters.READ_LENGTH.name]
+        assert len2 in param_vals[parameters.READ_LENGTH.name]
+
+
+def test_validate_command_line_parameter_sets_overrides_file_parameters_with_cl_options():
+    len1 = 10
+    len2 = 20
+    len3 = 30
+    with tempfile.NamedTemporaryFile() as f:
+        f.write("--read-length " + str(len1) + "," + str(len2))
+        f.flush()
+
+        options = {
+            "--read-length": str(len3)
+        }
+
+        ignore_params = _get_ignore_params()
+        ignore_params.append(parameters.QUANT_METHOD)
+
+        param_vals = parameters.validate_command_line_parameter_sets(
+            f.name, options, ignore_params)
+
+        assert len1 not in param_vals[parameters.READ_LENGTH.name]
+        assert len2 not in param_vals[parameters.READ_LENGTH.name]
+        assert len3 in param_vals[parameters.READ_LENGTH.name]
 
 
 def test_get_file_name_returns_correct_name():
