@@ -144,8 +144,7 @@ def _prequantify(logger, options, **params):
     quant_method = params[parameters.QUANT_METHOD.name]
     if quant_method not in quantifiers_used:
         quantifiers_used.append(quant_method)
-        logger.info("Executing prequantification for " +
-                    quant_method.get_name())
+        logger.info("Executing prequantification for " + str(quant_method))
         _execute_quantification_script(run_dir, ["-p"])
         time.sleep(1)
 

@@ -54,7 +54,7 @@ def validate_command_line_options(options):
         for qm in param_values[parameters.QUANT_METHOD.name]:
             if qm.requires_paired_end_reads():
                 raise schema.SchemaError(
-                    None, "Quantification method " + qm.get_name() +
+                    None, "Quantification method " + str(qm) +
                     " does not support single-end reads.")
 
     opt.validate_list_option(

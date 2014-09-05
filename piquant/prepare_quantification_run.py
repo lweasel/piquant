@@ -57,7 +57,7 @@ def _add_quantify_transcripts(writer, quant_method, quant_params, cleanup):
         with writer.section():
             writer.add_comment(
                 "Use {method} to calculate per-transcript TPMs.".format(
-                    method=quant_method.get_name()))
+                    method=quant_method))
             quant_method.write_quantification_commands(writer, quant_params)
 
         if cleanup:
@@ -110,7 +110,7 @@ def _add_assemble_quantification_data(
         ("{command} --method={method} --out={out_file} {fs_pro_file} " +
          "{results_file} {counts_file} {unique_seq_file}").format(
             command=_get_script_path(ASSEMBLE_DATA_SCRIPT),
-            method=quant_method.get_name(),
+            method=quant_method,
             out_file=TPMS_FILE,
             fs_pro_file=fs_pro_file,
             results_file=quant_method.get_results_file(),
@@ -179,7 +179,7 @@ def _add_analyse_results(
                 writer, quantifier_dir, fs_pro_file, quant_method)
         _add_analyse_quantification_results(
             writer, run_dir, piquant_options,
-            quant_method=quant_method.get_name(),
+            quant_method=quant_method,
             read_length=read_length, read_depth=read_depth,
             paired_end=paired_end, errors=errors, bias=bias)
 

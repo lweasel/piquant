@@ -21,8 +21,13 @@ def _Quantifier(cls):
     return cls
 
 
+class _QuantifierBase(object):
+    def __str__(self):
+        return self.__class__.get_name()
+
+
 @_Quantifier
-class _Cufflinks:
+class _Cufflinks(_QuantifierBase):
     FPKM_COLUMN = "FPKM"
 
     CALCULATE_BOWTIE_INDEX_DIRECTORY = \
@@ -133,7 +138,7 @@ class _Cufflinks:
         return self.norm_constant * fpkm
 
 
-class _TranscriptomeBasedQuantifierBase(object):
+class _TranscriptomeBasedQuantifierBase(_QuantifierBase):
     CALCULATE_TRANSCRIPT_REFERENCE_DIRECTORY = \
         "REF_DIR=$(dirname {ref_name})"
     CHECK_TRANSCRIPT_REFERENCE_DIRECTORY_EXISTS = \

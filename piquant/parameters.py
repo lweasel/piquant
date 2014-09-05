@@ -51,13 +51,10 @@ NUM_FRAGMENTS = _Parameter(
         x, "Number of fragments must be a positive integer", nonneg=True),
     run_parameter=False)
 
-# TODO: get rid of isinstance() ASAP
-is_string = lambda x: isinstance(x, six.string_types)
-
 QUANT_METHOD = _Parameter(
     "quant_method", "Quantifier", "--quant-method",
     lambda x: quantifiers.get_quantification_methods()[x],
-    value_namer=lambda x: x if is_string(x) else x.get_name())
+    value_namer=lambda x: str(x))
 
 READ_DEPTH = _Parameter(
     "read_depth", "Read depth", "--read-depth", int,

@@ -140,7 +140,6 @@ def write_flux_simulator_params_files(
 
 
 def get_reads_file(errors, paired_end=None):
-    # TODO: Document and test
     reads_file = SIMULATED_READS_PREFIX
     if paired_end == LEFT_READS:
         reads_file += ".1"
