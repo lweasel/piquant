@@ -56,8 +56,8 @@ Usage::
 
 The following command-line options and positional arguments are required:
 
-* ``--method=<quantification-method>``:
-* ``--out=<output-file>``:
+* ``--method``:
+* ``--out``:
 * ``<pro-file>``:
 * ``<quantification-file>``:
 * ``<transcript-count-file>``:
@@ -70,12 +70,34 @@ Calculate reads required for sequencing depth
 
 TODO - description.
 
+Usage::
+
+    calculate_reads_for_depth 
+        [--log-level=<log-level>] 
+        <pro-file> <read-length> <read-depth>
+
+The following positional arguments are required:
+
+* ``<pro-file>``:
+* ``<read-length>``:
+* ``<read-depth>``:
+
 .. _calculate-unique-transcript-sequence:
 
 Calculate unique transcript sequence
 ------------------------------------
 
 TODO - description.
+
+Usage::
+
+    calculate_unique_transcript_sequence 
+        [--log-level=<log-level>] 
+        <gtf-file>
+
+The following positional argument is required:
+
+* ``<gtf-file>``:
 
 .. _count-transcripts-for-genes:
 
@@ -84,9 +106,37 @@ Count transcripts for genes
 
 TODO - description.
 
+Usage::
+
+    count_transcripts_for_genes 
+        [--log-level=<log-level>] 
+        <gtf-file>
+
+The following positional argument is required:
+
+* ``<gtf-file>``:
+
 .. _simulate-read-bias:
 
 Simulate sequence bias in reads
 -------------------------------
 
 TODO - description.
+
+Usage::
+
+    simulate_read_bias 
+        [--log-level=<log-level>  --out-prefix=<out-prefix>  --paired-end] 
+        --num-reads=<num-reads> 
+        <pwm-file> <reads_file>
+
+The following command-line options and positional arguments are required:
+
+* ``--num-reads``:
+* ``<pwm-file>``:
+* ``<reads-file>``:
+
+while these command-line parameters are optional:
+
+* ``--out-prefix``:
+* ``--paired-end``:
