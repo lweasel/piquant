@@ -55,6 +55,7 @@ def _get_parameters_dir(options, **params):
 
     Return the path of a reads or quantification directory given a dictionary
     of run parameters (e.g. quantification method, read depth etc.).
+
     options: A dictionary mapping from piquant command line option names to
     option values.
     params: A dictionary mapping from parameters._Parameter instances to
@@ -73,6 +74,12 @@ def _reads_directory_checker(should_exist):
     should_exist: If True, the returned function will exit if the specified
     reads or quantification directory does not exist. If False, the function
     will exit if the reads or quantification directory does already exist.
+
+    logger: Logs messages to standard error.
+    options: A dictionary mapping from piquant command line option names to
+    option values.
+    params: A dictionary mapping from parameters._Parameter instances to
+    parameter values.
     """
     def check_reads_directory(logger, options, **params):
         params = dict(params)
@@ -88,6 +95,19 @@ def _reads_directory_checker(should_exist):
 
 
 def _prepare_read_simulation(logger, options, **params):
+    """
+    Write bash script and support files to perform RNA-seq read simulation.
+
+    Write a bash script and support files such that when the bash script is
+    executed, Flux Simulator will be used to simulate RNA-seq reads for the
+    simulation parameters encapsulated by 'params'.
+
+    logger: Logs messages to standard error.
+    options: A dictionary mapping from piquant command line option names to
+    option values.
+    params: A dictionary mapping from parameters._Parameter instances to
+    parameter values.
+    """
     reads_dir = _get_parameters_dir(options, **params)
     cleanup = not options[po.NO_CLEANUP]
     prs.create_simulation_files(reads_dir, cleanup, **params)
