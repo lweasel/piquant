@@ -3,39 +3,38 @@ from piquant.options import \
     validate_dict_option, validate_int_option, \
     validate_options_list, check_boolean_value, \
     validate_list_option
-from tempfile import mkdtemp, NamedTemporaryFile
+from tempfile import NamedTemporaryFile
 from schema import SchemaError
+from utils import temp_dir_created
 
 import pytest
-import os
+
+
+def _closed_file_name():
+    file = NamedTemporaryFile()
+    file_name = file.name
+    file.close()
+    return file_name
 
 
 def test_validate_file_option_does_not_raise_exception_for_existing_file_if_file_should_exist():
-    file = NamedTemporaryFile()
-    file_name = file.name
-    validate_file_option(file_name, "dummy")
+    with NamedTemporaryFile() as f:
+        validate_file_option(f.name, "dummy")
 
 
 def test_validate_file_option_does_not_raise_exception_for_non_existing_file_if_file_should_not_exist():
-    file = NamedTemporaryFile()
-    file_name = file.name
-    file.close()
-    validate_file_option(file_name, "dummy", should_exist=False)
+    validate_file_option(_closed_file_name(), "dummy", should_exist=False)
 
 
 def test_validate_file_option_raises_exception_for_non_existing_file_if_file_should_exist():
-    file = NamedTemporaryFile()
-    file_name = file.name
-    file.close()
     with pytest.raises(SchemaError):
-        validate_file_option(file_name, "dummy")
+        validate_file_option(_closed_file_name(), "dummy")
 
 
 def test_validate_file_option_raises_exception_for_existing_file_if_file_should_not_exist():
-    file = NamedTemporaryFile()
-    file_name = file.name
-    with pytest.raises(SchemaError):
-        validate_file_option(file_name, "dummy", should_exist=False)
+    with NamedTemporaryFile() as f:
+        with pytest.raises(SchemaError):
+            validate_file_option(f.name, "dummy", should_exist=False)
 
 
 def test_validate_file_option_raises_exception_for_none_if_nullable_not_specified():
@@ -48,9 +47,7 @@ def test_validate_file_option_does_not_raise_exception_for_none_if_nullable_spec
 
 
 def test_validate_file_option_exception_message_contains_correct_info():
-    file = NamedTemporaryFile()
-    file_name = file.name
-    file.close()
+    file_name = _closed_file_name()
 
     msg = "dummy"
     with pytest.raises(SchemaError) as exc_info:
@@ -60,29 +57,31 @@ def test_validate_file_option_exception_message_contains_correct_info():
 
 
 def test_validate_dir_option_does_not_raise_exception_for_existing_dir_if_dir_should_exist():
-    dir_path = mkdtemp()
-    validate_dir_option(dir_path, "dummy")
-    os.rmdir(dir_path)
+    with temp_dir_created() as dir_path:
+        validate_dir_option(dir_path, "dummy")
 
 
 def test_validate_dir_option_does_not_raise_exception_for_non_existing_dir_if_dir_should_not_exist():
-    dir_path = mkdtemp()
-    os.rmdir(dir_path)
+    dir_path = None
+    with temp_dir_created() as dp:
+        dir_path = dp
+
     validate_dir_option(dir_path, "dummy", should_exist=False)
 
 
 def test_validate_dir_option_raises_exception_for_non_existing_dir_if_dir_should_exist():
-    dir_path = mkdtemp()
-    os.rmdir(dir_path)
+    dir_path = None
+    with temp_dir_created() as dp:
+        dir_path = dp
+
     with pytest.raises(SchemaError):
         validate_dir_option(dir_path, "dummy")
 
 
 def test_validate_dir_option_raises_exception_for_existing_dir_if_dir_should_not_exist():
-    dir_path = mkdtemp()
-    with pytest.raises(SchemaError):
-        validate_dir_option(dir_path, "dummy", should_exist=False)
-    os.rmdir(dir_path)
+    with temp_dir_created() as dir_path:
+        with pytest.raises(SchemaError):
+            validate_dir_option(dir_path, "dummy", should_exist=False)
 
 
 def test_validate_dir_option_raises_exception_for_none_if_nullable_not_specified():
@@ -95,8 +94,9 @@ def test_validate_dir_option_does_not_raise_exception_for_none_if_nullable_speci
 
 
 def test_validate_dir_option_exception_message_contains_correct_info():
-    dir_path = mkdtemp()
-    os.rmdir(dir_path)
+    dir_path = None
+    with temp_dir_created() as dp:
+        dir_path = dp
 
     msg = "dummy"
     with pytest.raises(SchemaError) as exc_info:
