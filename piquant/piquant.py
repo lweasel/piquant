@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-# TODO: should be able to separately specify parent directory for reads directories.
-# TODO: rename out-dir
-
 """Usage:
     piquant prepare_read_dirs [{log_option_spec} --out-dir=<out_dir> --num-fragments=<num-fragments> --nocleanup --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir>]
     piquant create_reads [{log_option_spec} --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
@@ -175,7 +172,6 @@ class _StatsAccumulator:
         _StatsAccumulator.ACCUMULATORS.append(self)
 
     def __call__(self, logger, options, **params):
-        # TODO: get rid of need to pass run_name into get_stats_file()
         run_name = parameters.get_file_name(**params)
         run_dir = _get_parameters_dir(options, **params)
 

@@ -44,8 +44,6 @@ def get_graphable_statistics():
 
 
 def get_stratified_stats_types():
-    # TODO: documentation
-    # TODO: tests
     clsfrs = classifiers.get_classifiers()
     grp_clsfrs = [c for c in clsfrs if c.produces_grouped_stats()]
     dist_clsfrs = [c for c in clsfrs if c.produces_distribution_plots()]
@@ -57,16 +55,12 @@ def get_stratified_stats_types():
 
 
 def get_stats_file(directory, prefix, classifier=None, ascending=False):
-    # TODO: documentation
-    # TODO: tests
     return os.path.join(directory, prefix) + \
         (classifier.get_stats_file_suffix(ascending=ascending)
             if classifier else "_stats") + ".csv"
 
 
 def write_stats_data(filename, data_frame, **kwargs):
-    # TODO: documentation
-    # TODO: tests
     with open(filename, "w") as out_file:
         data_frame.to_csv(out_file, float_format="%.5f", **kwargs)
 
@@ -119,7 +113,6 @@ class _BaseStatistic():
         raise NotImplementedError
 
     def stat_range(self, vals_range):
-        # TODO: documentation
         return None
 
 
