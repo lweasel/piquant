@@ -113,6 +113,6 @@ A message is output to standard error for each quantification run which failed t
 
 Finally, statistics and graphs describing the accuracy of transcript quantification can be produced via the *piquant* command ``analyse_runs``::
 
-    `python piquant.py analyse_runs --params-file=output/params.txt
+    python piquant.py analyse_runs --params-file=output/params.txt
     
 In this case statistics and graphs are written into the default analysis output directory ``output/analysis`` (which is also created, if it does not exist).

@@ -1,7 +1,7 @@
 Quantification tools
 ====================
 
-By default, the *piquant* pipeline has the ability to run the following four transcript quantification tools. The pipeline can, however, be easily extended to run additional quantification tools by editing the ``quantifiers.py`` Python module, as described in :ref:`adding-new-quantifiers`.
+By default, the *piquant* pipeline has the ability to run the following four transcript quantification tools. The pipeline can, however, be easily extended to run additional quantification tools by editing the ``quantifiers.py`` Python module, as described in :ref:`extending-adding-new-quantifiers`.
 
 Cufflinks
 ---------
