@@ -14,13 +14,43 @@ All three methods of extension currently require some coding in Python.
 Adding a new quantifier
 -----------------------
 
-To enable *piquant* to run a particular quantification tool or pipeline, a new class should be added to the Python module ``quantifiers.py``, marked with the decorator ``_Quantifier``, and fulfilling the API requirements detailed below. Any such tool will then be automatically available to be included in quantification runs from the *piquant* command line.
+To enable *piquant* to run a particular quantification tool or pipeline, a new class should be added to the Python module ``quantifiers.py``, marked with the decorator ``@_Quantifier``, and fulfilling the API requirements detailed below. Any such tool will then be automatically available to be included in quantification runs from the *piquant* command line.
 
 A quantifier class has three main responsibilities:
 
 * It must supply commands to be written to ``run_quantification.sh`` scripts that will be executed when the scripts are run with the command line flag ``-p``; that is, preparatory actions that must be taken prior to quantifying transcripts with this quantificaton tool, but that only need to be executed once for a particular set of input transcripts and genome sequences.
 * It must supply commands to be written to ``run_quantification.sh`` scripts that will be executed when the scripts are run with the command line flag ``-q``; that is, actions that must be taken to calculate transcript abundances with this quantification tool for a particular set of simulated reads.
 * It must specify a file that contains the transcript abundance estimates calculated by the quantification tool, and know how to extract the calculated abundance for a particular transcript from this file.
+
+In detail, in addition to being marked with the decorator ``@_Quantifier``, a quantifier class should implement the following methods:
+
+``get_name()``
+
+TODO
+
+``write_preparatory_commands(writer, params)``
+
+TODO
+
+``write_quantification_commands(writer, params)``
+
+TODO
+
+``write_post_quantification_cleanup(writer)``
+
+TODO
+
+``get_results_file()``
+
+TODO
+
+``read_transcript_abundances(quant_file)``
+
+TODO
+
+``get_transcript_abundance(transcript_id)``
+
+TODO
 
 .. _extending-adding-new-statistics:
 
