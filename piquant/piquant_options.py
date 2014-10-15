@@ -49,14 +49,6 @@ def validate_command_line_options(options):
     param_values = parameters.validate_command_line_parameter_sets(
         options[PARAMS_FILE], options, ignore_params=ignore_params)
 
-    if not processing_reads and \
-            False in param_values[parameters.PAIRED_END.name]:
-        for qm in param_values[parameters.QUANT_METHOD.name]:
-            if qm.requires_paired_end_reads():
-                raise schema.SchemaError(
-                    None, "Quantification method " + str(qm) +
-                    " does not support single-end reads.")
-
     opt.validate_list_option(
         options[PLOT_FORMAT], plot.PLOT_FORMATS, "Invalid plot format")
     options[GROUPED_THRESHOLD] = opt.validate_int_option(

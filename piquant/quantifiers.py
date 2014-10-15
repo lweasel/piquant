@@ -121,10 +121,6 @@ class _Cufflinks(_QuantifierBase):
     def get_results_file(cls):
         return "transcriptome/isoforms.fpkm_tracking"
 
-    @classmethod
-    def requires_paired_end_reads(cls):
-        return False
-
     def read_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
                                       index_col="tracking_id")
@@ -220,10 +216,6 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
     def get_results_file(cls):
         return "rsem_sample.isoforms.results"
 
-    @classmethod
-    def requires_paired_end_reads(cls):
-        return False
-
     def read_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
                                       index_col="transcript_id")
@@ -285,10 +277,6 @@ class _Express(_TranscriptomeBasedQuantifierBase):
     @classmethod
     def get_results_file(cls):
         return "results.xprs"
-
-    @classmethod
-    def requires_paired_end_reads(cls):
-        return False
 
     def read_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
@@ -366,10 +354,6 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
     def get_results_file(cls):
         return "quant_filtered.csv"
 
-    @classmethod
-    def requires_paired_end_reads(cls):
-        return False
-
     def read_transcript_abundances(self, quant_file):
         self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
                                       index_col="Transcript")
@@ -377,6 +361,11 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
     def get_transcript_abundance(self, transcript_id):
         return self.abundances.ix[transcript_id]["TPM"] \
             if transcript_id in self.abundances.index else 0
+
+
+@_Quantifier
+class _Salmon(_TranscriptomeBasedQuantifierBase):
+    pass
 
 
 #@_Quantifier
