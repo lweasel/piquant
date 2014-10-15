@@ -365,7 +365,10 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
 
 @_Quantifier
 class _Salmon(_TranscriptomeBasedQuantifierBase):
-    pass
+
+    @classmethod
+    def get_name(cls):
+        return "Salmon"
 
 
 #@_Quantifier
