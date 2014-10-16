@@ -415,13 +415,15 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
         super(_Salmon, cls).write_preparatory_commands(writer, params)
 
         with writer.section():
-            writer.add_comment("Now create the Salmon transcript index.")
-
-            ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
             index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
 
-            writer.add_line(cls.CREATE_SALMON_TRANSCRIPT_INDEX.format(
-                ref_name=ref_name, index_dir=index_dir))
+            with writer.if_block("! -d " + index_dir):
+                writer.add_comment("Now create the Salmon transcript index.")
+
+                ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
+
+                writer.add_line(cls.CREATE_SALMON_TRANSCRIPT_INDEX.format(
+                    ref_name=ref_name, index_dir=index_dir))
 
     @classmethod
     def write_quantification_commands(cls, writer, params):
