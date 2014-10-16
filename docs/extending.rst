@@ -54,7 +54,7 @@ Commands are again written via the ``writer`` parameter, an instance of the Bash
 
 .. py:function:: write_post_quantification_cleanup(writer)
 
-TODO
+Running a quantification tool may produce many files in addition to those needed to assess the tool's performance (i.e. the file containing estimated transcript abundances), and if many quantification runs are performed, these may occupy significant disk space. ``write_post_quantification_cleanup`` allows an opportunity for these files to be removed once quantification has been performed. As before, such commands can be written via the ``writer`` parameter, an instance of the BashScriptWriter class.
 
 .. py:function:: get_results_file()
 
