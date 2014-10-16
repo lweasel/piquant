@@ -91,7 +91,7 @@ In addition to the command line options common to all ``piquant.py`` commands (s
 * ``--num-molecules``: FluxSimulator parameters will be set so that the initial pool of transcripts contains this many molecules. Note that although depending on this number, the number of fragments in the final library from which reads will be sequenced is a complicated function of the parameters at each stage of FluxSimulator's sequencing process. This parameter should be set high enough that the number of fragments in the final library exceeds the number of reads necessary to give any of the sequencing depths required (default: 30,000,000).
 * ``--nocleanup``: When run, FluxSimulator creates a number of large intermediate files. Unless ``--nocleanup`` is specified, the ``run_simulation.sh`` Bash script will be constructed so as to delete these intermediate files once read simulation has finished.
 
-.. todo:: The ``check_reads`` (see `below <check_reads>`) command should check that the ``--num-molecules`` parameter was set high enough to ensure that the number of reads necessary to give any of the requested read depths were indeed successfully produced - see `this issue <https://github.com/lweasel/piquant/issues/37>`_.
+.. todo:: The ``check_reads`` (see :ref:`below <check_reads>`) command should check that the ``--num-molecules`` parameter was set high enough to ensure that the number of reads necessary to give any of the requested read depths were indeed successfully produced - see `this issue <https://github.com/lweasel/piquant/issues/37>`_.
 
 .. _simulate-reads:
 

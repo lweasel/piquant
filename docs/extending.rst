@@ -73,11 +73,11 @@ The command specified by the parameter ``line_string`` will be written to the sc
 
 .. py:function:: section()
 
-To be used in a Python ``with`` statement. Commands, comments etc added within this context will be grouped together in the Bash script, followed by a blank line.
+To be used in a Python ``with`` statement. Commands, comments etc. added within this context will be grouped together in the Bash script, followed by a blank line.
 
 .. py:function:: if_block(test_command)
 
-To be used in a Python ``with`` statement. Commands, comments etc added within this context will be grouped together within a Bash ``if/then/fi`` block. The parameter ``test_command`` specifies the condition to be tested within the ``if`` statement.
+To be used in a Python ``with`` statement. Commands, comments etc. added within this context will be grouped together within a Bash ``if/then/fi`` block. The parameter ``test_command`` specifies the condition to be tested within the ``if`` statement.
 
 .. py:function:: add_echo(text)
 
