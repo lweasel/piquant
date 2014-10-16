@@ -143,7 +143,7 @@ class _TranscriptomeBasedQuantifierBase(_QuantifierBase):
         "mkdir -p $REF_DIR"
     PREPARE_TRANSCRIPT_REFERENCE = \
         "rsem-prepare-reference --gtf {transcript_gtf} --no-polyA " + \
-        "{genome_fasta_dir} {ref_name}"
+        "{bowtie_spec} {genome_fasta_dir} {ref_name}"
 
     @classmethod
     def _get_ref_name(cls, quantifier_dir):
@@ -161,6 +161,11 @@ class _TranscriptomeBasedQuantifierBase(_QuantifierBase):
 
             ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
 
+            # TODO: this will need to be changed when updating beyond RSEM
+            # 1.2.14, where building the Bowtie index must be specified
+            # explicitly
+            bowtie_spec = "" if cls._needs_bowtie_index() else "--no-bowtie"
+
             writer.add_line(
                 cls.CALCULATE_TRANSCRIPT_REFERENCE_DIRECTORY.format(
                     ref_name=ref_name))
@@ -171,7 +176,8 @@ class _TranscriptomeBasedQuantifierBase(_QuantifierBase):
                 writer.add_line(cls.PREPARE_TRANSCRIPT_REFERENCE.format(
                     transcript_gtf=params[TRANSCRIPT_GTF_FILE],
                     genome_fasta_dir=params[GENOME_FASTA_DIR],
-                    ref_name=ref_name))
+                    ref_name=ref_name,
+                    bowtie_spec=bowtie_spec))
 
 
 @_Quantifier
@@ -187,6 +193,10 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
     @classmethod
     def get_name(cls):
         return "RSEM"
+
+    @classmethod
+    def _needs_bowtie_index(cls):
+        return True
 
     @classmethod
     def write_quantification_commands(cls, writer, params):
@@ -243,6 +253,10 @@ class _Express(_TranscriptomeBasedQuantifierBase):
     @classmethod
     def get_name(cls):
         return "Express"
+
+    @classmethod
+    def _needs_bowtie_index(cls):
+        return True
 
     @classmethod
     def write_quantification_commands(cls, writer, params):
@@ -307,6 +321,10 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
         return "Sailfish"
 
     @classmethod
+    def _needs_bowtie_index(cls):
+        return False
+
+    @classmethod
     def _get_index_dir(cls, quantifier_dir):
         return os.path.join(quantifier_dir, "sailfish/index")
 
@@ -316,16 +334,16 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
         # transcript reference
         super(_Sailfish, cls).write_preparatory_commands(writer, params)
 
-        writer.add_comment(
-            "Now create the Sailfish transcript index (this will only " +
-            "perform indexing if the index does not already exist.")
+        with writer.section():
+            writer.add_comment(
+                "Now create the Sailfish transcript index (this will only " +
+                "perform indexing if the index does not already exist.)")
 
-        ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
-        index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
+            ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
+            index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
 
-        writer.add_line(cls.CREATE_SAILFISH_TRANSCRIPT_INDEX.format(
-            ref_name=ref_name,
-            index_dir=index_dir))
+            writer.add_line(cls.CREATE_SAILFISH_TRANSCRIPT_INDEX.format(
+                ref_name=ref_name, index_dir=index_dir))
 
     @classmethod
     def write_quantification_commands(cls, writer, params):
@@ -365,17 +383,50 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
 
 @_Quantifier
 class _Salmon(_TranscriptomeBasedQuantifierBase):
+    CREATE_SALMON_TRANSCRIPT_INDEX = \
+        "salmon index -t {ref_name}.transcripts.fa -i {index_dir}"
 
     @classmethod
     def get_name(cls):
         return "Salmon"
 
+    @classmethod
+    def _needs_bowtie_index(cls):
+        return False
 
-#@_Quantifier
-#class _RNASkim:
-    # ~/tools/RNASkim/src/rs_cluster -gene_fasta=rna_skim.fasta -num_threads=4 -output=clustered.fa -rs_length=60
-    # ~/tools/RNASkim/src/rs_index -gene_fasta=clustered.fa -index_file=clustered_gene.fa.pb -rs_length=60 -num_threads 4
-    # ~/tools/RNASkim/src/rs_select -index_file=clustered_gene.fa.pb -selected_keys_file=clustered_gene.fa.sk -rs_length=60
-    # ~/tools/RNASkim/src/rs_count -selected_keys_file=clustered_gene.fa.sk -count_file=clustered_gene.fa.cf -read_files1=/home/odando/projects/assess_isoform_quantification/piquant/output/30x_75b_se_no_errors_no_bias/reads.fasta -num_threads=4
-    # ~/tools/RNASkim/src/rs_estimate -count_file=clustered_gene.fa.cf > estimation
-    #pass
+    @classmethod
+    def _get_index_dir(cls, quantifier_dir):
+        return os.path.join(quantifier_dir, "salmon/index")
+
+    @classmethod
+    def write_preparatory_commands(cls, writer, params):
+        # We again use a tool from the RSEM package to create the transcript
+        # reference sequences
+        super(_Salmon, cls).write_preparatory_commands(writer, params)
+
+        with writer.section():
+            writer.add_comment("Now create the Salmon transcript index.")
+
+            ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
+            index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
+
+            writer.add_line(cls.CREATE_SALMON_TRANSCRIPT_INDEX.format(
+                ref_name=ref_name, index_dir=index_dir))
+
+    @classmethod
+    def write_quantification_commands(cls, writer, params):
+        pass
+
+    @classmethod
+    def write_post_quantification_cleanup(cls, writer):
+        pass
+
+    @classmethod
+    def get_results_file(cls):
+        return "salmon_quant/quant.sf"
+
+    def read_transcript_abundances(self, quant_file):
+        pass
+
+    def get_transcript_abundance(self, transcript_id):
+        return 0
