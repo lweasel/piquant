@@ -269,13 +269,13 @@ class _Express(_TranscriptomeBasedQuantifierBase):
         stranded_spec = "--fr-stranded " \
             if SIMULATED_READS not in params else ""
 
-        writer.add_pipe([
+        writer.add_pipe(
             cls.MAP_READS_TO_TRANSCRIPT_REFERENCE.format(
                 qualities_spec=qualities_spec,
                 ref_name=ref_name,
                 reads_spec=reads_spec),
             cls.CONVERT_SAM_TO_BAM
-        ])
+        )
         writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
             stranded_spec=stranded_spec,
             ref_name=ref_name))
@@ -302,9 +302,10 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
     QUANTIFY_ISOFORM_EXPRESSION = \
         "sailfish quant -p 8 -i {index_dir} -l {library_spec} " + \
         "{reads_spec} -o ."
-    FILTER_COMMENT_LINES = \
-        "grep -v '^# \[' quant_bias_corrected.sf | " + \
+    FILTER_COMMENT_LINES = [
+        "grep -v '^# \[' quant_bias_corrected.sf",
         "sed -e 's/# //'i > quant_filtered.csv"
+    ]
 
     REMOVE_SAILFISH_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
         "rm -rf logs quant_bias_corrected.sf quant.sf " + \
@@ -356,7 +357,7 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
             index_dir=index_dir,
             library_spec=library_spec,
             reads_spec=reads_spec))
-        writer.add_line(cls.FILTER_COMMENT_LINES)
+        writer.add_pipe(*cls.FILTER_COMMENT_LINES)
 
     @classmethod
     def write_post_quantification_cleanup(cls, writer):
@@ -379,9 +380,10 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
 
     QUANTIFY_ISOFORM_EXPRESSION = \
         "salmon quant -p 8 -i {index_dir} -l {library_spec} {reads_spec} -o ."
-    FILTER_COMMENT_LINES = \
-        "grep -v '^# \[\|salmon' quant.sf | " + \
+    FILTER_COMMENT_LINES = [
+        "grep -v '^# \[\|salmon' quant.sf",
         "sed -e 's/# //'i > quant_filtered.csv"
+    ]
 
     REMOVE_SALMON_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
         "rm -rf logs quant.sf"
@@ -431,7 +433,7 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
             index_dir=index_dir,
             library_spec=library_spec,
             reads_spec=reads_spec))
-        writer.add_line(cls.FILTER_COMMENT_LINES)
+        writer.add_pipe(cls.FILTER_COMMENT_LINES)
 
     @classmethod
     def write_post_quantification_cleanup(cls, writer):

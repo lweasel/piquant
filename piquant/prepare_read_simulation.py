@@ -109,11 +109,11 @@ def _add_shuffle_simulated_reads(writer, paired_end, errors):
         "random order, hence we shuffle the reads output by Flux Simulator.")
 
     reads_file = fs.get_reads_file(errors)
-    writer.add_pipe([
+    writer.add_pipe(
         "paste " + ("- " * lines_per_fragment) + "< " + reads_file,
         "shuf",
         "tr '\\t' '\\n' > " + TMP_READS_FILE
-    ])
+    )
     writer.add_line("mv " + TMP_READS_FILE + " " + reads_file)
 
 
@@ -141,12 +141,12 @@ def _add_separate_paired_end_reads(writer, errors):
         "output into files containing left and right reads.")
 
     reads_file = fs.get_reads_file(errors)
-    writer.add_pipe([
+    writer.add_pipe(
         "paste " + ("- - - -" if errors else "- -") + " < " + reads_file,
         "awk -F '\\t' '$1~/\/1/ " +
         "{print $0 > \"" + TMP_LEFT_READS_FILE + "\"} " +
         "$1~/\/2/ {print $0 > \"" + TMP_RIGHT_READS_FILE + "\"}'"
-    ])
+    )
     writer.add_line("rm " + reads_file)
 
     writer.add_line(
