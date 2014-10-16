@@ -65,7 +65,31 @@ Running a quantification tool may produce many files in addition to those needed
 The BashScriptWriter class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+``BashScriptWriter`` is a simple utility class to facilitate the writing of commands by quantifier classes to *piquant*'s ``run_simulation.sh`` and ``run_quantification.sh`` scripts. The most common methods are:
 
+.. py:function:: add_line(line_string)
+
+The command specified by the parameter ``line_string`` will be written to the script at the appropriate indendation level.
+
+.. py:function:: section()
+
+To be used in a Python ``with`` statement. Commands, comments etc added within this context will be grouped together in the Bash script, followed by a blank line.
+
+.. py:function:: if_block(test_command)
+
+To be used in a Python ``with`` statement. Commands, comments etc added within this context will be grouped together within a Bash ``if/then/fi`` block. The parameter ``test_command`` specifies the condition to be tested within the ``if`` statement.
+
+.. py:function:: add_echo(text)
+
+An echo statement will be written to the Bash script to print the string specified by the parameter ``text``.
+
+.. py:function:: add_pipe(*pipe_commands)
+
+The commands specified by the function's parameters will be joined together by pipes and written to the Bash script.
+
+.. py:function:: add_comment(comment)
+
+The text specified by the parameter ``comment`` will be written to the Bash script as an appropriately-formatted comment.
 
 .. _extending-adding-new-statistics:
 

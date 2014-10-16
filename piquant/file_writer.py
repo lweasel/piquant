@@ -84,8 +84,8 @@ class BashScriptWriter(_Writer):
                 self.deindent()
 
     @contextlib.contextmanager
-    def if_block(self, details):
-        return self._adding_bash_block("if [ ", " ]; then", "fi", details)
+    def if_block(self, test_command):
+        return self._adding_bash_block("if [ ", " ]; then", "fi", test_command)
 
     @contextlib.contextmanager
     def while_block(self, details):
