@@ -58,7 +58,7 @@ Running a quantification tool may produce many files in addition to those needed
 
 .. py:function:: get_results_file()
 
-TODO
+``get_results_file`` should return the path, relative to the quantification run directory, of the quantification output file containing estimated transcript abundances.
 
 .. py:function:: read_transcript_abundances(quant_file)
 
