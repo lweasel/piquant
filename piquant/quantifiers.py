@@ -314,7 +314,8 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
         "sed -e 's/# //'i > quant_filtered.csv"
 
     REMOVE_SAILFISH_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
-        "rm quant_bias_corrected.sf quant.sf reads.count_info reads.sfc"
+        "rm -rf logs quant_bias_corrected.sf quant.sf " + \
+        "reads.count_info reads.sfc"
 
     @classmethod
     def get_name(cls):
@@ -386,6 +387,15 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
     CREATE_SALMON_TRANSCRIPT_INDEX = \
         "salmon index -t {ref_name}.transcripts.fa -i {index_dir}"
 
+    QUANTIFY_ISOFORM_EXPRESSION = \
+        "salmon quant -p 8 -i {index_dir} -l {library_spec} {reads_spec} -o ."
+    FILTER_COMMENT_LINES = \
+        "grep -v '^# \[\|salmon' quant.sf | " + \
+        "sed -e 's/# //'i > quant_filtered.csv"
+
+    REMOVE_SALMON_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
+        "rm -rf logs quant.sf"
+
     @classmethod
     def get_name(cls):
         return "Salmon"
@@ -415,11 +425,25 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
 
     @classmethod
     def write_quantification_commands(cls, writer, params):
-        pass
+        index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
+
+        library_spec = "U" if SIMULATED_READS in params else "ISF"
+
+        reads_spec = "-r {r}".format(r=params[SIMULATED_READS]) \
+            if SIMULATED_READS in params \
+            else "-1 {l} -2 {r}".format(
+                l=params[LEFT_SIMULATED_READS],
+                r=params[RIGHT_SIMULATED_READS])
+
+        writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
+            index_dir=index_dir,
+            library_spec=library_spec,
+            reads_spec=reads_spec))
+        writer.add_line(cls.FILTER_COMMENT_LINES)
 
     @classmethod
     def write_post_quantification_cleanup(cls, writer):
-        pass
+        writer.add_line(cls.REMOVE_SALMON_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES)
 
     @classmethod
     def get_results_file(cls):
