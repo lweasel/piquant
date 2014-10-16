@@ -6,14 +6,14 @@ from utils import temp_dir_created
 
 TRANSCRIPT_GTF_FILE = "transcript_gtf_file"
 GENOME_FASTA_DIR = "genome_fasta_dir"
-NUM_FRAGMENTS = 1000
+NUM_MOLECULES = 1000
 READ_LENGTH = 50
 
 
 def _write_flux_simulator_params_files(
         output_dir, paired_end=False, errors=False, read_length=READ_LENGTH):
     fs.write_flux_simulator_params_files(
-        TRANSCRIPT_GTF_FILE, GENOME_FASTA_DIR, NUM_FRAGMENTS, read_length,
+        TRANSCRIPT_GTF_FILE, GENOME_FASTA_DIR, NUM_MOLECULES, read_length,
         paired_end, errors, output_dir)
 
 
@@ -67,8 +67,7 @@ def test_write_flux_simulator_params_files_writes_correct_common_params():
                   _get_simulation_params_dict(dirname)]:
             assert d["REF_FILE_NAME"] == TRANSCRIPT_GTF_FILE
             assert d["GEN_DIR"] == GENOME_FASTA_DIR
-            assert d["NB_MOLECULES"] == \
-                str(int(NUM_FRAGMENTS / fs._FRAGMENTS_PER_MOLECULE))
+            assert d["NB_MOLECULES"] == str(NUM_MOLECULES)
             assert d["POLYA_SCALE"] == "NaN"
             assert d["POLYA_SHAPE"] == "NaN"
 
