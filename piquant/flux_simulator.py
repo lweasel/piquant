@@ -50,12 +50,12 @@ _ERROR_MODEL_LONG = 76
 
 
 def _get_common_flux_simulator_params(
-        transcript_gtf_file, genome_fasta_dir, num_fragments):
+        transcript_gtf_file, genome_fasta_dir, num_molecules):
 
     return {
         "REF_FILE_NAME": transcript_gtf_file,
         "GEN_DIR": genome_fasta_dir,
-        "NB_MOLECULES": int(num_fragments / _FRAGMENTS_PER_MOLECULE),
+        "NB_MOLECULES": num_molecules,
         "POLYA_SCALE": "NaN",
         "POLYA_SHAPE": "NaN",
         "TMP_DIR": TEMPORARY_DIRECTORY
@@ -63,10 +63,10 @@ def _get_common_flux_simulator_params(
 
 
 def _write_flux_simulator_expression_params(
-        transcript_gtf_file, genome_fasta_dir, num_fragments, output_dir):
+        transcript_gtf_file, genome_fasta_dir, num_molecules, output_dir):
 
     fs_params = _get_common_flux_simulator_params(
-        transcript_gtf_file, genome_fasta_dir, num_fragments)
+        transcript_gtf_file, genome_fasta_dir, num_molecules)
 
     with fw.writing_to_file(fw.FluxSimulatorParamsWriter, output_dir,
                             EXPRESSION_PARAMS_FILE) as writer:
@@ -74,11 +74,11 @@ def _write_flux_simulator_expression_params(
 
 
 def _write_flux_simulator_simulation_params(
-        transcript_gtf_file, genome_fasta_dir, num_fragments,
+        transcript_gtf_file, genome_fasta_dir, num_molecules,
         read_length, paired_end, errors, output_dir):
 
     fs_params = _get_common_flux_simulator_params(
-        transcript_gtf_file, genome_fasta_dir, num_fragments)
+        transcript_gtf_file, genome_fasta_dir, num_molecules)
 
     fs_params["SEQ_FILE_NAME"] = SIMULATED_READS_PREFIX + ".bed"
     fs_params["PRO_FILE_NAME"] = EXPRESSION_PROFILE_FILE
@@ -112,7 +112,7 @@ def read_expression_profiles(pro_file):
 
 
 def write_flux_simulator_params_files(
-        transcript_gtf_file, genome_fasta_dir, num_fragments,
+        transcript_gtf_file, genome_fasta_dir, num_molecules,
         read_length, paired_end, errors, output_dir):
     """
     Write FluxSimulator expression and simulation parameters files.
@@ -124,8 +124,8 @@ def write_flux_simulator_params_files(
     transcripts to be simulated.
     genome_fasta_dir: Path to a directory containing per-chromosome genome
     sequences as FASTA files.
-    num_fragments: The approximate number of cDNA fragments to create.
-    read_length: The length in bases of the simulated reads.
+    num_molecules: The number of molecules in the initial transcript
+    population.
     paired_end: Whether single- or paired-end reads should be simulated.
     errors: Whether reads should be simulated with errors or not.
     output_dir: Path to the directory into which parameter files should be
@@ -133,9 +133,9 @@ def write_flux_simulator_params_files(
     """
 
     _write_flux_simulator_expression_params(
-        transcript_gtf_file, genome_fasta_dir, num_fragments, output_dir)
+        transcript_gtf_file, genome_fasta_dir, num_molecules, output_dir)
     _write_flux_simulator_simulation_params(
-        transcript_gtf_file, genome_fasta_dir, num_fragments,
+        transcript_gtf_file, genome_fasta_dir, num_molecules,
         read_length, paired_end, errors, output_dir)
 
 

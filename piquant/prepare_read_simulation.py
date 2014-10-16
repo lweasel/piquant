@@ -197,10 +197,10 @@ def _add_cleanup_intermediate_files(writer):
 
 def _create_simulator_parameter_files(
         reads_dir, transcript_gtf_file, genome_fasta_dir,
-        num_fragments, read_length, paired_end, errors):
+        num_molecules, read_length, paired_end, errors):
 
     fs.write_flux_simulator_params_files(
-        transcript_gtf_file, genome_fasta_dir, num_fragments,
+        transcript_gtf_file, genome_fasta_dir, num_molecules,
         read_length, paired_end, errors, reads_dir)
 
 
@@ -220,14 +220,14 @@ def _write_read_simulation_script(
 def create_simulation_files(
         reads_dir, cleanup, read_length=30, read_depth=10, paired_end=False,
         errors=False, bias=False, transcript_gtf=None, genome_fasta=None,
-        num_fragments=1000000000):
+        num_molecules=30000000):
 
     os.mkdir(reads_dir)
 
     # Write Flux Simulator parameters files
     _create_simulator_parameter_files(
         reads_dir, transcript_gtf, genome_fasta,
-        num_fragments, read_length, paired_end, errors)
+        num_molecules, read_length, paired_end, errors)
 
     # Write shell script to run read simulation
     _write_read_simulation_script(

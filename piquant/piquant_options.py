@@ -2,7 +2,6 @@ import options as opt
 import os.path
 import parameters
 import plot
-import schema
 
 OUTPUT_DIRECTORY = "--out-dir"
 STATS_DIRECTORY = "--stats-dir"
@@ -44,7 +43,7 @@ def validate_command_line_options(options):
                           parameters.GENOME_FASTA_DIR]
 
     if not options[PREPARE_READ_DIRS]:
-        ignore_params.append(parameters.NUM_FRAGMENTS)
+        ignore_params.append(parameters.NUM_MOLECULES)
 
     param_values = parameters.validate_command_line_parameter_sets(
         options[PARAMS_FILE], options, ignore_params=ignore_params)

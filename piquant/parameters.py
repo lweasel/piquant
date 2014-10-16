@@ -45,10 +45,10 @@ GENOME_FASTA_DIR = _Parameter(
         x, "Genome FASTA directory does not exist"),
     run_parameter=False)
 
-NUM_FRAGMENTS = _Parameter(
-    "num_fragments", "Number of fragments", "--num-fragments",
+NUM_MOLECULES = _Parameter(
+    "num_molecules", "Number of molecules", "--num-molecules",
     lambda x: opt.validate_int_option(
-        x, "Number of fragments must be a positive integer", nonneg=True),
+        x, "Number of molecules must be a positive integer", nonneg=True),
     run_parameter=False)
 
 QUANT_METHOD = _Parameter(

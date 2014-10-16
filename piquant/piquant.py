@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """Usage:
-    piquant prepare_read_dirs [{log_option_spec} --out-dir=<out_dir> --num-fragments=<num-fragments> --nocleanup --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir>]
+    piquant prepare_read_dirs [{log_option_spec} --out-dir=<out_dir> --num-molecules=<num-molecules> --nocleanup --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir>]
     piquant create_reads [{log_option_spec} --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant check_reads [{log_option_spec} --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant prepare_quant_dirs [{log_option_spec} --out-dir=<out-dir> --nocleanup --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir> --plot-format=<plot-format> --grouped-threshold=<threshold>]
@@ -16,7 +16,7 @@ Options:
 {log_option_spec}                  {log_option_description}
 --out-dir=<out-dir>                      Parent output directory to which quantification run directories will be written [default: output].
 --stats-dir=<stats-dir>                  Directory to output assembled stats and graphs to [default: output/analysis].
---num-fragments=<num-fragments>          Flux Simulator parameters will be set to create approximately this number of fragments [default: 1000000000].
+--num-molecules=<num-molecules>          Flux Simulator parameters will be set for simulation to start with this number of transcript molecules in the initial population [default: 30000000].
 --nocleanup                              If not specified, files non-essential for subsequent quantification (when creating reads) and assessing quantification accuracy (when quantifying) will be deleted.
 -f --params-file=<params-file>           File containing specification of quantification methods, read-lengths, read-depths and end, error and bias parameter values to create reads for.
 -q --quant-method=<quant-methods>        Comma-separated list of quantification methods to run.

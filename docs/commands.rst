@@ -88,8 +88,10 @@ In addition to the command line options common to all ``piquant.py`` commands (s
 
 * ``--transcript-gtf``: The path to a GTF formatted file describing the transcripts to be simulated by FluxSimulator. This GTF file location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``.
 * ``--genome-fasta``: The path to a directory containing per-chromosome genome sequences in FASTA-formatted files. This directory location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``.
-* ``--num-fragments``: FluxSimulator parameters will be set so as to create approximately this number of fragments; the fragments subsequently sequenced will be selected from this pool (default: 1,000,000,000).
+* ``--num-molecules``: FluxSimulator parameters will be set so that the initial pool of transcripts contains this many molecules. Note that although depending on this number, the number of fragments in the final library from which reads will be sequenced is a complicated function of the parameters at each stage of FluxSimulator's sequencing process. This parameter should be set high enough that the number of fragments in the final library exceeds the number of reads necessary to give any of the sequencing depths required (default: 30,000,000).
 * ``--nocleanup``: When run, FluxSimulator creates a number of large intermediate files. Unless ``--nocleanup`` is specified, the ``run_simulation.sh`` Bash script will be constructed so as to delete these intermediate files once read simulation has finished.
+
+.. todo:: The ``check_reads`` (see `below <check_reads>`) command should check that the ``--num-molecules`` parameter was set high enough to ensure that the number of reads necessary to give any of the requested read depths were indeed successfully produced - see `this issue <https://github.com/lweasel/piquant/issues/37>`_.
 
 .. _simulate-reads:
 
@@ -99,6 +101,8 @@ Create reads (``create_reads``)
 The ``create_reads`` command is used to simulate RNA-seq reads via the ``run_simulation.sh`` scripts that have been written by the ``prepare_read_dirs`` command (see :ref:`Prepare read directories <prepare-read-dirs>` above). For each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error`` and ``--bias``, the appropriate ``run_simulation.sh`` script is launched as a background process, ignoring hangup signals (via the ``nohup`` command). After launching the scripts, ``piquant.py`` exits.
 
 For details on the process of read simulation executed via ``run_simulation.sh``, see :doc:`simulation`.
+
+.. _check-reads:
 
 Check reads were successfully created (``check_reads``)
 -------------------------------------------------------
