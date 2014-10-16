@@ -447,10 +447,12 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
 
     @classmethod
     def get_results_file(cls):
-        return "salmon_quant/quant.sf"
+        return "quant_filtered.csv"
 
     def read_transcript_abundances(self, quant_file):
-        pass
+        self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
+                                      index_col="Name")
 
     def get_transcript_abundance(self, transcript_id):
-        return 0
+        return self.abundances.ix[transcript_id]["TPM"] \
+            if transcript_id in self.abundances.index else 0
