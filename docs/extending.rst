@@ -32,7 +32,17 @@ In detail, in addition to being marked with the decorator ``@_Quantifier``, a qu
 
 ``write_preparatory_commands`` writes commands to a ``run_quantification.sh`` script that should be executed prior to quantifying transcripts with the particular quantification tool, but that only need to be executed once for a particular set of input transcripts and genome sequences - for example, preparing a Bowtie index for the genome, or constructing transcript sequences.
 
-Commands are written via the ``writer`` parameter, an instance of the BashScriptWriter class (see :ref:`below <extending-bash-script-writer>`), which facilitates writing commands to a Bash script.
+Commands are written via the ``writer`` parameter, an instance of the BashScriptWriter class (see :ref:`below <extending-bash-script-writer>`), which facilitates writing to a Bash script.
+
+``params`` is a dictionary of key-value pairs containing items that may be of use to the quantifier during preparation or quantification:
+
+* ``TRANSCRIPT_GTF_FILE``: Full path to the GTF file containing transcript definitions.
+* ``GENOME_FASTA_DIR``: Full path to the directory containing genome sequence FASTA files.
+* ``QUANTIFIER_DIRECTORY``: Full path to a directory ``quantifier_scratch``, created within the *piquant* output directory, that quantifiers can write files to necessary for their operation (for example, a Bowtie or Sailfish index).
+* ``FASTQ_READS``: A boolean, ``True`` if reads have been simulated with errors and quality values, and are thus written in a FASTQ file.
+* ``SIMULATED_READS``: If single-end reads are being quantified, the full path to the file containing reads. This read is not present if paired-end reads are being quantified.
+* ``LEFT_SIMULATED_READS``: If paired-end reads are being quantified, the full path to the file containing the first read for each pair. This key is not present if single-end reads are being quantified.
+* ``RIGHT_SIMULATED_READS``: If paired-end reads are being quantified, the full path to the file containing the second read for each pair. This key is not present if single-end reads are being quantified.
 
 .. py:function:: write_quantification_commands(writer, params)
 
