@@ -1,9 +1,9 @@
 Extending piquant
 =================
 
-*piquant* is designed to be extensible in three principal ways:
+*piquant* is extensible in three principal ways:
 
-* :ref:`extending-adding-new-quantifiers`: Adding an additional quantification tool or pipeline whose comparative performance can then be assessed.
+* :ref:`extending-adding-new-quantifiers`: Adding an additional quantification tool or pipeline whose comparative performance against other quantifiers can then be assessed.
 * :ref:`extending-adding-new-statistics`: Adding an additional statistic to be calculated for each quantification run.
 * :ref:`extending-adding-new-classifiers`: Adding an additional classifier to split transcripts into discrete groups, so that the performance of quantification tools can be assessed across these sets of transcripts.
 
@@ -22,35 +22,35 @@ A quantifier class has three main responsibilities:
 * It must supply commands to be written to ``run_quantification.sh`` scripts that will be executed when the scripts are run with the command line flag ``-q``; that is, actions that must be taken to calculate transcript abundances with this quantification tool for a particular set of simulated reads.
 * It must specify a file that contains the transcript abundance estimates calculated by the quantification tool, and know how to extract the calculated abundance for a particular transcript from this file.
 
-In detail, in addition to being marked with the decorator ``@_Quantifier``, a quantifier class should implement the following methods:
+In detail, in addition to being marked with the decorator ``@_Quantifier``, a quantifier class must implement the following methods:
 
-``get_name()``
+.. py:function:: get_name()
 
 ``get_name`` should return the string to be given when specifying a list of quantifiers to be used by *piquant* via the command-line or parameters file option ``--quant-method``.
 
-``write_preparatory_commands(writer, params)``
+.. py:function:: write_preparatory_commands(writer, params)
 
 ``write_preparatory_commands`` writes commands to a ``run_quantification.sh`` script that should be executed prior to quantifying transcripts with the particular quantification tool, but that only need to be executed once for a particular set of input transcripts and genome sequences - for example, preparing a Bowtie index for the genome, or constructing transcript sequences.
 
-Commands are written via the ``writer`` parameter, an instance of the BashScriptWriter class (see :ref:`extending-bash-script-writer below`), which facilitates writing commands to a Bash script.
+Commands are written via the ``writer`` parameter, an instance of the BashScriptWriter class (see :ref:`below <extending-bash-script-writer>`), which facilitates writing commands to a Bash script.
 
-``write_quantification_commands(writer, params)``
-
-TODO
-
-``write_post_quantification_cleanup(writer)``
+.. py:function:: write_quantification_commands(writer, params)
 
 TODO
 
-``get_results_file()``
+.. py:function:: write_post_quantification_cleanup(writer)
 
 TODO
 
-``read_transcript_abundances(quant_file)``
+.. py:function:: get_results_file()
 
 TODO
 
-``get_transcript_abundance(transcript_id)``
+.. py:function:: read_transcript_abundances(quant_file)
+
+TODO
+
+.. py:function:: get_transcript_abundance(transcript_id)
 
 TODO
 
