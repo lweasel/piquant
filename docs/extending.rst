@@ -28,6 +28,8 @@ In detail, in addition to being marked with the decorator ``@_Quantifier``, a qu
 
 ``get_name`` should return the string to be given when specifying a list of quantifiers to be used by *piquant* via the command-line or parameters file option ``--quant-method``.
 
+.. _extending-write-preparatory-commands:
+
 .. py:function:: write_preparatory_commands(writer, params)
 
 ``write_preparatory_commands`` writes commands to a ``run_quantification.sh`` script that should be executed prior to quantifying transcripts with the particular quantification tool, but that only need to be executed once for a particular set of input transcripts and genome sequences - for example, preparing a Bowtie index for the genome, or constructing transcript sequences.
@@ -46,7 +48,9 @@ Commands are written via the ``writer`` parameter, an instance of the BashScript
 
 .. py:function:: write_quantification_commands(writer, params)
 
-TODO
+``write_quantification_commands`` writes commands to a ``run_quantification.sh`` that will be executed to calculate transcript abundances with this quantification tool for a particular set of simulated reads.
+
+Commands are again written via the ``writer`` parameter, an instance of the BashScriptWriter class. ``params`` is a dictionary of key-value pairs containing the same items as described for ``write_preparatory_commands`` :ref:`above <extending-write-preparatory-commands>`.
 
 .. py:function:: write_post_quantification_cleanup(writer)
 
