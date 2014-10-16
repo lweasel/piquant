@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """Usage:
-    assemble_quantification_data [{log_option_spec}] --method=<quantification-method> --out=<output-file> <pro-file> <quantification-file> <transcript-count-file> <unique-sequence-file>
+    assemble_quantification_data [{log_option_spec}] --method=<quantification-method> --out=<output-file> <pro-file> <transcript-count-file> <unique-sequence-file>
 
 {help_option_spec}                    {help_option_description}
 {ver_option_spec}                 {ver_option_description}
@@ -10,7 +10,6 @@
 -o <output-file> --out=<output-file>
                              Output file for real and calculated TPMs.
 <pro-file>                   Flux Simulator gene expression profile file.
-<quantification-file>        Output file from transcript quantifier from which abundances will be read.
 <transcript-count-file>      File containing per-gene transcript counts.
 <unique-sequence-file>       File containing unique sequence lengths per-transcript.
 """
@@ -27,7 +26,6 @@ import tpms
 QUANT_METHOD = "--method"
 OUT_FILE = "--out"
 PRO_FILE = "<pro-file>"
-QUANT_FILE = "<quantification-file>"
 COUNT_FILE = "<transcript-count-file>"
 UNIQUE_SEQ_FILE = "<unique-sequence-file>"
 
@@ -45,8 +43,6 @@ def _validate_command_line_options(options):
 
         opt.validate_file_option(
             options[PRO_FILE], "Could not open expression profile file")
-        opt.validate_file_option(
-            options[QUANT_FILE], "Could not open transcript abundance file")
         opt.validate_file_option(
             options[COUNT_FILE], "Could not open transcript count file")
         opt.validate_file_option(
@@ -66,9 +62,7 @@ def _read_expression_profiles(pro_file):
     return profiles
 
 
-def _read_transcript_abundances(quant_file, quantifier, profiles):
-    quantifier.read_transcript_abundances(quant_file)
-
+def _read_transcript_abundances(quantifier, profiles):
     profiles[tpms.CALCULATED_TPM] = profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].\
         map(quantifier.get_transcript_abundance)
 
@@ -118,8 +112,7 @@ def _assemble_and_write_quantification_data(logger, options):
     # Read calculated TPM values for each transcript produced by a particular
     # quantification method
     logger.info("Reading calculated TPMs...")
-    _read_transcript_abundances(
-        options[QUANT_FILE], options[QUANT_METHOD], profiles)
+    _read_transcript_abundances(options[QUANT_METHOD], profiles)
 
     # Read per-gene transcript counts
     logger.info("Reading per-gene transcript counts...")

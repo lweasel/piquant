@@ -108,12 +108,11 @@ def _add_assemble_quantification_data(
 
     writer.add_line(
         ("{command} --method={method} --out={out_file} {fs_pro_file} " +
-         "{results_file} {counts_file} {unique_seq_file}").format(
+         "{counts_file} {unique_seq_file}").format(
             command=_get_script_path(ASSEMBLE_DATA_SCRIPT),
             method=quant_method,
             out_file=TPMS_FILE,
             fs_pro_file=fs_pro_file,
-            results_file=quant_method.get_results_file(),
             counts_file=_get_transcript_counts_file(quantifier_dir),
             unique_seq_file=_get_unique_sequence_file(quantifier_dir)))
 

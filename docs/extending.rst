@@ -20,7 +20,7 @@ A quantifier class has three main responsibilities:
 
 * It must supply commands to be written to ``run_quantification.sh`` scripts that will be executed when the scripts are run with the command line flag ``-p``; that is, preparatory actions that must be taken prior to quantifying transcripts with this quantification tool, but that only need to be executed once for a particular set of input transcripts and genome sequences.
 * It must supply commands to be written to ``run_quantification.sh`` scripts that will be executed when the scripts are run with the command line flag ``-q``; that is, actions that must be taken to calculate transcript abundances with this quantification tool for a particular set of simulated reads.
-* It must specify a file that contains the transcript abundance estimates calculated by the quantification tool, and know how to extract the calculated abundance for a particular transcript from this file.
+* It must be able to return the abundance calculated by the quantification tool for a specified transcript.
 
 In detail, in addition to being marked with the decorator ``@_Quantifier``, a quantifier class must implement the following methods:
 
@@ -56,17 +56,9 @@ Commands are again written via the ``writer`` parameter, an instance of the Bash
 
 Running a quantification tool may produce many files in addition to those needed to assess the tool's performance (i.e. the file containing estimated transcript abundances), and if many quantification runs are performed, these may occupy significant disk space. ``write_post_quantification_cleanup`` allows an opportunity for these files to be removed once quantification has been performed. As before, such commands can be written via the ``writer`` parameter, an instance of the BashScriptWriter class.
 
-.. py:function:: get_results_file()
-
-``get_results_file`` should return the path, relative to the quantification run directory, of the quantification output file containing estimated transcript abundances.
-
-.. py:function:: read_transcript_abundances(quant_file)
-
-TODO
-
 .. py:function:: get_transcript_abundance(transcript_id)
 
-TODO
+``get_transcript_abundance`` should return the abundance estimated by the quantification tool for the transcript specified by the parameter ``transcript_id``; as it will be called for each transcript in the input set, it should generally read transcript abundances from the output files of the quantification tool only once. Transcript abundances should be return in TPM (transcripts per million). If the quantification tool does not supply abundance estimates in TPM, a transformation to these units may require to be perfomed (for example, see ``_Cufflinks.get_transcript_abundance()``, which transforms the FPKM values output by Cufflinks into TPM).
 
 .. _extending-bash-script-writer:
 

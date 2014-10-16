@@ -22,6 +22,9 @@ def _Quantifier(cls):
 
 
 class _QuantifierBase(object):
+    def __init__(self):
+        self.abundances = None
+
     def __str__(self):
         return self.__class__.get_name()
 
@@ -117,18 +120,15 @@ class _Cufflinks(_QuantifierBase):
         writer.add_line(cls.REMOVE_TOPHAT_OUTPUT_DIRECTORY)
         writer.add_line(cls.REMOVE_CUFFLINKS_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES)
 
-    @classmethod
-    def get_results_file(cls):
-        return "transcriptome/isoforms.fpkm_tracking"
-
-    def read_transcript_abundances(self, quant_file):
-        self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
-                                      index_col="tracking_id")
-
-        self.norm_constant = \
-            1000000 / (self.abundances[_Cufflinks.FPKM_COLUMN].sum())
-
     def get_transcript_abundance(self, transcript_id):
+        if self.abundances is None:
+            self.abundances = pd.read_csv(
+                "transcriptome/isoforms.fpkm_tracking",
+                delim_whitespace=True, index_col="tracking_id")
+
+            self.norm_constant = \
+                1000000 / (self.abundances[_Cufflinks.FPKM_COLUMN].sum())
+
         fpkm = self.abundances.ix[transcript_id][_Cufflinks.FPKM_COLUMN] \
             if transcript_id in self.abundances.index else 0
         return self.norm_constant * fpkm
@@ -222,15 +222,12 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
     def write_post_quantification_cleanup(cls, writer):
         writer.add_line(cls.REMOVE_RSEM_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES)
 
-    @classmethod
-    def get_results_file(cls):
-        return "rsem_sample.isoforms.results"
-
-    def read_transcript_abundances(self, quant_file):
-        self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
-                                      index_col="transcript_id")
-
     def get_transcript_abundance(self, transcript_id):
+        if self.abundances is None:
+            self.abundances = pd.read_csv(
+                "rsem_sample.isoforms.results", delim_whitespace=True,
+                index_col="transcript_id")
+
         return self.abundances.ix[transcript_id]["TPM"] \
             if transcript_id in self.abundances.index else 0
 
@@ -288,15 +285,11 @@ class _Express(_TranscriptomeBasedQuantifierBase):
         writer.add_line(cls.REMOVE_MAPPED_READS)
         writer.add_line(cls.REMOVE_EXPRESS_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES)
 
-    @classmethod
-    def get_results_file(cls):
-        return "results.xprs"
-
-    def read_transcript_abundances(self, quant_file):
-        self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
-                                      index_col="target_id")
-
     def get_transcript_abundance(self, transcript_id):
+        if self.abundances is None:
+            self.abundances = pd.read_csv(
+                "results.xprs", delim_whitespace=True, index_col="target_id")
+
         return self.abundances.ix[transcript_id]["tpm"] \
             if transcript_id in self.abundances.index else 0
 
@@ -327,7 +320,7 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
 
     @classmethod
     def _get_index_dir(cls, quantifier_dir):
-        return os.path.join(quantifier_dir, "sailfish/index")
+        return os.path.join(quantifier_dir, "sailfish", "index")
 
     @classmethod
     def write_preparatory_commands(cls, writer, params):
@@ -369,15 +362,12 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
     def write_post_quantification_cleanup(cls, writer):
         writer.add_line(cls.REMOVE_SAILFISH_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES)
 
-    @classmethod
-    def get_results_file(cls):
-        return "quant_filtered.csv"
-
-    def read_transcript_abundances(self, quant_file):
-        self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
-                                      index_col="Transcript")
-
     def get_transcript_abundance(self, transcript_id):
+        if self.abundances is None:
+            self.abundances = pd.read_csv(
+                "quant_filtered.csv", delim_whitespace=True,
+                index_col="Transcript")
+
         return self.abundances.ix[transcript_id]["TPM"] \
             if transcript_id in self.abundances.index else 0
 
@@ -406,7 +396,7 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
 
     @classmethod
     def _get_index_dir(cls, quantifier_dir):
-        return os.path.join(quantifier_dir, "salmon/index")
+        return os.path.join(quantifier_dir, "salmon", "index")
 
     @classmethod
     def write_preparatory_commands(cls, writer, params):
@@ -447,14 +437,11 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
     def write_post_quantification_cleanup(cls, writer):
         writer.add_line(cls.REMOVE_SALMON_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES)
 
-    @classmethod
-    def get_results_file(cls):
-        return "quant_filtered.csv"
-
-    def read_transcript_abundances(self, quant_file):
-        self.abundances = pd.read_csv(quant_file, delim_whitespace=True,
-                                      index_col="Name")
-
     def get_transcript_abundance(self, transcript_id):
+        if self.abundances is None:
+            self.abundances = pd.read_csv(
+                "quant_filtered.csv", delim_whitespace=True,
+                index_col="Name")
+
         return self.abundances.ix[transcript_id]["TPM"] \
             if transcript_id in self.abundances.index else 0
