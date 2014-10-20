@@ -433,7 +433,7 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
             index_dir=index_dir,
             library_spec=library_spec,
             reads_spec=reads_spec))
-        writer.add_pipe(cls.FILTER_COMMENT_LINES)
+        writer.add_pipe(*cls.FILTER_COMMENT_LINES)
 
     @classmethod
     def write_post_quantification_cleanup(cls, writer):
