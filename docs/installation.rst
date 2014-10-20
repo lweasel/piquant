@@ -13,12 +13,6 @@ Clone the *piquant* GitHub repository into this environment::
 
     git clone https://github.com/lweasel/piquant.git .
 
-Install Python packages required by *piquant*::
+Install the Python packages required by *piquant* into the virtual environment::
 
     pip install -r requirements.txt
-
-Package dependencies
---------------------
-
-TODO.
-
