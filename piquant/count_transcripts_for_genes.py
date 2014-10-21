@@ -75,7 +75,7 @@ def _count_transcripts_for_genes(logger, options):
 if __name__ == "__main__":
     # Read in command-line options
     __doc__ = opt.substitute_common_options_into_usage(__doc__)
-    options = docopt.docopt(__doc__, version="count_transcripts_for_genes.py")
+    options = docopt.docopt(__doc__, version="count_transcripts_for_genes.py v0.1")
 
     # Validate command-line options
     _validate_command_line_options(options)
