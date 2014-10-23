@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """Usage:
-    simulate_read_bias [{log_option_spec}] --out-prefix=<out-prefix> --paired-end] --num-reads=<num-reads> <pwm-file> <reads_file>
+    simulate_read_bias [{log_option_spec} --out-prefix=<out-prefix> --paired-end] --num-reads=<num-reads> <pwm-file> <reads_file>
 
 {help_option_spec}                   {help_option_description}
 {ver_option_spec}                {ver_option_description}
