@@ -139,8 +139,10 @@ def write_flux_simulator_params_files(
         read_length, paired_end, errors, output_dir)
 
 
-def get_reads_file(errors, paired_end=None):
+def get_reads_file(errors, paired_end=None, intermediate=False):
     reads_file = SIMULATED_READS_PREFIX
+    if not intermediate:
+        reads_file += "_final"
     if paired_end == LEFT_READS:
         reads_file += ".1"
     if paired_end == RIGHT_READS:

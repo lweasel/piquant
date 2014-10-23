@@ -118,7 +118,8 @@ def _check_reads_created(logger, options, **params):
     reads_dir = _get_parameters_dir(options, **params)
     reads_file = fs.get_reads_file(
         params[parameters.ERRORS.name],
-        fs.LEFT_READS if params[parameters.PAIRED_END.name] else None)
+        paired_end=(fs.LEFT_READS if params[parameters.PAIRED_END.name]
+                    else None))
 
     if not os.path.exists(os.path.join(reads_dir, reads_file)):
         run_name = os.path.basename(reads_dir)
