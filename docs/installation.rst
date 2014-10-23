@@ -1,9 +1,7 @@
 Installation
 ============
 
-.. note:: These instructions are temporary until a package has been submitted to PyPI.
-
-.. attention:: As *piquant* has a number of dependencies on other Python packages, it is strongly recommended to install in an isolated environment using the `virtualenv <http://virtualenv.readthedocs.org/en/latest/index.html>`_ tool; the `virtualenvwrapper <http://virtualenvwrapper.readthedocs.org/en/latest/install.html>`_ makes managing multiple virtual environments easier.
+.. attention:: As *piquant* has a number of dependencies on other Python packages, it is **strongly** recommended to install in an isolated environment using the `virtualenv <http://virtualenv.readthedocs.org/en/latest/index.html>`_ tool. The `virtualenvwrapper <http://virtualenvwrapper.readthedocs.org/en/latest/install.html>`_ makes managing multiple virtual environments easier.
 
 Create and work in a virtual environment for *piquant* using the ``virtualenvwrapper`` tool::
 
@@ -16,3 +14,7 @@ Clone the *piquant* GitHub repository into this environment::
 Install the Python packages required by *piquant* into the virtual environment (note that it may take some time to install and build these dependencies)::
 
     pip install -r requirements.txt
+
+Run unit tests for *piquant* using the command::
+
+    py.test test
