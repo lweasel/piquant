@@ -94,6 +94,38 @@ def _add_simulate_reads(writer):
     writer.add_line("rm -rf " + fs.TEMPORARY_DIRECTORY)
 
 
+def _check_correct_number_of_reads_created(writer, errors):
+    writer.add_comment(
+        "Check that the number of transcript molecules in the initial " +
+        "population was high enough to create the required number of reads.")
+
+    lines_per_read = 2
+    if errors:
+        lines_per_read *= 2
+
+    reads_file = fs.get_reads_file(errors, intermediate=True)
+
+    # Because the number of reads created is never exactly the number of reads
+    # asked for, we just check that the number created is not "too many" fewer
+    # than the number required (i.e. no. created is more than 99% of no.
+    # required)
+    with writer.section():
+        writer.set_variable(
+            "READS_PRODUCED",
+            "$(echo \"$(wc -l " + reads_file + " | awk '{print $1}') / " +
+            str(lines_per_read) + "\" | bc)")
+        writer.set_variable(
+            "READS_LOWER_BOUND",
+            "$(echo \"($READS * 0.99)/1\" | bc)")
+
+    with writer.if_block("$READS_PRODUCED -lt $READS_LOWER_BOUND"):
+        writer.add_echo(
+            "\"Exiting: $READS_PRODUCED reads created, when $READS were " +
+            "required - try increasing the number of molecules in the " +
+            "initial transcript population.\"")
+        writer.add_line("exit 1")
+
+
 def _add_shuffle_simulated_reads(writer, paired_end, errors):
     # Some isoform quantifiers (e.g. eXpress) require reads to be presented in
     # a random order, but the reads output by Flux Simulator do have an order -
@@ -108,7 +140,7 @@ def _add_shuffle_simulated_reads(writer, paired_end, errors):
         "Some isoform quantifiers require reads to be presented in a " +
         "random order, hence we shuffle the reads output by Flux Simulator.")
 
-    reads_file = fs.get_reads_file(errors)
+    reads_file = fs.get_reads_file(errors, intermediate=True)
     writer.add_pipe(
         "paste " + ("- " * lines_per_fragment) + "< " + reads_file,
         "shuf",
@@ -123,7 +155,7 @@ def _add_simulate_read_bias(writer, paired_end, errors):
         "Use a position weight matrix to simulate sequence bias in " +
         "the reads.")
 
-    reads_file = fs.get_reads_file(errors)
+    reads_file = fs.get_reads_file(errors, intermediate=True)
     out_prefix = "bias"
     writer.add_line(
         _get_script_path(SIMULATE_BIAS_SCRIPT) +
@@ -133,30 +165,35 @@ def _add_simulate_read_bias(writer, paired_end, errors):
     writer.add_line("mv " + out_prefix + "." + reads_file + " " + reads_file)
 
 
-def _add_separate_paired_end_reads(writer, errors):
-    # If we've specified paired end reads, split the FASTA/Q file output by
-    # Flux Simulator into separate files for forward and reverse reads
-    writer.add_comment(
-        "We've produced paired-end reads - split the Flux Simulator " +
-        "output into files containing left and right reads.")
+def _create_final_reads_files(writer, paired_end, errors):
+    reads_file = fs.get_reads_file(errors, intermediate=True)
 
-    reads_file = fs.get_reads_file(errors)
-    writer.add_pipe(
-        "paste " + ("- - - -" if errors else "- -") + " < " + reads_file,
-        "awk -F '\\t' '$1~/\/1/ " +
-        "{print $0 > \"" + TMP_LEFT_READS_FILE + "\"} " +
-        "$1~/\/2/ {print $0 > \"" + TMP_RIGHT_READS_FILE + "\"}'"
-    )
-    writer.add_line("rm " + reads_file)
+    if paired_end:
+        # If we've specified paired end reads, split the FASTA/Q file output by
+        # Flux Simulator into separate files for forward and reverse reads
+        writer.add_comment(
+            "We've produced paired-end reads - split the Flux Simulator " +
+            "output into files containing left and right reads.")
 
-    writer.add_line(
-        "tr '\\t' '\\n' < " + TMP_LEFT_READS_FILE + " > " +
-        fs.get_reads_file(errors, fs.LEFT_READS))
-    writer.add_line("rm " + TMP_LEFT_READS_FILE)
-    writer.add_line(
-        "tr '\\t' '\\n' < " + TMP_RIGHT_READS_FILE + " > " +
-        fs.get_reads_file(errors, fs.RIGHT_READS))
-    writer.add_line("rm " + TMP_RIGHT_READS_FILE)
+        writer.add_pipe(
+            "paste " + ("- - - -" if errors else "- -") + " < " + reads_file,
+            "awk -F '\\t' '$1~/\/1/ " +
+            "{print $0 > \"" + TMP_LEFT_READS_FILE + "\"} " +
+            "$1~/\/2/ {print $0 > \"" + TMP_RIGHT_READS_FILE + "\"}'"
+        )
+        writer.add_line("rm " + reads_file)
+
+        writer.add_line(
+            "tr '\\t' '\\n' < " + TMP_LEFT_READS_FILE + " > " +
+            fs.get_reads_file(errors, paired_end=fs.LEFT_READS))
+        writer.add_line("rm " + TMP_LEFT_READS_FILE)
+        writer.add_line(
+            "tr '\\t' '\\n' < " + TMP_RIGHT_READS_FILE + " > " +
+            fs.get_reads_file(errors, paired_end=fs.RIGHT_READS))
+        writer.add_line("rm " + TMP_RIGHT_READS_FILE)
+    else:
+        writer.add_comment("Create final simulated reads file.")
+        writer.add_line("mv " + reads_file + " " + fs.get_reads_file(errors))
 
 
 def _add_create_reads(
@@ -176,15 +213,16 @@ def _add_create_reads(
     with writer.section():
         _add_simulate_reads(writer)
     with writer.section():
+        _check_correct_number_of_reads_created(writer, errors)
+    with writer.section():
         _add_shuffle_simulated_reads(writer, paired_end, errors)
 
     if bias:
         with writer.section():
             _add_simulate_read_bias(writer, paired_end, errors)
 
-    if paired_end:
-        with writer.section():
-            _add_separate_paired_end_reads(writer, errors)
+    with writer.section():
+        _create_final_reads_files(writer, paired_end, errors)
 
 
 def _add_cleanup_intermediate_files(writer):

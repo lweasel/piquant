@@ -195,9 +195,11 @@ def _get_quant_params(reads_dir, quantifier_dir, transcript_gtf,
 
     if paired_end:
         quant_params[qs.LEFT_SIMULATED_READS] = \
-            os.path.join(reads_dir, fs.get_reads_file(errors, fs.LEFT_READS))
+            os.path.join(reads_dir,
+                         fs.get_reads_file(errors, paired_end=fs.LEFT_READS))
         quant_params[qs.RIGHT_SIMULATED_READS] = \
-            os.path.join(reads_dir, fs.get_reads_file(errors, fs.RIGHT_READS))
+            os.path.join(reads_dir,
+                         fs.get_reads_file(errors, paired_end=fs.RIGHT_READS))
     else:
         quant_params[qs.SIMULATED_READS] = \
             os.path.join(reads_dir, fs.get_reads_file(errors))
