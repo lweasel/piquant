@@ -112,6 +112,8 @@ A human-readable description for the statistic to appear in graph titles and axi
 
 A boolean, True if graphs of the statistic should be plotted as part of *piquant*'s analysis.
 
+.. _extending-calculate-method:
+
 .. py:method:: calculate(tpms, tp_tpms)
 
 ``calculate`` should compute the statistic for a set of transcript abundances estimated by a particular quantification tool. The parameter ``tpms`` is a `pandas <http://pandas.pydata.org>`_ `DataFrame <http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html?highlight=dataframe#pandas.DataFrame>`_ describing the results of a quantification run, while ``tp_tpms`` is a DataFrame describing those results of the quantification run for which both real and estimated abundances were above a threshold value indicating "presence" of the transcript (i.e. "true positive" TPM measurements).
@@ -144,4 +146,20 @@ If a tuple is returned, each value should be a number or ``None``. The first val
 Adding a new transcript classifier
 ----------------------------------
 
-TODO.
+Adding a new classifier of transcripts is perhaps simpler than adding a new quantification tool or analysis statistic; in the Python module ``classifiers.py``, an instance of the class ``_Classifier`` should be added to the list ``_CLASSIFIERS``. Any such classifier will automatically be included in the post-quantification analysis performed by *piquant*, and graphs will be produced showing the variation of statistics as measured across groups of transcripts as defined by the classifier.
+
+Parameters to be supplied to the ``_Classifier`` constructor are as follows:
+
+* ``column_name``: A short name for the classifier to be used in filenames and CSV column headers.
+* ``value_extractor``: A function which takes a row of a pandas DataFrame containing the results of a quantification run (as described :ref:`above <extending-calculate-method>` - such a row describes quantification for a single transcript) and returns a numeric classification value for the transcript indicated by the row.
+* ``grouped_stats`` *[Optional - default: True]*: A boolean. If ``True``, the instance is a :ref:`"grouped" classifier <assessment-grouped-classifiers>`, which splits transcripts into fixed groups dependent on some property inherent in the transcripts (or their estimated abundances) themselves. If ``False``, the instance is a :ref:`"distribution" classifier <assessment-distribution-classifiers>`, which splits transcripts into two groups, those above and below some threshold (where that threshold is generally the value of some property of quantification).
+* ``distribution_plot_range`` *[Optional - default: None]*: If ``grouped_stats`` is ``False``, this parameter should either be a tuple of two numbers or ``None``. If a tuple is supplied, these should be the minimum and maximum values of the "distribution" classifier threshold to be used in plots produced by this classifier.
+* ``plot_title`` *[Optional- default: None]*: A human-readable description for the classifier to appear in graph titles and axis labels. If not supplied, the value of the ``column_name`` parameter will be used.
+
+Note that a subclass, ``_LevelsClassifier``, of ``_Classifier`` is supplied, which aids the construction of classifiers which group transcripts based on ranges of some parameter which takes many possible values (for example, transcript length in base pairs, or transcript abundance measured in TPM). Parameters to be supplied to the ``_LevelsClassifier`` constructor are as follows:
+
+* ``column_name``: As for ``_Classifier``.
+* ``value_extractor``: A function which takes a row of a pandas DataFrame (as described for ``_Classifier`` above) and extracts a numeric classification value for the transcript indicated by the row. Note, however, that transcripts are classified into groups based on the particular range this values falls into, as determined by the ``levels`` and ``closed`` parameters below.
+* ``levels``: A list of numbers defining the ranges of values (as determined by the ``value_extractor`` function) for which transcripts are considered to belong to the same group. The first group consists of all transcripts whose value is less than or equal to the first item in ``levels``; the second group those transcripts whose value is greater than the first item in ``levels`` and less than or equal to the second item, and so on. The nature of the final group is determined by the parameter ``closed`` below.
+* ``closed`` *[Optional - default: False]*: A boolean. If ``False``, the final group for the classifier consists of all transcripts whose value (as determined by the ``value_extractor`` function) is greater than or equal to the last item in ``levels``. If ``True``, there is no such open range: the final group consists of all transcripts whose value is greater than or equal to the last but one item in ``levels``, and less than or equal to the last item.
+* ``plot_title`` *[Optional - default: None]*: As for ``_Classifier``.
