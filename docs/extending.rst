@@ -133,6 +133,12 @@ The ``tpms`` and ``tp_tpms`` DataFrame objects have a row for each estimated tra
 
 ``calculate_grouped`` should return a pandas `Series <http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html>`_ instance, enumerating the statistic as calculated for each transcript group. When adding a new statistic, it may be easiest to adapt one of the existing ``calcualate_grouped`` methods to your needs.
 
+.. py:method:: stat_range(vals_range):
+
+The ``stat_range`` method controls the y-axis bounds in graphs created for this statistic. The ``vals_range`` parameter is a tuple of two values, the minimum and maximum values of the statistic that will be plotted in a particular graph. ``stat_range`` should return either a tuple of two values or ``None``. 
+
+If a tuple is returned, each value should be a number or ``None``. The first value will be the minimum bound of the y-axis in the graph to be drawn; a value of ``None`` indicates that no special bound is to be imposed and the y-axis minimum will be chosen automatically according to the minimum value of the statistic. Likewise, the second value controls the maximum bound of the y-axis. Returning ``None`` instead of a tuple means that both y-axis bounds will be chosen automatically.
+
 .. _extending-adding-new-classifiers:
 
 Adding a new transcript classifier
