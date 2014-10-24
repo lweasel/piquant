@@ -18,6 +18,6 @@ install:
     - "pip install coverage"
     - "pip install coveralls"
 script: 
-    - "coverage run --source=piquant setup.py test"
+    - "coverage run --source=piquant -m py.test test"
 after_success:
     coveralls
