@@ -70,7 +70,7 @@ The following command-line options and positional arguments are required:
 Calculate reads required for sequencing depth
 ---------------------------------------------
 
-TODO - description.
+``calculate_reads_for_depth`` is run when a ``run_simulation.sh`` script is executed. It calculates the approximate number of reads required to be simulated for a set of transcripts in order to provide the specified sequencing depth, given a particular length of read.
 
 Usage::
 
@@ -80,9 +80,9 @@ Usage::
 
 The following positional arguments are required:
 
-* ``<pro-file>``:
-* ``<read-length>``:
-* ``<read-depth>``:
+* ``<pro-file>``: The FluxSimulator expression profile file from which reads will be simulated.
+* ``<read-length>``: An integer, the length of reads in base pairs.
+* ``<read-depth>``: An integer, the mean sequencing depth desired.
 
 .. _calculate-unique-transcript-sequence:
 
