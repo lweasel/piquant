@@ -106,7 +106,7 @@ The following positional argument is required:
 Count transcripts for genes
 ---------------------------
 
-TODO - description.
+``count_transcripts_for_genes`` is also executed when a ``run_quantification.sh`` script is run with the ``-a`` flag. It calculates the number of transcripts shared by the gene of origin for each transcript from which reads will be simulated.
 
 Usage::
 
@@ -116,7 +116,7 @@ Usage::
 
 The following positional argument is required:
 
-* ``<gtf-file>``:
+* ``<gtf-file>``: Full path to the GTF file defining transcripts and genes.
 
 .. _simulate-read-bias:
 
