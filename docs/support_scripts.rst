@@ -12,7 +12,9 @@ Further information on each script and their command line options is given in th
 Analyse a single quantification run
 -----------------------------------
 
-TODO - description.
+``analyse_quantification_run`` is executed when a ``run_quantification.sh`` script is run with the ``-a`` flag. It reads the ``tpms.csv`` file produced by ``assemble_quantification_data.py`` (see `below <assemble-quantification-data>`_), and then calculates statistics and plots graphs to assess the accuracy of transcript abundance estimates produced in a single quantification run.
+
+For full details of the analyses produced, see `here <assessment-single-run>`_.
 
 Usage::
 
@@ -25,19 +27,19 @@ Usage::
 
 The following command-line options and positional arguments are required:
 
-* ``--quant-method``:
-* ``--read-length``:
-* ``--read-depth``:
-* ``--paired-end``:
-* ``--error``:
-* ``--bias``:
-* ``<tpm-file>``:
-* ``<out-file>``:
+* ``--quant-method``: The quantification method by which transcript abundance estimates were produced.
+* ``--read-length``: An integer, the length of reads in the simulated RNA-seq data.
+* ``--read-depth``: An integer, the depth of sequencing in the simulated RNA-seq data.
+* ``--paired-end``: A boolean, ``True`` if the simulated RNA-seq data consists of paired-end reads, or ``False`` if it consists of single-end reads.
+* ``--error``: A boolean, ``True`` if the simulated RNA-seq data contains sequencing errors.
+* ``--bias``: A boolean, ``True`` if sequence bias has been applied to the simulated RNA-seq data.
+* ``<tpm-file>``: A CSV file describing the per-transcript abundance estimates produced by a quantification run.
+* ``<out-file>``: A prefix for output CSV and graph files written by this script.
 
 while these command-line parameters are optional:
 
-* ``--plot-format``:
-* ``--grouped-threshold``:
+* ``--plot-format``: Output format for graphs, one of "pdf", "svg" or "png" (default "pdf").
+* ``--grouped-threshold``: The minimum number of transcripts required, in a group determined by a transcript classifier, for a statistic calculated for that group to be shown on a plot (default: 300).
 
 .. _assemble-quantification-data:
 
