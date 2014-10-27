@@ -53,6 +53,8 @@ Assessing quantification accuracy
 
 Running ``run_quantification.sh`` with the ``-a`` flag results in the following two steps being executed. As above, for performing quantification itself, re-running ``run_quantification.sh`` with this flag will repeat the assessment of quantification accuracy.
 
+.. _quantification-assemble-data:
+
 Assemble data
 ^^^^^^^^^^^^^
 

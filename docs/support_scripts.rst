@@ -46,7 +46,7 @@ while these command-line parameters are optional:
 Assemble data for a single quantification run
 ---------------------------------------------
 
-TODO - description.
+``assemble_quantification_data`` is also executed when a ``run_quantification`` scrip is run with the ``-a`` flag. It assembles data required to assess the accuracy of transcript abundance estimates produced in a single quantification run, and writes these data to an output CSV file. See `here <quantification-assemble-data>`_ for full details of the data sources and output file contents.
 
 Usage::
 
@@ -58,12 +58,12 @@ Usage::
 
 The following command-line options and positional arguments are required:
 
-* ``--method``:
-* ``--out``:
-* ``<pro-file>``:
-* ``<quantification-file>``:
-* ``<transcript-count-file>``:
-* ``<unique-sequence-file>``:
+* ``--method``: The quantification method by which transcript abundance estimates were produced.
+* ``--out``: The output CSV file name.
+* ``<pro-file>``: Full path of the FluxSimulator [FluxSimulator]_ expression profile file which contains 'ground truth' transcript abundances.
+* ``<quantification-file>``: Full path of the quantification tool-specific file containing estimated transcript abundances.
+* ``<transcript-count-file>``: Full path of a file containing per-gene transcript counts, as produced by `the script <count-transcripts-for-genes>`_ ``count_transcripts_for_genes.py``.
+* ``<unique-sequence-file>``: Full path of a file containing lengths of sequence unique to each transcript, as produced by `the script <calculate-unique-transcript-sequence>`_ ``calculate_unique_transcript_sequence.py``.
 
 .. _calculate-reads-for-depth:
 
