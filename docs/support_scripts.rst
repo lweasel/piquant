@@ -89,7 +89,7 @@ The following positional arguments are required:
 Calculate unique transcript sequence
 ------------------------------------
 
-TODO - description.
+``calculate_unique_transcript_sequence`` is executed when a ``run_quantification.sh`` script is run with the ``-p`` flag. It calculates the length of sequence in base pairs that is unique to each transcript from which reads will be simulated.
 
 Usage::
 
@@ -99,7 +99,7 @@ Usage::
 
 The following positional argument is required:
 
-* ``<gtf-file>``:
+* ``<gtf-file>``: Full path to the GTF file defining transcripts and genes.
 
 .. _count-transcripts-for-genes:
 
