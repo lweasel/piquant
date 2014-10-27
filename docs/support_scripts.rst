@@ -12,7 +12,9 @@ Further information on each script and their command line options is given in th
 Analyse a single quantification run
 -----------------------------------
 
-TODO - description.
+``analyse_quantification_run`` is executed when a ``run_quantification.sh`` script is run with the ``-a`` flag. It reads the ``tpms.csv`` file produced by ``assemble_quantification_data.py`` (see `below <assemble-quantification-data>`_), and then calculates statistics and plots graphs to assess the accuracy of transcript abundance estimates produced in a single quantification run.
+
+For full details of the analyses produced, see `here <assessment-single-run>`_.
 
 Usage::
 
@@ -25,26 +27,26 @@ Usage::
 
 The following command-line options and positional arguments are required:
 
-* ``--quant-method``:
-* ``--read-length``:
-* ``--read-depth``:
-* ``--paired-end``:
-* ``--error``:
-* ``--bias``:
-* ``<tpm-file>``:
-* ``<out-file>``:
+* ``--quant-method``: The quantification method by which transcript abundance estimates were produced.
+* ``--read-length``: An integer, the length of reads in the simulated RNA-seq data.
+* ``--read-depth``: An integer, the depth of sequencing in the simulated RNA-seq data.
+* ``--paired-end``: A boolean, ``True`` if the simulated RNA-seq data consists of paired-end reads, or ``False`` if it consists of single-end reads.
+* ``--error``: A boolean, ``True`` if the simulated RNA-seq data contains sequencing errors.
+* ``--bias``: A boolean, ``True`` if sequence bias has been applied to the simulated RNA-seq data.
+* ``<tpm-file>``: A CSV file describing the per-transcript abundance estimates produced by a quantification run.
+* ``<out-file>``: A prefix for output CSV and graph files written by this script.
 
 while these command-line parameters are optional:
 
-* ``--plot-format``:
-* ``--grouped-threshold``:
+* ``--plot-format``: Output format for graphs, one of "pdf", "svg" or "png" (default "pdf").
+* ``--grouped-threshold``: The minimum number of transcripts required, in a group determined by a transcript classifier, for a statistic calculated for that group to be shown on a plot (default: 300).
 
 .. _assemble-quantification-data:
 
 Assemble data for a single quantification run
 ---------------------------------------------
 
-TODO - description.
+``assemble_quantification_data`` is also executed when a ``run_quantification`` scrip is run with the ``-a`` flag. It assembles data required to assess the accuracy of transcript abundance estimates produced in a single quantification run, and writes these data to an output CSV file. See `here <quantification-assemble-data>`_ for full details of the data sources and output file contents.
 
 Usage::
 
@@ -56,19 +58,19 @@ Usage::
 
 The following command-line options and positional arguments are required:
 
-* ``--method``:
-* ``--out``:
-* ``<pro-file>``:
-* ``<quantification-file>``:
-* ``<transcript-count-file>``:
-* ``<unique-sequence-file>``:
+* ``--method``: The quantification method by which transcript abundance estimates were produced.
+* ``--out``: The output CSV file name.
+* ``<pro-file>``: Full path of the FluxSimulator [FluxSimulator]_ expression profile file which contains 'ground truth' transcript abundances.
+* ``<quantification-file>``: Full path of the quantification tool-specific file containing estimated transcript abundances.
+* ``<transcript-count-file>``: Full path of a file containing per-gene transcript counts, as produced by `the script <count-transcripts-for-genes>`_ ``count_transcripts_for_genes.py``.
+* ``<unique-sequence-file>``: Full path of a file containing lengths of sequence unique to each transcript, as produced by `the script <calculate-unique-transcript-sequence>`_ ``calculate_unique_transcript_sequence.py``.
 
 .. _calculate-reads-for-depth:
 
 Calculate reads required for sequencing depth
 ---------------------------------------------
 
-TODO - description.
+``calculate_reads_for_depth`` is run when a ``run_simulation.sh`` script is executed. It calculates the approximate number of reads required to be simulated for a set of transcripts in order to provide the specified sequencing depth, given a particular length of read.
 
 Usage::
 
@@ -78,16 +80,16 @@ Usage::
 
 The following positional arguments are required:
 
-* ``<pro-file>``:
-* ``<read-length>``:
-* ``<read-depth>``:
+* ``<pro-file>``: The FluxSimulator expression profile file from which reads will be simulated.
+* ``<read-length>``: An integer, the length of reads in base pairs.
+* ``<read-depth>``: An integer, the mean sequencing depth desired.
 
 .. _calculate-unique-transcript-sequence:
 
 Calculate unique transcript sequence
 ------------------------------------
 
-TODO - description.
+``calculate_unique_transcript_sequence`` is executed when a ``run_quantification.sh`` script is run with the ``-p`` flag. It calculates the length of sequence in base pairs that is unique to each transcript from which reads will be simulated.
 
 Usage::
 
@@ -97,14 +99,14 @@ Usage::
 
 The following positional argument is required:
 
-* ``<gtf-file>``:
+* ``<gtf-file>``: Full path to the GTF file defining transcripts and genes.
 
 .. _count-transcripts-for-genes:
 
 Count transcripts for genes
 ---------------------------
 
-TODO - description.
+``count_transcripts_for_genes`` is also executed when a ``run_quantification.sh`` script is run with the ``-a`` flag. It calculates the number of transcripts shared by the gene of origin for each transcript from which reads will be simulated.
 
 Usage::
 
@@ -114,14 +116,14 @@ Usage::
 
 The following positional argument is required:
 
-* ``<gtf-file>``:
+* ``<gtf-file>``: Full path to the GTF file defining transcripts and genes.
 
 .. _simulate-read-bias:
 
 Simulate sequence bias in reads
 -------------------------------
 
-TODO - description.
+``simulate_read_bias`` is run when a ``run_simulation.sh`` script is executed. It approximates a particular type of sequence bias by preferentially selecting reads from an input FASTA or FASTQ file the beginning of whose sequence is closer to having a supplied nucleotide composition.
 
 Usage::
 
@@ -132,11 +134,11 @@ Usage::
 
 The following command-line options and positional arguments are required:
 
-* ``--num-reads``:
-* ``<pwm-file>``:
-* ``<reads-file>``:
+* ``--num-reads``: Number of reads to output.
+* ``<pwm-file>``: Full path to a file containing a Position Weight Matrix; this PWM defines a preferential nucleotide composition for bases at the start of reads. Reads whose starting sequence composition scores higher against the PWM are more likely to be selected for output.
+* ``<reads-file>``: FASTA or FASTQ file containing reads upon which bias is to be imposed.
 
 while these command-line parameters are optional:
 
-* ``--out-prefix``:
-* ``--paired-end``:
+* ``--out-prefix``: Prefix for FASTA or FASTQ file to which biased reads are written (default "bias").
+* ``--paired-end``: Indicates the reads file contains paired-end reads.
