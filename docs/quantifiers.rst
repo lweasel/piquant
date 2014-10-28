@@ -3,50 +3,52 @@ Quantification tools
 
 By default, the *piquant* pipeline has the ability to run the following four transcript quantification tools. The pipeline can, however, be easily extended to run additional quantification tools by editing the ``quantifiers.py`` Python module, as described in :ref:`extending-adding-new-quantifiers`.
 
+.. attention:: It is important to clarify that rather than testing the performance of quantification tools alone, *piquant* is actually testing the performance, as regards the accuracy of transcript quantification, of mapping plus quantification tool pipelines (at least in the case of quantification tools which require mapping of reads prior to quantification). It can easily be understood, for example, how difficulties encountered when mapping reads to the genome might adversely affect quantification performance, through factors beyond a quantification tool's control.
+
 Cufflinks
 ---------
 
-Note: *piquant* has been tested with Cufflinks [Cufflinks]_ version 2.2.0 and TopHat [TopHat]_ version 2.0.10.
+.. note:: *piquant* has been tested with *Cufflinks* [Cufflinks]_ version 2.2.0 and *TopHat* [TopHat]_ version 2.0.10.
 
-In preparation for quantifying transcripts with Cufflinks, the following prequantification tasks are executed (these steps are a necessary preliminary for mapping simulated reads to the genome with TopHat):
+In preparation for quantifying transcripts with *Cufflinks*, the following prequantification tasks are executed (these steps are a necessary preliminary for mapping simulated reads to the genome with TopHat):
 
-* A Bowtie [Bowtie]_ index is built for the genome using the ``bowtie-build`` command.
-* A FASTA file for the genome, corresponding to the Bowtie index, is constructed using the ``bowtie-inspect`` command.
+* A *Bowtie* [Bowtie]_ index is built for the genome using the ``bowtie-build`` command.
+* A FASTA file for the genome, corresponding to the *Bowtie* index, is constructed using the ``bowtie-inspect`` command.
 
-When quantifying transcripts with Cufflinks for a set of simulated RNA-seq reads, reads are first mapped to the genome using the splice-aware mapper TopHat, with the following command line options (see the `TopHat manual <http://ccb.jhu.edu/software/tophat/manual.shtml>`_ for further details on these options):
+When quantifying transcripts with *Cufflinks* for a set of simulated RNA-seq reads, reads are first mapped to the genome using the splice-aware mapper *TopHat*, with the following command line options (see the `TopHat manual <http://ccb.jhu.edu/software/tophat/manual.shtml>`_ for further details on these options):
 
 * ``--library-type <type>``: The library type is set to ``fr-unstranded`` for single-end reads and ``fr-secondstrand`` for paired-end reads (in the latter case, simulated reads are stranded - see :ref:`simulate-reads`).
-* ``--no-coverage-search``: Coverage-based search for junctions is disabled
+* ``--no-coverage-search``: Coverage-based search for junctions is disabled.
 
-Cufflinks is then run to estimate transcript abundances with the following command line options (see the `Cufflinks manual <http://cufflinks.cbcb.umd.edu/manual.html>`_ for further details on these options):
+*Cufflinks* is then run to estimate transcript abundances with the following command line options (see the `Cufflinks manual <http://cufflinks.cbcb.umd.edu/manual.html>`_ for further details on these options):
 
-* ``--library-type <type>``: The library type is set to ``fr-unstranded`` or ``fr-secondstrand`` as for TopHat above.
+* ``--library-type <type>``: The library type is set to ``fr-unstranded`` or ``fr-secondstrand`` as for *TopHat* above.
 * ``-u``: Reads mapping to multiple locations in the genome are more accurately weighted.
-* ``-b <genome FASTA file>``: Cufflinks' bias detection and correction algorithm is run.
+* ``-b <genome FASTA file>``: *Cufflinks*' bias detection and correction algorithm is run.
 
-After transcript abundance estimation has completed, of the files output by Cufflinks only ``isoforms.fpkm_tracking`` is retained (unless the ``--nocleanup`` option was specified when the ``run_quantification.sh`` script was created). Relative transcript abundances are extracted from this file in units of FPKM (fragments per kilobase of exon per million reads mapped) and then converted to relative abundances measured in TPM (transcripts per million).
+After transcript abundance estimation has completed, of the files output by *Cufflinks*, only ``isoforms.fpkm_tracking`` is retained (unless the ``--nocleanup`` option was specified when the ``run_quantification.sh`` script was created). Relative transcript abundances are extracted from this file in units of FPKM (fragments per kilobase of exon per million reads mapped) and then converted to relative abundances measured in TPM (transcripts per million).
 
 (Note: for an excellent discussion of RNA-seq expression units, see `this <http://haroldpimentel.wordpress.com/2014/05/08/what-the-fpkm-a-review-rna-seq-expression-units/>`_ blog post).
 
 RSEM
 ----
 
-Note: *piquant* has been tested with RSEM [RSEM]_ version 1.2.12 and Bowtie version 1.0.0.
+.. note:: *piquant* has been tested with *RSEM* [RSEM]_ version 1.2.12 and *Bowtie* version 1.0.0.
 
-In preparation for quantifying transcripts with RSEM, the ``rsem-prepare-reference`` tool from the RSEM package is used to construct sequences in FASTA format for the input set of transcripts. ``rsem-prepare-reference`` is executed with the ``--no-polyA`` command line option so that poly-A tails are not added to the end of reference isoforms (see `here <http://deweylab.biostat.wisc.edu/rsem/rsem-prepare-reference.html>`_ for more details on the ``rsem-prepare-reference`` tool).
+In preparation for quantifying transcripts with *RSEM*, the ``rsem-prepare-reference`` tool from the *RSEM* package is used to construct sequences in FASTA format for the input set of transcripts. ``rsem-prepare-reference`` is executed with the ``--no-polyA`` command line option so that poly-A tails are not added to the end of reference isoforms (see `here <http://deweylab.biostat.wisc.edu/rsem/rsem-prepare-reference.html>`_ for more details on the ``rsem-prepare-reference`` tool).
 
-Then, when quantifying transcripts with RSEM for a set of simulated RNA-seq reads, the tool ``rsem-calculate-expression`` is executed with the ``--strand-specific`` command line option, but only for paired-end reads, as the reads generated by FluxSimulator in this case are stranded (see :ref:`simulate-reads`). See `here <http://deweylab.biostat.wisc.edu/rsem/rsem-calculate-expression.html>`_ for more details on the ``rsem-calculate-expression`` tool.
+Then, when quantifying transcripts with *RSEM* for a set of simulated RNA-seq reads, the tool ``rsem-calculate-expression`` is executed with the ``--strand-specific`` command line option, but only for paired-end reads, as the reads generated by *FluxSimulator* in this case are stranded (see :ref:`simulate-reads`). See `here <http://deweylab.biostat.wisc.edu/rsem/rsem-calculate-expression.html>`_ for more details on the ``rsem-calculate-expression`` tool.
 
-After transcript abundance estimation has completed, of the files output by RSEM, only ``<sample_name>.isoforms.results`` is retained (unless the ``--nocleanup`` option was specified when the ``run_quantification.sh`` script was created). Relative transcript abundances are extracted from this file in units of TPM (transcripts per million).
+After transcript abundance estimation has completed, of the files output by *RSEM*, only ``<sample_name>.isoforms.results`` is retained (unless the ``--nocleanup`` option was specified when the ``run_quantification.sh`` script was created). Relative transcript abundances are extracted from this file in units of TPM (transcripts per million).
 
 eXpress
 -------
 
-Note: *piquant* has been tested with eXpress [eXpress]_ version 1.5.1 and Bowtie [Bowtie]_ version 1.0.0.
+.. note:: *piquant* has been tested with *eXpress* [eXpress]_ version 1.5.1 and *Bowtie* [Bowtie]_ version 1.0.0.
 
-In preparation for quantifying transcripts with eXpress, the ``rsem-prepare-reference`` tool from the RSEM package is used to construct transcript sequences, as described above.
+In preparation for quantifying transcripts with *eXpress*, the ``rsem-prepare-reference`` tool from the *RSEM* package is used to construct transcript sequences, as described above.
 
-When quantifying transcripts with eXpress for a set of simulated RNA-seq reads, reads are first mapped to the transcript sequences using Bowtie, with the following command line options, which have, in general, been chosen to provide similar alignment behaviour as is implemented within the RSEM pipeline (see the `Bowtie manual <http://bowtie-bio.sourceforge.net/manual.shtml>`_ for further details on these options):
+When quantifying transcripts with *eXpress* for a set of simulated RNA-seq reads, reads are first mapped to the transcript sequences using *Bowtie*, with the following command line options, which have, in general, been chosen to provide similar alignment behaviour as is implemented within the *RSEM* pipeline (see the `Bowtie manual <http://bowtie-bio.sourceforge.net/manual.shtml>`_ for further details on these options):
 
 * ``-e 99999999``: The maximum permitted total of quality values at all mismatched read positions throughout the entire alignment.
 * ``-l 25``: A seed length for alignments of 25 base pairs.
@@ -56,20 +58,20 @@ When quantifying transcripts with eXpress for a set of simulated RNA-seq reads, 
 * ``-m 200``: All alignments are suppressed for a particular read or read pair if more than 200 alignments exist for it.
 * ``-S``: Alignments are printed in SAM [SAM]_ format.
 
-The alignments produced by Bowtie are piped to the ``view`` command of the SAMtools package to convert them to BAM format, for subsequent input to eXpress. eXpress is executed with the ``--fr-stranded`` command line option, but only for paired-end reads, as the reads generated by FluxSimulator in this case are stranded (see :ref:`simulate-reads`). See the `eXpress manual <http://bio.math.berkeley.edu/eXpress/manual.html>`_ for further details on the options available.
+The alignments produced by *Bowtie* are piped to the ``view`` command of the *SAMtools* package to convert them to BAM format, for subsequent input to *eXpress*. *eXpress* is executed with the ``--fr-stranded`` command line option, but only for paired-end reads, as the reads generated by *FluxSimulator* in this case are stranded (see :ref:`simulate-reads`). See the `eXpress manual <http://bio.math.berkeley.edu/eXpress/manual.html>`_ for further details on the options available.
 
-After transcript abundance estimation has completed, of the files output by eXpress, only ``results.xprs`` is retained (unless the ``--nocleanup`` option was specified when the ``run_quantification.sh`` script was created). Relative transcript abundacnes are extracted from this file in units of TPM (transcripts per million).
+After transcript abundance estimation has completed, of the files output by *eXpress*, only ``results.xprs`` is retained (unless the ``--nocleanup`` option was specified when the ``run_quantification.sh`` script was created). Relative transcript abundacnes are extracted from this file in units of TPM (transcripts per million).
 
 Sailfish
 --------
 
-Note: *piquant* has been tested with Sailfish [Sailfish]_ version 0.6.3.
+.. note:: *piquant* has been tested with *Sailfish* [Sailfish]_ version 0.6.3.
 
-In preparation for quantifying transcripts with Sailfish, the Sailfish ``index`` command is executed to create a kmer index for the input transcript set. The ``-k`` option is used to set a kmer size of 20 base pairs (for more information on Sailfish commands, see the Sailfish manual, dowloadable `here http://www.cs.cmu.edu/~ckingsf/software/sailfish/README.html`_).
+In preparation for quantifying transcripts with *Sailfish*, the *Sailfish* ``index`` command is executed to create a kmer index for the input transcript set. The ``-k`` option is used to set a kmer size of 20 base pairs (for more information on *Sailfish* commands, see the *Sailfish* manual, dowloadable `here <http://www.cs.cmu.edu/~ckingsf/software/sailfish/README.html>`_).
 
-Then, when quantifying transcripts with Sailfish for a set of simulated RNA-seq reads, the Sailfish ``quant`` command is executed with the following settings for the library type (``-l``) option, depending on whether single- or paired-end reads are being quantified:
+Then, when quantifying transcripts with *Sailfish* for a set of simulated RNA-seq reads, the *Sailfish* ``quant`` command is executed with the following settings for the library type (``-l``) option, depending on whether single- or paired-end reads are being quantified:
 
 * ``-l "T=SE:S=U"`` for single-end reads - that is, a single-end library type of unknown strandedness.
-* ``-l "T=PE:O=><:S=SA"`` for paired-end reads - that is, a paired-end library type, with read mates oriented towards each other, mate 1 coming from the sense strand and mate 2 from the anti-sense strand (in this case, the reads generated by FluxSimulator are stranded - see :ref:`simualate-reads`).
+* ``-l "T=PE:O=><:S=SA"`` for paired-end reads - that is, a paired-end library type, with read mates oriented towards each other, mate 1 coming from the sense strand and mate 2 from the anti-sense strand (in this case, the reads generated by *FluxSimulator* are stranded - see :ref:`simulate-reads`).
 
-After transcript abundance estimation has completed, of the files output by Sailfish, only ``quant_bias_corrected.sf`` is retained - that is quantification estimates with Sailfish's bias correction algorithms applied (unless the ``--nocleanup`` option was specified when the ``run_quantification.sh`` script was created). Relative transcript abundances are extracted from this file in units of TPM (transcripts per million).
+After transcript abundance estimation has completed, of the files output by *Sailfish*, only ``quant_bias_corrected.sf`` is retained - that is quantification estimates with *Sailfish*'s bias correction algorithms applied (unless the ``--nocleanup`` option was specified when the ``run_quantification.sh`` script was created). Relative transcript abundances are extracted from this file in units of TPM (transcripts per million).

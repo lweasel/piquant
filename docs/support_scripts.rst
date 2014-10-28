@@ -135,7 +135,7 @@ Usage::
 The following command-line options and positional arguments are required:
 
 * ``--num-reads``: Number of reads to output.
-* ``<pwm-file>``: Full path to a file containing a Position Weight Matrix; this PWM defines a preferential nucleotide composition for bases at the start of reads. Reads whose starting sequence composition scores higher against the PWM are more likely to be selected for output.
+* ``<pwm-file>``: Full path to a file containing a position weight matrix; this PWM defines a preferential nucleotide composition for bases at the start of reads. Reads whose starting sequence composition scores higher against the PWM are more likely to be selected for output.
 * ``<reads-file>``: FASTA or FASTQ file containing reads upon which bias is to be imposed.
 
 while these command-line parameters are optional:

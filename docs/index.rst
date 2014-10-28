@@ -6,7 +6,7 @@
 Welcome to piquant's documentation
 ==================================
 
-*piquant* is a pipeline to assess the quantification of transcripts.
+*piquant* is a pipeline to help assess the accuracy of quantification of transcripts from RNA-sequencing data.
 
 Contents:
 

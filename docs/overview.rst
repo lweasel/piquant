@@ -14,7 +14,7 @@ All three stages of the pipeline can be run via different commands of the ``piqu
 Simulate reads
 --------------
 
-Simulation of RNA-seq reads proceeds in two stages. In the first, run via the ``piquant`` command ``prepare_read_dirs``, directories are prepared in which reads will be simulated; each directory corresponds to a particular combination of sequencing parameters:
+Simulation of RNA-seq reads proceeds in two steps. In the first, run via the ``piquant`` command ``prepare_read_dirs``, directories are prepared in which reads will be simulated; each directory corresponds to a particular combination of sequencing parameters:
 
 * depth of sequencing
 * length of reads
@@ -22,18 +22,18 @@ Simulation of RNA-seq reads proceeds in two stages. In the first, run via the ``
 * reads with or without errors
 * reads with or without sequence bias
 
-In the second stage, RNA-seq reads are simulated. Each directory created above contains a script which, when run, will use the FluxSimulator RNA-seq experiment simulator [FluxSimulator]_ to generate an expression profile for transcripts, then simulate reads for those transcripts according to the specified combination of sequencing parameters. This script can be run directly; however, using the ``piquant`` command ``create_reads``, reads for several combinations of sequencing parameters can be simulated simultaneously as a batch.
+In the second step, RNA-seq reads are simulated. Each directory created in the first step contains a script which, when run, will use the *FluxSimulator* RNA-seq experiment simulator [FluxSimulator]_ to generate an expression profile for transcripts, then simulate reads for those transcripts according to the specified combination of sequencing parameters. This script can be run directly; however, using the ``piquant`` command ``create_reads``, reads for several combinations of sequencing parameters can be simulated at once as a batch.
 
 The ``piquant`` command ``check_reads`` provides an easy way to check that the read simulation processes completed correctly for specified combinations of sequencing parameters.
 
 Quantify transcripts
 --------------------
 
-Quantification of transcripts proceeds in three stages. In the first, run via the ``piquant`` command ``prepare_quant_dirs``, directories are prepared in which quantification results will be produced. For each combination of sequencing parameters for which reads were simulated, there will such a directory for each quantification tool (or, alternatively, for each different combination of quantification tool parameters that are being assessed).
+Quantification of transcripts proceeds in three steps. In the first, run via the ``piquant`` command ``prepare_quant_dirs``, directories are prepared in which quantification results will be produced. For each combination of sequencing parameters for which reads were simulated, there will such a directory for each quantification tool (or, alternatively, for each different combination of quantification tool parameters that are being assessed).
 
-In the second stage, the ``piquant`` command ``prequantify`` runs, for each quantification tool, commands that only need to be executed once, regardless of how many different sets of simulated reads are being used for quantification. For example, such commands might include creating a Bowtie [Bowtie]_ index for the genome to which reads will be mapped, or deriving FASTA sequences for the transcripts whose abundance is being measured.
+In the second step, the ``piquant`` command ``prequantify`` runs, for each quantification tool, commands that only need to be executed once, regardless of how many different sets of simulated reads are being used for quantification. For example, such commands might include creating a *Bowtie* [Bowtie]_ index for the genome to which reads will be mapped, or deriving FASTA sequences for the transcripts whose abundance is being measured.
 
-Finally, transcript abundances are estimated using specified transcriptome quantification tools. Each directory created by the command ``prepare_quant_dirs`` above contains a script which, when run, will use a particular tool to estimate isoform expression for a particular set of simulated reads. As for the case of creating reads, this script can be run directly if necessary; however, the ``piquant`` command ``quantify`` allows a number of such scripts to be run simultaneously as a batch.
+Finally, transcript abundances are estimated using specified transcriptome quantification tools. Each directory created by the command ``prepare_quant_dirs`` contains a script which, when run, will use a particular tool to estimate isoform expression for a particular set of simulated reads. As for the case of creating reads, this script can be run directly if necessary; however, the ``piquant`` command ``quantify`` allows a number of such scripts to be run simultaneously as a batch.
 
 The ``piquant`` command ``check_quant`` provides an easy way to check that the transcript quantification processes completed correctly for specified combinations of tools and read sequencing parameters.
 
@@ -47,27 +47,27 @@ Requirements
 
 The *piquant* pipeline is implemented as a set of Python scripts and modules; it has currently been tested against Python versions 2.7.6 and 3.4.0 running under Ubuntu 12.04.4 LTS and 14.04.1 LTS.
 
-In order to simulate reads, the FluxSimulator RNA-seq experiment simulator [FluxSimulator]_ is required to be installed, and the ``flux-simulator`` executable be added to the executable path (e.g. via the Unix PATH variable). *piquant* has been tested with FluxSimulator version 1.2.2.
+In order to simulate reads, the *FluxSimulator* RNA-seq experiment simulator is required to be installed, and the ``flux-simulator`` executable be added to the executable path (e.g. via the Unix PATH variable). *piquant* has been tested with FluxSimulator version 1.2.2.
 
 By default, *piquant* has the ability to run four different quantification tools:
 
-* Cufflinks: Transcript assembly, differential expression, and differential regulation for RNA-Seq [Cufflinks]_
-* RSEM: RNA-Seq by Expectation-Maximization [RSEM]_
-* eXpress: Streaming quantification for high-throughput sequencing [eXpress]_
-* Sailfish: Rapid Alignment-free Quantification of Isoform Abundance [Sailfish]_
+* *Cufflinks*: Transcript assembly, differential expression, and differential regulation for RNA-Seq [Cufflinks]_
+* *RSEM*: RNA-Seq by Expectation-Maximization [RSEM]_
+* *eXpress*: Streaming quantification for high-throughput sequencing [eXpress]_
+* *Sailfish*: Rapid Alignment-free Quantification of Isoform Abundance [Sailfish]_
 
 and these tools are required to be installed, and their relevant executables added to the executable path, if they are to be used within *piquant*. The pipeline has been tested with the following versions of these quantification tools:
 
-* Cufflinks: version 2.2.0
-* RSEM: version 1.2.12
-* eXpress: version 1.5.1
-* Sailfish: version 0.6.3
+* *Cufflinks*: version 2.2.0
+* *RSEM*: version 1.2.12
+* *eXpress*: version 1.5.1
+* *Sailfish*: version 0.6.3
 
 In addition, the use of each quantification tool within the *piquant* pipeline has additional dependencies, which are enumerated below:
 
-* Cufflinks: Bowtie [Bowtie]_ and TopHat [TopHat]_ are required to map simulated reads to the genome. 
-* RSEM: Bowtie [Bowtie]_ is required by RSEM to map simulated reads to the transcriptome.
-* eXpress: Bowtie [Bowtie]_ is required to map simulated reads to the transcriptome. In this case, *piquant* creates transcriptome sequences for mapping using a tool from the RSEM package (``rsem-prepare-reference``).
-* Sailfish: *piquant* again uses ``rsem-prepare-reference`` from the RSEM package to create reference transcriptome sequences.
+* *Cufflinks*: *Bowtie* [Bowtie]_ and *TopHat* [TopHat]_ are required to map simulated reads to the genome. 
+* *RSEM*: *Bowtie* [Bowtie]_ is required by RSEM to map simulated reads to the transcriptome.
+* *eXpress*: *Bowtie* [Bowtie]_ is required to map simulated reads to the transcriptome. In this case, *piquant* creates transcriptome sequences for mapping using a tool from the *RSEM* package (``rsem-prepare-reference``).
+* *Sailfish*: *piquant* again uses ``rsem-prepare-reference`` from the *RSEM* package to create reference transcriptome sequences.
 
-*piquant* has been tested with Bowtie version 1.0.0 and TopHat version 2.0.10.
+*piquant* has been tested with *Bowtie* version 1.0.0 and *TopHat* version 2.0.10.
