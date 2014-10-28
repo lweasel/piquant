@@ -12,9 +12,9 @@ Further information on each script and their command line options is given in th
 Analyse a single quantification run
 -----------------------------------
 
-``analyse_quantification_run.py`` is executed when a ``run_quantification.sh`` script is run with the ``-a`` flag. It reads the ``tpms.csv`` file produced by ``assemble_quantification_data.py`` (see :ref:`below <assemble-quantification-data>`_), and then calculates statistics and plots graphs to assess the accuracy of transcript abundance estimates produced in a single quantification run.
+``analyse_quantification_run.py`` is executed when a ``run_quantification.sh`` script is run with the ``-a`` flag. It reads the ``tpms.csv`` file produced by ``assemble_quantification_data.py`` (see :ref:`below <assemble-quantification-data>`), and then calculates statistics and plots graphs to assess the accuracy of transcript abundance estimates produced in a single quantification run.
 
-For full details of the analyses produced, see :ref:`here <assessment-single-run>`_.
+For full details of the analyses produced, see :ref:`here <assessment-single-run>`.
 
 Usage::
 
@@ -46,7 +46,7 @@ while these command-line parameters are optional:
 Assemble data for a single quantification run
 ---------------------------------------------
 
-``assemble_quantification_data.py`` is also executed when a ``run_quantification.sh`` script is run with the ``-a`` flag. It assembles data required to assess the accuracy of transcript abundance estimates produced in a single quantification run, and writes these data to an output CSV file. See :ref:`here <quantification-assemble-data>`_ for full details of the data sources and output file contents.
+``assemble_quantification_data.py`` is also executed when a ``run_quantification.sh`` script is run with the ``-a`` flag. It assembles data required to assess the accuracy of transcript abundance estimates produced in a single quantification run, and writes these data to an output CSV file. See :ref:`here <quantification-assemble-data>` for full details of the data sources and output file contents.
 
 Usage::
 
@@ -62,8 +62,8 @@ The following command-line options and positional arguments are required:
 * ``--out``: The output CSV file name.
 * ``<pro-file>``: Full path of the *FluxSimulator* [FluxSimulator]_ expression profile file which contains 'ground truth' transcript abundances.
 * ``<quantification-file>``: Full path of the quantification tool-specific file containing estimated transcript abundances.
-* ``<transcript-count-file>``: Full path of a file containing per-gene transcript counts, as produced by :ref:`the script <count-transcripts-for-genes>`_ ``count_transcripts_for_genes.py``.
-* ``<unique-sequence-file>``: Full path of a file containing lengths of sequence unique to each transcript, as produced by :ref:`the script <calculate-unique-transcript-sequence>`_ ``calculate_unique_transcript_sequence.py``.
+* ``<transcript-count-file>``: Full path of a file containing per-gene transcript counts, as produced by :ref:`the script <count-transcripts-for-genes>` ``count_transcripts_for_genes.py``.
+* ``<unique-sequence-file>``: Full path of a file containing lengths of sequence unique to each transcript, as produced by :ref:`the script <calculate-unique-transcript-sequence>` ``calculate_unique_transcript_sequence.py``.
 
 .. _calculate-reads-for-depth:
 
