@@ -17,4 +17,4 @@ Install the Python packages required by *piquant* into the virtual environment (
 
 Run unit tests for *piquant* using the command::
 
-    py.test test
+    PYTHONPATH=. py.test test

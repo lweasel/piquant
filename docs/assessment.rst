@@ -17,16 +17,18 @@ Note also that each statistic can be marked as being suitable for producing inte
 Number of TPMs
 ^^^^^^^^^^^^^^
 
-This is simply the number of TPMs ("transcripts per million" values) calculated, corresponding to the total number of transcripts in the transcript group, or as a whole.
+This is simply the number of TPMs ("transcripts per million" values) calculated, corresponding to the total number of transcripts in the transcript group, or in the set of input transcripts as a whole.
 
 This statistic is marked as being not suitable for producing graphs.
 
 Number of 'true positive' TPMs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Since estimating the abundance of very rare transcripts is difficult, *piquant* defines a cut-off value for the number of transcripts per million below which a transcript is considered not to be present. The cut-off is set at 0.1 transcripts per million.
+Estimating the abundance of very rare transcripts is difficult. Moreover, some quantification tools are also able to assemble transcripts from RNA-seq data; however, *piquant* runs these tools in quantification mode only, and pre-specifies the set of transcripts that exist. Therefore, it is possible that *piquant* might hamper the performance of certain quantification tools by making them account for the potential existence of particular transcripts that they would not have considered had they been allowed to assemble transcripts themselves before quantification.
 
-.. todo::  `Allow <https://github.com/lweasel/piquant/issues/26>`_ the user to change this cut-off value.
+For this reason, *piquant* defines a cut-off value for the number of transcripts per million below which a transcript is considered to be "not present" - in many cases, it may be fairer to only consider quantification tool performance for those transcripts considered to be present according to both their real and estimated abundances.
+
+.. todo::  The cut-off is set at 0.1 transcripts per million. `Allow <https://github.com/lweasel/piquant/issues/26>`_ the user to change this value.
 
 Given this cut-off, it is possible to split transcripts into four sets:
 
@@ -35,7 +37,7 @@ Given this cut-off, it is possible to split transcripts into four sets:
 * *"false positives"*: transcripts whose real abundance is below the cut-off, but whose calculated abundance lies above it
 * *"true positives"*: transcripts for which both real and estimated abundances are above the cut-off
 
-Some of the remaining statistics detailed below are calculated only for transcripts considered to be "true positives", to avoid punishing quantification tools through rare transcripts whose abundance is difficult to calculate. The current statistic merely counts the number of such "true positive" transcripts (either in a particular transcript group as determined by a transcript classifier, or for the set of input transcripts as a whole).
+Accordingly, some of the remaining statistics detailed below are calculated only for transcripts considered to be "true positives". The current statistic merely counts the number of such "true positive" transcripts (either in a particular transcript group as determined by a transcript classifier, or for the set of input transcripts as a whole).
 
 Spearman correlation
 ^^^^^^^^^^^^^^^^^^^^
@@ -45,14 +47,14 @@ The `Spearman rank correlation coefficient <http://en.wikipedia.org/wiki/Spearma
 Error fraction
 ^^^^^^^^^^^^^^
 
-The percentage of transcripts considered to be "true positives" for which the estimated TPM is greater than 10% higher or lower than the real TPM; when assessing quantification performance, a lower error fraction is considered to be better.
+The fraction of transcripts considered to be "true positives" for which the estimated TPM is greater than 10% higher or lower than the real TPM; when assessing quantification performance, a lower error fraction is considered to be better.
 
 .. todo:: `Allow <https://github.com/lweasel/piquant/issues/27>`_ the user to change the threshold value of 10%. 
 
 Median percent error
 ^^^^^^^^^^^^^^^^^^^^
 
-For transcripts considered to be "true positives", the median value of the percentage errors of estimated compared to real TPMs; when assessing quantification performance, a median percent error closer to zero is considered to be better. This statistics can also indicate whether a particular quantification tool tends to over- or under-estimate transcript abundances, for transcripts as a whole, or for certain classes of transcript.
+For transcripts considered to be "true positives", the median value of the percentage errors of estimated compared to real TPMs; when assessing quantification performance, a median percent error closer to zero is considered to be better. This statistic can also indicate whether a particular quantification tool tends to over- or under-estimate transcript abundances, for transcripts as a whole, or for certain classes of transcript.
 
 Sensitivity
 ^^^^^^^^^^^
@@ -77,7 +79,7 @@ The specificity (or true negative rate) of a transcript quantification method is
 Transcript classifiers
 ----------------------
 
-Transcript classifiers split the whole set of input transcripts into discrete groups, those groups sharing some similar properties; such a division of transcripts then allows the performance of quantification tools to be assessed across different types of transcripts. The transcript classifiers provided by default are listed below; however it is easy to extend *piquant* to add additional classifiers (see :ref:`extending-adding-new-classifiers`).
+Transcript classifiers split the whole set of input transcripts into discrete groups, these groups sharing some similar property; such a division of transcripts then allows the performance of quantification tools to be assessed across different types of transcripts. The transcript classifiers provided by default are listed below; however it is easy to extend *piquant* to add additional classifiers (see :ref:`extending-adding-new-classifiers`).
 
 Note, however, that transcript classifiers fall into one of two distinct types, and these types are described first.
 
@@ -184,7 +186,7 @@ Plots
 Assessment of multiple quantification runs
 ------------------------------------------
 
-Statistics and plots comparing multiple quantification runs are produced by executing the *piquant* command ``analyse_runs`` (see :ref:`commands-analyse-runs`). Note that depending on the number of combination of quantification and read simulation parameters that ``analyse_runs`` is executed for, a very large number of graphs may be produced; it may, therefore, be useful to concentrate attention on those parameter values which are of greatest interest.
+Statistics and plots comparing multiple quantification runs are produced by executing the *piquant* command ``analyse_runs`` (see :ref:`Analyse quantification results <commands-analyse-runs>`). Note that depending on the number of combination of quantification and read simulation parameters that ``analyse_runs`` is executed for, a very large number of graphs may be produced; it may, therefore, be useful to concentrate attention on those parameter values which are of greatest interest.
 
 The following CSV files and plots (written as PDF files by default) are produced:
 
@@ -193,7 +195,7 @@ CSV files
 
 * ``overall_stats.csv``: A CSV file with a field for each defined statistic which has been calculated over the whole set of input transcripts for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_stats.csv`` files described above.
 * ``overall_stats_by_<classifier>.csv``: A CSV file for each "grouped" transcript classifier, containing the same fields as ``overall_stats.csv``, with statistics calculated for distinct subsets of transcripts as determined by the classifier, for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_stats_by_<classifier>.csv`` files described above.
-* ``overall_distribution_stats_<asc|desc>_by_<classifier>.csv``: Two CSV files ("ascending" and "descending") for each "distribution" transcript classifier, indicating the fractino of transcripts lying above or below values of the classifier threshold variable, for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_distribution_stats_<asc|desc>_by_<classifier>.csv`` files.
+* ``overall_distribution_stats_<asc|desc>_by_<classifier>.csv``: Two CSV files ("ascending" and "descending") for each "distribution" transcript classifier, indicating the fraction of transcripts lying above or below values of the classifier threshold variable, for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_distribution_stats_<asc|desc>_by_<classifier>.csv`` files.
 
 Plots
 ^^^^^
@@ -210,7 +212,7 @@ Within each ``by_<numerical_parameter_1>`` directory, a ``<statistic>`` director
 
     overall_<statistic>_vs_<numerical_parameter_2>_per_<parameter_1>_<other_parameter_values>.pdf
 
-A plot will be produced for every combination of values of quantification and read simulation parameters, excluding *parameter_1* and *numerical_parameter_2* described above. For example, the statistics directories below ``overall_stats_graphs/quant_method/by_read_depth/`` will, for each statistic, contain a plot of that statistic on the y-axis, against read depth on the x-axis, with a line for each quantification method, for each combination of read length, single- or paired-end read, etc. as specified by the ``analyse_runs`` command that was executed.
+A plot will be produced for every combination of values of quantification and read simulation parameters, excluding *parameter_1* and *numerical_parameter_2* described above. For example, the statistics directories below ``overall_stats_graphs/quant_method/by_read_depth/`` will, for each statistic, contain a plot of that statistic on the y-axis, against read depth on the x-axis, with a line for each quantification method, for each combination of read length, single- or paired-end reads, etc. as specified by the ``analyse_runs`` command that was executed.
 
 *"Grouped statistics" graphs*
 

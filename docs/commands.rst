@@ -31,9 +31,9 @@ The following command line options control which combinations of sequencing para
 
 * ``--read-length``: A comma-separated list of integer read lengths for which to simulate reads or perform quantification.
 * ``--read-depth``: A comma-separated list of integer read depths for which to simulate reads or perform quantification.
-* ``--paired-end``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed for single- or paired-end reads.
-* ``--error``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed without or with sequencing errors introduced into the reads.
-* ``--bias``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed without or with sequence bias introduced into the reads.
+* ``--paired-end``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed for single- or paired-end reads or both.
+* ``--error``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed without or with sequencing errors introduced into the reads, or both.
+* ``--bias``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed without or with sequence bias introduced into the reads, or both.
 * ``--quant-method``: A comma-separated list of quantification methods for which transcript quantification should be performed. By default, *piquant* can quantify via the methods "Cufflinks", "RSEM", "Express" and "Sailfish". (Note that this option is not relevant for the simulation of reads).
 
 Except in the case of the ``--quant-method`` option when simulating reads, values for each of these options *must* be specified; otherwise ``piquant.py`` will exit with an error. For ease of use, however, the options can also be specified in a parameters file, via the common command line option ``--params-file``. Such a parameters file should take the form of one option and its value per-line, with option and value separated by whitespace, e.g.::
@@ -78,20 +78,18 @@ eight read simulation directories will be created:
 
 Within each read simulation directory, three files are written:
 
-* ``flux_simulator_expression.par``: A FluxSimulator [FluxSimulator]_ parameters file suitable for creating a transcript expression profile.
-* ``flux_simulator_simulation.par``: A FluxSimulator parameters file suitable for simulating RNA-seq reads according to the created transcript expression profile.
-* ``run_simulation.sh``: A Bash script which, when executed, will use FluxSimulator and the above two parameters files to simulate reads for the appropriate combination of sequencing parameters. 
+* ``flux_simulator_expression.par``: A *FluxSimulator* [FluxSimulator]_ parameters file suitable for creating a transcript expression profile.
+* ``flux_simulator_simulation.par``: A *FluxSimulator* parameters file suitable for simulating RNA-seq reads according to the created transcript expression profile.
+* ``run_simulation.sh``: A Bash script which, when executed, will use *FluxSimulator* and the above two parameters files to simulate reads for the appropriate combination of sequencing parameters. 
 
 Note that it is possible to execute the ``run_simulation.sh`` script directly; however by using the ``piquant.py`` command ``create_reads``, sets of reads for several combinations of sequencing parameters can be created simultaneously as a batch (see :ref:`Create reads <simulate-reads>` below).
 
 In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``prepare-read-dirs`` command takes the following additional options:
 
-* ``--transcript-gtf``: The path to a GTF formatted file describing the transcripts to be simulated by FluxSimulator. This GTF file location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``.
+* ``--transcript-gtf``: The path to a GTF formatted file describing the transcripts to be simulated by *FluxSimulator*. This GTF file location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``. Note that the GTF file should only contain features of feature type "exon", and that every exon feature should specify both "gene_id" and "transcript_id" among its attributes.
 * ``--genome-fasta``: The path to a directory containing per-chromosome genome sequences in FASTA-formatted files. This directory location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``.
-* ``--num-molecules``: FluxSimulator parameters will be set so that the initial pool of transcripts contains this many molecules. Note that although depending on this number, the number of fragments in the final library from which reads will be sequenced is a complicated function of the parameters at each stage of FluxSimulator's sequencing process. This parameter should be set high enough that the number of fragments in the final library exceeds the number of reads necessary to give any of the sequencing depths required (default: 30,000,000).
-* ``--nocleanup``: When run, FluxSimulator creates a number of large intermediate files. Unless ``--nocleanup`` is specified, the ``run_simulation.sh`` Bash script will be constructed so as to delete these intermediate files once read simulation has finished.
-
-.. todo:: The ``check_reads`` (see :ref:`below <check_reads>`) command should check that the ``--num-molecules`` parameter was set high enough to ensure that the number of reads necessary to give any of the requested read depths were indeed successfully produced - see `this issue <https://github.com/lweasel/piquant/issues/37>`_.
+* ``--num-molecules``: *FluxSimulator* parameters will be set so that the initial pool of transcripts contains this many molecules. Note that although it depends on this value, the number of fragments in the final library from which reads will be sequenced is also a complicated function of the parameters at each stage of *FluxSimulator*'s sequencing process. This parameter should be set high enough that the number of fragments in the final library exceeds the number of reads necessary to give any of the sequencing depths required (default: 30,000,000). 
+* ``--nocleanup``: When run, *FluxSimulator* creates a number of large intermediate files. Unless ``--nocleanup`` is specified, the ``run_simulation.sh`` Bash script will be constructed so as to delete these intermediate files once read simulation has finished.
 
 .. _simulate-reads:
 
@@ -109,14 +107,14 @@ Check reads were successfully created (``check_reads``)
 
 The ``check_reads`` command is used to confirm that simulation of RNA-seq reads via ``run_simulation.sh`` scripts successfully completed. For each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error`` and ``--bias``, the relevant read simulation directory is checked for the existence of the appropriate FASTA or FASTQ files containing simulated reads. A message is printed to standard error for those combinations of sequencing parameters for which read simulation has not yet finished, or for which simulation terminated unsuccessfully.
 
-In the case of unsuccessful termination, the file ``nohup.out`` in the relevant simulation directory contains the messages output by both FluxSimulator and the *piquant* scripts executed, and this file can be examined for the source of error.
+In the case of unsuccessful termination, the file ``nohup.out`` in the relevant simulation directory contains the messages output by both *FluxSimulator* and the *piquant* scripts that were executed, and this file can be examined for the source of error.
 
 .. _prepare-quant-dirs:
 
 Prepare quantification directories (``prepare_quant_dirs``)
 -----------------------------------------------------------
 
-The ``prepare_quant_dirs`` command is used to prepare the directories in which transcript quantification will take place - one such directory is created for each possible combination of sequencing and quantification parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias`` and ``--quant-method``, and each directory is anmed according to its particular set of parameters. For example with the following command line options specified:
+The ``prepare_quant_dirs`` command is used to prepare the directories in which transcript quantification will take place - one such directory is created for each possible combination of sequencing and quantification parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias`` and ``--quant-method``, and each directory is named according to its particular set of parameters. For example with the following command line options specified:
 
 * ``--quant-method``: Cufflinks, RSEM, Express, Sailfish
 * ``--read-length``: 50
@@ -144,16 +142,16 @@ As is the case when simulating reads, it is possible to execute the ``run_quanti
 
 In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``prepare-quant-dirs`` command takes the following additional options:
 
-* ``--transcript-gtf``: The path to a GTF formatted file describing the transcripts that were simulated by FluxSimulator. This GTF file location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``. The transcripts GTF file should be the same as were supplied to the ``prepare_read_dirs`` command (see :ref:`Prepare read directories <prepare-read-dirs>` above).
+* ``--transcript-gtf``: The path to a GTF formatted file describing the transcripts from which reads were simulated by *FluxSimulator*. This GTF file location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``. The transcripts GTF file should be the same as was supplied to the ``prepare_read_dirs`` command (see :ref:`Prepare read directories <prepare-read-dirs>` above).
 * ``--genome-fasta``: The path to a directory containing per-chromosome genome sequences in FASTA-formatted files. This directory location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``. The genome sequences should be the same as were supplied to the ``prepare_read_dirs`` command.
 * ``--nocleanup``: When run, quantification tools may create a number of output files. Unless ``--nocleanup`` is specified, the  ``run_quantification`` Bash script will be constructed so as to delete all of these, except those essential for *piquant* to calculate the accuracy with which quantification has been performed. 
 * ``--plot-format``: The file format in which graphs produced during the analysis of this quantification run will be written to - one of "pdf", "svg" or "png" (default "pdf").
-* ``--grouped-threshold``: When producing graphs against groups of transcripts determined by a transcript classifier, only groups with greater than this number of transcripts will contribute to the plot.
+* ``--grouped-threshold``: When producing graphs against groups of transcripts determined by a transcript classifier (see :ref:`assessment-transcript-classifiers`_), only groups with greater than this number of transcripts will contribute to the plot.
 
 Prepare for quantification (``prequantify``)
 --------------------------------------------
 
-Some quantification tools may require some action to be taken prior to quantifying transcript expression which, however, only needs to be executed once for a particular set of transcripts and genome sequences - for example, preparing a Bowtie [Bowtie]_ index for the genome, or creating transcript sequences. The ``piquant.py`` command ``prequantify`` will execute these pre-quantification actions for any quantification tools specified by the command line option ``--quant-method``.
+Some quantification tools may require some action to be taken prior to quantifying transcript expression which, however, only needs to be executed once for a particular set of transcripts and genome sequences - for example, preparing a *Bowtie* [Bowtie]_ index for the genome, or creating transcript FASTA sequences. The ``piquant.py`` command ``prequantify`` will execute these pre-quantification actions for any quantification tools specified by the command line option ``--quant-method``.
 
 Note that prequantification can, if necessary, be run manually for any particular quantification tool by executing the appropriate ``run_simulation.sh`` script with the ``-p`` command line option.
 
@@ -171,18 +169,18 @@ Check quantification was successfully completed (``check_quant``)
 
 The ``check_quant`` command is used to confirm that quantification of transcript expression via ``run_quantification.sh`` scripts successfully completed. For each possible combination of parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias`` and ``--quant-method``, the relevant quantification directory is checked for the existence of the appropriate output files of the quantification tool that will subsequently be used for assessing quantification accuracy. A message is printed to standard error for those combinations of parameters for which quantification has not yet finished, or for which quantification terminated unsuccessfully.
 
-In the case of unsuccessful termination, the file ``nohup.out`` in the relevant quantification directory contains the messages output by both the quantification tool and the *piquant* scripts executed, and this file can be examined for the source of error.
+In the case of unsuccessful termination, the file ``nohup.out`` in the relevant quantification directory contains the messages output by both the quantification tool and the *piquant* scripts that were executed, and this file can be examined for the source of error.
 
 .. _commands-analyse-runs:
 
 Analyse quantification results (``analyse_runs``)
 -------------------------------------------------
 
-The ``analyse_runs`` command is used to gather and calculate statistics, and to draw graphs, pertaining to the accuracy of quantification of transcript expression. Statistics are calculated, and graphs drawn, for those combinations of quantification tools and sequencing parameters determined by the options ``--read-length``,  ``--read-depth``, ``--paired-end``, ``--error``, ``--bias`` and ``--quant-method``.
+The ``analyse_runs`` command is used to gather data and calculate statistics, and to draw graphs, pertaining to the accuracy of quantification of transcript expression. Statistics are calculated, and graphs drawn, for those combinations of quantification tools and sequencing parameters determined by the options ``--read-length``,  ``--read-depth``, ``--paired-end``, ``--error``, ``--bias`` and ``--quant-method``.
 
 For more details on the statistics calculated and the graphs drawn, see :doc:`assessment`.
 
-In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``analyse_runs`` command takes the following additional option:
+In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``analyse_runs`` command takes the following additional options:
 
 * ``--stats-dir``: The path to a directory into which statistics and graph files will be written. The directory will be created if it does not already exist.
 * ``--plot-format``: The file format in which graphs produced during analysis will be written to - one of "pdf", "svg" or "png" (default "pdf").
