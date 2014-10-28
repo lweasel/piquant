@@ -52,4 +52,5 @@ in the tool's top-level directory.
 Changelog
 =========
 
+* 1.0: First full release (28/10/14)
 * 0.1: Initial beta development.
