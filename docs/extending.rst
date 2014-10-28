@@ -32,15 +32,15 @@ In detail, in addition to being marked with the decorator ``@_Quantifier``, a qu
 
 .. py:method:: write_preparatory_commands(writer, params)
 
-``write_preparatory_commands`` writes commands to a ``run_quantification.sh`` script that should be executed prior to quantifying transcripts with the particular quantification tool, but that only need to be executed once for a particular set of input transcripts and genome sequences - for example, preparing a Bowtie index for the genome, or constructing transcript sequences.
+``write_preparatory_commands`` writes commands to a ``run_quantification.sh`` script that should be executed prior to quantifying transcripts with the particular quantification tool, but that only need to be executed once for a particular set of input transcripts and genome sequences - for example, preparing a *Bowtie* index for the genome, or constructing transcript sequences.
 
 Commands are written via the ``writer`` parameter, an instance of the ``BashScriptWriter`` class (see :ref:`below <extending-bash-script-writer>`), which facilitates writing to a Bash script.
 
-``params`` is a dictionary of key-value pairs containing items that may be of use to the quantifier during preparation or quantification:
+``params`` is a dictionary of key-value pairs containing items that may be of use to the quantifier during preparation or subsequent quantification:
 
 * ``TRANSCRIPT_GTF_FILE``: Full path to the GTF file containing transcript definitions.
 * ``GENOME_FASTA_DIR``: Full path to the directory containing genome sequence FASTA files.
-* ``QUANTIFIER_DIRECTORY``: Full path to a directory ``quantifier_scratch``, created within the *piquant* output directory, that quantifiers can write files to necessary for their operation which only need to be created once (for example, a Bowtie or Sailfish index).
+* ``QUANTIFIER_DIRECTORY``: Full path to a directory ``quantifier_scratch``, created within the *piquant* output directory, that quantifiers can write files to necessary for their operation which only need to be created once (for example, a *Bowtie* or *Sailfish* index).
 * ``FASTQ_READS``: A boolean, ``True`` if reads have been simulated with errors (and hence quality values), and are thus written in a FASTQ file.
 * ``SIMULATED_READS``: If single-end reads are being quantified, the full path to the file containing simulated reads. This key is not present in the dictionary if paired-end reads are being quantified.
 * ``LEFT_SIMULATED_READS``: If paired-end reads are being quantified, the full path to the file containing the first read for each pair of simulated reads. This key is not present in the dictionary if single-end reads are being quantified.
@@ -54,7 +54,7 @@ Commands are again written via the ``writer`` parameter, an instance of the ``Ba
 
 .. py:method:: write_post_quantification_cleanup(writer)
 
-Running a quantification tool may produce many files in addition to those needed to assess the tool's performance (i.e. the file containing estimated transcript abundances), and if multiple quantification runs are performed, these may occupy significant disk space. ``write_post_quantification_cleanup`` allows an opportunity for commands to be writen to remove these files once quantification has been performed. As before, such commands can be written via the ``writer`` parameter, an instance of the ``BashScriptWriter`` class.
+Running a quantification tool may produce many files in addition to that needed to assess the tool's performance (i.e. the file containing estimated transcript abundances), and if multiple quantification runs are performed, these may occupy significant disk space. ``write_post_quantification_cleanup`` allows an opportunity for commands to be writen to remove these files once quantification has been performed. As before, such commands can be written via the ``writer`` parameter, an instance of the ``BashScriptWriter`` class.
 
 .. py:method:: get_transcript_abundance(transcript_id)
 
@@ -102,15 +102,15 @@ A statistics class must have the following attributes and methods (note that the
 
 .. py:attribute:: name
 
-A short name for the statistic to be used in filenames and CSV column headers.
+A short name for the statistic, to be used in filenames and CSV column headers.
 
 .. py:attribute:: title
 
-A human-readable description for the statistic to appear in graph titles and axis labels.
+A human-readable description for the statistic, to appear in graph titles and axis labels.
 
 .. py:attribute:: graphable
 
-A boolean, True if graphs of the statistic should be plotted as part of *piquant*'s analysis.
+A boolean, ``True`` if graphs of the statistic should be plotted as part of *piquant*'s analysis.
 
 .. _extending-calculate-method:
 
@@ -139,7 +139,7 @@ The ``tpms`` and ``tp_tpms`` DataFrame objects have a row for each estimated tra
 
 The ``stat_range`` method controls the y-axis bounds in graphs created for this statistic. The ``vals_range`` parameter is a tuple of two values, the minimum and maximum values of the statistic that will be plotted in a particular graph. ``stat_range`` should return either a tuple of two values or ``None``. 
 
-If a tuple is returned, each value should be a number or ``None``. The first value will be the minimum bound of the y-axis in the graph to be drawn; a value of ``None`` indicates that no special bound is to be imposed and the y-axis minimum will be chosen automatically according to the minimum value of the statistic. Likewise, the second value controls the maximum bound of the y-axis. Returning ``None`` instead of a tuple means that both y-axis bounds will be chosen automatically.
+If a tuple is returned, each value should either be a number or ``None``. The first value will be the minimum bound of the y-axis in the graph to be drawn; a value of ``None`` indicates that no special bound is to be imposed and the y-axis minimum will be chosen automatically according to the minimum value of the statistic. Likewise, the second value controls the maximum bound of the y-axis. Returning ``None`` instead of a tuple means that both y-axis bounds will be chosen automatically.
 
 .. _extending-adding-new-classifiers:
 
@@ -150,13 +150,13 @@ Adding a new classifier of transcripts is perhaps simpler than adding a new quan
 
 Parameters to be supplied to the ``_Classifier`` constructor are as follows:
 
-* ``column_name``: A short name for the classifier to be used in filenames and CSV column headers.
+* ``column_name``: A short name for the classifier, to be used in filenames and CSV column headers.
 * ``value_extractor``: A function which takes a row of a pandas DataFrame containing the results of a quantification run (as described :ref:`above <extending-calculate-method>` - such a row describes quantification for a single transcript) and returns a numeric classification value for the transcript indicated by the row.
 * ``grouped_stats`` *[Optional - default: True]*: A boolean. If ``True``, the instance is a :ref:`"grouped" classifier <assessment-grouped-classifiers>`, which splits transcripts into fixed groups dependent on some property inherent in the transcripts (or their estimated abundances) themselves. If ``False``, the instance is a :ref:`"distribution" classifier <assessment-distribution-classifiers>`, which splits transcripts into two groups, those above and below some threshold (where that threshold is generally the value of some property of quantification).
 * ``distribution_plot_range`` *[Optional - default: None]*: If ``grouped_stats`` is ``False``, this parameter should either be a tuple of two numbers or ``None``. If a tuple is supplied, these should be the minimum and maximum values of the "distribution" classifier threshold to be used in plots produced by this classifier.
-* ``plot_title`` *[Optional- default: None]*: A human-readable description for the classifier to appear in graph titles and axis labels. If not supplied, the value of the ``column_name`` parameter will be used.
+* ``plot_title`` *[Optional - default: None]*: A human-readable description for the classifier, to appear in graph titles and axis labels. If not supplied, the value of the ``column_name`` parameter will be used.
 
-Note that a subclass, ``_LevelsClassifier``, of ``_Classifier`` is supplied, which aids the construction of classifiers which group transcripts based on ranges of some parameter which takes many possible values (for example, transcript length in base pairs, or transcript abundance measured in TPM). Parameters to be supplied to the ``_LevelsClassifier`` constructor are as follows:
+Note that a subclass, ``_LevelsClassifier``, of ``_Classifier`` is supplied, which aids the construction of classifiers which group transcripts based on ranges of some parameter that takes many possible values (for example, transcript length in base pairs, or transcript abundance measured in TPM). Parameters to be supplied to the ``_LevelsClassifier`` constructor are as follows:
 
 * ``column_name``: As for ``_Classifier``.
 * ``value_extractor``: A function which takes a row of a pandas DataFrame (as described for ``_Classifier`` above) and extracts a numeric classification value for the transcript indicated by the row. Note, however, that transcripts are classified into groups based on the particular range this values falls into, as determined by the ``levels`` and ``closed`` parameters below.
