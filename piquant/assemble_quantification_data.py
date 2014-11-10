@@ -19,7 +19,7 @@ from schema import SchemaError
 
 import flux_simulator as fs
 import options as opt
-import pandas
+import pandas as pd
 import quantifiers as qs
 import tpms
 
@@ -28,10 +28,6 @@ OUT_FILE = "--out"
 PRO_FILE = "<pro-file>"
 COUNT_FILE = "<transcript-count-file>"
 UNIQUE_SEQ_FILE = "<unique-sequence-file>"
-
-TRANSCRIPT_COL = "transcript"
-COUNT_COL = "transcript_count"
-UNIQUE_SEQ_LENGTH_COL = "unique-length"
 
 SORTED_PREFIX = "sorted"
 SORTED_BAM_FILE = SORTED_PREFIX + ".bam"
@@ -68,21 +64,25 @@ def _read_transcript_abundances(quantifier, profiles):
 
 
 def _read_transcript_counts(count_file, profiles):
-    transcript_counts = pandas.read_csv(count_file, index_col=TRANSCRIPT_COL)
+    transcript_counts = pd.read_csv(count_file, index_col=tpms.TRANSCRIPT)
 
-    set_transcript_count = lambda t_id: \
-        transcript_counts.ix[t_id][COUNT_COL] \
-        if t_id in transcript_counts.index else 0
+    def set_transcript_count_and_gene(t_id):
+        tc_row = transcript_counts.ix[t_id]
+        return pd.Series({
+            tpms.GENE: tc_row[tpms.GENE],
+            tpms.TRANSCRIPT_COUNT: tc_row[tpms.TRANSCRIPT_COUNT]
+        })
 
-    profiles[tpms.TRANSCRIPT_COUNT] = \
-        profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].map(set_transcript_count)
+    return profiles.merge(profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].apply(
+        set_transcript_count_and_gene),
+        left_index=True, right_index=True)
 
 
 def _read_unique_sequence_lengths(unique_seq_file, profiles):
-    unique_seqs = pandas.read_csv(unique_seq_file, index_col=TRANSCRIPT_COL)
+    unique_seqs = pd.read_csv(unique_seq_file, index_col=tpms.TRANSCRIPT)
 
     set_unique_length = lambda t_id: \
-        unique_seqs.ix[t_id][UNIQUE_SEQ_LENGTH_COL] \
+        unique_seqs.ix[t_id][tpms.UNIQUE_SEQ_LENGTH] \
         if t_id in unique_seqs.index else 0
 
     profiles[tpms.UNIQUE_SEQ_LENGTH] = \
@@ -92,14 +92,14 @@ def _read_unique_sequence_lengths(unique_seq_file, profiles):
 def _write_quantification_data(out_file, profiles):
     profiles.rename(
         columns={
-            fs.PRO_FILE_TRANSCRIPT_ID_COL: TRANSCRIPT_COL,
+            fs.PRO_FILE_TRANSCRIPT_ID_COL: tpms.TRANSCRIPT,
             fs.PRO_FILE_LENGTH_COL: tpms.LENGTH
         },
         inplace=True)
 
     profiles.to_csv(
         out_file, index=False,
-        cols=[TRANSCRIPT_COL, tpms.LENGTH, tpms.UNIQUE_SEQ_LENGTH,
+        cols=[tpms.TRANSCRIPT, tpms.GENE, tpms.LENGTH, tpms.UNIQUE_SEQ_LENGTH,
               tpms.TRANSCRIPT_COUNT, tpms.REAL_TPM, tpms.CALCULATED_TPM])
 
 
@@ -116,7 +116,7 @@ def _assemble_and_write_quantification_data(logger, options):
 
     # Read per-gene transcript counts
     logger.info("Reading per-gene transcript counts...")
-    _read_transcript_counts(options[COUNT_FILE], profiles)
+    profiles = _read_transcript_counts(options[COUNT_FILE], profiles)
 
     # Read unique sequence lengths per-transcript
     logger.info("Reading unique sequence lengths per-transcript")

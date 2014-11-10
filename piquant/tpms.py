@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+TRANSCRIPT = "transcript"
+GENE = "gene"
 TRANSCRIPT_COUNT = "num-transcripts"
 LENGTH = "length"
 UNIQUE_SEQ_LENGTH = "unique-length"

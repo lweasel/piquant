@@ -14,6 +14,7 @@ import docopt
 import gtf
 import options as opt
 import schema
+import tpms
 
 GTF_FILE = "<gtf-file>"
 
@@ -50,7 +51,7 @@ def _get_transcript_counts_for_genes(transcript_to_gene_mappings):
 def _output_transcript_counts_for_genes(
         transcript_to_gene_mappings, transcript_counts):
 
-    print("transcript,gene,transcript_count")
+    print(",".join([tpms.TRANSCRIPT, tpms.GENE, tpms.TRANSCRIPT_COUNT]))
     for transcript, gene in transcript_to_gene_mappings.items():
         print("{t},{g},{c}".format(
             t=transcript, g=gene, c=transcript_counts[gene]))
