@@ -13,13 +13,14 @@ import docopt
 import gtf
 import options as opt
 import schema
+import tpms
 
 from collections import defaultdict, namedtuple
 
 GTF_FILE = "<gtf-file>"
+NO_BASES = set()
 
-
-Exon = namedtuple('Exon', ['sequence', 'start', 'end', 'strand'])
+Exon = namedtuple('Exon', ['sequence', 'start', 'end', 'strand', 'bases'])
 
 ExonAndTranscript = namedtuple('ExonAndTranscript', ['exon', 'transcript'])
 
@@ -50,7 +51,7 @@ def _get_exon_transcript_pairs(exon_info):
         column_dict[gtf.TRANSCRIPT_ID_ATTRIBUTE])
 
     return [ExonAndTranscript(
-        Exon(str(ei[0]), int(ei[1]), int(ei[2]), str(ei[3])), ei[-1])
+        Exon(str(ei[0]), int(ei[1]), int(ei[2]), str(ei[3]), None), ei[-1])
         for ei in exon_info_list]
 
 
@@ -70,73 +71,60 @@ def _get_unique_exon_transcript_pairs(exon_transcript_pairs):
 
 
 def _get_unique_exon_per_chromosome_map(unique_exon_transcript_pairs):
-    seq_to_unique_exon_transcript_map = defaultdict(list)
+    seq_to_unique_exon_transcripts = defaultdict(list)
 
     for e_and_t in unique_exon_transcript_pairs:
-            seq_to_unique_exon_transcript_map[e_and_t.exon.sequence].\
-                append(e_and_t)
+        seq_to_unique_exon_transcripts[e_and_t.exon.sequence].\
+            append(e_and_t)
 
-    return seq_to_unique_exon_transcript_map
-
-
-def _get_exon_bases_map(unique_exon_transcript_pairs):
-    return {e_and_t.exon:
-            set(range(e_and_t.exon.start, e_and_t.exon.end + 1))
-            for e_and_t in unique_exon_transcript_pairs}
-
-
-def _get_exon_bases(index, exon_and_transcript_list, exon_bases_map):
-    exon = exon_and_transcript_list[index].exon
-    exon_bases = exon_bases_map[exon]
-    return exon, exon_bases
-
-
-def _calculate_exon_difference(exon1, exon1_bases, exon2, exon2_bases):
-    if exon2.end < exon1.start or exon2.start > exon1.end:
-        # No overlap between exons
-        return exon1_bases
-
-    if exon2.start <= exon1.start and exon2.end >= exon2.end:
-        # Exon 2 completely covers exon 1
-        return set()
-
-    return exon1_bases - exon2_bases
+    return seq_to_unique_exon_transcripts
 
 
 def _get_unique_transcript_lengths(
-        unique_exon_transcript_pairs,
-        seq_to_unique_exon_transcript_map, logger):
-
-    exon_bases_map = _get_exon_bases_map(unique_exon_transcript_pairs)
+        seq_to_unique_exon_transcripts, logger):
 
     transcript_lengths = defaultdict(int)
 
-    for seq, e_and_t_list in seq_to_unique_exon_transcript_map.items():
-        logger.info("...processing chromosome '{seq}'".format(seq=seq))
+    for seq, e_and_t_list in seq_to_unique_exon_transcripts.items():
+        logger.info("...processing {exons} exons for chromosome '{seq}'".
+                    format(exons=len(e_and_t_list), seq=seq))
+
         indices = range(len(e_and_t_list))
 
+        e_and_t_list = [e_and_t._replace(
+            exon=e_and_t.exon._replace(
+                bases=set(range(e_and_t.exon.start, e_and_t.exon.end + 1))))
+            for e_and_t in e_and_t_list]
+
         for i in indices:
-            e1, e1_bases = _get_exon_bases(i, e_and_t_list, exon_bases_map)
+            exon1 = e_and_t_list[i].exon
+            exon_bases = exon1.bases
 
             for j in indices:
                 if i == j:
                     continue
 
-                e2, e2_bases = _get_exon_bases(j, e_and_t_list, exon_bases_map)
+                exon2 = e_and_t_list[j].exon
+                if exon2.end < exon1.start or exon2.start > exon1.end:
+                    # No overlap between exons
+                    continue
 
-                e1_bases = _calculate_exon_difference(
-                    e1, e1_bases, e2, e2_bases)
-                if len(e1_bases) == 0:
+                if exon2.start <= exon1.start and exon2.end >= exon2.end:
+                    # Exon 2 completely covers exon 1
+                    exon_bases = NO_BASES
                     break
 
-            transcript = e_and_t_list[i].transcript
-            transcript_lengths[transcript] += len(e1_bases)
+                exon_bases = exon_bases - exon2.bases
+                if len(exon_bases) == 0:
+                    break
+
+            transcript_lengths[e_and_t_list[i].transcript] += len(exon_bases)
 
     return transcript_lengths
 
 
 def _output_unique_transcript_lengths(transcript_lengths):
-    print("transcript,unique-length")
+    print(",".join([tpms.TRANSCRIPT, tpms.UNIQUE_SEQ_LENGTH]))
     for transcript, length in transcript_lengths.items():
         print("{t},{l}".format(t=transcript, l=length))
 
@@ -161,7 +149,7 @@ def _calculate_unique_transcript_sequence(logger, options):
 
     # For those exons which originate from only one transcript, split into
     # groups per originating chromosome
-    seq_to_unique_exon_transcript_map = \
+    seq_to_unique_exon_transcripts = \
         _get_unique_exon_per_chromosome_map(unique_exon_transcript_pairs)
 
     # For the remaining exons, some will overlap - we want now calculate how
@@ -169,8 +157,7 @@ def _calculate_unique_transcript_sequence(logger, options):
     # bases unique to that transcript.
     logger.info("Removing overlaps between exons...")
     transcript_lengths = _get_unique_transcript_lengths(
-        unique_exon_transcript_pairs,
-        seq_to_unique_exon_transcript_map, logger)
+        seq_to_unique_exon_transcripts, logger)
 
     # Write the unique number of bases per-transcript to the specified output
     # file.
@@ -179,7 +166,7 @@ def _calculate_unique_transcript_sequence(logger, options):
     _output_unique_transcript_lengths(transcript_lengths)
 
 
-if __name__ == "__main__":
+def _main():
     # Read in command-line options
     __doc__ = opt.substitute_common_options_into_usage(__doc__)
     options = docopt.docopt(
@@ -193,3 +180,7 @@ if __name__ == "__main__":
 
     # Calculate and output number of unique bases per transcript
     _calculate_unique_transcript_sequence(logger, options)
+
+
+if __name__ == "__main__":
+    _main()
