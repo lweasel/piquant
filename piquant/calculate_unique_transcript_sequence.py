@@ -20,6 +20,7 @@ import schema
 import tpms
 
 from collections import defaultdict, namedtuple
+from __init__ import __version__
 
 GTF_FILE = "<gtf-file>"
 NO_BASES = set()
@@ -174,7 +175,8 @@ def _main(docstring):
     # Read in command-line options
     docstring = opt.substitute_common_options_into_usage(__doc__)
     options = docopt.docopt(
-        docstring, version="calculate_unique_transcript_sequence v0.1")
+        docstring,
+        version="calculate_unique_transcript_sequence v" + __version__)
 
     # Validate command-line options
     _validate_command_line_options(options)

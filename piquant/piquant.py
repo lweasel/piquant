@@ -79,6 +79,7 @@ import sys
 import time
 import tpms
 
+from __init__ import __version__
 
 def _get_parameters_dir(options, **params):
     """
@@ -368,7 +369,7 @@ def _main(docstring):
     # Read in command-line options
     docstring = opt.substitute_common_options_into_usage(
         docstring, plot_formats=plot.PLOT_FORMATS)
-    options = docopt.docopt(docstring, version="piquant v0.1")
+    options = docopt.docopt(docstring, version="piquant v" + __version__)
 
     # Validate and process command-line options
     param_values = None

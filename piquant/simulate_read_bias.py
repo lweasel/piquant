@@ -22,6 +22,8 @@ import random
 import schema
 import sys
 
+from __init__ import __version__
+
 NUM_READS = "--num-reads"
 OUT_PREFIX = "--out-prefix"
 PAIRED_END = "--paired-end"
@@ -157,7 +159,7 @@ def _simulate_bias(logger, options):
 if __name__ == "__main__":
     # Read in command-line options
     __doc__ = opt.substitute_common_options_into_usage(__doc__)
-    options = docopt.docopt(__doc__, version="simulate_read_bias v0.1")
+    options = docopt.docopt(__doc__, version="simulate_read_bias v" + __version__)
 
     # Validate command-line options
     _validate_command_line_options(options)
