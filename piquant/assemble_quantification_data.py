@@ -1,17 +1,26 @@
 #!/usr/bin/env python
 
-"""Usage:
-    assemble_quantification_data [{log_option_spec}] --method=<quantification-method> --out=<output-file> <pro-file> <transcript-count-file> <unique-sequence-file>
+"""
+Usage:
+    assemble_quantification_data [{log_option_spec}] --method=<quantification-method> --out=<output-file> <pro-file> <dummy> <transcript-count-file> <unique-sequence-file>
 
-{help_option_spec}                    {help_option_description}
-{ver_option_spec}                 {ver_option_description}
-{log_option_spec}      {log_option_description}
--m --method=<quant-method>   Method used to quantify transcript abundances.
+Options:
+{help_option_spec}
+    {help_option_description}
+{ver_option_spec}
+    {ver_option_description}
+{log_option_spec}
+    {log_option_description}
+-m --method=<quant-method>
+    Method used to quantify transcript abundances.
 -o <output-file> --out=<output-file>
-                             Output file for real and calculated TPMs.
-<pro-file>                   Flux Simulator gene expression profile file.
-<transcript-count-file>      File containing per-gene transcript counts.
-<unique-sequence-file>       File containing unique sequence lengths per-transcript.
+    Output file for real and calculated TPMs.
+<pro-file>
+    Flux Simulator gene expression profile file.
+<transcript-count-file>
+    File containing per-gene transcript counts.
+<unique-sequence-file>
+    File containing unique sequence lengths per-transcript.
 """
 
 from docopt import docopt
@@ -127,10 +136,10 @@ def _assemble_and_write_quantification_data(logger, options):
     _write_quantification_data(options[OUT_FILE], profiles)
 
 
-if __name__ == "__main__":
+def _main(docstring):
     # Read in command-line options
-    __doc__ = opt.substitute_common_options_into_usage(__doc__)
-    options = docopt(__doc__, version="assemble_quantification_data v0.1")
+    docstring = opt.substitute_common_options_into_usage(docstring)
+    options = docopt(docstring, version="assemble_quantification_data v0.1")
 
     # Validate command-line options
     _validate_command_line_options(options)
@@ -140,3 +149,7 @@ if __name__ == "__main__":
 
     # Assemble and write quantification data
     _assemble_and_write_quantification_data(logger, options)
+
+
+if __name__ == "__main__":
+    _main(__doc__)

@@ -54,8 +54,8 @@ def get_stratified_stats_types():
             for c, asc in itertools.product(dist_clsfrs, [True, False])]
 
 
-def get_stats_file(directory, prefix, classifier=None, ascending=False):
-    return os.path.join(directory, prefix) + \
+def get_stats_file(directory, prefix, tpm_level, classifier=None, ascending=False):
+    return os.path.join(directory, "_".join([prefix, tpm_level])) + \
         (classifier.get_stats_file_suffix(ascending=ascending)
             if classifier else "_stats") + ".csv"
 
@@ -111,9 +111,6 @@ class _BaseStatistic():
         calculated for 'tp_grouped'.
         """
         raise NotImplementedError
-
-    def stat_range(self, vals_range):
-        return None
 
 
 @_Statistic

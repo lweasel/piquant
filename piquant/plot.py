@@ -53,11 +53,11 @@ def _get_distribution_plot_ylabel(ascending):
 
 def _set_distribution_plot_bounds(xmin, xmax, ymin=None, ymax=None):
     xmargin = (xmax - xmin) / 40.0
-    plt.xlim(xmin=xmin-xmargin, xmax=xmax+xmargin)
+    plt.xlim(xmin=xmin - xmargin, xmax=xmax + xmargin)
     plt.ylim(ymin=-2.5, ymax=102.5)
 
 
-def _get_statistic_plot_bounds_setter(statistic):
+def _get_plot_bounds_setter(statistic):
     def _set_statistic_plot_bounds(xmin, xmax, ymin, ymax):
         xmargin = 2 * (xmax - xmin) / 100.0
         plt.xlim(xmin=xmin - xmargin, xmax=xmax + xmargin)
@@ -74,7 +74,7 @@ def _get_statistic_plot_bounds_setter(statistic):
     return _set_statistic_plot_bounds
 
 
-def _set_ticks_for_transcript_classifier_plot(locations, classifier):
+def _set_ticks_for_classifier_plot(locations, classifier):
     plt.xticks(locations, classifier.get_value_labels(len(locations)))
 
 
@@ -184,10 +184,10 @@ def _plot_statistic_vs_varying_param_grouped_by_param(
         _plot_statistic_grouped_by_parameter(
             stats, group_param, varying_param.name, statistic.name,
             varying_param.title, statistic.title,
-            _get_statistic_plot_bounds_setter(statistic), title)
+            _get_plot_bounds_setter(statistic), title)
 
 
-def _plot_statistic_vs_transcript_classifier_grouped_by_param(
+def _plot_statistic_vs_classifier_grouped_by_param(
         fformat, stats, base_name, statistic, group_param,
         classifier, fixed_param_values):
 
@@ -206,15 +206,15 @@ def _plot_statistic_vs_transcript_classifier_grouped_by_param(
         _plot_statistic_grouped_by_parameter(
             stats, group_param, clsfr_col, statistic.name,
             xlabel, statistic.title,
-            _get_statistic_plot_bounds_setter(statistic), title)
+            _get_plot_bounds_setter(statistic), title)
 
         min_xval = stats[clsfr_col].min()
         max_xval = stats[clsfr_col].max()
-        _set_ticks_for_transcript_classifier_plot(
+        _set_ticks_for_classifier_plot(
             np.arange(min_xval, max_xval + 1), classifier)
 
 
-def _plot_cumulative_transcript_distribution_grouped_by_param(
+def _plot_cumulative_distribution_grouped_by_param(
         fformat, stats, base_name, group_param,
         classifier, ascending, fixed_param_values):
 
@@ -269,7 +269,7 @@ def log_ratio_boxplot(
         plt.xlabel(_capitalized(grouping_column))
         plt.ylabel("Log ratio (calculated/real TPM)")
 
-        _set_ticks_for_transcript_classifier_plot(plt.xticks()[0], classifier)
+        _set_ticks_for_classifier_plot(plt.xticks()[0], classifier)
 
 
 def plot_statistic_vs_transcript_classifier(
@@ -286,14 +286,14 @@ def plot_statistic_vs_transcript_classifier(
 
         plt.plot(xvals, yvals, '-o')
 
-        _get_statistic_plot_bounds_setter(statistic)(
+        _get_plot_bounds_setter(statistic)(
             min_xval, max_xval, yvals.min(), yvals.max())
 
         plt.xlabel(_capitalized(classifier.get_plot_title()))
         plt.ylabel(statistic.title)
         plt.suptitle(statistic.title + " vs " + _decapitalized(clsfr_col))
 
-        _set_ticks_for_transcript_classifier_plot(
+        _set_ticks_for_classifier_plot(
             np.arange(min_xval, max_xval + 1), classifier)
 
 
@@ -343,10 +343,10 @@ def _get_fixed_params(all_params, non_fixed, param_values):
 
 def _get_stats_for_fixed_params(stats_df, fixed_params, fp_values_set):
     fixed_param_values = {}
-    for i, fp in enumerate(fixed_params):
+    for i, fixed_p in enumerate(fixed_params):
         fp_value = fp_values_set[i]
-        stats_df = stats_df[stats_df[fp.name] == fp_value]
-        fixed_param_values[fp] = fp_value
+        stats_df = stats_df[stats_df[fixed_p.name] == fp_value]
+        fixed_param_values[fixed_p] = fp_value
     return stats_df, fixed_param_values
 
 
@@ -422,7 +422,7 @@ def draw_grouped_stats_graphs(fformat, stats_dir, param_values, threshold):
 
     for clsfr in grp_clsfrs:
         stats_file = statistics.get_stats_file(
-            stats_dir, statistics.OVERALL_STATS_PREFIX, clsfr)
+            stats_dir, statistics.OVERALL_STATS_PREFIX, t.TRANSCRIPT, clsfr)
         clsfr_stats = pd.read_csv(stats_file)
 
         clsfr_dir = _get_plot_subdirectory(
@@ -449,7 +449,7 @@ def draw_grouped_stats_graphs(fformat, stats_dir, param_values, threshold):
                         statistic_dir, "grouped")
 
                     filtered_stats_df = stats_df[num_tpms_filter(stats_df)]
-                    _plot_statistic_vs_transcript_classifier_grouped_by_param(
+                    _plot_statistic_vs_classifier_grouped_by_param(
                         fformat, filtered_stats_df, graph_file_basename,
                         stat, param, clsfr, fixed_param_values)
 
@@ -466,7 +466,8 @@ def draw_distribution_graphs(fformat, stats_dir, param_values):
     dist_clsfrs = [c for c in clsfrs if c.produces_distribution_plots()]
     for clsfr, asc in itertools.product(dist_clsfrs, [True, False]):
         stats_file = statistics.get_stats_file(
-            stats_dir, statistics.OVERALL_STATS_PREFIX, clsfr, asc)
+            stats_dir, statistics.OVERALL_STATS_PREFIX,
+            t.TRANSCRIPT, clsfr, asc)
         clsfr_stats = pd.read_csv(stats_file)
 
         clsfr_dir = _get_plot_subdirectory(
@@ -489,6 +490,6 @@ def draw_distribution_graphs(fformat, stats_dir, param_values):
                 stats_df, fixed_param_values = _get_stats_for_fixed_params(
                     clsfr_stats, fixed_params, fp_values_set)
 
-                _plot_cumulative_transcript_distribution_grouped_by_param(
+                _plot_cumulative_distribution_grouped_by_param(
                     fformat, stats_df, graph_file_basename, param,
                     clsfr, asc, fixed_param_values)

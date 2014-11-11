@@ -87,13 +87,14 @@ def _add_parameter_values_to_stats(stats, options):
 def _write_overall_stats(transcript_tpms, tp_transcript_tpms,
                          gene_tpms, tp_gene_tpms, options):
 
-    for tpms, tp_tpms, file_id in [(transcript_tpms, tp_transcript_tpms, ""),
-                                   (gene_tpms, tp_gene_tpms, "_gene")]:
+    for tpms, tp_tpms, tpm_level in \
+            [(transcript_tpms, tp_transcript_tpms, t.TRANSCRIPT),
+             (gene_tpms, tp_gene_tpms, t.GENE)]:
         stats = t.get_stats(tpms, tp_tpms, statistics.get_statistics())
         _add_parameter_values_to_stats(stats, options)
 
         stats_file_name = statistics.get_stats_file(
-            ".", options[OUT_FILE_BASENAME] + file_id)
+            ".", options[OUT_FILE_BASENAME], tpm_level)
         statistics.write_stats_data(stats_file_name, stats, index=False)
 
 
@@ -109,7 +110,7 @@ def _write_stratified_stats(tpms, tp_tpms, non_zero, options):
             clsfr_stats[classifier] = stats
 
             stats_file_name = statistics.get_stats_file(
-                ".", options[OUT_FILE_BASENAME], classifier)
+                ".", options[OUT_FILE_BASENAME], t.TRANSCRIPT, classifier)
             statistics.write_stats_data(stats_file_name, stats)
 
         elif classifier.produces_distribution_plots():
@@ -119,7 +120,8 @@ def _write_stratified_stats(tpms, tp_tpms, non_zero, options):
                 _add_parameter_values_to_stats(stats, options)
 
                 stats_file_name = statistics.get_stats_file(
-                    ".", options[OUT_FILE_BASENAME], classifier, ascending)
+                    ".", options[OUT_FILE_BASENAME], t.TRANSCRIPT,
+                    classifier, ascending)
                 statistics.write_stats_data(
                     stats_file_name, stats, index=False)
 
