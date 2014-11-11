@@ -15,6 +15,7 @@ import options as opt
 import schema
 
 from collections import defaultdict, namedtuple
+from __init__ import __version__
 
 GTF_FILE = "<gtf-file>"
 
@@ -183,7 +184,7 @@ if __name__ == "__main__":
     # Read in command-line options
     __doc__ = opt.substitute_common_options_into_usage(__doc__)
     options = docopt.docopt(
-        __doc__, version="calculate_unique_transcript_sequence v0.1")
+        __doc__, version="calculate_unique_transcript_sequence v" + __version__)
 
     # Validate command-line options
     _validate_command_line_options(options)

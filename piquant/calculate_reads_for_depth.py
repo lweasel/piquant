@@ -16,6 +16,8 @@ import flux_simulator as fs
 import options as opt
 import schema
 
+from __init__ import __version__
+
 PRO_FILE = "<pro-file>"
 READ_LENGTH = "<read-length>"
 READ_DEPTH = "<read-depth>"
@@ -61,7 +63,7 @@ def _calculate_reads_for_depth(profiles, read_length, required_depth):
 if __name__ == "__main__":
     # Read in command-line options
     __doc__ = opt.substitute_common_options_into_usage(__doc__)
-    options = docopt.docopt(__doc__, version="calculate_reads_for_depth v0.1")
+    options = docopt.docopt(__doc__, version="calculate_reads_for_depth v" + __version__)
 
     # Validate and process command-line options
     _validate_command_line_options(options)

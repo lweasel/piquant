@@ -48,6 +48,7 @@ import statistics
 import sys
 import time
 
+from __init__ import __version__
 
 def _get_parameters_dir(options, **params):
     """
@@ -314,7 +315,7 @@ if __name__ == "__main__":
     # Read in command-line options
     __doc__ = opt.substitute_common_options_into_usage(
         __doc__, plot_formats=plot.PLOT_FORMATS)
-    options = docopt.docopt(__doc__, version="piquant v0.1")
+    options = docopt.docopt(__doc__, version="piquant v" + __version__)
 
     # Validate and process command-line options
     param_values = None

@@ -30,6 +30,8 @@ import tpms as t
 import plot
 import schema
 
+from __init__ import __version__
+
 TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
 TRUE_POSITIVES_LABEL = "true positive TPMs"
 TPM_FILE = "<tpm-file>"
@@ -223,7 +225,7 @@ if __name__ == "__main__":
     __doc__ = opt.substitute_common_options_into_usage(
         __doc__, plot_formats=plot.PLOT_FORMATS)
     options = docopt.docopt(
-        __doc__, version="analyse_quantification_run v0.1")
+        __doc__, version="analyse_quantification_run v" + __version__)
 
     # Validate command-line options
     _validate_command_line_options(options)

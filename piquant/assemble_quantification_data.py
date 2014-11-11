@@ -23,6 +23,8 @@ import pandas
 import quantifiers as qs
 import tpms
 
+from __init__ import __version__
+
 QUANT_METHOD = "--method"
 OUT_FILE = "--out"
 PRO_FILE = "<pro-file>"
@@ -130,7 +132,7 @@ def _assemble_and_write_quantification_data(logger, options):
 if __name__ == "__main__":
     # Read in command-line options
     __doc__ = opt.substitute_common_options_into_usage(__doc__)
-    options = docopt(__doc__, version="assemble_quantification_data v0.1")
+    options = docopt(__doc__, version="assemble_quantification_data v" + __version__)
 
     # Validate command-line options
     _validate_command_line_options(options)
