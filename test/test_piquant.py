@@ -1,9 +1,11 @@
 import os
 import os.path
+import piquant.log as log
 import piquant.piquant as piq
 import piquant.piquant_options as po
 import piquant.quantifiers as quant
 import pytest
+import sys
 import time
 import utils
 
@@ -31,6 +33,10 @@ def _get_test_params(quant_method=None):
     return params
 
 
+def _get_logger():
+    return log.get_logger(sys.stderr, "critical")
+
+
 def _check_file_exists(parent_dir, file_name):
     assert os.path.exists(parent_dir + os.path.sep + file_name)
 
@@ -50,7 +56,7 @@ def test_read_directory_checker_returns_correct_checker_if_directory_should_exis
         os.mkdir(params_dir)
 
         directory_checker = piq._reads_directory_checker(True)
-        directory_checker(None, test_options, **_get_test_params())
+        directory_checker(_get_logger(), test_options, **_get_test_params())
 
 
 def test_read_directory_checker_returns_correct_checker_if_directory_should_exist_and_doesnt_exist():
@@ -59,7 +65,7 @@ def test_read_directory_checker_returns_correct_checker_if_directory_should_exis
 
         directory_checker = piq._reads_directory_checker(True)
         with pytest.raises(SystemExit):
-            directory_checker(None, test_options, **_get_test_params())
+            directory_checker(_get_logger(), test_options, **_get_test_params())
 
 
 def test_read_directory_checker_returns_correct_checker_if_directory_shouldnt_exist_and_doesnt_exist():
@@ -67,7 +73,7 @@ def test_read_directory_checker_returns_correct_checker_if_directory_shouldnt_ex
         test_options = _get_test_options(temp_dir)
 
         directory_checker = piq._reads_directory_checker(False)
-        directory_checker(None, test_options, **_get_test_params())
+        directory_checker(_get_logger(), test_options, **_get_test_params())
 
 
 def test_read_directory_checker_returns_correct_checker_if_directory_shouldnt_exist_and_does_exist():
@@ -79,14 +85,14 @@ def test_read_directory_checker_returns_correct_checker_if_directory_shouldnt_ex
 
         directory_checker = piq._reads_directory_checker(False)
         with pytest.raises(SystemExit):
-            directory_checker(None, test_options, **_get_test_params())
+            directory_checker(_get_logger(), test_options, **_get_test_params())
 
 
 def test_prepare_read_simulation_creates_correct_files():
     with utils.temp_dir_created() as dir_path:
         options = _get_test_options(dir_path)
         params = _get_test_params()
-        piq._prepare_read_simulation(None, options, **params)
+        piq._prepare_read_simulation(_get_logger(), options, **params)
 
         reads_dir = piq._get_parameters_dir(options, **params)
         _check_file_exists(reads_dir, "run_simulation.sh")
@@ -106,7 +112,7 @@ def test_create_reads_executes_run_simulation_script():
         utils.write_executable_script(
             reads_dir, "run_simulation.sh", "touch " + test_filename)
 
-        piq._create_reads(None, options, **params)
+        piq._create_reads(_get_logger(), options, **params)
         time.sleep(0.1)
 
         assert os.path.exists(reads_dir + os.path.sep + test_filename)
@@ -116,7 +122,7 @@ def test_prepare_quantification_creates_correct_file():
     with utils.temp_dir_created() as dir_path:
         options = _get_test_options(dir_path)
         params = _get_test_params(quant_method=quant._Cufflinks())
-        piq._prepare_quantification(None, options, **params)
+        piq._prepare_quantification(_get_logger(), options, **params)
 
         quant_dir = piq._get_parameters_dir(options, **params)
         _check_file_exists(quant_dir, "run_quantification.sh")
