@@ -360,13 +360,15 @@ def _get_plot_subdirectory(parent_dir, sub_dir_name):
     return sub_dir
 
 
-def draw_overall_stats_graphs(fformat, stats_dir, overall_stats, param_values):
+def draw_overall_stats_graphs(
+        fformat, stats_dir, overall_stats, param_values, tpm_level):
+
     # Draw graphs derived from statistics calculated for the whole set of TPMs.
     # e.g. the Spearman correlation of calculated and real TPMs graphed as
     # read-depth varies, for each quantification method, in the case of
     # paired-end reads with errors and bias.
     overall_stats_dir = _get_plot_subdirectory(
-        stats_dir, "overall_stats_graphs")
+        stats_dir, "overall_{l}_stats_graphs".format(l=tpm_level))
 
     numerical_params = \
         [p for p in parameters.get_run_parameters() if p.is_numeric]

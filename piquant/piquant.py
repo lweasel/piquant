@@ -81,6 +81,7 @@ import tpms
 
 from __init__ import __version__
 
+
 def _get_parameters_dir(options, **params):
     """
     Return the path of a reads or quantification directory.
@@ -304,10 +305,9 @@ def _write_accumulated_stats(options):
         stats_acc._write_stats(options[po.STATS_DIRECTORY])
 
 
-def _get_overall_stats(options):
+def _get_overall_stats(options, tpm_level):
     overall_stats_file = statistics.get_stats_file(
-        options[po.STATS_DIRECTORY], statistics.OVERALL_STATS_PREFIX,
-        tpms.TRANSCRIPT)
+        options[po.STATS_DIRECTORY], statistics.OVERALL_STATS_PREFIX, tpm_level)
     return pd.read_csv(overall_stats_file)
 
 
@@ -317,12 +317,12 @@ def _get_stats_param_values(overall_stats):
 
 
 def _draw_overall_stats_graphs(
-        logger, options, overall_stats, stats_param_values):
+        logger, options, overall_stats, stats_param_values, tpm_level):
     logger.info("Drawing graphs derived from statistics calculated for the " +
                 "whole set of TPMs...")
     plot.draw_overall_stats_graphs(
         options[po.PLOT_FORMAT], options[po.STATS_DIRECTORY],
-        overall_stats, stats_param_values)
+        overall_stats, stats_param_values, tpm_level)
 
 
 def _draw_grouped_stats_graphs(logger, options, stats_param_values):
@@ -343,15 +343,22 @@ def _draw_distribution_graphs(logger, options, stats_param_values):
 def _analyse_runs(logger, options):
     _write_accumulated_stats(options)
 
-    overall_stats = _get_overall_stats(options)
-    stats_param_values = _get_stats_param_values(overall_stats)
+    overall_transcript_stats = _get_overall_stats(options, tpms.TRANSCRIPT)
+    transcript_stats_param_values = \
+        _get_stats_param_values(overall_transcript_stats)
+
+    overall_gene_stats = _get_overall_stats(options, tpms.GENE)
+    gene_stats_param_values = _get_stats_param_values(overall_gene_stats)
 
     _draw_overall_stats_graphs(
-        logger, options, overall_stats, stats_param_values)
+        logger, options, overall_transcript_stats,
+        transcript_stats_param_values, tpms.TRANSCRIPT)
+    _draw_overall_stats_graphs(
+        logger, options, overall_gene_stats, gene_stats_param_values, tpms.GENE)
     _draw_grouped_stats_graphs(
-        logger, options, stats_param_values)
+        logger, options, transcript_stats_param_values)
     _draw_distribution_graphs(
-        logger, options, stats_param_values)
+        logger, options, transcript_stats_param_values)
 
 
 def _run_piquant_command(logger, options, param_values):
