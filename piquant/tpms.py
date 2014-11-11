@@ -24,35 +24,42 @@ NOT_PRESENT_CUTOFF = 0.1
 CUMULATIVE_DISTRIBUTION_POINTS = 20
 
 
-def mark_positives_and_negatives(tpms):
-    tpms[FALSE_NEGATIVE] = \
-        (tpms[REAL_TPM] > NOT_PRESENT_CUTOFF) & \
-        (tpms[CALCULATED_TPM] <= NOT_PRESENT_CUTOFF)
-    tpms[FALSE_POSITIVE] = \
-        (tpms[CALCULATED_TPM] > NOT_PRESENT_CUTOFF) & \
-        (tpms[REAL_TPM] <= NOT_PRESENT_CUTOFF)
-    tpms[TRUE_NEGATIVE] = \
-        (tpms[REAL_TPM] <= NOT_PRESENT_CUTOFF) & \
-        (tpms[CALCULATED_TPM] <= NOT_PRESENT_CUTOFF)
-    tpms[TRUE_POSITIVE] = \
-        (tpms[REAL_TPM] > NOT_PRESENT_CUTOFF) & \
-        (tpms[CALCULATED_TPM] > NOT_PRESENT_CUTOFF)
+def mark_positives_and_negatives(*tpm_sets):
+    for tpms in tpm_sets:
+        tpms[FALSE_NEGATIVE] = \
+            (tpms[REAL_TPM] > NOT_PRESENT_CUTOFF) & \
+            (tpms[CALCULATED_TPM] <= NOT_PRESENT_CUTOFF)
+        tpms[FALSE_POSITIVE] = \
+            (tpms[CALCULATED_TPM] > NOT_PRESENT_CUTOFF) & \
+            (tpms[REAL_TPM] <= NOT_PRESENT_CUTOFF)
+        tpms[TRUE_NEGATIVE] = \
+            (tpms[REAL_TPM] <= NOT_PRESENT_CUTOFF) & \
+            (tpms[CALCULATED_TPM] <= NOT_PRESENT_CUTOFF)
+        tpms[TRUE_POSITIVE] = \
+            (tpms[REAL_TPM] > NOT_PRESENT_CUTOFF) & \
+            (tpms[CALCULATED_TPM] > NOT_PRESENT_CUTOFF)
 
 
 def get_true_positives(tpms):
     return tpms[tpms[TRUE_POSITIVE]]
 
 
-def calculate_percent_error(tpms):
-    tpms[PERCENT_ERROR] = \
-        100 * (tpms[CALCULATED_TPM] - tpms[REAL_TPM]) / tpms[REAL_TPM]
+def get_non_zero_tpms(tpms):
+    return tpms[(tpms[REAL_TPM] > 0) & (tpms[CALCULATED_TPM] > 0)]
 
 
-def calculate_log_ratios(tpms):
-    tpms[LOG10_REAL_TPM] = np.log10(tpms[REAL_TPM])
-    tpms[LOG10_CALCULATED_TPM] = np.log10(tpms[CALCULATED_TPM])
-    tpms[LOG10_RATIO] = \
-        tpms[LOG10_CALCULATED_TPM] - tpms[LOG10_REAL_TPM]
+def calculate_percent_error(*tpm_sets):
+    for tpms in tpm_sets:
+        tpms[PERCENT_ERROR] = \
+            100 * (tpms[CALCULATED_TPM] - tpms[REAL_TPM]) / tpms[REAL_TPM]
+
+
+def calculate_log_ratios(*tpm_sets):
+    for tpms in tpm_sets:
+        tpms[LOG10_REAL_TPM] = np.log10(tpms[REAL_TPM])
+        tpms[LOG10_CALCULATED_TPM] = np.log10(tpms[CALCULATED_TPM])
+        tpms[LOG10_RATIO] = \
+            tpms[LOG10_CALCULATED_TPM] - tpms[LOG10_REAL_TPM]
 
 
 def apply_classifiers(tpms, classifiers):

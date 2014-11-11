@@ -11,7 +11,8 @@ validate_int_option: Check if a string option represents an integer.
 check_boolean_value: Validates an option string represents a boolean value.
 get_logger_for_options: Return a Logger with option-specified severity level.
 validate_log_level: Check an option-specified logging level is valid.
-substitute_common_options_into_usage: Substitute interpolations into a usage message.
+substitute_common_options_into_usage: Substitute interpolations into a usage
+message.
 """
 
 from schema import And, Or, Schema, Use
@@ -19,6 +20,7 @@ from schema import And, Or, Schema, Use
 import log
 import os.path
 import sys
+import textwrap
 
 _LOG_LEVEL_OPTION = "--" + log.LOG_LEVEL
 
@@ -90,10 +92,10 @@ def validate_options_list(option, item_validator, option_name, separator=','):
     """
     items = option.split(separator)
 
-    def validated_value(x):
-        msg = "'" + str(x) + "' is not a valid " + option_name + "."
-        validated = Schema(Use(item_validator), error=msg).validate(x)
-        return validated if validated is not None else x
+    def validated_value(val):
+        msg = "'" + str(val) + "' is not a valid " + option_name + "."
+        validated = Schema(Use(item_validator), error=msg).validate(val)
+        return validated if validated is not None else val
 
     return [validated_value(i) for i in items]
 
@@ -229,6 +231,8 @@ def substitute_common_options_into_usage(usage_msg, **substitutions):
     log_desc = ("Set logging level " +
                 "(one of {log_level_vals}) [default: info].").format(
         log_level_vals=str(log.LEVELS.keys()))
+    log_desc = '\n'.join(textwrap.wrap(
+        log_desc, width=75, subsequent_indent="    "))
 
     return usage_msg.format(
         log_option_spec=log_spec, log_option_description=log_desc,

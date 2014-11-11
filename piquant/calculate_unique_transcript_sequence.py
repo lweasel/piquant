@@ -3,10 +3,14 @@
 """Usage:
     calculate_unique_transcript_sequence [{log_option_spec}] <gtf-file>
 
-{help_option_spec}                 {help_option_description}
-{ver_option_spec}              {ver_option_description}
-{log_option_spec}   {log_option_description}
-<gtf-file>                GTF file containing genes and transcripts.
+{help_option_spec}
+    {help_option_description}
+{ver_option_spec}
+    {ver_option_description}
+{log_option_spec}
+    {log_option_description}
+<gtf-file>
+    GTF file containing genes and transcripts.
 """
 
 import docopt
@@ -166,11 +170,11 @@ def _calculate_unique_transcript_sequence(logger, options):
     _output_unique_transcript_lengths(transcript_lengths)
 
 
-def _main():
+def _main(docstring):
     # Read in command-line options
-    __doc__ = opt.substitute_common_options_into_usage(__doc__)
+    docstring = opt.substitute_common_options_into_usage(__doc__)
     options = docopt.docopt(
-        __doc__, version="calculate_unique_transcript_sequence v0.1")
+        docstring, version="calculate_unique_transcript_sequence v0.1")
 
     # Validate command-line options
     _validate_command_line_options(options)
@@ -183,4 +187,4 @@ def _main():
 
 
 if __name__ == "__main__":
-    _main()
+    _main(__doc__)
