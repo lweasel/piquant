@@ -1,12 +1,18 @@
 #!/usr/bin/env python
 
-"""Usage:
+"""
+Usage:
     count_transcripts_for_genes [{log_option_spec}] <gtf-file>
 
-{help_option_spec}                 {help_option_description}
-{ver_option_spec}              {ver_option_description}
-{log_option_spec}   {log_option_description}
-<gtf-file>                GTF file containing genes and transcripts.
+Options:
+{help_option_spec}
+    {help_option_description}
+{ver_option_spec}
+    {ver_option_description}
+{log_option_spec}
+    {log_option_description}
+<gtf-file>
+    GTF file containing genes and transcripts.
 """
 
 import collections
@@ -75,10 +81,11 @@ def _count_transcripts_for_genes(logger, options):
         transcript_to_gene_mappings, transcript_counts)
 
 
-if __name__ == "__main__":
+def _main(docstring):
     # Read in command-line options
-    __doc__ = opt.substitute_common_options_into_usage(__doc__)
-    options = docopt.docopt(__doc__, version="count_transcripts_for_genes.py v" + __version__)
+    docstring = opt.substitute_common_options_into_usage(docstring)
+    options = docopt.docopt(
+        docstring, version="count_transcripts_for_genes.py v" + __version__)
 
     # Validate command-line options
     _validate_command_line_options(options)
@@ -88,3 +95,7 @@ if __name__ == "__main__":
 
     # Calculate and print per-gene transcript counts to standard out
     _count_transcripts_for_genes(logger, options)
+
+
+if __name__ == "__main__":
+    _main(__doc__)
