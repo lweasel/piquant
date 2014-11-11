@@ -1,16 +1,28 @@
 #!/usr/bin/env python
 
-"""Usage:
-    simulate_read_bias [{log_option_spec} --out-prefix=<out-prefix> --paired-end] --num-reads=<num-reads> <pwm-file> <reads_file>
+"""
+Usage:
+    simulate_read_bias [{log_option_spec} --out-prefix=<out-prefix>]
+        [--paired-end] --num-reads=<num-reads>
+        <pwm-file> <reads_file>
 
-{help_option_spec}                   {help_option_description}
-{ver_option_spec}                {ver_option_description}
-{log_option_spec}     {log_option_description}
--n --num-reads=<num-reads>  Number of reads to output.
---out-prefix=<out-prefix>   String to be prepended to input file names for output [default: bias]
---paired-end                Indicates the reads file contains paired-end reads.
-<pwm-file>                  PWM file with positional base weights used to bias reads.
-<reads_file>                FASTA/Q file containing single or paired end reads.
+Options:
+{help_option_spec}
+    {help_option_description}
+{ver_option_spec}
+    {ver_option_description}
+{log_option_spec}
+    {log_option_description}
+-n --num-reads=<num-reads>
+    Number of reads to output.
+--out-prefix=<out-prefix>
+    String to be prepended to input file names for output [default: bias]
+--paired-end
+    Indicates the reads file contains paired-end reads.
+<pwm-file>
+    PWM file with positional base weights used to bias reads.
+<reads_file>
+    FASTA/Q file containing single or paired end reads.
 """
 
 import collections
@@ -97,9 +109,9 @@ def _yield_elements(enumerable, element_picker):
 
 def _score_fragments(reads_file, bias_pwm, num_fragments, lines_per_fragment):
     scores = []
-    with open(reads_file, 'r') as f:
+    with open(reads_file, 'r') as rfile:
         for i, line in enumerate(
-                _yield_elements(f, SequenceLinePicker(lines_per_fragment))):
+                _yield_elements(rfile, SequenceLinePicker(lines_per_fragment))):
             score = ReadScore(
                 i, random.random() * bias_pwm.score(line.strip()))
             scores.append(score)
@@ -120,10 +132,10 @@ def _select_scores(scores, num_fragments):
     return selected_scores
 
 
-def _write_output_file(input_file, scores, lines_per_fragment):
+def _write_output_file(input_file, out_prefix, scores, lines_per_fragment):
     dirname = os.path.dirname(os.path.abspath(input_file))
     basename = os.path.basename(input_file)
-    output_file = os.path.join(dirname, options[OUT_PREFIX] + "." + basename)
+    output_file = os.path.join(dirname, out_prefix + "." + basename)
 
     with open(input_file, 'r') as in_f, open(output_file, 'w') as out_f:
         for i, line in enumerate(_yield_elements(
@@ -152,14 +164,15 @@ def _simulate_bias(logger, options):
 
     # Write selected fragments to output file(s)
     logger.info("Writing selected fragments to output files")
-    _write_output_file(options[READS_FILE], selected_scores,
-                       lines_per_fragment)
+    _write_output_file(options[READS_FILE], options[OUT_PREFIX],
+                       selected_scores, lines_per_fragment)
 
 
-if __name__ == "__main__":
+def _main(docstring):
     # Read in command-line options
-    __doc__ = opt.substitute_common_options_into_usage(__doc__)
-    options = docopt.docopt(__doc__, version="simulate_read_bias v" + __version__)
+    docstring = opt.substitute_common_options_into_usage(docstring)
+    options = docopt.docopt(
+        docstring, version="simulate_read_bias v" + __version__)
 
     # Validate command-line options
     _validate_command_line_options(options)
@@ -170,3 +183,7 @@ if __name__ == "__main__":
     # Simulate bias by preferentially selecting reads according to a position
     # weight matrix
     _simulate_bias(logger, options)
+
+
+if __name__ == "__main__":
+    _main(__doc__)
