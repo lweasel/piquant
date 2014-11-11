@@ -1,14 +1,24 @@
 #!/usr/bin/env python
 
-"""Usage:
-    calculate_reads_for_depth [{log_option_spec}] <pro-file> <read-length> <read-depth>
+"""
+Usage:
+    calculate_reads_for_depth [{log_option_spec}]
+        <pro-file> <read-length> <read-depth>
 
-{help_option_spec}                           {help_option_description}
-{ver_option_spec}                        {ver_option_description}
-{log_option_spec}             {log_option_description}
-<pro-file>                          Flux Simulator gene expression profile file.
-<read-length>                       The length of simulated reads.
-<read-depth>                        The (approximate) read depth that is required given the specified read length.
+Options:
+{help_option_spec}
+   {help_option_description}
+{ver_option_spec}
+    {ver_option_description}
+{log_option_spec}
+    {log_option_description}
+<pro-file>
+    Flux Simulator gene expression profile file.
+<read-length>
+    The length of simulated reads.
+<read-depth>
+    The (approximate) read depth that is required given the specified read
+    length.
 """
 
 import docopt
@@ -60,10 +70,11 @@ def _calculate_reads_for_depth(profiles, read_length, required_depth):
     return bases_to_sequence // read_length
 
 
-if __name__ == "__main__":
+def _main(docstring):
     # Read in command-line options
-    __doc__ = opt.substitute_common_options_into_usage(__doc__)
-    options = docopt.docopt(__doc__, version="calculate_reads_for_depth v" + __version__)
+    docstring = opt.substitute_common_options_into_usage(docstring)
+    options = docopt.docopt(
+        docstring, version="calculate_reads_for_depth v" + __version__)
 
     # Validate and process command-line options
     _validate_command_line_options(options)
@@ -78,3 +89,7 @@ if __name__ == "__main__":
     # specified overall average depth of coverage
     print(_calculate_reads_for_depth(
         profiles, options[READ_LENGTH], options[READ_DEPTH]))
+
+
+if __name__ == "__main__":
+    _main(__doc__)
