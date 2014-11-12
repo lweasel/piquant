@@ -14,7 +14,7 @@ All three methods of extension currently require some coding in Python.
 Adding a new quantifier
 -----------------------
 
-To enable *piquant* to run a particular quantification tool or pipeline, a new class should be added to the Python module ``quantifiers.py``, marked with the decorator ``@_Quantifier``, and fulfilling the API requirements detailed below. Any such tool will then be automatically available to be included in quantification runs from the *piquant* command line.
+To enable *piquant* to run a particular quantification tool or pipeline, a new class should be added to the Python module ``quantifiers.py``, marked with the decorator ``@_quantifier``, and fulfilling the API requirements detailed below. Any such tool will then be automatically available to be included in quantification runs from the *piquant* command line.
 
 A quantifier class has three main responsibilities:
 
@@ -22,7 +22,7 @@ A quantifier class has three main responsibilities:
 * It must supply commands to be written to ``run_quantification.sh`` scripts that will be executed when the scripts are run with the command line flag ``-q``; that is, actions that must be taken to calculate transcript abundances with this quantification tool for a particular set of simulated reads.
 * It must be able to return the abundance calculated by the quantification tool for a specified transcript.
 
-In detail, in addition to being marked with the decorator ``@_Quantifier``, a quantifier class must implement the following methods:
+In detail, in addition to being marked with the decorator ``@_quantifier``, a quantifier class must implement the following methods:
 
 .. py:method:: get_name()
 

@@ -17,12 +17,12 @@ def get_quantification_methods():
     return _QUANT_METHODS
 
 
-def _Quantifier(cls):
+def _quantifier(cls):
     _QUANT_METHODS[cls.get_name()] = cls()
     return cls
 
 
-class _QuantifierBase(object):
+class _quantifierBase(object):
     def __init__(self):
         self.abundances = None
 
@@ -34,8 +34,8 @@ class _QuantifierBase(object):
         return self.__class__.get_name()
 
 
-@_Quantifier
-class _Cufflinks(_QuantifierBase):
+@_quantifier
+class _Cufflinks(_quantifierBase):
     FPKM_COLUMN = "FPKM"
 
     CALCULATE_BOWTIE_INDEX_DIRECTORY = \
@@ -142,7 +142,7 @@ class _Cufflinks(_QuantifierBase):
         return self.norm_constant * fpkm
 
 
-class _TranscriptomeBasedQuantifierBase(_QuantifierBase):
+class _TranscriptomeBasedQuantifierBase(_quantifierBase):
     CALCULATE_TRANSCRIPT_REFERENCE_DIRECTORY = \
         "REF_DIR=$(dirname {ref_name})"
     CHECK_TRANSCRIPT_REFERENCE_DIRECTORY_EXISTS = \
@@ -192,7 +192,7 @@ class _TranscriptomeBasedQuantifierBase(_QuantifierBase):
         raise NotImplementedError
 
 
-@_Quantifier
+@_quantifier
 class _RSEM(_TranscriptomeBasedQuantifierBase):
     QUANTIFY_ISOFORM_EXPRESSION = \
         "rsem-calculate-expression --time {qualities_spec} --p " + \
@@ -246,7 +246,7 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
             if transcript_id in self.abundances.index else 0
 
 
-@_Quantifier
+@_quantifier
 class _Express(_TranscriptomeBasedQuantifierBase):
     MAP_READS_TO_TRANSCRIPT_REFERENCE = \
         "bowtie {qualities_spec} -e 99999999 -l 25 -I 1 -X 1000 -a -S " + \
@@ -309,7 +309,7 @@ class _Express(_TranscriptomeBasedQuantifierBase):
             if transcript_id in self.abundances.index else 0
 
 
-@_Quantifier
+@_quantifier
 class _Sailfish(_TranscriptomeBasedQuantifierBase):
     CREATE_SAILFISH_TRANSCRIPT_INDEX = \
         "sailfish index -p {num_threads} -t {ref_name}.transcripts.fa " + \
@@ -391,7 +391,7 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
             if transcript_id in self.abundances.index else 0
 
 
-@_Quantifier
+@_quantifier
 class _Salmon(_TranscriptomeBasedQuantifierBase):
     CREATE_SALMON_TRANSCRIPT_INDEX = \
         "salmon index -t {ref_name}.transcripts.fa -i {index_dir}"
