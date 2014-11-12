@@ -45,6 +45,9 @@ def validate_command_line_options(options):
     if not options[PREPARE_READ_DIRS]:
         ignore_params.append(parameters.NUM_MOLECULES)
 
+    if not options[PREPARE_QUANT_DIRS]:
+        ignore_params.append(parameters.NUM_THREADS)
+
     param_values = parameters.validate_command_line_parameter_sets(
         options[PARAMS_FILE], options, ignore_params=ignore_params)
 

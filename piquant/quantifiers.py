@@ -8,6 +8,7 @@ LEFT_SIMULATED_READS = "LEFT_SIMULATED_READS"
 RIGHT_SIMULATED_READS = "RIGHT_SIMULATED_READS"
 FASTQ_READS = "FASTQ_READS"
 QUANTIFIER_DIRECTORY = "QUANTIFIER_DIRECTORY"
+NUM_THREADS = "NUM_THREADS"
 
 _QUANT_METHODS = {}
 
@@ -24,6 +25,10 @@ def _Quantifier(cls):
 class _QuantifierBase(object):
     def __init__(self):
         self.abundances = None
+
+    @classmethod
+    def get_name(cls):
+        raise NotImplementedError
 
     def __str__(self):
         return self.__class__.get_name()
@@ -49,11 +54,12 @@ class _Cufflinks(_QuantifierBase):
         "bowtie-inspect {bowtie_index} > {bowtie_index}.fa"
 
     MAP_READS_TO_GENOME_WITH_TOPHAT = \
-        "tophat {stranded_spec} --no-coverage-search -p 8 " + \
+        "tophat {stranded_spec} --no-coverage-search -p {num_threads} " + \
         "-o tho {bowtie_index} {reads_spec}"
     QUANTIFY_ISOFORM_EXPRESSION = \
-        "cufflinks -o transcriptome -u -b {bowtie_index}.fa -p 8 " + \
-        "{stranded_spec} -G {transcript_gtf} tho/accepted_hits.bam"
+        "cufflinks -o transcriptome -u -b {bowtie_index}.fa " + \
+        "-p {num_threads} " + "{stranded_spec} -G {transcript_gtf} " + \
+        "tho/accepted_hits.bam"
 
     REMOVE_TOPHAT_OUTPUT_DIRECTORY = \
         "rm -rf tho"
@@ -108,12 +114,14 @@ class _Cufflinks(_QuantifierBase):
         writer.add_line(cls.MAP_READS_TO_GENOME_WITH_TOPHAT.format(
             bowtie_index=bowtie_index,
             reads_spec=reads_spec,
-            stranded_spec=stranded_spec))
+            stranded_spec=stranded_spec,
+            num_threads=params[NUM_THREADS]))
 
         writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
             bowtie_index=bowtie_index,
             transcript_gtf=params[TRANSCRIPT_GTF_FILE],
-            stranded_spec=stranded_spec))
+            stranded_spec=stranded_spec,
+            num_threads=params[NUM_THREADS]))
 
     @classmethod
     def write_post_quantification_cleanup(cls, writer):
@@ -179,12 +187,17 @@ class _TranscriptomeBasedQuantifierBase(_QuantifierBase):
                     ref_name=ref_name,
                     bowtie_spec=bowtie_spec))
 
+    @classmethod
+    def _needs_bowtie_index(cls):
+        raise NotImplementedError
+
 
 @_Quantifier
 class _RSEM(_TranscriptomeBasedQuantifierBase):
     QUANTIFY_ISOFORM_EXPRESSION = \
-        "rsem-calculate-expression --time {qualities_spec} --p 32 " + \
-        "{stranded_spec} {reads_spec} {ref_name} rsem_sample"
+        "rsem-calculate-expression --time {qualities_spec} --p " + \
+        "{num_threads} " + "{stranded_spec} {reads_spec} {ref_name} " + \
+        "rsem_sample"
 
     REMOVE_RSEM_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
         "find . -name \"rsem_sample*\" \! " + \
@@ -216,7 +229,8 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
             qualities_spec=qualities_spec,
             reads_spec=reads_spec,
             stranded_spec=stranded_spec,
-            ref_name=ref_name))
+            ref_name=ref_name,
+            num_threads=params[NUM_THREADS]))
 
     @classmethod
     def write_post_quantification_cleanup(cls, writer):
@@ -236,7 +250,7 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
 class _Express(_TranscriptomeBasedQuantifierBase):
     MAP_READS_TO_TRANSCRIPT_REFERENCE = \
         "bowtie {qualities_spec} -e 99999999 -l 25 -I 1 -X 1000 -a -S " + \
-        "-m 200 -p 32 {ref_name} {reads_spec}"
+        "-m 200 -p {num_threads} {ref_name} {reads_spec}"
     CONVERT_SAM_TO_BAM = \
         "samtools view -Sb - > hits.bam"
     QUANTIFY_ISOFORM_EXPRESSION = \
@@ -273,7 +287,8 @@ class _Express(_TranscriptomeBasedQuantifierBase):
             cls.MAP_READS_TO_TRANSCRIPT_REFERENCE.format(
                 qualities_spec=qualities_spec,
                 ref_name=ref_name,
-                reads_spec=reads_spec),
+                reads_spec=reads_spec,
+                num_threads=params[NUM_THREADS]),
             cls.CONVERT_SAM_TO_BAM
         )
         writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
@@ -297,10 +312,11 @@ class _Express(_TranscriptomeBasedQuantifierBase):
 @_Quantifier
 class _Sailfish(_TranscriptomeBasedQuantifierBase):
     CREATE_SAILFISH_TRANSCRIPT_INDEX = \
-        "sailfish index -p 8 -t {ref_name}.transcripts.fa -k 20 -o {index_dir}"
+        "sailfish index -p {num_threads} -t {ref_name}.transcripts.fa " + \
+        "-k 20 -o {index_dir}"
 
     QUANTIFY_ISOFORM_EXPRESSION = \
-        "sailfish quant -p 8 -i {index_dir} -l {library_spec} " + \
+        "sailfish quant -p {num_threads} -i {index_dir} -l {library_spec} " + \
         "{reads_spec} -o ."
     FILTER_COMMENT_LINES = [
         "grep -v '^# \[' quant_bias_corrected.sf",
@@ -338,7 +354,8 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
             index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
 
             writer.add_line(cls.CREATE_SAILFISH_TRANSCRIPT_INDEX.format(
-                ref_name=ref_name, index_dir=index_dir))
+                ref_name=ref_name, index_dir=index_dir,
+                num_threads=params[NUM_THREADS]))
 
     @classmethod
     def write_quantification_commands(cls, writer, params):
@@ -356,7 +373,8 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
         writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
             index_dir=index_dir,
             library_spec=library_spec,
-            reads_spec=reads_spec))
+            reads_spec=reads_spec,
+            num_threads=params[NUM_THREADS]))
         writer.add_pipe(*cls.FILTER_COMMENT_LINES)
 
     @classmethod
@@ -379,7 +397,8 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
         "salmon index -t {ref_name}.transcripts.fa -i {index_dir}"
 
     QUANTIFY_ISOFORM_EXPRESSION = \
-        "salmon quant -p 8 -i {index_dir} -l {library_spec} {reads_spec} -o ."
+        "salmon quant -p {num_threads} -i {index_dir} -l " + \
+        "{library_spec} {reads_spec} -o ."
     FILTER_COMMENT_LINES = [
         "grep -v '^# \[\|salmon' quant.sf",
         "sed -e 's/# //'i > quant_filtered.csv"
@@ -432,7 +451,8 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
         writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
             index_dir=index_dir,
             library_spec=library_spec,
-            reads_spec=reads_spec))
+            reads_spec=reads_spec,
+            num_threads=params[NUM_THREADS]))
         writer.add_pipe(*cls.FILTER_COMMENT_LINES)
 
     @classmethod

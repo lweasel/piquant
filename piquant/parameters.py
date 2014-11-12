@@ -51,6 +51,12 @@ NUM_MOLECULES = _Parameter(
         x, "Number of molecules must be a positive integer", positive=True),
     run_parameter=False)
 
+NUM_THREADS = _Parameter(
+    "num_threads", "Number of threads", "--num-threads",
+    lambda x: opt.validate_int_option(
+        x, "Number of threads must be a positive integer", positive=True),
+    run_parameter=False)
+
 QUANT_METHOD = _Parameter(
     "quant_method", "Quantifier", "--quant-method",
     lambda x: quantifiers.get_quantification_methods()[x],
