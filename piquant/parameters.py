@@ -48,7 +48,7 @@ GENOME_FASTA_DIR = _Parameter(
 NUM_MOLECULES = _Parameter(
     "num_molecules", "Number of molecules", "--num-molecules",
     lambda x: opt.validate_int_option(
-        x, "Number of molecules must be a positive integer", nonneg=True),
+        x, "Number of molecules must be a positive integer", positive=True),
     run_parameter=False)
 
 QUANT_METHOD = _Parameter(

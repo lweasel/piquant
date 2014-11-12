@@ -133,7 +133,7 @@ def validate_dict_option(dict_option, values_dict, msg):
         validate(dict_option)
 
 
-def validate_int_option(int_option, msg, nonneg=False, nullable=False):
+def validate_int_option(int_option, msg, positive=False, nullable=False):
     """
     Check if a command line option is an integer.
 
@@ -145,14 +145,14 @@ def validate_int_option(int_option, msg, nonneg=False, nullable=False):
 
     int_option: The command line option, a string.
     msg: Text for the SchemaError exception raised if the test fails.
-    nonneg: If set to True, the integer must be positive or zero.
+    positive: If set to True, the integer must be positive.
     nullable: If set to True, the command line option is allowed to be 'None'
     (i.e. the option has not been specified).
     """
     msg = "{msg}: '{val}'".format(msg=msg, val=int_option)
     validator = Use(int)
-    if nonneg:
-        validator = And(validator, lambda x: x >= 0)
+    if positive:
+        validator = And(validator, lambda x: x >= 1)
     if nullable:
         validator = _nullable_validator(validator)
 

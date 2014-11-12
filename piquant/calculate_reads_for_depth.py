@@ -41,10 +41,10 @@ def _validate_command_line_options(options):
             options[PRO_FILE], "Could not open expression profile file")
         options[READ_LENGTH] = opt.validate_int_option(
             options[READ_LENGTH], "Read length must be a positive integer",
-            nonneg=True)
+            positive=True)
         options[READ_DEPTH] = opt.validate_int_option(
             options[READ_DEPTH], "Read depth must be a positive integer",
-            nonneg=True)
+            positive=True)
     except schema.SchemaError as exc:
         exit("Exiting. " + exc.code)
 

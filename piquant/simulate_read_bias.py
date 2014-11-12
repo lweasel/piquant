@@ -79,7 +79,7 @@ def _validate_command_line_options(options):
 
         options[NUM_READS] = opt.validate_int_option(
             options[NUM_READS],
-            "Number of reads must be non-negative", nonneg=True)
+            "Number of reads must be positive", positive=True)
         opt.validate_file_option(
             options[PWM_FILE], "PWM file should exist")
         opt.validate_file_option(

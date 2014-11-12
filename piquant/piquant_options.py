@@ -52,6 +52,7 @@ def validate_command_line_options(options):
         options[PLOT_FORMAT], plot.PLOT_FORMATS, "Invalid plot format")
     options[GROUPED_THRESHOLD] = opt.validate_int_option(
         options[GROUPED_THRESHOLD],
-        "Invalid minimum value for number of data points for boxplots")
+        "Minimum value for number of data points must be positive",
+        positive=True)
 
     return options, param_values

@@ -159,12 +159,12 @@ def test_validate_int_option_raises_exception_for_non_int():
         validate_int_option("a", "dummy")
 
 
-def test_validate_int_option_raises_exception_for_negative_if_nonneg_specified():
+def test_validate_int_option_raises_exception_for_negative_if_positive_specified():
     with pytest.raises(SchemaError):
-        validate_int_option(-1, "dummy", nonneg=True)
+        validate_int_option(-1, "dummy", positive=True)
 
 
-def test_validate_int_option_does_not_raise_exception_for_negative_if_nonneg_not_specified():
+def test_validate_int_option_does_not_raise_exception_for_negative_if_positive_not_specified():
     validate_int_option(-1, "dummy")
 
 
