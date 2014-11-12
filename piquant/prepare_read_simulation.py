@@ -39,8 +39,8 @@ def _add_fix_zero_length_transcripts(writer):
         "(this is a hack - Flux Simulator seems to sometimes " +
         "incorrectly output transcripts with zero length)")
     writer.add_line(
-        ("ZERO_LENGTH_COUNT=$(awk 'BEGIN {i=0} $4 == 0 {i++;} " +
-         "END {print i}' {pro_file})").format(
+        ("ZERO_LENGTH_COUNT=$(awk 'BEGIN {{i=0}} $4 == 0 {{i++;}} " +
+         "END {{print i}}' {pro_file})").format(
             pro_file=fs.EXPRESSION_PROFILE_FILE))
     writer.add_echo()
     writer.add_echo(
@@ -113,7 +113,7 @@ def _check_correct_number_of_reads_created(writer, errors):
     with writer.section():
         writer.set_variable(
             "READS_PRODUCED",
-            ("$(echo \"$(wc -l {reads_file} | awk '{print $1}') / " +
+            ("$(echo \"$(wc -l {reads_file} | awk '{{print $1}}') / " +
              "{lines_per_read}\" | bc)").format(
                 reads_file=reads_file,
                 lines_per_read=lines_per_read))
@@ -185,8 +185,8 @@ def _create_final_reads_files(writer, paired_end, errors):
 
         writer.add_pipe(
             "paste " + ("- " * (4 if errors else 2)) + "< " + tmp_reads_file,
-            ("awk -F '\\t' '$1~/\/1/ {print $0 > \"{tmp_left_reads}\"} " +
-             "$1~/\/2/ {print $0 > \"{tmp_right_reads}\"}'").format(
+            ("awk -F '\\t' '$1~/\/1/ {{print $0 > \"{tmp_left_reads}\"}} " +
+             "$1~/\/2/ {{print $0 > \"{tmp_right_reads}\"}}'").format(
                 tmp_left_reads=TMP_LEFT_READS_FILE,
                 tmp_right_reads=TMP_RIGHT_READS_FILE)
         )
