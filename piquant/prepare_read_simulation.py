@@ -39,31 +39,31 @@ def _add_fix_zero_length_transcripts(writer):
         "(this is a hack - Flux Simulator seems to sometimes " +
         "incorrectly output transcripts with zero length)")
     writer.add_line(
-        "ZERO_LENGTH_COUNT=$(awk 'BEGIN {i=0} $4 == 0 {i++;} " +
-        "END {print i}' " + fs.EXPRESSION_PROFILE_FILE + ")")
+        ("ZERO_LENGTH_COUNT=$(awk 'BEGIN {i=0} $4 == 0 {i++;} " +
+         "END {print i}' {pro_file})").format(
+            pro_file=fs.EXPRESSION_PROFILE_FILE))
     writer.add_echo()
     writer.add_echo(
         "Removing $ZERO_LENGTH_COUNT transcripts with zero length...")
     writer.add_echo()
     writer.add_line(
-        "awk '$4 > 0' " + fs.EXPRESSION_PROFILE_FILE +
-        " > tmp; mv tmp " + fs.EXPRESSION_PROFILE_FILE)
+        "awk '$4 > 0' {pro_file} > tmp; mv tmp {pro_file}".format(
+            pro_file=fs.EXPRESSION_PROFILE_FILE))
 
 
 def _add_calculate_required_read_depth(writer, read_length, read_depth, bias):
-
     # Given the expression profile created, calculate the number of reads
     # required to give the (approximate) read depth specified. Then edit the
     # Flux Simulator parameter file to specify this number of reads.
     writer.add_comment(
-        "Calculate the number of reads required to give (approximately" +
-        ") a read depth of " + str(read_depth) +
-        " across the transcriptome, given a read length of " +
-        str(read_length))
+        ("Calculate the number of reads required to give (approximately" +
+         ") a read depth of {depth} across the transcriptome, given a read " +
+         "length of {length}").format(depth=read_depth, length=read_length))
     writer.set_variable(
-        "READS", "$(" + _get_script_path(CALC_READ_DEPTH_SCRIPT) + " " +
-        fs.EXPRESSION_PROFILE_FILE + " " + str(read_length) + " " +
-        str(read_depth) + ")")
+        "READS", "$({command} {pro_file} {length} {depth})".format(
+            command=_get_script_path(CALC_READ_DEPTH_SCRIPT),
+            pro_file=fs.EXPRESSION_PROFILE_FILE,
+            length=read_length, depth=read_depth))
 
     if bias:
         writer.add_comment(
@@ -78,8 +78,9 @@ def _add_update_flux_simulator_parameters(writer):
     writer.add_comment(
         "Update the Flux Simulator parameters file with this number of reads.")
     writer.add_line(
-        "sed -i \"s/" + fs.READ_NUMBER_PLACEHOLDER + "/$READS/\" " +
-        fs.SIMULATION_PARAMS_FILE)
+        "sed -i \"s/{read_num_placeholder}/$READS/\" {sim_params_file}".format(
+            read_num_placeholder=fs.READ_NUMBER_PLACEHOLDER,
+            sim_params_file=fs.SIMULATION_PARAMS_FILE))
 
 
 def _add_simulate_reads(writer):
@@ -112,8 +113,10 @@ def _check_correct_number_of_reads_created(writer, errors):
     with writer.section():
         writer.set_variable(
             "READS_PRODUCED",
-            "$(echo \"$(wc -l " + reads_file + " | awk '{print $1}') / " +
-            str(lines_per_read) + "\" | bc)")
+            ("$(echo \"$(wc -l {reads_file} | awk '{print $1}') / " +
+             "{lines_per_read}\" | bc)").format(
+                reads_file=reads_file,
+                lines_per_read=lines_per_read))
         writer.set_variable(
             "READS_LOWER_BOUND",
             "$(echo \"($READS * 0.99)/1\" | bc)")
@@ -146,7 +149,8 @@ def _add_shuffle_simulated_reads(writer, paired_end, errors):
         "shuf",
         "tr '\\t' '\\n' > " + TMP_READS_FILE
     )
-    writer.add_line("mv " + TMP_READS_FILE + " " + reads_file)
+    writer.add_line("mv {tmp_reads_file} {reads_file}".format(
+        tmp_reads_file=TMP_READS_FILE, reads_file=reads_file))
 
 
 def _add_simulate_read_bias(writer, paired_end, errors):
@@ -157,16 +161,20 @@ def _add_simulate_read_bias(writer, paired_end, errors):
 
     reads_file = fs.get_reads_file(errors, intermediate=True)
     out_prefix = "bias"
+
     writer.add_line(
-        _get_script_path(SIMULATE_BIAS_SCRIPT) +
-        " -n $FINAL_READS --out-prefix=" + out_prefix + " " +
-        ("--paired-end" if paired_end else "") + " " +
-        _get_script_path(BIAS_PWM_FILE) + " " + reads_file)
+        ("{command} -n $FINAL_READS --out-prefix={out_prefix} " +
+         "{end_spec} {pwm_file} {reads_file}").format(
+            command=_get_script_path(SIMULATE_BIAS_SCRIPT),
+            out_prefix=out_prefix,
+            end_spec=("--paired-end" if paired_end else ""),
+            pwm_file=_get_script_path(BIAS_PWM_FILE),
+            reads_file=reads_file))
     writer.add_line("mv " + out_prefix + "." + reads_file + " " + reads_file)
 
 
 def _create_final_reads_files(writer, paired_end, errors):
-    reads_file = fs.get_reads_file(errors, intermediate=True)
+    tmp_reads_file = fs.get_reads_file(errors, intermediate=True)
 
     if paired_end:
         # If we've specified paired end reads, split the FASTA/Q file output by
@@ -176,24 +184,31 @@ def _create_final_reads_files(writer, paired_end, errors):
             "output into files containing left and right reads.")
 
         writer.add_pipe(
-            "paste " + ("- - - -" if errors else "- -") + " < " + reads_file,
-            "awk -F '\\t' '$1~/\/1/ " +
-            "{print $0 > \"" + TMP_LEFT_READS_FILE + "\"} " +
-            "$1~/\/2/ {print $0 > \"" + TMP_RIGHT_READS_FILE + "\"}'"
+            "paste " + ("- " * (4 if errors else 2)) + "< " + tmp_reads_file,
+            ("awk -F '\\t' '$1~/\/1/ {print $0 > \"{tmp_left_reads}\"} " +
+             "$1~/\/2/ {print $0 > \"{tmp_right_reads}\"}'").format(
+                tmp_left_reads=TMP_LEFT_READS_FILE,
+                tmp_right_reads=TMP_RIGHT_READS_FILE)
         )
-        writer.add_line("rm " + reads_file)
+        writer.add_line("rm " + tmp_reads_file)
 
         writer.add_line(
-            "tr '\\t' '\\n' < " + TMP_LEFT_READS_FILE + " > " +
-            fs.get_reads_file(errors, paired_end=fs.LEFT_READS))
+            "tr '\\t' '\\n' < {tmp_left_reads} > {left_reads}".format(
+                tmp_left_reads=TMP_LEFT_READS_FILE,
+                left_reads=fs.get_reads_file(
+                    errors, paired_end=fs.LEFT_READS)))
         writer.add_line("rm " + TMP_LEFT_READS_FILE)
         writer.add_line(
-            "tr '\\t' '\\n' < " + TMP_RIGHT_READS_FILE + " > " +
-            fs.get_reads_file(errors, paired_end=fs.RIGHT_READS))
+            "tr '\\t' '\\n' < {tmp_right_reads} > {right_reads}".format(
+                tmp_right_reads=TMP_RIGHT_READS_FILE,
+                right_reads=fs.get_reads_file(
+                    errors, paired_end=fs.RIGHT_READS)))
         writer.add_line("rm " + TMP_RIGHT_READS_FILE)
     else:
         writer.add_comment("Create final simulated reads file.")
-        writer.add_line("mv " + reads_file + " " + fs.get_reads_file(errors))
+        writer.add_line("mv {tmp_reads_file} {reads_file}".format(
+            tmp_reads_file=tmp_reads_file,
+            reads_file=fs.get_reads_file(errors)))
 
 
 def _add_create_reads(
@@ -230,7 +245,8 @@ def _add_cleanup_intermediate_files(writer):
         writer.add_comment(
             "Remove intermediate files not necessary for quantification.")
         writer.add_line("rm " + fs.SIMULATION_LIBRARY_FILE)
-        writer.add_line("rm " + fs.SIMULATED_READS_PREFIX + ".bed")
+        writer.add_line("rm {reads_prefix}.bed".format(
+            reads_prefix=fs.SIMULATED_READS_PREFIX))
 
 
 def _create_simulator_parameter_files(
