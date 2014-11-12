@@ -27,7 +27,8 @@ def _get_ignore_params():
         parameters.BIAS,
         parameters.TRANSCRIPT_GTF,
         parameters.GENOME_FASTA_DIR,
-        parameters.NUM_MOLECULES
+        parameters.NUM_MOLECULES,
+        parameters.NUM_THREADS
     ]
 
 
