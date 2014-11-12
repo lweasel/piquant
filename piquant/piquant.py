@@ -4,7 +4,7 @@
     piquant prepare_read_dirs [{log_option_spec} --out-dir=<out_dir> --num-molecules=<num-molecules> --nocleanup --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir>]
     piquant create_reads [{log_option_spec} --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant check_reads [{log_option_spec} --out-dir=<out_dir> --params-file=<params-file> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
-    piquant prepare_quant_dirs [{log_option_spec} --out-dir=<out-dir> --nocleanup --num-threads=<num-threads> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir> --plot-format=<plot-format> --grouped-threshold=<threshold>]
+    piquant prepare_quant_dirs [{log_option_spec} --out-dir=<out-dir> --nocleanup --num-threads=<num-threads> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases> --transcript-gtf=<transcript-gtf-file> --genome-fasta=<genome-fasta-dir> --plot-format=<plot-format> --grouped-threshold=<threshold> --error-fraction-threshold=<ef-threshold>]
     piquant prequantify [{log_option_spec} --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant quantify [{log_option_spec} --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant check_quant [{log_option_spec} --out-dir=<out-dir> --params-file=<params-file> --quant-method=<quant-methods> --read-length=<read-lengths> --read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors> --bias=<biases>]
@@ -61,6 +61,10 @@ Options:
 --grouped-threshold=<threshold>
     Minimum number of data points required for a group of transcripts to be
     shown on a plot [default: 300].
+--error-fraction-threshold=<ef-threshold>
+    Transcripts whose estimated TPM is greater than this percentage higher or
+    lower than their real TPM are considered above threshold for the "error
+    fraction" statistic [default: 10].
 """
 
 import docopt

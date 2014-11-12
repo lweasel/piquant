@@ -10,6 +10,7 @@ import classifiers
 import itertools
 import math
 import os.path
+import piquant_options as po
 import tpms as t
 
 TP_NUM_TPMS = "tp-num-tpms"
@@ -74,6 +75,11 @@ def _Statistic(cls):
 
 class _BaseStatistic():
     # Base for classes capable of calculating a statistic
+
+    @classmethod
+    def set_options(cls, options):
+        pass
+
     def __init__(self, name, title, graphable=True):
         self.name = name
         self.title = title
@@ -185,7 +191,11 @@ class _TruePositiveErrorFraction(_BaseStatistic):
     # indicating 'presence' of the transcript) for which the calculated TPM
     # was greater than a certain percentage above or below the real TPM.
 
-    ERROR_PERCENTAGE_THRESHOLD = 10
+    ERROR_FRACTION_THRESHOLD = 10
+
+    @classmethod
+    def set_options(cls, options):
+        cls.ERROR_FRACTION_THRESHOLD = options[po.ERROR_FRACTION_THRESHOLD]
 
     def __init__(self):
         _BaseStatistic.__init__(
@@ -198,13 +208,13 @@ class _TruePositiveErrorFraction(_BaseStatistic):
 
     def calculate(self, tpms, tp_tpms):
         return _TruePositiveErrorFraction._calculate(
-            tp_tpms, _TruePositiveErrorFraction.ERROR_PERCENTAGE_THRESHOLD)
+            tp_tpms, _TruePositiveErrorFraction.ERROR_FRACTION_THRESHOLD)
 
     def calculate_grouped(
             self, grouped, grp_summary, tp_grouped, tp_grp_summary):
         return tp_grouped.apply(
             _TruePositiveErrorFraction._calculate,
-            _TruePositiveErrorFraction.ERROR_PERCENTAGE_THRESHOLD)
+            _TruePositiveErrorFraction.ERROR_FRACTION_THRESHOLD)
 
     def stat_range(self, vals_range):
         return _ZERO_TO_ONE_STAT_RANGE

@@ -2,7 +2,7 @@
 
 """
 Usage:
-    analyse_quantification_run [{log_option_spec} --plot-format=<plot-format> --grouped-threshold=<threshold>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> <tpm-file> <out-file>
+    analyse_quantification_run [{log_option_spec} --plot-format=<plot-format> --grouped-threshold=<grouped-threshold> --error-fraction-threshold=<ef-threshold>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> <tpm-file> <out-file>
 
 Options:
 {help_option_spec}
@@ -13,9 +13,13 @@ Options:
     {log_option_description}
 --plot-format=<plot-format>
     Output format for graphs (one of {plot_formats}) [default: pdf].
---grouped-threshold=<threshold>
+--grouped-threshold=<grouped-threshold>
     Minimum number of data points required for a group of transcripts to be
     shown on a plot [default: 300].
+--error-fraction-threshold=<ef-threshold>
+    Transcripts whose estimated TPM is greater than this percentage higher or
+    lower than their real TPM are considered above threshold for the "error
+    fraction" statistic [default: 10].
 --quant-method=<quant-method>
     Method used to quantify transcript abundances.
 --read-length=<read-length>
@@ -42,6 +46,7 @@ import numpy as np
 import options as opt
 import pandas as pd
 import parameters
+import piquant_options as po
 import statistics
 import tpms as t
 import plot
@@ -62,15 +67,9 @@ TpmInfo = collections.namedtuple("TpmInfo", ["tpms", "label"])
 def _validate_command_line_options(options):
     try:
         opt.validate_log_level(options)
-
         opt.validate_file_option(options[TPM_FILE], "Could not open TPM file")
 
-        opt.validate_list_option(
-            options[PLOT_FORMAT], plot.PLOT_FORMATS, "Invalid plot format")
-        options[GROUPED_THRESHOLD] = opt.validate_int_option(
-            options[GROUPED_THRESHOLD],
-            "Minimum value for number of data points must be positive",
-            positive=True)
+        po.validate_quantification_run_analysis_options(options)
     except schema.SchemaError as exc:
         exit(exc.code)
 
@@ -198,6 +197,9 @@ def _prepare_data(transcript_tpms, gene_tpms, logger):
 def _write_statistics(
         options, logger, transcript_tpms, tp_transcript_tpms,
         non_zero_transcript_tpms, gene_tpms, tp_gene_tpms):
+
+    for stat in statistics.get_statistics():
+        stat.set_options(options)
 
     # Write statistics pertaining to the set of quantified transcripts and
     # genes as a whole.

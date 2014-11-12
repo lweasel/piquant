@@ -9,6 +9,7 @@ NO_CLEANUP = "--nocleanup"
 PARAMS_FILE = "--params-file"
 PLOT_FORMAT = "--plot-format"
 GROUPED_THRESHOLD = "--grouped-threshold"
+ERROR_FRACTION_THRESHOLD = "--error-fraction-threshold"
 
 # commands
 PREPARE_READ_DIRS = "prepare_read_dirs"
@@ -50,11 +51,19 @@ def validate_command_line_options(options):
     param_values = parameters.validate_command_line_parameter_sets(
         options[PARAMS_FILE], options, ignore_params=ignore_params)
 
+    validate_quantification_run_analysis_options(options)
+
+    return options, param_values
+
+
+def validate_quantification_run_analysis_options(options):
     opt.validate_list_option(
         options[PLOT_FORMAT], plot.PLOT_FORMATS, "Invalid plot format")
     options[GROUPED_THRESHOLD] = opt.validate_int_option(
         options[GROUPED_THRESHOLD],
         "Minimum value for number of data points must be positive",
         positive=True)
-
-    return options, param_values
+    options[ERROR_FRACTION_THRESHOLD] = opt.validate_int_option(
+        options[ERROR_FRACTION_THRESHOLD],
+        "Error fraction threshold percentage must be positive",
+        positive=True)
