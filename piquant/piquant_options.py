@@ -24,9 +24,8 @@ ANALYSE_RUNS = "analyse_runs"
 def validate_command_line_options(options):
     opt.validate_log_level(options)
 
-    opt.validate_dir_option(
-        options[OUTPUT_DIRECTORY], "Output parent directory does not exist")
     options[OUTPUT_DIRECTORY] = os.path.abspath(options[OUTPUT_DIRECTORY])
+    options[STATS_DIRECTORY] = os.path.abspath(options[STATS_DIRECTORY])
 
     opt.validate_file_option(
         options[PARAMS_FILE],

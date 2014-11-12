@@ -142,6 +142,9 @@ def _prepare_read_simulation(logger, options, **params):
     parameter values, describing properties of the read simulation to be
     performed.
     """
+    if not os.path.exists(options[po.OUTPUT_DIRECTORY]):
+        os.mkdir(options[po.OUTPUT_DIRECTORY])
+
     reads_dir = _get_parameters_dir(options, **params)
     cleanup = not options[po.NO_CLEANUP]
     logger.debug("Creating simulation files in " + reads_dir)
@@ -200,6 +203,9 @@ def _prepare_quantification(logger, options, **params):
     parameter values, describing properties of the quantification run to be
     performed.
     """
+    if not os.path.exists(options[po.OUTPUT_DIRECTORY]):
+        os.mkdir(options[po.OUTPUT_DIRECTORY])
+
     run_dir = _get_parameters_dir(options, **params)
     logger.debug("Creating quantification files in " + run_dir)
 
