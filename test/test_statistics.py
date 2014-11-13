@@ -133,7 +133,7 @@ def _error_fraction(tpm_pairs):
     above_threshold = \
         [r for r, c in tpm_pairs if
          error_percent(r, c) >
-            statistics._TruePositiveErrorFraction.ERROR_PERCENTAGE_THRESHOLD]
+            statistics._TruePositiveErrorFraction.ERROR_FRACTION_THRESHOLD]
     return len(above_threshold) / float(len(tpm_pairs))
 
 

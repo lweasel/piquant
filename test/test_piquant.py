@@ -15,7 +15,8 @@ def _get_test_options(output_dir):
         po.OUTPUT_DIRECTORY: output_dir,
         po.NO_CLEANUP: True,
         po.PLOT_FORMAT: "pdf",
-        po.GROUPED_THRESHOLD: 3000
+        po.GROUPED_THRESHOLD: 3000,
+        po.ERROR_FRACTION_THRESHOLD: 10
     }
 
 
