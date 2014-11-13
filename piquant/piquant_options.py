@@ -3,7 +3,8 @@ import os.path
 import parameters
 import plot
 
-OUTPUT_DIRECTORY = "--out-dir"
+READS_OUTPUT_DIR = "--reads-dir"
+QUANT_OUTPUT_DIR = "--quant-dir"
 STATS_DIRECTORY = "--stats-dir"
 NO_CLEANUP = "--nocleanup"
 PARAMS_FILE = "--params-file"
@@ -26,7 +27,8 @@ ANALYSE_RUNS = "analyse_runs"
 def validate_command_line_options(options):
     opt.validate_log_level(options)
 
-    options[OUTPUT_DIRECTORY] = os.path.abspath(options[OUTPUT_DIRECTORY])
+    options[READS_OUTPUT_DIR] = os.path.abspath(options[READS_OUTPUT_DIR])
+    options[QUANT_OUTPUT_DIR] = os.path.abspath(options[QUANT_OUTPUT_DIR])
     options[STATS_DIRECTORY] = os.path.abspath(options[STATS_DIRECTORY])
 
     opt.validate_file_option(

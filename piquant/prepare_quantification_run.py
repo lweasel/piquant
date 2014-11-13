@@ -226,7 +226,7 @@ def write_run_quantification_script(
             _add_process_command_line_options(writer)
 
         quantifier_dir = os.path.join(
-            piquant_options[po.OUTPUT_DIRECTORY], "quantifier_scratch")
+            piquant_options[po.QUANT_OUTPUT_DIR], "quantifier_scratch")
 
         quant_params = _get_quant_params(
             reads_dir, quantifier_dir, transcript_gtf,

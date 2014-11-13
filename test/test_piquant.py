@@ -12,7 +12,8 @@ import utils
 
 def _get_test_options(output_dir):
     return {
-        po.OUTPUT_DIRECTORY: output_dir,
+        po.READS_OUTPUT_DIR: output_dir,
+        po.QUANT_OUTPUT_DIR: output_dir,
         po.NO_CLEANUP: True,
         po.PLOT_FORMAT: "pdf",
         po.GROUPED_THRESHOLD: 3000,

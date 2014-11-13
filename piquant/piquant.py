@@ -3,24 +3,24 @@
 """
 Usage:
     piquant prepare_read_dirs
-        [{log_option_spec} --out-dir=<out-dir>]
+        [{log_option_spec} --reads-dir=<reads-dir>]
         [--num-molecules=<num-molecules> --nocleanup]
         [--params-file=<params-file> --read-length=<read-lengths>]
         [--read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors>]
         [--bias=<biases> --transcript-gtf=<gtf-file>]
         [--genome-fasta=<genome-fasta-dir>]
     piquant create_reads
-        [{log_option_spec} --out-dir=<out-dir>]
+        [{log_option_spec} --reads-dir=<reads-dir>]
         [--params-file=<params-file> --read-length=<read-lengths>]
         [--read-depth=<read-depths> --paired-end=<paired-ends>]
         [--error=<errors> --bias=<biases>]
     piquant check_reads
-        [{log_option_spec} --out-dir=<out-dir>]
+        [{log_option_spec} --reads-dir=<reads-dir>]
         [--params-file=<params-file> --read-length=<read-lengths>]
         [--read-depth=<read-depths> --paired-end=<paired-ends>]
         [--error=<errors> --bias=<biases>]
     piquant prepare_quant_dirs
-        [{log_option_spec} --out-dir=<out-dir>]
+        [{log_option_spec} --reads-dir=<reads-dir> --quant-dir=<quant-dir>]
         [--nocleanup --num-threads=<num-threads>]
         [--params-file=<params-file> --quant-method=<quant-methods>]
         [--read-length=<read-lengths> --read-depth=<read-depths>]
@@ -30,22 +30,22 @@ Usage:
         [--error-fraction-threshold=<ef-threshold>]
         [--not-present-cutoff=<cutoff>]
     piquant prequantify
-        [{log_option_spec} --out-dir=<out-dir>]
+        [{log_option_spec} --quant-dir=<quant-dir>]
         [--params-file=<params-file> --quant-method=<quant-methods>]
         [--read-length=<read-lengths> --read-depth=<read-depths>]
         [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant quantify
-        [{log_option_spec} --out-dir=<out-dir>]
+        [{log_option_spec} --quant-dir=<quant-dir>]
         [--params-file=<params-file> --quant-method=<quant-methods>]
         [--read-length=<read-lengths> --read-depth=<read-depths>]
         [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant check_quant
-        [{log_option_spec} --out-dir=<out-dir>]
+        [{log_option_spec} --quant-dir=<quant-dir>]
         [--params-file=<params-file> --quant-method=<quant-methods>]
         [--read-length=<read-lengths> --read-depth=<read-depths>]
         [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
     piquant analyse_runs
-        [{log_option_spec} --out-dir=<out-dir>]
+        [{log_option_spec} --quant-dir=<quant-dir>]
         [--stats-dir=<stats-dir> --params-file=<params-file>]
         [--quant-method=<quant-methods> --read-length=<read-lengths>]
         [--read-depth=<read-depths> --paired-end=<paired-ends>]
@@ -58,7 +58,10 @@ Options:
     {ver_option_description}
 {log_option_spec}
     {log_option_description}
---out-dir=<out-dir>
+--run-dir=<run-dir>
+    Parent output directory to which read simulation directories will be
+    written [default: output].
+--quant-dir=<quant-dir>
     Parent output directory to which quantification run directories will be
     written [default: output].
 --stats-dir=<stats-dir>
@@ -150,8 +153,10 @@ def _get_parameters_dir(run_dir, options, **params):
     if not run_dir and parameters.QUANT_METHOD.name in params:
         del params[parameters.QUANT_METHOD.name]
 
-    return os.path.join(options[po.OUTPUT_DIRECTORY],
-                        parameters.get_file_name(**params))
+    dir_option = po.QUANT_OUTPUT_DIR if run_dir else po.READS_OUTPUT_DIR
+
+    return os.path.join(
+        options[dir_option], parameters.get_file_name(**params))
 
 
 def _reads_directory_checker(should_exist):
@@ -192,8 +197,8 @@ def _prepare_read_simulation(logger, options, **params):
     parameter values, describing properties of the read simulation to be
     performed.
     """
-    if not os.path.exists(options[po.OUTPUT_DIRECTORY]):
-        os.mkdir(options[po.OUTPUT_DIRECTORY])
+    if not os.path.exists(options[po.READS_OUTPUT_DIR]):
+        os.mkdir(options[po.READS_OUTPUT_DIR])
 
     reads_dir = _get_parameters_dir(False, options, **params)
     cleanup = not options[po.NO_CLEANUP]
@@ -253,8 +258,8 @@ def _prepare_quantification(logger, options, **params):
     parameter values, describing properties of the quantification run to be
     performed.
     """
-    if not os.path.exists(options[po.OUTPUT_DIRECTORY]):
-        os.mkdir(options[po.OUTPUT_DIRECTORY])
+    if not os.path.exists(options[po.QUANT_OUTPUT_DIR]):
+        os.mkdir(options[po.QUANT_OUTPUT_DIR])
 
     reads_dir = _get_parameters_dir(False, options, **params)
     run_dir = _get_parameters_dir(True, options, **params)
@@ -283,8 +288,7 @@ def _quantify(logger, options, **params):
     run_dir = _get_parameters_dir(True, options, **params)
 
     logger.info("Executing shell script to run quantification analysis.")
-    #_execute_quantification_script(run_dir, ["-qa"])
-    _execute_quantification_script(run_dir, ["-a"])
+    _execute_quantification_script(run_dir, ["-qa"])
 
 
 def _check_quantification_completed(logger, options, **params):
