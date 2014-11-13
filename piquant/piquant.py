@@ -132,18 +132,24 @@ import tpms
 from __init__ import __version__
 
 
-def _get_parameters_dir(options, **params):
+def _get_parameters_dir(run_dir, options, **params):
     """
     Return the path of a reads or quantification directory.
 
     Return the path of a reads or quantification directory given a dictionary
     of run parameters (e.g. quantification method, read depth etc.).
 
+    run_dir: True if a quantification directory path is to be returned, False
+    if the associated reads directory is to be returned.
     options: A dictionary mapping from piquant command line option names to
     option values.
     params: A dictionary mapping from parameters._Parameter instances to
     parameter values.
     """
+    params = dict(params)
+    if not run_dir and parameters.QUANT_METHOD.name in params:
+        del params[parameters.QUANT_METHOD.name]
+
     return os.path.join(options[po.OUTPUT_DIRECTORY],
                         parameters.get_file_name(**params))
 
@@ -160,11 +166,7 @@ def _reads_directory_checker(should_exist):
     will exit if the reads or quantification directory does already exist.
     """
     def check_reads_directory(logger, options, **params):
-        params = dict(params)
-        if parameters.QUANT_METHOD.name in params:
-            del params[parameters.QUANT_METHOD.name]
-
-        reads_dir = _get_parameters_dir(options, **params)
+        reads_dir = _get_parameters_dir(False, options, **params)
         logger.debug("Checking reads directory {d}, should_exist={s}".
                      format(d=reads_dir, s=should_exist))
 
@@ -193,7 +195,7 @@ def _prepare_read_simulation(logger, options, **params):
     if not os.path.exists(options[po.OUTPUT_DIRECTORY]):
         os.mkdir(options[po.OUTPUT_DIRECTORY])
 
-    reads_dir = _get_parameters_dir(options, **params)
+    reads_dir = _get_parameters_dir(False, options, **params)
     cleanup = not options[po.NO_CLEANUP]
     logger.debug("Creating simulation files in " + reads_dir)
 
@@ -201,14 +203,14 @@ def _prepare_read_simulation(logger, options, **params):
 
 
 def _create_reads(logger, options, **params):
-    run_dir = _get_parameters_dir(options, **params)
+    run_dir = _get_parameters_dir(False, options, **params)
     logger.debug("Creating reads in " + run_dir)
 
     process.run_in_directory(run_dir, './run_simulation.sh')
 
 
 def _check_reads_created(logger, options, **params):
-    reads_dir = _get_parameters_dir(options, **params)
+    reads_dir = _get_parameters_dir(False, options, **params)
     reads_file = fs.get_reads_file(
         params[parameters.ERRORS.name],
         paired_end=(fs.LEFT_READS if params[parameters.PAIRED_END.name]
@@ -221,7 +223,7 @@ def _check_reads_created(logger, options, **params):
 
 def _run_directory_checker(should_exist):
     def check_run_directory(logger, options, **params):
-        run_dir = _get_parameters_dir(options, **params)
+        run_dir = _get_parameters_dir(True, options, **params)
         logger.debug("Checking run directory {d}, should_exist={s}".
                      format(d=run_dir, s=should_exist))
 
@@ -254,12 +256,9 @@ def _prepare_quantification(logger, options, **params):
     if not os.path.exists(options[po.OUTPUT_DIRECTORY]):
         os.mkdir(options[po.OUTPUT_DIRECTORY])
 
-    run_dir = _get_parameters_dir(options, **params)
+    reads_dir = _get_parameters_dir(False, options, **params)
+    run_dir = _get_parameters_dir(True, options, **params)
     logger.debug("Creating quantification files in " + run_dir)
-
-    reads_params = dict(params)
-    del reads_params[parameters.QUANT_METHOD.name]
-    reads_dir = _get_parameters_dir(options, **reads_params)
 
     prq.write_run_quantification_script(reads_dir, run_dir, options, **params)
 
@@ -268,7 +267,7 @@ def _prequantifier():
     quantifiers_used = []
 
     def prequantify(logger, options, **params):
-        run_dir = _get_parameters_dir(options, **params)
+        run_dir = _get_parameters_dir(True, options, **params)
 
         quant_method = params[parameters.QUANT_METHOD.name]
         if quant_method not in quantifiers_used:
@@ -281,7 +280,7 @@ def _prequantifier():
 
 
 def _quantify(logger, options, **params):
-    run_dir = _get_parameters_dir(options, **params)
+    run_dir = _get_parameters_dir(True, options, **params)
 
     logger.info("Executing shell script to run quantification analysis.")
     #_execute_quantification_script(run_dir, ["-qa"])
@@ -289,7 +288,7 @@ def _quantify(logger, options, **params):
 
 
 def _check_quantification_completed(logger, options, **params):
-    run_dir = _get_parameters_dir(options, **params)
+    run_dir = _get_parameters_dir(True, options, **params)
 
     main_stats_file = statistics.get_stats_file(
         run_dir, os.path.basename(run_dir), tpms.TRANSCRIPT)
@@ -309,7 +308,7 @@ class _StatsAccumulator:
 
     def __call__(self, logger, options, **params):
         run_name = parameters.get_file_name(**params)
-        run_dir = _get_parameters_dir(options, **params)
+        run_dir = _get_parameters_dir(True, options, **params)
 
         stats_file = statistics.get_stats_file(
             run_dir, run_name, self.tpm_level, **self.stratified_stats_type)
