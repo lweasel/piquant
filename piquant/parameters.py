@@ -48,13 +48,13 @@ GENOME_FASTA_DIR = _Parameter(
 NUM_MOLECULES = _Parameter(
     "num_molecules", "Number of molecules", "--num-molecules",
     lambda x: opt.validate_int_option(
-        x, "Number of molecules must be a positive integer", positive=True),
+        x, "Number of molecules must be a positive integer", min_val=1),
     run_parameter=False)
 
 NUM_THREADS = _Parameter(
     "num_threads", "Number of threads", "--num-threads",
     lambda x: opt.validate_int_option(
-        x, "Number of threads must be a positive integer", positive=True),
+        x, "Number of threads must be a positive integer", min_val=1),
     run_parameter=False)
 
 QUANT_METHOD = _Parameter(

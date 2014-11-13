@@ -10,6 +10,7 @@ PARAMS_FILE = "--params-file"
 PLOT_FORMAT = "--plot-format"
 GROUPED_THRESHOLD = "--grouped-threshold"
 ERROR_FRACTION_THRESHOLD = "--error-fraction-threshold"
+NOT_PRESENT_CUTOFF = "--not-present-cutoff"
 
 # commands
 PREPARE_READ_DIRS = "prepare_read_dirs"
@@ -62,8 +63,8 @@ def validate_quantification_run_analysis_options(options):
     options[GROUPED_THRESHOLD] = opt.validate_int_option(
         options[GROUPED_THRESHOLD],
         "Minimum value for number of data points must be positive",
-        positive=True)
+        min_val=1)
     options[ERROR_FRACTION_THRESHOLD] = opt.validate_int_option(
         options[ERROR_FRACTION_THRESHOLD],
         "Error fraction threshold percentage must be positive",
-        positive=True)
+        min_val=1)

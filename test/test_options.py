@@ -1,8 +1,8 @@
 from piquant.options import \
     validate_file_option, validate_dir_option, \
     validate_dict_option, validate_int_option, \
-    validate_options_list, check_boolean_value, \
-    validate_list_option
+    validate_float_option, validate_options_list, \
+    check_boolean_value, validate_list_option
 from tempfile import NamedTemporaryFile
 from schema import SchemaError
 from utils import temp_dir_created
@@ -149,22 +149,17 @@ def test_validate_dict_option_exception_message_contains_correct_info():
     check_exception_message(exc_info, msg, key)
 
 
-def test_validate_int_option_returns_correct_value():
-    int_val = 1
-    assert validate_int_option(str(1), "dummy") == int_val
-
-
 def test_validate_int_option_raises_exception_for_non_int():
     with pytest.raises(SchemaError):
         validate_int_option("a", "dummy")
 
 
-def test_validate_int_option_raises_exception_for_negative_if_positive_specified():
+def test_validate_int_option_raises_exception_for_negative_if_min_val_specified():
     with pytest.raises(SchemaError):
-        validate_int_option(-1, "dummy", positive=True)
+        validate_int_option(-1, "dummy", min_val=0)
 
 
-def test_validate_int_option_does_not_raise_exception_for_negative_if_positive_not_specified():
+def test_validate_int_option_does_not_raise_exception_for_negative_if_min_val_not_specified():
     validate_int_option(-1, "dummy")
 
 
@@ -182,6 +177,39 @@ def test_validate_int_option_exception_message_contains_correct_info():
     str_val = "abcde"
     with pytest.raises(SchemaError) as exc_info:
         validate_int_option(str_val, msg)
+
+    check_exception_message(exc_info, msg, str_val)
+
+
+def test_validate_float_option_returns_correct_value():
+    float_val = 0.3532
+    assert validate_float_option(str(float_val), "dummy") == float_val
+
+
+def test_validate_float_option_raises_exception_for_non_float():
+    with pytest.raises(SchemaError):
+        validate_float_option("a", "dummy")
+
+
+def test_validate_float_option_raises_exception_for_negative_if_min_val_specified():
+    with pytest.raises(SchemaError):
+        validate_int_option(-1.23, "dummy", min_val=0)
+
+
+def test_validate_float_option_does_not_raise_exception_for_negative_if_min_val_not_specified():
+    validate_int_option(-1.23, "dummy")
+
+
+def test_validate_int_option_returns_correct_value():
+    int_val = 1
+    assert validate_int_option(str(int_val), "dummy") == int_val
+
+
+def test_validate_float_option_exception_message_contains_correct_info():
+    msg = "dummy"
+    str_val = "abcde"
+    with pytest.raises(SchemaError) as exc_info:
+        validate_float_option(str_val, msg)
 
     check_exception_message(exc_info, msg, str_val)
 
