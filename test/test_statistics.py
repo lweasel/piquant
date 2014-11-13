@@ -15,7 +15,7 @@ def _get_test_tpms():
 
     t.calculate_log_ratios(tpms)
     t.calculate_percent_error(tpms)
-    t.mark_positives_and_negatives(tpms)
+    t.mark_positives_and_negatives(0.1, tpms)
 
     return tpms, t.get_true_positives(tpms)
 

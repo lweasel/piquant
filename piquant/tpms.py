@@ -20,24 +20,23 @@ FALSE_NEGATIVE = "false-neg"
 TRUE_POSITIVE = "true-pos"
 TRUE_NEGATIVE = "true-neg"
 
-NOT_PRESENT_CUTOFF = 0.1
 CUMULATIVE_DISTRIBUTION_POINTS = 20
 
 
-def mark_positives_and_negatives(*tpm_sets):
+def mark_positives_and_negatives(not_present_cutoff, *tpm_sets):
     for tpms in tpm_sets:
         tpms[FALSE_NEGATIVE] = \
-            (tpms[REAL_TPM] > NOT_PRESENT_CUTOFF) & \
-            (tpms[CALCULATED_TPM] <= NOT_PRESENT_CUTOFF)
+            (tpms[REAL_TPM] > not_present_cutoff) & \
+            (tpms[CALCULATED_TPM] <= not_present_cutoff)
         tpms[FALSE_POSITIVE] = \
-            (tpms[CALCULATED_TPM] > NOT_PRESENT_CUTOFF) & \
-            (tpms[REAL_TPM] <= NOT_PRESENT_CUTOFF)
+            (tpms[CALCULATED_TPM] > not_present_cutoff) & \
+            (tpms[REAL_TPM] <= not_present_cutoff)
         tpms[TRUE_NEGATIVE] = \
-            (tpms[REAL_TPM] <= NOT_PRESENT_CUTOFF) & \
-            (tpms[CALCULATED_TPM] <= NOT_PRESENT_CUTOFF)
+            (tpms[REAL_TPM] <= not_present_cutoff) & \
+            (tpms[CALCULATED_TPM] <= not_present_cutoff)
         tpms[TRUE_POSITIVE] = \
-            (tpms[REAL_TPM] > NOT_PRESENT_CUTOFF) & \
-            (tpms[CALCULATED_TPM] > NOT_PRESENT_CUTOFF)
+            (tpms[REAL_TPM] > not_present_cutoff) & \
+            (tpms[CALCULATED_TPM] > not_present_cutoff)
 
 
 def get_true_positives(tpms):

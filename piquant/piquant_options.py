@@ -68,3 +68,7 @@ def validate_quantification_run_analysis_options(options):
         options[ERROR_FRACTION_THRESHOLD],
         "Error fraction threshold percentage must be positive",
         min_val=1)
+    options[NOT_PRESENT_CUTOFF] = opt.validate_float_option(
+        options[NOT_PRESENT_CUTOFF],
+        "Cutoff value must be non-negative",
+        min_val=0)

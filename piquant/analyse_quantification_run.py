@@ -128,13 +128,15 @@ def _write_stratified_stats(tpms, tp_tpms, non_zero, options):
     return clsfr_stats
 
 
-def _draw_tpm_scatter_plot(tp_transcript_tpms, tp_gene_tpms, options):
+def _draw_tpm_scatter_plot(tp_transcript_tpms, tp_gene_tpms, plot_format,
+                           basename, not_present_cutoff):
+
     plot.log_tpm_scatter_plot(
-        options[PLOT_FORMAT], tp_transcript_tpms,
-        options[OUT_FILE_BASENAME], TRUE_POSITIVES_LABEL)
+        plot_format, tp_transcript_tpms, basename,
+        TRUE_POSITIVES_LABEL, not_present_cutoff)
     plot.log_tpm_scatter_plot(
-        options[PLOT_FORMAT], tp_gene_tpms,
-        options[OUT_FILE_BASENAME] + "_gene", TRUE_POSITIVES_LABEL)
+        plot_format, tp_gene_tpms, basename + "_gene",
+        TRUE_POSITIVES_LABEL, not_present_cutoff)
 
 
 def _draw_stratified_log_ratio_boxplots(non_zero, tp_tpms, options):
@@ -173,12 +175,13 @@ def _draw_cumulative_transcript_distribution_graphs(
             options[OUT_FILE_BASENAME], tpm_info.label, clsfr, asc)
 
 
-def _prepare_data(transcript_tpms, gene_tpms, logger):
+def _prepare_data(transcript_tpms, gene_tpms, not_present_cutoff, logger):
     # Determine whether each TPM measurement is a true/false positive/negative.
     # For our purposes, marking an TPM as positive or negative is determined by
     # whether it is greater or less than an "isoform not present" cutoff value.
     logger.info("Marking positives and negatives...")
-    t.mark_positives_and_negatives(transcript_tpms, gene_tpms)
+    t.mark_positives_and_negatives(
+        not_present_cutoff, transcript_tpms, gene_tpms)
 
     # Calculate the percent error (positive or negative) of the calculated TPM
     # values from the real values
@@ -213,9 +216,13 @@ def _write_statistics(
         transcript_tpms, tp_transcript_tpms, non_zero_transcript_tpms, options)
 
 
-def _draw_graphs(options, tp_transcript_tpms, non_zero_transcript_tpms, tp_gene_tpms, clsfr_stats):
+def _draw_graphs(options, tp_transcript_tpms, non_zero_transcript_tpms,
+                 tp_gene_tpms, clsfr_stats, not_present_cutoff):
+
     # Make a scatter plot of log transformed calculated vs real TPMs
-    _draw_tpm_scatter_plot(tp_transcript_tpms, tp_gene_tpms, options)
+    _draw_tpm_scatter_plot(
+        tp_transcript_tpms, tp_gene_tpms, options[PLOT_FORMAT],
+        options[OUT_FILE_BASENAME], options[po.NOT_PRESENT_CUTOFF])
 
     # Make boxplots of log ratios stratified by various classification measures
     # (e.g. the number of transcripts per-originating gene of each transcript)
@@ -239,7 +246,8 @@ def _analyse_run(logger, options):
     gene_tpms = transcript_tpms[[t.GENE, t.REAL_TPM, t.CALCULATED_TPM]].\
         groupby(t.GENE).aggregate(np.sum)
 
-    _prepare_data(transcript_tpms, gene_tpms, logger)
+    _prepare_data(transcript_tpms, gene_tpms,
+                  options[po.NOT_PRESENT_CUTOFF], logger)
 
     # Get data frames containing only true positive TPMs and TPMs with non-zero
     # real and estimated abundances
@@ -255,7 +263,7 @@ def _analyse_run(logger, options):
     # Draw graphs
     logger.info("Plotting graphs...")
     _draw_graphs(options, tp_transcript_tpms, non_zero_transcript_tpms,
-                 tp_gene_tpms, clsfr_stats)
+                 tp_gene_tpms, clsfr_stats, options[po.NOT_PRESENT_CUTOFF])
 
 
 def _main(docstring):

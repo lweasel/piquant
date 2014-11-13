@@ -236,7 +236,9 @@ def _plot_cumulative_distribution_grouped_by_param(
             _set_distribution_plot_bounds, title)
 
 
-def log_tpm_scatter_plot(fformat, tpms, base_name, tpm_label):
+def log_tpm_scatter_plot(
+        fformat, tpms, base_name, tpm_label, not_present_cutoff):
+
     with _saving_new_plot(fformat, base_name, tpm_label, "log10 scatter"):
         plt.scatter(tpms[t.LOG10_REAL_TPM].values,
                     tpms[t.LOG10_CALCULATED_TPM].values,
@@ -247,7 +249,7 @@ def log_tpm_scatter_plot(fformat, tpms, base_name, tpm_label):
         plt.xlabel("Log10 real TPM")
         plt.ylabel("Log10 calculated TPM")
 
-        min_val = np.log10(t.NOT_PRESENT_CUTOFF) - 0.2
+        min_val = np.log10(not_present_cutoff) - 0.2
         plt.xlim(xmin=min_val)
         plt.ylim(ymin=min_val)
 

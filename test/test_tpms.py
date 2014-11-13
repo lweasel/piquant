@@ -8,6 +8,7 @@ CALC_TPMS_VALS = [0.03, 20, 3, 0.01, 5, 20, 10]
 GROUPS = [0, 1, 0, 1, 0, 1, 1]
 
 GROUP_TEST_COL = "group_test"
+NOT_PRESENT_CUTOFF = 0.1
 
 
 def _get_test_tpms():
@@ -21,28 +22,28 @@ def _get_test_tpms():
 
 def _get_test_tp_tpms():
     tpms = _get_test_tpms()
-    return tpms[(tpms[t.REAL_TPM] > t.NOT_PRESENT_CUTOFF) &
-                (tpms[t.CALCULATED_TPM] > t.NOT_PRESENT_CUTOFF)]
+    return tpms[(tpms[t.REAL_TPM] > NOT_PRESENT_CUTOFF) &
+                (tpms[t.CALCULATED_TPM] > NOT_PRESENT_CUTOFF)]
 
 
 def _true_positive(real_tpm, calculated_tpm):
-    return real_tpm > t.NOT_PRESENT_CUTOFF and \
-        calculated_tpm > t.NOT_PRESENT_CUTOFF
+    return real_tpm > NOT_PRESENT_CUTOFF and \
+        calculated_tpm > NOT_PRESENT_CUTOFF
 
 
 def _true_negative(real_tpm, calculated_tpm):
-    return real_tpm < t.NOT_PRESENT_CUTOFF and \
-        calculated_tpm < t.NOT_PRESENT_CUTOFF
+    return real_tpm < NOT_PRESENT_CUTOFF and \
+        calculated_tpm < NOT_PRESENT_CUTOFF
 
 
 def _false_negative(real_tpm, calculated_tpm):
-    return real_tpm > t.NOT_PRESENT_CUTOFF and \
-        calculated_tpm < t.NOT_PRESENT_CUTOFF
+    return real_tpm > NOT_PRESENT_CUTOFF and \
+        calculated_tpm < NOT_PRESENT_CUTOFF
 
 
 def _false_positive(real_tpm, calculated_tpm):
-    return real_tpm < t.NOT_PRESENT_CUTOFF and \
-        calculated_tpm > t.NOT_PRESENT_CUTOFF
+    return real_tpm < NOT_PRESENT_CUTOFF and \
+        calculated_tpm > NOT_PRESENT_CUTOFF
 
 
 class _DummyStatistic:
@@ -73,7 +74,7 @@ class _DummyClassifier:
 
 def test_mark_positives_negatives_marks_correct_entries_as_true_positive():
     tpms = _get_test_tpms()
-    t.mark_positives_and_negatives(tpms)
+    t.mark_positives_and_negatives(NOT_PRESENT_CUTOFF, tpms)
     for index, row in tpms.iterrows():
         if _true_positive(row[t.REAL_TPM], row[t.CALCULATED_TPM]):
             assert row[t.TRUE_POSITIVE]
@@ -86,7 +87,7 @@ def test_mark_positives_negatives_marks_correct_entries_as_true_positive():
 
 def test_mark_positives_negatives_marks_correct_entries_as_false_positive():
     tpms = _get_test_tpms()
-    t.mark_positives_and_negatives(tpms)
+    t.mark_positives_and_negatives(NOT_PRESENT_CUTOFF, tpms)
     for index, row in tpms.iterrows():
         if _false_positive(row[t.REAL_TPM], row[t.CALCULATED_TPM]):
             assert row[t.FALSE_POSITIVE]
@@ -99,7 +100,7 @@ def test_mark_positives_negatives_marks_correct_entries_as_false_positive():
 
 def test_mark_positives_negatives_marks_correct_entries_as_true_negative():
     tpms = _get_test_tpms()
-    t.mark_positives_and_negatives(tpms)
+    t.mark_positives_and_negatives(NOT_PRESENT_CUTOFF, tpms)
     for index, row in tpms.iterrows():
         if _true_negative(row[t.REAL_TPM], row[t.CALCULATED_TPM]):
             assert row[t.TRUE_NEGATIVE]
@@ -112,7 +113,7 @@ def test_mark_positives_negatives_marks_correct_entries_as_true_negative():
 
 def test_mark_positives_negatives_marks_correct_entries_as_false_negative():
     tpms = _get_test_tpms()
-    t.mark_positives_and_negatives(tpms)
+    t.mark_positives_and_negatives(NOT_PRESENT_CUTOFF, tpms)
     for index, row in tpms.iterrows():
         if _false_negative(row[t.REAL_TPM], row[t.CALCULATED_TPM]):
             assert row[t.FALSE_NEGATIVE]
@@ -125,12 +126,12 @@ def test_mark_positives_negatives_marks_correct_entries_as_false_negative():
 
 def test_get_true_positives_returns_correct_number_of_entries():
     tpms = _get_test_tpms()
-    t.mark_positives_and_negatives(tpms)
+    t.mark_positives_and_negatives(NOT_PRESENT_CUTOFF, tpms)
     tp_tpms = t.get_true_positives(tpms)
 
     assert len(tp_tpms) == \
         len([x for x, y in zip(CALC_TPMS_VALS, REAL_TPMS_VALS)
-            if x > t.NOT_PRESENT_CUTOFF and y > t.NOT_PRESENT_CUTOFF])
+            if x > NOT_PRESENT_CUTOFF and y > NOT_PRESENT_CUTOFF])
 
 
 def test_calculate_percent_error_calculates_correct_values():
@@ -148,7 +149,7 @@ def test_calculate_log_ratios_calculates_correct_values():
     t.calculate_log_ratios(tpms)
 
     for index, row in tpms.iterrows():
-        val = np.log10(CALC_TPMS_VALS[index]/float(REAL_TPMS_VALS[index]))
+        val = np.log10(CALC_TPMS_VALS[index] / float(REAL_TPMS_VALS[index]))
         npt.assert_approx_equal(row[t.LOG10_RATIO], val)
 
 
