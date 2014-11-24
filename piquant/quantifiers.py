@@ -7,6 +7,7 @@ SIMULATED_READS = "SIMULATED_READS"
 LEFT_SIMULATED_READS = "LEFT_SIMULATED_READS"
 RIGHT_SIMULATED_READS = "RIGHT_SIMULATED_READS"
 FASTQ_READS = "FASTQ_READS"
+STRANDED_READS = "STRANDED_READS"
 QUANTIFIER_DIRECTORY = "QUANTIFIER_DIRECTORY"
 NUM_THREADS = "NUM_THREADS"
 
@@ -107,9 +108,8 @@ class _Cufflinks(_quantifierBase):
                 l=params[LEFT_SIMULATED_READS],
                 r=params[RIGHT_SIMULATED_READS])
 
-        stranded_spec = "--library-type " + \
-            ("fr-unstranded" if SIMULATED_READS in params
-             else "fr-secondstrand")
+        stranded_spec = "--library-type" + \
+            ("fr-secondstrand" if params[STRANDED_READS] else "fr-unstranded")
 
         writer.add_line(cls.MAP_READS_TO_GENOME_WITH_TOPHAT.format(
             bowtie_index=bowtie_index,
@@ -220,8 +220,7 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
                 l=params[LEFT_SIMULATED_READS],
                 r=params[RIGHT_SIMULATED_READS])
 
-        stranded_spec = "" if SIMULATED_READS in params \
-            else "--strand-specific"
+        stranded_spec = "" if params[STRANDED_READS] else "--strand-specific"
 
         ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
 
@@ -280,8 +279,8 @@ class _Express(_TranscriptomeBasedQuantifierBase):
                 l=params[LEFT_SIMULATED_READS],
                 r=params[RIGHT_SIMULATED_READS])
 
-        stranded_spec = "--fr-stranded " \
-            if SIMULATED_READS not in params else ""
+        stranded_spec = ("--f-stranded" if SIMULATED_READS in params
+                         else "--fr-stranded") if params[STRANDED_READS] else ""
 
         writer.add_pipe(
             cls.MAP_READS_TO_TRANSCRIPT_REFERENCE.format(
@@ -361,8 +360,11 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
     def write_quantification_commands(cls, writer, params):
         index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
 
-        library_spec = "\"T=SE:S=U\"" if SIMULATED_READS in params \
-            else "\"T=PE:O=><:S=SA\""
+        library_spec = \
+            ("\"T=SE:S=S\"" if params[STRANDED_READS]
+             else "\"T=SE:S=U\"") if SIMULATED_READS in params else \
+            ("\"T=PE:O=><:S=SA\"" if params[STRANDED_READS]
+             else "\"T=PE:O=><:S=U\"")
 
         reads_spec = "-r {r}".format(r=params[SIMULATED_READS]) \
             if SIMULATED_READS in params \
@@ -440,7 +442,8 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
     def write_quantification_commands(cls, writer, params):
         index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
 
-        library_spec = "U" if SIMULATED_READS in params else "ISF"
+        library_spec = "" if SIMULATED_READS in params else "I"
+        library_spec += "SF" if params[STRANDED_READS] else "U"
 
         reads_spec = "-r {r}".format(r=params[SIMULATED_READS]) \
             if SIMULATED_READS in params \

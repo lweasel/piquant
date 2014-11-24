@@ -172,7 +172,8 @@ def _add_process_command_line_options(writer):
 
 def _add_analyse_results(
         writer, reads_dir, run_dir, quantifier_dir, piquant_options,
-        quant_method, read_length, read_depth, paired_end, errors, bias):
+        quant_method, read_length, read_depth, paired_end,
+        errors, bias, stranded):
 
     fs_pro_file = os.path.join(reads_dir, fs.EXPRESSION_PROFILE_FILE)
 
@@ -181,21 +182,21 @@ def _add_analyse_results(
             _add_assemble_quantification_data(
                 writer, quantifier_dir, fs_pro_file, quant_method)
         _add_analyse_quantification_results(
-            writer, run_dir, piquant_options,
-            quant_method=quant_method,
+            writer, run_dir, piquant_options, quant_method=quant_method,
             read_length=read_length, read_depth=read_depth,
-            paired_end=paired_end, errors=errors, bias=bias)
+            paired_end=paired_end, errors=errors, bias=bias, stranded=stranded)
 
 
-def _get_quant_params(reads_dir, quantifier_dir, transcript_gtf,
-                      genome_fasta, num_threads, paired_end, errors):
+def _get_quant_params(reads_dir, quantifier_dir, transcript_gtf, genome_fasta,
+                      num_threads, paired_end, errors, stranded):
 
     quant_params = {
         qs.TRANSCRIPT_GTF_FILE: transcript_gtf,
         qs.GENOME_FASTA_DIR: genome_fasta,
         qs.QUANTIFIER_DIRECTORY: quantifier_dir,
         qs.NUM_THREADS: num_threads,
-        qs.FASTQ_READS: errors
+        qs.FASTQ_READS: errors,
+        qs.STRANDED_READS: stranded
     }
 
     if paired_end:
@@ -215,7 +216,7 @@ def _get_quant_params(reads_dir, quantifier_dir, transcript_gtf,
 def write_run_quantification_script(
         reads_dir, run_dir, piquant_options,
         quant_method=None, read_length=50, read_depth=10,
-        paired_end=False, errors=False, bias=False,
+        paired_end=False, errors=False, bias=False, stranded=False,
         transcript_gtf=None, genome_fasta=None, num_threads=1):
 
     os.mkdir(run_dir)
@@ -229,8 +230,8 @@ def write_run_quantification_script(
             piquant_options[po.QUANT_OUTPUT_DIR], "quantifier_scratch")
 
         quant_params = _get_quant_params(
-            reads_dir, quantifier_dir, transcript_gtf,
-            genome_fasta, num_threads, paired_end, errors)
+            reads_dir, quantifier_dir, transcript_gtf, genome_fasta,
+            num_threads, paired_end, errors, stranded)
 
         with writer.section():
             _add_run_prequantification(
@@ -244,4 +245,5 @@ def write_run_quantification_script(
 
         _add_analyse_results(
             writer, reads_dir, run_dir, quantifier_dir, piquant_options,
-            quant_method, read_length, read_depth, paired_end, errors, bias)
+            quant_method, read_length, read_depth, paired_end,
+            errors, bias, stranded)

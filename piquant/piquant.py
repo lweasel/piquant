@@ -7,49 +7,54 @@ Usage:
         [--num-molecules=<num-molecules> --nocleanup]
         [--params-file=<params-file> --read-length=<read-lengths>]
         [--read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors>]
-        [--bias=<biases> --transcript-gtf=<gtf-file>]
-        [--genome-fasta=<genome-fasta-dir>]
+        [--bias=<biases> --stranded=<stranded>]
+        [--transcript-gtf=<gtf-file> --genome-fasta=<genome-fasta-dir>]
     piquant create_reads
         [{log_option_spec} --reads-dir=<reads-dir>]
         [--params-file=<params-file> --read-length=<read-lengths>]
         [--read-depth=<read-depths> --paired-end=<paired-ends>]
-        [--error=<errors> --bias=<biases>]
+        [--error=<errors> --bias=<biases> --stranded=<stranded>]
     piquant check_reads
         [{log_option_spec} --reads-dir=<reads-dir>]
         [--params-file=<params-file> --read-length=<read-lengths>]
         [--read-depth=<read-depths> --paired-end=<paired-ends>]
-        [--error=<errors> --bias=<biases>]
+        [--error=<errors> --bias=<biases> --stranded=<stranded>]
     piquant prepare_quant_dirs
         [{log_option_spec} --reads-dir=<reads-dir> --quant-dir=<quant-dir>]
         [--nocleanup --num-threads=<num-threads>]
-        [--params-file=<params-file> --quant-method=<quant-methods>]
+        [--params-file=<params-file>]
         [--read-length=<read-lengths> --read-depth=<read-depths>]
         [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+        [--stranded=<stranded> --quant-method=<quant-methods>]
         [--transcript-gtf=<gtf-file> --genome-fasta=<genome-fasta-dir>]
         [--plot-format=<plot-format> --grouped-threshold=<gp-threshold>]
         [--error-fraction-threshold=<ef-threshold>]
         [--not-present-cutoff=<cutoff>]
     piquant prequantify
         [{log_option_spec} --quant-dir=<quant-dir>]
-        [--params-file=<params-file> --quant-method=<quant-methods>]
+        [--params-file=<params-file>]
         [--read-length=<read-lengths> --read-depth=<read-depths>]
         [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+        [--stranded=<stranded> --quant-method=<quant-methods>]
     piquant quantify
-        [{log_option_spec} --quant-dir=<quant-dir>]
-        [--params-file=<params-file> --quant-method=<quant-methods>]
+        [{log_option_spec} --reads-dir=<reads-dir> --quant-dir=<quant-dir>]
+        [--params-file=<params-file>]
         [--read-length=<read-lengths> --read-depth=<read-depths>]
         [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+        [--stranded=<stranded> --quant-method=<quant-methods>]
     piquant check_quant
         [{log_option_spec} --quant-dir=<quant-dir>]
-        [--params-file=<params-file> --quant-method=<quant-methods>]
+        [--params-file=<params-file>]
         [--read-length=<read-lengths> --read-depth=<read-depths>]
         [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+        [--stranded=<stranded> --quant-method=<quant-methods>]
     piquant analyse_runs
         [{log_option_spec} --quant-dir=<quant-dir>]
         [--stats-dir=<stats-dir> --params-file=<params-file>]
-        [--quant-method=<quant-methods> --read-length=<read-lengths>]
-        [--read-depth=<read-depths> --paired-end=<paired-ends>]
-        [--error=<errors> --bias=<biases> --plot-format=<plot-format>]
+        [--read-length=<read-lengths> --read-depth=<read-depths>]
+        [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
+        [--stranded=<stranded> --quant-method=<quant-methods>]
+        [--plot-format=<plot-format>]
 
 Options:
 {help_option_spec}
@@ -58,7 +63,7 @@ Options:
     {ver_option_description}
 {log_option_spec}
     {log_option_description}
---run-dir=<run-dir>
+--reads-dir=<reads-dir>
     Parent output directory to which read simulation directories will be
     written [default: output].
 --quant-dir=<quant-dir>
@@ -77,10 +82,11 @@ Options:
     will be deleted.
 --num-threads=<num-threads>
     Number of threads to be used by multi-threaded quantification methods
-    [default:1].
+    [default: 1].
 -f --params-file=<params-file>
     File containing specification of quantification methods, read-lengths,
-    read-depths and end, error and bias parameter values to create reads for.
+    read-depths and end, error, bias and strandedness parameter values to
+    create reads or estimate transcript abundances for.
 -q --quant-method=<quant-methods>
     Comma-separated list of quantification methods to run.
 -l --read-length=<read-lengths>
@@ -96,6 +102,10 @@ Options:
 -b --bias=<biases>
     Comma-separated list of True/False strings indicating whether
     quantification should be performed with or without read sequence bias.
+-s --stranded=<stranded>
+    Comma-separated list of True/False strings indicating whether reads should
+    be generated, or quantification performed, simulating a protocol that
+    produces stranded reads.
 --transcript-gtf=<gtf-file>
     GTF formatted file describing the transcripts to be simulated.
 --genome-fasta=<genome-fasta-dir>

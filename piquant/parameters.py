@@ -84,6 +84,11 @@ ERRORS = _Parameter(
     value_namer=lambda x: "with errors" if x else "no errors",
     file_namer=lambda x: "errors" if x else "no_errors")
 
+STRANDED = _Parameter(
+    "stranded", "Strandedness", "--stranded",
+    opt.check_boolean_value,
+    value_namer=lambda x: "stranded" if x else "unstranded")
+
 BIAS = _Parameter(
     "bias", "Bias", "--bias",
     opt.check_boolean_value,

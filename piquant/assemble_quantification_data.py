@@ -2,7 +2,7 @@
 
 """
 Usage:
-    assemble_quantification_data [{log_option_spec}] --method=<quantification-method> --out=<output-file> <pro-file> <dummy> <transcript-count-file> <unique-sequence-file>
+    assemble_quantification_data [{log_option_spec}] --method=<quantification-method> --out=<output-file> <pro-file> <transcript-count-file> <unique-sequence-file>
 
 Options:
 {help_option_spec}

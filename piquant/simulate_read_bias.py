@@ -4,7 +4,7 @@
 Usage:
     simulate_read_bias [{log_option_spec} --out-prefix=<out-prefix>]
         [--paired-end] --num-reads=<num-reads>
-        <pwm-file> <reads_file>
+        <pwm-file> <reads-file>
 
 Options:
 {help_option_spec}
@@ -16,13 +16,13 @@ Options:
 -n --num-reads=<num-reads>
     Number of reads to output.
 --out-prefix=<out-prefix>
-    String to be prepended to input file names for output [default: bias]
+    String to be prepended to input file name for output [default: bias]
 --paired-end
     Indicates the reads file contains paired-end reads.
 <pwm-file>
     PWM file with positional base weights used to bias reads.
-<reads_file>
-    FASTA/Q file containing single or paired end reads.
+<reads-file>
+    FASTA/Q file containing single- or paired-end reads.
 """
 
 import collections
@@ -40,7 +40,7 @@ NUM_READS = "--num-reads"
 OUT_PREFIX = "--out-prefix"
 PAIRED_END = "--paired-end"
 PWM_FILE = "<pwm-file>"
-READS_FILE = "<reads_file>"
+READS_FILE = "<reads-file>"
 
 
 ReadScore = collections.namedtuple("ReadScore", ["read_number", "score"])
@@ -169,12 +169,11 @@ def _simulate_bias(logger, options):
 
 
 def _main(docstring):
-    # Read in command-line options
+    # Read in and validate command-line options
     docstring = opt.substitute_common_options_into_usage(docstring)
     options = docopt.docopt(
         docstring, version="simulate_read_bias v" + __version__)
 
-    # Validate command-line options
     _validate_command_line_options(options)
 
     # Set up logger

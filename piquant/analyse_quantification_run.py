@@ -2,7 +2,7 @@
 
 """
 Usage:
-    analyse_quantification_run [{log_option_spec} --plot-format=<plot-format> --grouped-threshold=<grouped-threshold> --error-fraction-threshold=<ef-threshold>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> <tpm-file> <out-file>
+    analyse_quantification_run [{log_option_spec} --plot-format=<plot-format> --grouped-threshold=<grouped-threshold> --error-fraction-threshold=<ef-threshold> --not-present-cutoff=<cutoff>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> --stranded=<stranded> <tpm-file> <out-file>
 
 Options:
 {help_option_spec}
@@ -20,6 +20,9 @@ Options:
     Transcripts whose estimated TPM is greater than this percentage higher or
     lower than their real TPM are considered above threshold for the "error
     fraction" statistic [default: 10].
+--not-present-cutoff=<cutoff>
+    Cut-off value for the number of transcripts per-million below which a
+    transcript is considered to be "not present" [default: 0.1].
 --quant-method=<quant-method>
     Method used to quantify transcript abundances.
 --read-length=<read-length>
@@ -32,6 +35,8 @@ Options:
     Whether the reads contain sequencing errors.
 --bias=<bias>
     Whether the reads contain sequence bias.
+--stranded=<stranded>
+    Whether the reads are strand-specific or unstranded.
 <tpm-file>
     File containing real and calculated TPMs.
 <out-file>
@@ -241,7 +246,8 @@ def _draw_graphs(options, tp_transcript_tpms, non_zero_transcript_tpms,
 
 def _analyse_run(logger, options):
     # Read TPMs into a data frame
-    logger.info("Reading TPMs...")
+    logger.info("Reading TPMs from " + options[TPM_FILE])
+
     transcript_tpms = pd.read_csv(options[TPM_FILE])
     gene_tpms = transcript_tpms[[t.GENE, t.REAL_TPM, t.CALCULATED_TPM]].\
         groupby(t.GENE).aggregate(np.sum)

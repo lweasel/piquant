@@ -6,6 +6,7 @@ RUN_SCRIPT = "run_simulation.sh"
 
 CALC_READ_DEPTH_SCRIPT = "calculate_reads_for_depth.py"
 SIMULATE_BIAS_SCRIPT = "simulate_read_bias.py"
+FIX_ANTISENSE_READS_SCRIPT = "fix_antisense_reads.py"
 BIAS_PWM_FILE = "bias_motif.pwm"
 
 TMP_READS_FILE = "reads.tmp"
@@ -173,6 +174,23 @@ def _add_simulate_read_bias(writer, paired_end, errors):
     writer.add_line("mv " + out_prefix + "." + reads_file + " " + reads_file)
 
 
+def _add_fix_antisense_reads(writer, errors):
+    # If we're simulating a stranded protocol for single-end reads, reverse
+    # complement all antisense reads (for paired-end reads, the reads produced
+    # by FluxSimulator are effectively always stranded)
+    writer.add_comment(
+        "Reverse complement antisense reads to simulate a stranded protocol")
+
+    reads_file = fs.get_reads_file(errors, intermediate=True)
+    out_prefix = "stranded"
+
+    writer.add_line("{command} --out-prefix={out_prefix} {reads_file}".format(
+        command=_get_script_path(FIX_ANTISENSE_READS_SCRIPT),
+        out_prefix=out_prefix,
+        reads_file=reads_file))
+    writer.add_line("mv " + out_prefix + "." + reads_file + " " + reads_file)
+
+
 def _create_final_reads_files(writer, paired_end, errors):
     tmp_reads_file = fs.get_reads_file(errors, intermediate=True)
 
@@ -212,7 +230,8 @@ def _create_final_reads_files(writer, paired_end, errors):
 
 
 def _add_create_reads(
-        writer, read_length, read_depth, paired_end, errors, bias):
+        writer, read_length, read_depth,
+        paired_end, errors, bias, stranded):
 
     with writer.section():
         _add_create_flux_simulator_temporary_directory(writer)
@@ -231,6 +250,10 @@ def _add_create_reads(
         _check_correct_number_of_reads_created(writer, errors)
     with writer.section():
         _add_shuffle_simulated_reads(writer, paired_end, errors)
+
+    if stranded and not paired_end:
+        with writer.section():
+            _add_fix_antisense_reads(writer, errors)
 
     if bias:
         with writer.section():
@@ -259,22 +282,23 @@ def _create_simulator_parameter_files(
 
 
 def _write_read_simulation_script(
-        reads_dir, read_length, read_depth, paired_end, errors, bias, cleanup):
+        reads_dir, read_length, read_depth,
+        paired_end, errors, bias, stranded, cleanup):
 
     with fw.writing_to_file(
             fw.BashScriptWriter, reads_dir, RUN_SCRIPT) as writer:
 
         _add_create_reads(writer, read_length, read_depth,
-                          paired_end, errors, bias)
+                          paired_end, errors, bias, stranded)
 
         if cleanup:
             _add_cleanup_intermediate_files(writer)
 
 
 def create_simulation_files(
-        reads_dir, cleanup, read_length=30, read_depth=10, paired_end=False,
-        errors=False, bias=False, transcript_gtf=None, genome_fasta=None,
-        num_molecules=30000000):
+        reads_dir, cleanup, read_length=30, read_depth=10,
+        paired_end=False, errors=False, bias=False, stranded=False,
+        transcript_gtf=None, genome_fasta=None, num_molecules=30000000):
 
     os.mkdir(reads_dir)
 
@@ -285,4 +309,5 @@ def create_simulation_files(
 
     # Write shell script to run read simulation
     _write_read_simulation_script(
-        reads_dir, read_length, read_depth, paired_end, errors, bias, cleanup)
+        reads_dir, read_length, read_depth, paired_end,
+        errors, bias, stranded, cleanup)
