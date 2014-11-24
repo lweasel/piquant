@@ -2,7 +2,7 @@
 
 """
 Usage:
-    analyse_quantification_run [{log_option_spec} --plot-format=<plot-format> --grouped-threshold=<grouped-threshold> --error-fraction-threshold=<ef-threshold> --not-present-cutoff=<cutoff>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> --stranded=<stranded> <tpm-file> <out-file>
+    analyse_quantification_run [{log_option_spec} --plot-format=<plot-format> --grouped-threshold=<grouped-threshold> --error-fraction-threshold=<ef-threshold> --not-present-cutoff=<cutoff>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> --stranded=<stranded> --noise-perc=<noise-depth-percentage> <tpm-file> <out-file>
 
 Options:
 {help_option_spec}
@@ -37,6 +37,10 @@ Options:
     Whether the reads contain sequence bias.
 --stranded=<stranded>
     Whether the reads are strand-specific or unstranded.
+--noise-perc=<noise-depth-percentage>
+    The depth of reads sequenced across a set of transcripts defined as "noise"
+    (as a percentage of the depth of reads for the set of transcripts to be
+    quantified).
 <tpm-file>
     File containing real and calculated TPMs.
 <out-file>

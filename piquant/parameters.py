@@ -2,7 +2,6 @@ import itertools
 import options as opt
 import quantifiers
 import schema
-import six
 
 _PARAMETERS = []
 _RUN_PARAMETERS = []
@@ -39,6 +38,13 @@ TRANSCRIPT_GTF = _Parameter(
         x, "Transcript GTF file does not exist"),
     run_parameter=False)
 
+NOISE_TRANSCRIPT_GTF = _Parameter(
+    "noise_transcript_gtf", "Noise transcript GTF file",
+    "--noise-transcript-gtf",
+    lambda x: opt.validate_file_option(
+        x, "Noise transcript GTF file does not exist"),
+    run_parameter=False)
+
 GENOME_FASTA_DIR = _Parameter(
     "genome_fasta", "Genome FASTA directory", "--genome-fasta",
     lambda x: opt.validate_dir_option(
@@ -63,13 +69,13 @@ QUANT_METHOD = _Parameter(
     value_namer=lambda x: str(x))
 
 READ_DEPTH = _Parameter(
-    "read_depth", "Read depth", "--read-depth", int,
-    is_numeric=True,
+    "read_depth", "Read depth", "--read-depth",
+    int, is_numeric=True,
     value_namer=lambda x: "{d}x".format(d=x))
 
 READ_LENGTH = _Parameter(
-    "read_length", "Read length", "--read-length", int,
-    is_numeric=True,
+    "read_length", "Read length", "--read-length",
+    int, is_numeric=True,
     value_namer=lambda x: "{l}b".format(l=x))
 
 PAIRED_END = _Parameter(
@@ -94,6 +100,11 @@ BIAS = _Parameter(
     opt.check_boolean_value,
     value_namer=lambda x: "with bias" if x else "no bias",
     file_namer=lambda x: "bias" if x else "no_bias")
+
+NOISE_DEPTH_PERCENT = _Parameter(
+    "noise_perc", "Noise depth percentage", "--noise-perc",
+    int, is_numeric=True,
+    value_namer=lambda x: "no_noise" if x == 0 else "noise-{d}x".format(d=x))
 
 
 def get_run_parameters():

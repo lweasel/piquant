@@ -298,7 +298,8 @@ def _write_read_simulation_script(
 def create_simulation_files(
         reads_dir, cleanup, read_length=30, read_depth=10,
         paired_end=False, errors=False, bias=False, stranded=False,
-        transcript_gtf=None, genome_fasta=None, num_molecules=30000000):
+        noise_perc=0, transcript_gtf=None, noise_transcript_gtf=None,
+        genome_fasta=None, num_molecules=30000000):
 
     os.mkdir(reads_dir)
 

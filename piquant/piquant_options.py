@@ -43,6 +43,7 @@ def validate_command_line_options(options):
 
     if not (options[PREPARE_READ_DIRS] or options[PREPARE_QUANT_DIRS]):
         ignore_params += [parameters.TRANSCRIPT_GTF,
+                          parameters.NOISE_TRANSCRIPT_GTF,
                           parameters.GENOME_FASTA_DIR]
 
     if not options[PREPARE_READ_DIRS]:
@@ -50,6 +51,9 @@ def validate_command_line_options(options):
 
     if not options[PREPARE_QUANT_DIRS]:
         ignore_params.append(parameters.NUM_THREADS)
+
+    if options[parameters.NOISE_DEPTH_PERCENT.option_name] == "0":
+        ignore_params.append(parameters.NOISE_TRANSCRIPT_GTF)
 
     param_values = parameters.validate_command_line_parameter_sets(
         options[PARAMS_FILE], options, ignore_params=ignore_params)

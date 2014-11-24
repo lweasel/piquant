@@ -8,17 +8,21 @@ Usage:
         [--params-file=<params-file> --read-length=<read-lengths>]
         [--read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors>]
         [--bias=<biases> --stranded=<stranded>]
+        [--noise-perc=<noise-depth-percentage>]
         [--transcript-gtf=<gtf-file> --genome-fasta=<genome-fasta-dir>]
+        [--noise-transcript-gtf=<noise-gtf-file>]
     piquant create_reads
         [{log_option_spec} --reads-dir=<reads-dir>]
         [--params-file=<params-file> --read-length=<read-lengths>]
         [--read-depth=<read-depths> --paired-end=<paired-ends>]
         [--error=<errors> --bias=<biases> --stranded=<stranded>]
+        [--noise-perc=<noise-depth-percentage>]
     piquant check_reads
         [{log_option_spec} --reads-dir=<reads-dir>]
         [--params-file=<params-file> --read-length=<read-lengths>]
         [--read-depth=<read-depths> --paired-end=<paired-ends>]
         [--error=<errors> --bias=<biases> --stranded=<stranded>]
+        [--noise-perc=<noise-depth-percentage>]
     piquant prepare_quant_dirs
         [{log_option_spec} --reads-dir=<reads-dir> --quant-dir=<quant-dir>]
         [--nocleanup --num-threads=<num-threads>]
@@ -26,6 +30,7 @@ Usage:
         [--read-length=<read-lengths> --read-depth=<read-depths>]
         [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
         [--stranded=<stranded> --quant-method=<quant-methods>]
+        [--noise-perc=<noise-depth-percentage>]
         [--transcript-gtf=<gtf-file> --genome-fasta=<genome-fasta-dir>]
         [--plot-format=<plot-format> --grouped-threshold=<gp-threshold>]
         [--error-fraction-threshold=<ef-threshold>]
@@ -36,24 +41,28 @@ Usage:
         [--read-length=<read-lengths> --read-depth=<read-depths>]
         [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
         [--stranded=<stranded> --quant-method=<quant-methods>]
+        [--noise-perc=<noise-depth-percentage>]
     piquant quantify
         [{log_option_spec} --reads-dir=<reads-dir> --quant-dir=<quant-dir>]
         [--params-file=<params-file>]
         [--read-length=<read-lengths> --read-depth=<read-depths>]
         [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
         [--stranded=<stranded> --quant-method=<quant-methods>]
+        [--noise-perc=<noise-depth-percentage>]
     piquant check_quant
         [{log_option_spec} --quant-dir=<quant-dir>]
         [--params-file=<params-file>]
         [--read-length=<read-lengths> --read-depth=<read-depths>]
         [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
         [--stranded=<stranded> --quant-method=<quant-methods>]
+        [--noise-perc=<noise-depth-percentage>]
     piquant analyse_runs
         [{log_option_spec} --quant-dir=<quant-dir>]
         [--stats-dir=<stats-dir> --params-file=<params-file>]
         [--read-length=<read-lengths> --read-depth=<read-depths>]
         [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
         [--stranded=<stranded> --quant-method=<quant-methods>]
+        [--noise-perc=<noise-depth-percentage>]
         [--plot-format=<plot-format>]
 
 Options:
@@ -85,8 +94,8 @@ Options:
     [default: 1].
 -f --params-file=<params-file>
     File containing specification of quantification methods, read-lengths,
-    read-depths and end, error, bias and strandedness parameter values to
-    create reads or estimate transcript abundances for.
+    read-depths and end, error, bias, strandedness and noise depth percentage
+    parameter values to create reads or estimate transcript abundances for.
 -q --quant-method=<quant-methods>
     Comma-separated list of quantification methods to run.
 -l --read-length=<read-lengths>
@@ -106,8 +115,15 @@ Options:
     Comma-separated list of True/False strings indicating whether reads should
     be generated, or quantification performed, simulating a protocol that
     produces stranded reads.
+--noise-perc=<noise-depth-percentage>
+    Comma-separated list of percentages of the overall read-depth:
+    quantification will be performed on sets of reads containing noise from a
+    specified set of transcripts at these depths [default: 0].
 --transcript-gtf=<gtf-file>
     GTF formatted file describing the transcripts to be simulated.
+--noise-transcript-gtf=<noise-gtf-file>
+    GTF formatted file describing transcripts to be simulated as background
+    noise.
 --genome-fasta=<genome-fasta-dir>
     Directory containing per-chromosome sequences as FASTA files.
 --plot-format=<plot-format>

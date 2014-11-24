@@ -26,7 +26,9 @@ def _get_ignore_params():
         parameters.ERRORS,
         parameters.BIAS,
         parameters.STRANDED,
+        parameters.NOISE_DEPTH_PERCENT,
         parameters.TRANSCRIPT_GTF,
+        parameters.NOISE_TRANSCRIPT_GTF,
         parameters.GENOME_FASTA_DIR,
         parameters.NUM_MOLECULES,
         parameters.NUM_THREADS
