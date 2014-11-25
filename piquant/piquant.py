@@ -118,7 +118,7 @@ Options:
 --noise-perc=<noise-depth-percentage>
     Comma-separated list of percentages of the overall read-depth:
     quantification will be performed on sets of reads containing noise from a
-    specified set of transcripts at these depths [default: 0].
+    specified set of transcripts at these depths.
 --transcript-gtf=<gtf-file>
     GTF formatted file describing the transcripts to be simulated.
 --noise-transcript-gtf=<noise-gtf-file>

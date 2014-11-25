@@ -42,9 +42,9 @@ def _validate_command_line_options(options):
         options[READ_LENGTH] = opt.validate_int_option(
             options[READ_LENGTH], "Read length must be a positive integer",
             min_val=1)
-        options[READ_DEPTH] = opt.validate_int_option(
-            options[READ_DEPTH], "Read depth must be a positive integer",
-            min_val=1)
+        options[READ_DEPTH] = opt.validate_float_option(
+            options[READ_DEPTH], "Read depth must be a positive float",
+            min_val=0)
     except schema.SchemaError as exc:
         exit("Exiting. " + exc.code)
 

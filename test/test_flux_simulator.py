@@ -14,7 +14,7 @@ def _write_flux_simulator_params_files(
         output_dir, paired_end=False, errors=False, read_length=READ_LENGTH):
     fs.write_flux_simulator_params_files(
         TRANSCRIPT_GTF_FILE, GENOME_FASTA_DIR, NUM_MOLECULES, read_length,
-        paired_end, errors, output_dir)
+        paired_end, errors, TRANSCRIPT_GTF_FILE, 0, output_dir)
 
 
 def _get_params_dict(params_file):
@@ -27,11 +27,13 @@ def _get_params_dict(params_file):
 
 
 def _get_expression_params_file(dirname):
-    return dirname + os.path.sep + fs.EXPRESSION_PARAMS_FILE
+    return dirname + os.path.sep + \
+        fs.get_expression_params_file(fs.MAIN_TRANSCRIPTS)
 
 
 def _get_simulation_params_file(dirname):
-    return dirname + os.path.sep + fs.SIMULATION_PARAMS_FILE
+    return dirname + os.path.sep + \
+        fs.get_simulation_params_file(fs.MAIN_TRANSCRIPTS)
 
 
 def _get_expression_params_dict(dirname):
@@ -82,16 +84,18 @@ def test_write_flux_simulator_params_files_writes_correct_simulation_params():
     with temp_dir_created() as dirname:
         _write_flux_simulator_params_files(dirname)
 
-        d = _get_simulation_params_dict(dirname)
-        assert d["SEQ_FILE_NAME"] == fs.SIMULATED_READS_PREFIX + ".bed"
-        assert d["PRO_FILE_NAME"] == fs.EXPRESSION_PROFILE_FILE
-        assert d["FASTA"] == "YES"
-        assert d["READ_NUMBER"] == fs.READ_NUMBER_PLACEHOLDER
-        assert d["READ_LENGTH"] == str(READ_LENGTH)
-        assert d["PCR_DISTRIBUTION"] == "none"
-        assert "PAIRED_END" not in d
-        assert "UNIQUE_IDS" not in d
-        assert "ERR_FILE" not in d
+        spd = _get_simulation_params_dict(dirname)
+        assert spd["SEQ_FILE_NAME"] == \
+            "main_" + fs.SIMULATED_READS_PREFIX + ".bed"
+        assert spd["PRO_FILE_NAME"] == \
+            fs.get_expression_profile_file(fs.MAIN_TRANSCRIPTS)
+        assert spd["FASTA"] == "YES"
+        assert spd["READ_NUMBER"] == fs.READ_NUMBER_PLACEHOLDER
+        assert spd["READ_LENGTH"] == str(READ_LENGTH)
+        assert spd["PCR_DISTRIBUTION"] == "none"
+        assert "PAIRED_END" not in spd
+        assert "UNIQUE_IDS" not in spd
+        assert "ERR_FILE" not in spd
 
 
 def test_write_flux_simulator_params_files_writes_correct_params_when_paired_ends_are_specified():

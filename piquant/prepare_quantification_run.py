@@ -175,7 +175,8 @@ def _add_analyse_results(
         quant_method, read_length, read_depth, paired_end,
         errors, bias, stranded, noise_perc):
 
-    fs_pro_file = os.path.join(reads_dir, fs.EXPRESSION_PROFILE_FILE)
+    fs_pro_file = os.path.join(
+        reads_dir, fs.get_expression_profile_file(fs.MAIN_TRANSCRIPTS))
 
     with writer.if_block("-n \"$ANALYSE_RESULTS\""):
         with writer.section():

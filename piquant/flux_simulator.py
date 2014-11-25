@@ -9,9 +9,6 @@ PRO_FILE_TRANSCRIPT_ID_COL: Transcript ID column in FluxSimulator .pro file.
 PRO_FILE_LENGTH_COL: Transcript length column in FluxSimulator .pro file.
 PRO_FILE_FRAC_COL: Abundance fraction column in FluxSimulator .pro file.
 PRO_FILE_NUM_COL: Transcript count column in FluxSimulator .pro file.
-EXPRESSION_PARAMS_FILE: FluxSimulator expression parameters file name.
-EXPRESSION_PROFILE_FILE: FluxSimulator expression profile file name.
-SIMULATION_PARAMS_FILE: FluxSimulator simulation parameters file name.
 SIMULATED_READS_PREFIX: FluxSimulator reads FASTA file prefix.
 READ_NUMBER_PLACEHOLDER: Placeholder text for number of reads to simulate.
 """
@@ -24,13 +21,12 @@ PRO_FILE_LENGTH_COL = 3
 PRO_FILE_FRAC_COL = 4
 PRO_FILE_NUM_COL = 5
 
-EXPRESSION_PARAMS_FILE = "flux_simulator_expression.par"
-EXPRESSION_PROFILE_FILE = EXPRESSION_PARAMS_FILE.replace("par", "pro")
-SIMULATION_PARAMS_FILE = "flux_simulator_simulation.par"
-SIMULATION_LIBRARY_FILE = SIMULATION_PARAMS_FILE.replace("par", "lib")
 SIMULATED_READS_PREFIX = "reads"
 READ_NUMBER_PLACEHOLDER = "READ_NUMBER_PLACEHOLDER"
 TEMPORARY_DIRECTORY = "flux_simulator_tmp"
+
+MAIN_TRANSCRIPTS = "main"
+NOISE_TRANSCRIPTS = "noise"
 
 _PRO_FILE_COLS = [
     0,
@@ -62,26 +58,64 @@ def _get_common_flux_simulator_params(
     }
 
 
+def _get_flux_simulator_file(file_type, transcript_set, suffix):
+    return "flux_simulator_{transcripts}_{ft}.{suffix}".format(
+        transcripts=transcript_set, ft=file_type, suffix=suffix)
+
+
+def get_expression_params_file(transcript_set):
+    return _get_flux_simulator_file("expression", transcript_set, "par")
+
+
+def get_simulation_params_file(transcript_set):
+    return _get_flux_simulator_file("simulation", transcript_set, "par")
+
+
+def get_expression_profile_file(transcript_set):
+    return get_expression_params_file(transcript_set).replace("par", "pro")
+
+
+def get_simulation_library_file(transcript_set):
+    return get_simulation_params_file(transcript_set).replace("par", "lib")
+
+
 def _write_flux_simulator_expression_params(
-        transcript_gtf_file, genome_fasta_dir, num_molecules, output_dir):
+        transcript_gtf_file, genome_fasta_dir, num_molecules,
+        transcript_set, output_dir):
 
     fs_params = _get_common_flux_simulator_params(
         transcript_gtf_file, genome_fasta_dir, num_molecules)
 
-    with fw.writing_to_file(fw.FluxSimulatorParamsWriter, output_dir,
-                            EXPRESSION_PARAMS_FILE) as writer:
+    with fw.writing_to_file(
+            fw.FluxSimulatorParamsWriter, output_dir,
+            get_expression_params_file(transcript_set)) as writer:
         writer.add_vars(fs_params)
+
+
+def _write_flux_simulator_expression_params_files(
+        transcript_gtf_file, genome_fasta_dir, num_molecules,
+        noise_transcript_gtf_file, noise_perc, output_dir):
+
+    _write_flux_simulator_expression_params(
+        transcript_gtf_file, genome_fasta_dir, num_molecules,
+        MAIN_TRANSCRIPTS, output_dir)
+
+    if noise_perc != 0:
+        _write_flux_simulator_expression_params(
+            noise_transcript_gtf_file, genome_fasta_dir, num_molecules,
+            NOISE_TRANSCRIPTS, output_dir)
 
 
 def _write_flux_simulator_simulation_params(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
-        read_length, paired_end, errors, output_dir):
+        read_length, paired_end, errors, transcript_set, output_dir):
 
     fs_params = _get_common_flux_simulator_params(
         transcript_gtf_file, genome_fasta_dir, num_molecules)
 
-    fs_params["SEQ_FILE_NAME"] = SIMULATED_READS_PREFIX + ".bed"
-    fs_params["PRO_FILE_NAME"] = EXPRESSION_PROFILE_FILE
+    fs_params["SEQ_FILE_NAME"] = \
+        transcript_set + "_" + SIMULATED_READS_PREFIX + ".bed"
+    fs_params["PRO_FILE_NAME"] = get_expression_profile_file(transcript_set)
     fs_params["FASTA"] = "YES"
     fs_params["READ_NUMBER"] = READ_NUMBER_PLACEHOLDER
     fs_params["READ_LENGTH"] = read_length
@@ -94,9 +128,25 @@ def _write_flux_simulator_simulation_params(
     if errors:
         fs_params["ERR_FILE"] = _ERROR_MODEL_LONG
 
-    with fw.writing_to_file(fw.FluxSimulatorParamsWriter, output_dir,
-                            SIMULATION_PARAMS_FILE) as writer:
+    with fw.writing_to_file(
+            fw.FluxSimulatorParamsWriter, output_dir,
+            get_simulation_params_file(transcript_set)) as writer:
         writer.add_vars(fs_params)
+
+
+def _write_flux_simulator_simulation_params_files(
+        transcript_gtf_file, genome_fasta_dir, num_molecules,
+        read_length, paired_end, errors,
+        noise_transcript_gtf_file, noise_perc, output_dir):
+
+    _write_flux_simulator_simulation_params(
+        transcript_gtf_file, genome_fasta_dir, num_molecules,
+        read_length, paired_end, errors, MAIN_TRANSCRIPTS, output_dir)
+
+    if noise_perc != 0:
+        _write_flux_simulator_simulation_params(
+            noise_transcript_gtf_file, genome_fasta_dir, num_molecules,
+            read_length, paired_end, errors, NOISE_TRANSCRIPTS, output_dir)
 
 
 def read_expression_profiles(pro_file):
@@ -113,7 +163,8 @@ def read_expression_profiles(pro_file):
 
 def write_flux_simulator_params_files(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
-        read_length, paired_end, errors, output_dir):
+        read_length, paired_end, errors,
+        noise_transcript_gtf_file, noise_perc, output_dir):
     """
     Write FluxSimulator expression and simulation parameters files.
 
@@ -128,19 +179,31 @@ def write_flux_simulator_params_files(
     population.
     paired_end: Whether single- or paired-end reads should be simulated.
     errors: Whether reads should be simulated with errors or not.
+    noise_transcript_gtf_file: Path to a GTF-formatted file describing the
+    transcripts to be simulated as "noise".
+    noise_perc: "Noise" transcripts will be expressed at a mean depth equal to
+    this percentage of the main sequencing depth.
     output_dir: Path to the directory into which parameter files should be
     written.
     """
 
-    _write_flux_simulator_expression_params(
-        transcript_gtf_file, genome_fasta_dir, num_molecules, output_dir)
-    _write_flux_simulator_simulation_params(
+    _write_flux_simulator_expression_params_files(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
-        read_length, paired_end, errors, output_dir)
+        noise_transcript_gtf_file, noise_perc, output_dir)
+    _write_flux_simulator_simulation_params_files(
+        transcript_gtf_file, genome_fasta_dir, num_molecules,
+        read_length, paired_end, errors,
+        noise_transcript_gtf_file, noise_perc, output_dir)
 
 
-def get_reads_file(errors, paired_end=None, intermediate=False):
+def get_reads_file(errors, paired_end=None, intermediate=False,
+                   transcript_set=None):
+
     reads_file = SIMULATED_READS_PREFIX
+
+    if transcript_set:
+        reads_file = transcript_set + "_" + reads_file
+
     if not intermediate:
         reads_file += "_final"
     if paired_end == LEFT_READS:

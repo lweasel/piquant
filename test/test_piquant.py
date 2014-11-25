@@ -109,8 +109,8 @@ def test_prepare_read_simulation_creates_correct_files():
 
         reads_dir = piq._get_parameters_dir(False, options, **params)
         _check_file_exists(reads_dir, "run_simulation.sh")
-        _check_file_exists(reads_dir, "flux_simulator_expression.par")
-        _check_file_exists(reads_dir, "flux_simulator_simulation.par")
+        _check_file_exists(reads_dir, "flux_simulator_main_expression.par")
+        _check_file_exists(reads_dir, "flux_simulator_main_simulation.par")
 
 
 def test_create_reads_executes_run_simulation_script():
