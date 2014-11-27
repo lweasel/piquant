@@ -394,12 +394,13 @@ def _add_cleanup_intermediate_files(writer):
 def _create_simulator_parameter_files(
         reads_dir, transcript_gtf_file, genome_fasta_dir,
         num_molecules, read_length, paired_end, errors,
-        noise_transcript_gtf, noise_perc):
+        noise_transcript_gtf, noise_perc, num_noise_molecules):
 
     fs.write_flux_simulator_params_files(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
         read_length, paired_end, errors,
-        noise_transcript_gtf, noise_perc, reads_dir)
+        noise_transcript_gtf, noise_perc, num_noise_molecules,
+        reads_dir)
 
 
 def _write_read_simulation_script(
@@ -420,7 +421,7 @@ def create_simulation_files(
         reads_dir, cleanup, read_length=30, read_depth=10,
         paired_end=False, errors=False, bias=False, stranded=False,
         noise_perc=0, transcript_gtf=None, noise_transcript_gtf=None,
-        genome_fasta=None, num_molecules=30000000):
+        genome_fasta=None, num_molecules=30000000, num_noise_molecules=2000000):
 
     os.mkdir(reads_dir)
 
@@ -428,7 +429,7 @@ def create_simulation_files(
     _create_simulator_parameter_files(
         reads_dir, transcript_gtf, genome_fasta,
         num_molecules, read_length, paired_end, errors,
-        noise_transcript_gtf, noise_perc)
+        noise_transcript_gtf, noise_perc, num_noise_molecules)
 
     # Write shell script to run read simulation
     _write_read_simulation_script(

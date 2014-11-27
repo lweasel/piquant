@@ -94,7 +94,8 @@ def _write_flux_simulator_expression_params(
 
 def _write_flux_simulator_expression_params_files(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
-        noise_transcript_gtf_file, noise_perc, output_dir):
+        noise_transcript_gtf_file, noise_perc, num_noise_molecules,
+        output_dir):
 
     _write_flux_simulator_expression_params(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
@@ -102,8 +103,8 @@ def _write_flux_simulator_expression_params_files(
 
     if noise_perc != 0:
         _write_flux_simulator_expression_params(
-            noise_transcript_gtf_file, genome_fasta_dir, num_molecules,
-            NOISE_TRANSCRIPTS, output_dir)
+            noise_transcript_gtf_file, genome_fasta_dir,
+            num_noise_molecules, NOISE_TRANSCRIPTS, output_dir)
 
 
 def _write_flux_simulator_simulation_params(
@@ -137,7 +138,8 @@ def _write_flux_simulator_simulation_params(
 def _write_flux_simulator_simulation_params_files(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
         read_length, paired_end, errors,
-        noise_transcript_gtf_file, noise_perc, output_dir):
+        noise_transcript_gtf_file, noise_perc, num_noise_molecules,
+        output_dir):
 
     _write_flux_simulator_simulation_params(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
@@ -145,7 +147,7 @@ def _write_flux_simulator_simulation_params_files(
 
     if noise_perc != 0:
         _write_flux_simulator_simulation_params(
-            noise_transcript_gtf_file, genome_fasta_dir, num_molecules,
+            noise_transcript_gtf_file, genome_fasta_dir, num_noise_molecules,
             read_length, paired_end, errors, NOISE_TRANSCRIPTS, output_dir)
 
 
@@ -164,7 +166,8 @@ def read_expression_profiles(pro_file):
 def write_flux_simulator_params_files(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
         read_length, paired_end, errors,
-        noise_transcript_gtf_file, noise_perc, output_dir):
+        noise_transcript_gtf_file, noise_perc, num_noise_molecules,
+        output_dir):
     """
     Write FluxSimulator expression and simulation parameters files.
 
@@ -183,17 +186,21 @@ def write_flux_simulator_params_files(
     transcripts to be simulated as "noise".
     noise_perc: "Noise" transcripts will be expressed at a mean depth equal to
     this percentage of the main sequencing depth.
+    num_noise_molecules: The number of molecules in the initial noise
+    transcript population.
     output_dir: Path to the directory into which parameter files should be
     written.
     """
 
     _write_flux_simulator_expression_params_files(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
-        noise_transcript_gtf_file, noise_perc, output_dir)
+        noise_transcript_gtf_file, noise_perc, num_noise_molecules,
+        output_dir)
     _write_flux_simulator_simulation_params_files(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
         read_length, paired_end, errors,
-        noise_transcript_gtf_file, noise_perc, output_dir)
+        noise_transcript_gtf_file, noise_perc, num_noise_molecules,
+        output_dir)
 
 
 def get_reads_file(errors, paired_end=None, intermediate=False,

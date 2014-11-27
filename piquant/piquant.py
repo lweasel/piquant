@@ -4,7 +4,8 @@
 Usage:
     piquant prepare_read_dirs
         [{log_option_spec} --reads-dir=<reads-dir>]
-        [--num-molecules=<num-molecules> --nocleanup]
+        [--num-molecules=<num-molecules>]
+        [--num-noise-molecules=<num-noise-molecules> --nocleanup]
         [--params-file=<params-file> --read-length=<read-lengths>]
         [--read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors>]
         [--bias=<biases> --stranded=<stranded>]
@@ -82,9 +83,13 @@ Options:
     Directory to output assembled stats and graphs to
     [default: output/analysis].
 --num-molecules=<num-molecules>
-    Flux Simulator parameters will be set for simulation to start with this
-    number of transcript molecules in the initial population
+    Flux Simulator parameters will be set for the main simulation to start with
+    this number of transcript molecules in the initial population
     [default: 30000000].
+--num-noise-molecules=<num-noise-molecules>
+    Flux Simulator parameters will be set for the noise simulation to start
+    with this number of noise transcript molecules in the initial population
+    [default: 2000000]
 --nocleanup
     If not specified, files non-essential for subsequent quantification (when
     creating reads) and assessing quantification accuracy (when quantifying)

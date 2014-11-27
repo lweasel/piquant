@@ -31,6 +31,7 @@ def _get_ignore_params():
         parameters.NOISE_TRANSCRIPT_GTF,
         parameters.GENOME_FASTA_DIR,
         parameters.NUM_MOLECULES,
+        parameters.NUM_NOISE_MOLECULES,
         parameters.NUM_THREADS
     ]
 

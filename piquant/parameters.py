@@ -57,6 +57,12 @@ NUM_MOLECULES = _Parameter(
         x, "Number of molecules must be a positive integer", min_val=1),
     run_parameter=False)
 
+NUM_NOISE_MOLECULES = _Parameter(
+    "num_noise_molecules", "Number of noise molecules", "--num-noise-molecules",
+    lambda x: opt.validate_int_option(
+        x, "Number of noise molecules must be a positive integer", min_val=1),
+    run_parameter=False)
+
 NUM_THREADS = _Parameter(
     "num_threads", "Number of threads", "--num-threads",
     lambda x: opt.validate_int_option(
