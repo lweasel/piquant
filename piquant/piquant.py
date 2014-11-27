@@ -1,150 +1,5 @@
 #!/usr/bin/env python
 
-"""
-Usage:
-    piquant prepare_read_dirs
-        [{log_option_spec} --reads-dir=<reads-dir>]
-        [--num-molecules=<num-molecules>]
-        [--num-noise-molecules=<num-noise-molecules> --nocleanup]
-        [--params-file=<params-file> --read-length=<read-lengths>]
-        [--read-depth=<read-depths> --paired-end=<paired-ends> --error=<errors>]
-        [--bias=<biases> --stranded=<stranded>]
-        [--noise-perc=<noise-depth-percentage>]
-        [--transcript-gtf=<gtf-file> --genome-fasta=<genome-fasta-dir>]
-        [--noise-transcript-gtf=<noise-gtf-file>]
-    piquant create_reads
-        [{log_option_spec} --reads-dir=<reads-dir>]
-        [--params-file=<params-file> --read-length=<read-lengths>]
-        [--read-depth=<read-depths> --paired-end=<paired-ends>]
-        [--error=<errors> --bias=<biases> --stranded=<stranded>]
-        [--noise-perc=<noise-depth-percentage>]
-    piquant check_reads
-        [{log_option_spec} --reads-dir=<reads-dir>]
-        [--params-file=<params-file> --read-length=<read-lengths>]
-        [--read-depth=<read-depths> --paired-end=<paired-ends>]
-        [--error=<errors> --bias=<biases> --stranded=<stranded>]
-        [--noise-perc=<noise-depth-percentage>]
-    piquant prepare_quant_dirs
-        [{log_option_spec} --reads-dir=<reads-dir> --quant-dir=<quant-dir>]
-        [--nocleanup --num-threads=<num-threads>]
-        [--params-file=<params-file>]
-        [--read-length=<read-lengths> --read-depth=<read-depths>]
-        [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
-        [--stranded=<stranded> --quant-method=<quant-methods>]
-        [--noise-perc=<noise-depth-percentage>]
-        [--transcript-gtf=<gtf-file> --genome-fasta=<genome-fasta-dir>]
-        [--plot-format=<plot-format> --grouped-threshold=<gp-threshold>]
-        [--error-fraction-threshold=<ef-threshold>]
-        [--not-present-cutoff=<cutoff>]
-    piquant prequantify
-        [{log_option_spec} --quant-dir=<quant-dir>]
-        [--params-file=<params-file>]
-        [--read-length=<read-lengths> --read-depth=<read-depths>]
-        [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
-        [--stranded=<stranded> --quant-method=<quant-methods>]
-        [--noise-perc=<noise-depth-percentage>]
-    piquant quantify
-        [{log_option_spec} --reads-dir=<reads-dir> --quant-dir=<quant-dir>]
-        [--params-file=<params-file>]
-        [--read-length=<read-lengths> --read-depth=<read-depths>]
-        [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
-        [--stranded=<stranded> --quant-method=<quant-methods>]
-        [--noise-perc=<noise-depth-percentage>]
-    piquant check_quant
-        [{log_option_spec} --quant-dir=<quant-dir>]
-        [--params-file=<params-file>]
-        [--read-length=<read-lengths> --read-depth=<read-depths>]
-        [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
-        [--stranded=<stranded> --quant-method=<quant-methods>]
-        [--noise-perc=<noise-depth-percentage>]
-    piquant analyse_runs
-        [{log_option_spec} --quant-dir=<quant-dir>]
-        [--stats-dir=<stats-dir> --params-file=<params-file>]
-        [--read-length=<read-lengths> --read-depth=<read-depths>]
-        [--paired-end=<paired-ends> --error=<errors> --bias=<biases>]
-        [--stranded=<stranded> --quant-method=<quant-methods>]
-        [--noise-perc=<noise-depth-percentage>]
-        [--plot-format=<plot-format>]
-
-Options:
-{help_option_spec}
-    {help_option_description}
-{ver_option_spec}
-    {ver_option_description}
-{log_option_spec}
-    {log_option_description}
---reads-dir=<reads-dir>
-    Parent output directory to which read simulation directories will be
-    written [default: output].
---quant-dir=<quant-dir>
-    Parent output directory to which quantification run directories will be
-    written [default: output].
---stats-dir=<stats-dir>
-    Directory to output assembled stats and graphs to
-    [default: output/analysis].
---num-molecules=<num-molecules>
-    Flux Simulator parameters will be set for the main simulation to start with
-    this number of transcript molecules in the initial population
-    [default: 30000000].
---num-noise-molecules=<num-noise-molecules>
-    Flux Simulator parameters will be set for the noise simulation to start
-    with this number of noise transcript molecules in the initial population
-    [default: 2000000]
---nocleanup
-    If not specified, files non-essential for subsequent quantification (when
-    creating reads) and assessing quantification accuracy (when quantifying)
-    will be deleted.
---num-threads=<num-threads>
-    Number of threads to be used by multi-threaded quantification methods
-    [default: 1].
--f --params-file=<params-file>
-    File containing specification of quantification methods, read-lengths,
-    read-depths and end, error, bias, strandedness and noise depth percentage
-    parameter values to create reads or estimate transcript abundances for.
--q --quant-method=<quant-methods>
-    Comma-separated list of quantification methods to run.
--l --read-length=<read-lengths>
-    Comma-separated list of read-lengths to perform quantification for.
--d --read-depth=<read-depths>
-    Comma-separated list of read-depths to perform quantification for.
--p --paired-end=<paired-ends>
-    Comma-separated list of True/False strings indicating whether
-    quantification should be performed for single or paired-end reads.
--e --error=<errors>
-    Comma-separated list of True/False strings indicating whether
-    quantification should be performed with or without read errors.
--b --bias=<biases>
-    Comma-separated list of True/False strings indicating whether
-    quantification should be performed with or without read sequence bias.
--s --stranded=<stranded>
-    Comma-separated list of True/False strings indicating whether reads should
-    be generated, or quantification performed, simulating a protocol that
-    produces stranded reads.
---noise-perc=<noise-depth-percentage>
-    Comma-separated list of percentages of the overall read-depth:
-    quantification will be performed on sets of reads containing noise from a
-    specified set of transcripts at these depths.
---transcript-gtf=<gtf-file>
-    GTF formatted file describing the transcripts to be simulated.
---noise-transcript-gtf=<noise-gtf-file>
-    GTF formatted file describing transcripts to be simulated as background
-    noise.
---genome-fasta=<genome-fasta-dir>
-    Directory containing per-chromosome sequences as FASTA files.
---plot-format=<plot-format>
-    Output format for graphs (one of {plot_formats}) [default: pdf].
---grouped-threshold=<gp-threshold>
-    Minimum number of data points required for a group of transcripts to be
-    shown on a plot [default: 300].
---error-fraction-threshold=<ef-threshold>
-    Transcripts whose estimated TPM is greater than this percentage higher or
-    lower than their real TPM are considered above threshold for the "error
-    fraction" statistic [default: 10].
---not-present-cutoff=<cutoff>
-    Cut-off value for the number of transcripts per-million below which a
-    transcript is considered to be "not present" [default: 0.1].
-"""
-
 import docopt
 import flux_simulator as fs
 import options as opt
@@ -383,11 +238,6 @@ def _get_executables_for_commands():
     return execs
 
 
-def _get_piquant_command(options):
-    return [option for option, val in options.items()
-            if (val and option in _get_executables_for_commands())][0]
-
-
 def _write_accumulated_stats(options):
     if not os.path.exists(options[po.STATS_DIRECTORY]):
         os.mkdir(options[po.STATS_DIRECTORY])
@@ -451,9 +301,7 @@ def _analyse_runs(logger, options):
         logger, options, transcript_stats_param_values)
 
 
-def _run_piquant_command(logger, options, param_values):
-    piquant_command = _get_piquant_command(options)
-
+def _run_piquant_command(logger, piquant_command, options, param_values):
     parameters.execute_for_param_sets(
         _get_executables_for_commands()[piquant_command],
         logger, options, **param_values)
@@ -462,16 +310,30 @@ def _run_piquant_command(logger, options, param_values):
         _analyse_runs(logger, options)
 
 
-def _main(docstring):
-    # Read in command-line options
-    docstring = opt.substitute_common_options_into_usage(
-        docstring, plot_formats=plot.PLOT_FORMATS)
-    options = docopt.docopt(docstring, version="piquant v" + __version__)
+def piquant(args):
+    # Check that a piquant command has been specified
+    if len(args) < 2:
+        exit(("Exiting - one of the following piquant commands must be " +
+              "specified:\n    {cs}\nTo get help on a particular command, " +
+              "run that command with the --help option.\n\nFor further " +
+              "documentation on piquant, please see " +
+              "http://piquant.readthedocs.org/en/latest/.").format(
+             cs="\n    ".join(po.get_command_names())))
+
+    command_name, args = sys.argv[1], sys.argv[2:]
+
+    # Check the specified command is valid
+    command = po.get_command(command_name)
+
+    # Read command-line options
+    usage = po.get_usage_message(command)
+    options = docopt.docopt(usage, version="piquant v" + __version__)
 
     # Validate and process command-line options
     param_values = None
     try:
-        options, param_values = po.validate_command_line_options(options)
+        options, param_values = \
+            po.validate_command_line_options(command, options)
     except schema.SchemaError as exc:
         exit("Exiting. " + exc.code)
 
@@ -479,8 +341,7 @@ def _main(docstring):
     logger = opt.get_logger_for_options(options)
 
     # Run the specified piquant command
-    _run_piquant_command(logger, options, param_values)
-
+    _run_piquant_command(logger, command, options, param_values)
 
 if __name__ == "__main__":
-    _main(__doc__)
+    piquant(sys.argv)
