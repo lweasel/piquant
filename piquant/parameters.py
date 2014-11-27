@@ -118,13 +118,20 @@ def get_run_parameters():
 
 
 def validate_command_line_parameter_sets(
-        params_file, cl_options, ignore_params=[]):
+        params_file_path, cl_options, ignore_params=[]):
 
     file_param_vals = {}
-    if params_file:
-        with open(params_file) as f:
-            file_param_vals = {param: vals for param, vals in
-                               [line.strip().split() for line in f]}
+    if params_file_path:
+        with open(params_file_path) as params_file:
+            option_names = [p.option_name for p in _PARAMETERS]
+            file_param_vals = {}
+            for option_name, vals in \
+                    [line.strip().split() for line in params_file]:
+                if option_name not in option_names:
+                    raise schema.SchemaError(
+                        None, "Unknown option '{o}' in parameters file.".
+                        format(o=option_name))
+                file_param_vals[option_name] = vals
 
     param_vals = {}
     for param in _PARAMETERS:
