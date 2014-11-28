@@ -208,7 +208,7 @@ NOISE_DEPTH_PERCENT = _PiquantOption(
     "from a specified set of transcripts at these depths",
     title="Noise depth percentage", is_numeric=True,
     option_validator=lambda x: opt.validate_int_option(
-        x, "Noise depth percentage must be a positive integer", min_val=1),
+        x, "Noise depth percentage must be a positive integer", min_val=0),
     value_namer=lambda x: "no_noise" if x == 0 else "noise-{d}x".format(d=x),
     option_type=_PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
 
