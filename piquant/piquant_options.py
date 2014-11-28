@@ -179,15 +179,6 @@ ERRORS = _PiquantOption(
     file_namer=lambda x: "errors" if x else "no_errors",
     option_type=_PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
 
-BIAS = _PiquantOption(
-    "bias",
-    "Comma-separated list of True/False strings indicating whether " +
-    "quantification should be performed with or without read sequence bias",
-    title="Bias", option_validator=opt.check_boolean_value,
-    value_namer=lambda x: "with bias" if x else "no bias",
-    file_namer=lambda x: "bias" if x else "no_bias",
-    option_type=_PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
-
 STRANDED = _PiquantOption(
     "stranded",
     "Comma-separated list of True/False strings indicating whether reads " +
@@ -195,6 +186,15 @@ STRANDED = _PiquantOption(
     "protocol that produces stranded reads",
     title="Strandedness", option_validator=opt.check_boolean_value,
     value_namer=lambda x: "stranded" if x else "unstranded",
+    option_type=_PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
+
+BIAS = _PiquantOption(
+    "bias",
+    "Comma-separated list of True/False strings indicating whether " +
+    "quantification should be performed with or without read sequence bias",
+    title="Bias", option_validator=opt.check_boolean_value,
+    value_namer=lambda x: "with bias" if x else "no bias",
+    file_namer=lambda x: "bias" if x else "no_bias",
     option_type=_PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
 
 NOISE_DEPTH_PERCENT = _PiquantOption(
