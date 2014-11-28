@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os.path
 import pandas as pd
-import parameters
+import piquant_options as po
 import seaborn as sb
 import statistics
 import sys
@@ -78,22 +78,23 @@ def _set_ticks_for_classifier_plot(locations, classifier):
     plt.xticks(locations, classifier.get_value_labels(len(locations)))
 
 
-def _get_group_param_values(stats_df, group_param):
-    group_param_vals = stats_df[group_param.name].value_counts().index.tolist()
-    group_param_vals.sort()
-    return group_param_vals
+def _get_group_mqr_option_values(stats_df, group_mqr_option):
+    group_mqr_option_vals = \
+        stats_df[group_mqr_option.name].value_counts().index.tolist()
+    group_mqr_option_vals.sort()
+    return group_mqr_option_vals
 
 
-def _get_grouped_by_param_stats_plot_file_name_elements(
-        base_name, plotted, group_param, fixed_param_info,
+def _get_grouped_by_mqr_option_stats_plot_file_name_elements(
+        base_name, plotted, group_mqr_option, fixed_mqr_option_info,
         versus=None, ascending=None):
     name_elements = [base_name, plotted]
     if versus:
         name_elements += ["vs", versus]
-    name_elements += ["per", group_param.title.lower()]
+    name_elements += ["per", group_mqr_option.title.lower()]
     if ascending is not None:
         name_elements.append("asc" if ascending else "desc")
-    name_elements += fixed_param_info
+    name_elements += fixed_mqr_option_info
     if ascending is not None:
         name_elements.append("distribution")
     return name_elements
@@ -109,37 +110,40 @@ def _get_stats_plot_file_name_elements(
     return name_elements
 
 
-def _get_grouped_by_param_stats_plot_title(
-        plotted, group_param, fixed_param_info, versus=None):
+def _get_grouped_by_mqr_option_stats_plot_title(
+        plotted, group_mqr_option, fixed_mqr_option_info, versus=None):
 
     title_elements = [plotted]
     if versus:
         title_elements += ["vs", _decapitalized(versus)]
-    title_elements += ["per", group_param.title.lower()]
+    title_elements += ["per", group_mqr_option.title.lower()]
 
     title = " ".join(title_elements)
-    if len(fixed_param_info) > 0:
-        title += ": " + ", ".join(fixed_param_info)
+    if len(fixed_mqr_option_info) > 0:
+        title += ": " + ", ".join(fixed_mqr_option_info)
 
     return title
 
 
-def _plot_statistic_grouped_by_parameter(
-        stats_df, group_param, xcol, ycol, xlabel, ylabel,
+def _plot_statistic_grouped_by_mqr_optioneter(
+        stats_df, group_mqr_option, xcol, ycol, xlabel, ylabel,
         plot_bounds_setter, title):
 
-    group_param_vals = _get_group_param_values(stats_df, group_param)
+    group_mqr_option_vals = _get_group_mqr_option_values(
+        stats_df, group_mqr_option)
 
     xmin = ymin = sys.maxsize
     xmax = ymax = -sys.maxsize - 1
 
-    for group_param_value in group_param_vals:
-        group_stats = stats_df[stats_df[group_param.name] == group_param_value]
+    for group_mqr_option_value in group_mqr_option_vals:
+        group_stats = stats_df[
+            stats_df[group_mqr_option.name] == group_mqr_option_value]
         group_stats.sort(columns=xcol, axis=0, inplace=True)
         xvals = group_stats[xcol]
         yvals = group_stats[ycol]
         plt.plot(xvals, yvals, '-o',
-                 label=group_param.get_value_name(group_param_value))
+                 label=group_mqr_option.get_value_name(
+                     group_mqr_option_value))
 
         group_ymin = yvals.min()
         if group_ymin < ymin:
@@ -161,51 +165,52 @@ def _plot_statistic_grouped_by_parameter(
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.legend(title=group_param.title, loc=4)
+    plt.legend(title=group_mqr_option.title, loc=4)
     plt.suptitle(title)
 
     return (ymin, ymax)
 
 
-def _plot_statistic_vs_varying_param_grouped_by_param(
-        fformat, stats, base_name, statistic,
-        group_param, varying_param, fixed_param_values):
+def _plot_statistic_vs_varying_mqr_option_grouped_by_mqr_option(
+        fformat, stats, base_name, statistic, group_mqr_option,
+        varying_mqr_option, fixed_mqr_option_values):
 
-    fixed_param_info = parameters.get_value_names(fixed_param_values)
+    fixed_mqr_option_info = po.get_value_names(fixed_mqr_option_values)
 
-    name_elements = _get_grouped_by_param_stats_plot_file_name_elements(
-        base_name, statistic.name,
-        group_param, fixed_param_info, versus=varying_param.name)
+    name_elements = _get_grouped_by_mqr_option_stats_plot_file_name_elements(
+        base_name, statistic.name, group_mqr_option,
+        fixed_mqr_option_info, versus=varying_mqr_option.name)
 
     with _saving_new_plot(fformat, *name_elements):
-        title = _get_grouped_by_param_stats_plot_title(
-            statistic.title, group_param, fixed_param_info,
-            versus=varying_param.title)
-        _plot_statistic_grouped_by_parameter(
-            stats, group_param, varying_param.name, statistic.name,
-            varying_param.title, statistic.title,
+        title = _get_grouped_by_mqr_option_stats_plot_title(
+            statistic.title, group_mqr_option, fixed_mqr_option_info,
+            versus=varying_mqr_option.title)
+        _plot_statistic_grouped_by_mqr_optioneter(
+            stats, group_mqr_option, varying_mqr_option.name, statistic.name,
+            varying_mqr_option.title, statistic.title,
             _get_plot_bounds_setter(statistic), title)
 
 
-def _plot_statistic_vs_classifier_grouped_by_param(
-        fformat, stats, base_name, statistic, group_param,
-        classifier, fixed_param_values):
+def _plot_statistic_vs_classifier_grouped_by_mqr_option(
+        fformat, stats, base_name, statistic, group_mqr_option,
+        classifier, fixed_mqr_option_values):
 
     clsfr_col = classifier.get_column_name()
-    fixed_param_info = parameters.get_value_names(fixed_param_values)
+    fixed_mqr_option_info = po.get_value_names(fixed_mqr_option_values)
 
-    name_elements = _get_grouped_by_param_stats_plot_file_name_elements(
-        base_name, statistic.name, group_param, fixed_param_info,
-        versus=clsfr_col)
+    name_elements = _get_grouped_by_mqr_option_stats_plot_file_name_elements(
+        base_name, statistic.name, group_mqr_option,
+        fixed_mqr_option_info, versus=clsfr_col)
 
     with _saving_new_plot(fformat, *name_elements):
         xlabel = _capitalized(classifier.get_plot_title())
-        title = _get_grouped_by_param_stats_plot_title(
-            statistic.title, group_param, fixed_param_info, versus=xlabel)
+        title = _get_grouped_by_mqr_option_stats_plot_title(
+            statistic.title, group_mqr_option,
+            fixed_mqr_option_info, versus=xlabel)
 
-        _plot_statistic_grouped_by_parameter(
-            stats, group_param, clsfr_col, statistic.name,
-            xlabel, statistic.title,
+        _plot_statistic_grouped_by_mqr_optioneter(
+            stats, group_mqr_option, clsfr_col,
+            statistic.name, xlabel, statistic.title,
             _get_plot_bounds_setter(statistic), title)
 
         min_xval = stats[clsfr_col].min()
@@ -214,23 +219,23 @@ def _plot_statistic_vs_classifier_grouped_by_param(
             np.arange(min_xval, max_xval + 1), classifier)
 
 
-def _plot_cumulative_distribution_grouped_by_param(
-        fformat, stats, base_name, group_param,
-        classifier, ascending, fixed_param_values):
+def _plot_cumulative_distribution_grouped_by_mqr_option(
+        fformat, stats, base_name, group_mqr_option,
+        classifier, ascending, fixed_mqr_option_values):
 
     clsfr_col = classifier.get_column_name()
-    fixed_param_info = parameters.get_value_names(fixed_param_values)
+    fixed_mqr_option_info = po.get_value_names(fixed_mqr_option_values)
 
-    name_elements = _get_grouped_by_param_stats_plot_file_name_elements(
-        base_name, clsfr_col, group_param, fixed_param_info,
-        ascending=ascending)
+    name_elements = _get_grouped_by_mqr_option_stats_plot_file_name_elements(
+        base_name, clsfr_col, group_mqr_option,
+        fixed_mqr_option_info, ascending=ascending)
 
     with _saving_new_plot(fformat, *name_elements):
-        title = _get_grouped_by_param_stats_plot_title(
-            _capitalized(clsfr_col) + " threshold", group_param,
-            fixed_param_info)
-        _plot_statistic_grouped_by_parameter(
-            stats, group_param, clsfr_col, t.TRUE_POSITIVE_PERCENTAGE,
+        title = _get_grouped_by_mqr_option_stats_plot_title(
+            _capitalized(clsfr_col) + " threshold", group_mqr_option,
+            fixed_mqr_option_info)
+        _plot_statistic_grouped_by_mqr_optioneter(
+            stats, group_mqr_option, clsfr_col, t.TRUE_POSITIVE_PERCENTAGE,
             _capitalized(clsfr_col),
             _get_distribution_plot_ylabel(ascending),
             _set_distribution_plot_bounds, title)
@@ -318,41 +323,42 @@ def plot_cumulative_transcript_distribution(
         plt.suptitle(_capitalized(clsfr_col) + " threshold: " + tpm_label)
 
 
-# Utility functions for manipulating sets of parameters
+# Utility functions for manipulating sets of quantification run options
 
 
-def _degenerate_param(param, param_values):
-    return len(param_values[param]) <= 1
+def _degenerate_mqr_option(mqr_option, mqr_option_values):
+    return len(mqr_option_values[mqr_option]) <= 1
 
 
-def _get_non_degenerate_params(params, param_values):
-    return [p for p in params if not _degenerate_param(p, param_values)]
+def _get_non_degenerate_mqr_options(mqr_options, mqr_option_values):
+    return [o for o in mqr_options
+            if not _degenerate_mqr_option(o, mqr_option_values)]
 
 
-def _remove_from(params, to_remove):
+def _remove_from(mqr_options, to_remove):
     get_pset = lambda x: x if isinstance(x, set) \
         else (set(x) if isinstance(x, list) else set([x]))
-    return get_pset(params) - get_pset(to_remove)
+    return get_pset(mqr_options) - get_pset(to_remove)
 
 
-def _get_fixed_params(all_params, non_fixed, param_values):
-    fixed_params = [p for p in _remove_from(all_params, non_fixed)
-                    if not _degenerate_param(p, param_values)]
+def _get_fixed_mqr_options(all_mqr_options, non_fixed, mqr_option_values):
+    fixed_mqr_options = [o for o in _remove_from(all_mqr_options, non_fixed)
+                         if not _degenerate_mqr_option(o, mqr_option_values)]
     value_sets = [v for v in itertools.product(
-                  *[param_values[p] for p in fixed_params])]
-    return fixed_params, value_sets
+                  *[mqr_option_values[o] for o in fixed_mqr_options])]
+    return fixed_mqr_options, value_sets
 
 
-def _get_stats_for_fixed_params(stats_df, fixed_params, fp_values_set):
-    fixed_param_values = {}
-    for i, fixed_p in enumerate(fixed_params):
-        fp_value = fp_values_set[i]
-        stats_df = stats_df[stats_df[fixed_p.name] == fp_value]
-        fixed_param_values[fixed_p] = fp_value
-    return stats_df, fixed_param_values
+def _get_stats_for_fixed_mqr_options(stats_df, fixed_mqr_options, fo_values_set):
+    fixed_mqr_option_values = {}
+    for i, fixed_o in enumerate(fixed_mqr_options):
+        fo_value = fo_values_set[i]
+        stats_df = stats_df[stats_df[fixed_o.name] == fo_value]
+        fixed_mqr_option_values[fixed_o] = fo_value
+    return stats_df, fixed_mqr_option_values
 
 
-# Making plots over multiple sets of sequencing and quantification parameters
+# Making plots over multiple sets of sequencing and quantification run options
 
 
 def _get_plot_subdirectory(parent_dir, sub_dir_name):
@@ -363,7 +369,7 @@ def _get_plot_subdirectory(parent_dir, sub_dir_name):
 
 
 def draw_overall_stats_graphs(
-        fformat, stats_dir, overall_stats, param_values, tpm_level):
+        fformat, stats_dir, overall_stats, mqr_option_values, tpm_level):
 
     # Draw graphs derived from statistics calculated for the whole set of TPMs.
     # e.g. the Spearman correlation of calculated and real TPMs graphed as
@@ -372,44 +378,45 @@ def draw_overall_stats_graphs(
     overall_stats_dir = _get_plot_subdirectory(
         stats_dir, "overall_{l}_stats_graphs".format(l=tpm_level))
 
-    numerical_params = \
-        [p for p in parameters.get_run_parameters() if p.is_numeric]
+    numerical_mqr_options = \
+        [o for o in po.get_multiple_quant_run_options() if o.is_numeric]
 
-    for param in _get_non_degenerate_params(
-            parameters.get_run_parameters(), param_values):
+    for mqr_option in _get_non_degenerate_mqr_options(
+            po.get_multiple_quant_run_options(), mqr_option_values):
 
-        non_degenerate_numerical_params = _get_non_degenerate_params(
-            _remove_from(numerical_params, param), param_values)
-        if len(non_degenerate_numerical_params) == 0:
+        non_deg_numerical_mqr_opts = _get_non_degenerate_mqr_options(
+            _remove_from(numerical_mqr_options, mqr_option), mqr_option_values)
+        if len(non_deg_numerical_mqr_opts) == 0:
             continue
 
-        param_stats_dir = _get_plot_subdirectory(
-            overall_stats_dir, "per_" + param.name)
+        mqr_option_stats_dir = _get_plot_subdirectory(
+            overall_stats_dir, "per_" + mqr_option.name)
 
-        for num_p in non_degenerate_numerical_params:
-            num_param_stats_dir = _get_plot_subdirectory(
-                param_stats_dir, "by_" + num_p.name)
+        for num_p in non_deg_numerical_mqr_opts:
+            num_mqr_option_stats_dir = _get_plot_subdirectory(
+                mqr_option_stats_dir, "by_" + num_p.name)
 
-            fixed_params, fp_values_sets = \
-                _get_fixed_params(parameters.get_run_parameters(),
-                                  [param, num_p], param_values)
+            fixed_mqr_options, fp_values_sets = \
+                _get_fixed_mqr_options(po.get_multiple_quant_run_options(),
+                                       [mqr_option, num_p], mqr_option_values)
 
             for fp_values_set in fp_values_sets:
-                stats_df, fixed_param_values = _get_stats_for_fixed_params(
-                    overall_stats, fixed_params, fp_values_set)
+                stats_df, fixed_mqr_option_values = \
+                    _get_stats_for_fixed_mqr_options(
+                        overall_stats, fixed_mqr_options, fp_values_set)
 
                 for stat in statistics.get_graphable_statistics():
                     statistic_dir = _get_plot_subdirectory(
-                        num_param_stats_dir, stat.name)
+                        num_mqr_option_stats_dir, stat.name)
 
                     graph_file_basename = os.path.join(
                         statistic_dir, statistics.OVERALL_STATS_PREFIX)
-                    _plot_statistic_vs_varying_param_grouped_by_param(
+                    _plot_statistic_vs_varying_mqr_option_grouped_by_mqr_option(
                         fformat, stats_df, graph_file_basename,
-                        stat, param, num_p, fixed_param_values)
+                        stat, mqr_option, num_p, fixed_mqr_option_values)
 
 
-def draw_grouped_stats_graphs(fformat, stats_dir, param_values, threshold):
+def draw_grouped_stats_graphs(fformat, stats_dir, mqr_option_values, threshold):
     # Draw graphs derived from statistics calculated on groups of TPMs that
     # have been stratified into sets based on some classifier of transcripts.
     # e.g. the median percentage error of calculated vs real TPMs graphed as
@@ -433,32 +440,33 @@ def draw_grouped_stats_graphs(fformat, stats_dir, param_values, threshold):
             grouped_stats_dir,
             "grouped_by_" + clsfr.get_column_name().replace(' ', '_'))
 
-        for param in _get_non_degenerate_params(
-                parameters.get_run_parameters(), param_values):
-            param_stats_dir = _get_plot_subdirectory(
-                clsfr_dir, "per_" + param.name)
+        for mqr_option in _get_non_degenerate_mqr_options(
+                po.get_multiple_quant_run_options(), mqr_option_values):
+            mqr_option_stats_dir = _get_plot_subdirectory(
+                clsfr_dir, "per_" + mqr_option.name)
 
-            fixed_params, fp_values_sets = \
-                _get_fixed_params(parameters.get_run_parameters(),
-                                  param, param_values)
+            fixed_mqr_options, fp_values_sets = \
+                _get_fixed_mqr_options(po.get_multiple_quant_run_options(),
+                                       mqr_option, mqr_option_values)
 
             for fp_values_set in fp_values_sets:
-                stats_df, fixed_param_values = _get_stats_for_fixed_params(
-                    clsfr_stats, fixed_params, fp_values_set)
+                stats_df, fixed_mqr_option_values = \
+                    _get_stats_for_fixed_mqr_options(
+                        clsfr_stats, fixed_mqr_options, fp_values_set)
 
                 for stat in statistics.get_graphable_statistics():
                     statistic_dir = _get_plot_subdirectory(
-                        param_stats_dir, stat.name)
+                        mqr_option_stats_dir, stat.name)
                     graph_file_basename = os.path.join(
                         statistic_dir, "grouped")
 
                     filtered_stats_df = stats_df[num_tpms_filter(stats_df)]
-                    _plot_statistic_vs_classifier_grouped_by_param(
+                    _plot_statistic_vs_classifier_grouped_by_mqr_option(
                         fformat, filtered_stats_df, graph_file_basename,
-                        stat, param, clsfr, fixed_param_values)
+                        stat, mqr_option, clsfr, fixed_mqr_option_values)
 
 
-def draw_distribution_graphs(fformat, stats_dir, param_values):
+def draw_distribution_graphs(fformat, stats_dir, mqr_option_values):
     # Draw distributions illustrating the percentage of TPMs above or below
     # some threshold as that threshold changes. e.g. the percentage of TPMs
     # whose absolute percentage error in calculated TPM, as compared to real
@@ -478,22 +486,23 @@ def draw_distribution_graphs(fformat, stats_dir, param_values):
             distribution_stats_dir,
             clsfr.get_column_name().replace(' ', '_') + "_distribution")
 
-        for param in _get_non_degenerate_params(
-                parameters.get_run_parameters(), param_values):
+        for mqr_option in _get_non_degenerate_mqr_options(
+                po.get_multiple_quant_run_options(), mqr_option_values):
 
-            param_stats_dir = _get_plot_subdirectory(
-                clsfr_dir, "per_" + param.name)
+            mqr_option_stats_dir = _get_plot_subdirectory(
+                clsfr_dir, "per_" + mqr_option.name)
             graph_file_basename = os.path.join(
-                param_stats_dir, "distribution")
+                mqr_option_stats_dir, "distribution")
 
-            fixed_params, fp_values_sets = \
-                _get_fixed_params(parameters.get_run_parameters(),
-                                  param, param_values)
+            fixed_mqr_options, fp_values_sets = \
+                _get_fixed_mqr_options(po.get_multiple_quant_run_options(),
+                                       mqr_option, mqr_option_values)
 
             for fp_values_set in fp_values_sets:
-                stats_df, fixed_param_values = _get_stats_for_fixed_params(
-                    clsfr_stats, fixed_params, fp_values_set)
+                stats_df, fixed_mqr_option_values = \
+                    _get_stats_for_fixed_mqr_options(
+                        clsfr_stats, fixed_mqr_options, fp_values_set)
 
-                _plot_cumulative_distribution_grouped_by_param(
-                    fformat, stats_df, graph_file_basename, param,
-                    clsfr, asc, fixed_param_values)
+                _plot_cumulative_distribution_grouped_by_mqr_option(
+                    fformat, stats_df, graph_file_basename, mqr_option,
+                    clsfr, asc, fixed_mqr_option_values)

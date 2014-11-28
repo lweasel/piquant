@@ -54,7 +54,6 @@ import itertools
 import numpy as np
 import options as opt
 import pandas as pd
-import parameters
 import piquant_options as po
 import statistics
 import tpms as t
@@ -78,7 +77,9 @@ def _validate_command_line_options(options):
         opt.validate_log_level(options)
         opt.validate_file_option(options[TPM_FILE], "Could not open TPM file")
 
-        po.validate_quantification_run_analysis_options(options)
+        for option in [po.PLOT_FORMAT, po.GROUPED_THRESHOLD,
+                       po.ERROR_FRACTION_THRESHOLD, po.NOT_PRESENT_CUTOFF]:
+            option.option_validator(options[option.option_name])
     except schema.SchemaError as exc:
         exit(exc.code)
 
@@ -88,9 +89,9 @@ def _get_tpm_infos(non_zero, tp_tpms):
             TpmInfo(tp_tpms, TRUE_POSITIVES_LABEL)]
 
 
-def _add_parameter_values_to_stats(stats, options):
-    for param in parameters.get_run_parameters():
-        stats[param.name] = options[param.option_name]
+def _add_mqr_option_values_to_stats(stats, options):
+    for option in po.get_multiple_quant_run_options():
+        stats[option.name] = options[option.option_name]
 
 
 def _write_overall_stats(transcript_tpms, tp_transcript_tpms,
@@ -100,7 +101,7 @@ def _write_overall_stats(transcript_tpms, tp_transcript_tpms,
             [(transcript_tpms, tp_transcript_tpms, t.TRANSCRIPT),
              (gene_tpms, tp_gene_tpms, t.GENE)]:
         stats = t.get_stats(tpms, tp_tpms, statistics.get_statistics())
-        _add_parameter_values_to_stats(stats, options)
+        _add_mqr_option_values_to_stats(stats, options)
 
         stats_file_name = statistics.get_stats_file(
             ".", options[OUT_FILE_BASENAME], tpm_level)
@@ -115,7 +116,7 @@ def _write_stratified_stats(tpms, tp_tpms, non_zero, options):
             column_name = classifier.get_column_name()
             stats = t.get_grouped_stats(
                 tpms, tp_tpms, column_name, statistics.get_statistics())
-            _add_parameter_values_to_stats(stats, options)
+            _add_mqr_option_values_to_stats(stats, options)
             clsfr_stats[classifier] = stats
 
             stats_file_name = statistics.get_stats_file(
@@ -126,7 +127,7 @@ def _write_stratified_stats(tpms, tp_tpms, non_zero, options):
             for ascending in [True, False]:
                 stats = t.get_distribution_stats(
                     non_zero, tp_tpms, classifier, ascending)
-                _add_parameter_values_to_stats(stats, options)
+                _add_mqr_option_values_to_stats(stats, options)
 
                 stats_file_name = statistics.get_stats_file(
                     ".", options[OUT_FILE_BASENAME], t.TRANSCRIPT,

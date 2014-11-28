@@ -2,7 +2,6 @@ import file_writer as fw
 import flux_simulator as fs
 import quantifiers as qs
 import os.path
-import parameters
 import piquant_options as po
 
 RUN_SCRIPT = "run_quantification.sh"
@@ -118,32 +117,32 @@ def _add_assemble_quantification_data(
 
 
 def _add_analyse_quantification_results(
-        writer, run_dir, piquant_options, **params):
+        writer, run_dir, options, **mqr_options):
 
     # Finally perform analysis on the calculated TPMs
     writer.add_comment("Perform analysis on calculated TPMs.")
 
-    options_dict = {p.name: p.option_name for
-                    p in parameters.get_run_parameters()}
+    options_dict = {o.param_name: o.option_name for
+                    o in po.get_multiple_quant_run_options()}
 
-    params_spec = ""
-    for param_name, param_val in params.items():
-        params_spec += "{name}={val} ".format(
-            name=options_dict[param_name],
-            val=str(param_val))
+    mqr_options_spec = ""
+    for opt_name, opt_val in mqr_options.items():
+        mqr_options_spec += "{name}={val} ".format(
+            name=options_dict[opt_name],
+            val=str(opt_val))
 
     writer.add_line(
         ("{command} --plot-format={format} " +
          "--grouped-threshold={gp_threshold} " +
          "--error-fraction-threshold={ef_threshold} " +
          "--not-present-cutoff={cutoff} " +
-         "{params_spec} {tpms_file} {output_basename}").format(
+         "{mqr_options_spec} {tpms_file} {output_basename}").format(
             command=_get_script_path(ANALYSE_DATA_SCRIPT),
-            format=piquant_options[po.PLOT_FORMAT],
-            gp_threshold=piquant_options[po.GROUPED_THRESHOLD],
-            ef_threshold=piquant_options[po.ERROR_FRACTION_THRESHOLD],
-            cutoff=piquant_options[po.NOT_PRESENT_CUTOFF],
-            params_spec=params_spec,
+            format=options[po.PLOT_FORMAT.option_name],
+            gp_threshold=options[po.GROUPED_THRESHOLD.option_name],
+            ef_threshold=options[po.ERROR_FRACTION_THRESHOLD.option_name],
+            cutoff=options[po.NOT_PRESENT_CUTOFF.option_name],
+            mqr_options_spec=mqr_options_spec,
             tpms_file=TPMS_FILE,
             output_basename=os.path.basename(run_dir)))
 
@@ -230,7 +229,8 @@ def write_run_quantification_script(
             _add_process_command_line_options(writer)
 
         quantifier_dir = os.path.join(
-            piquant_options[po.QUANT_OUTPUT_DIR], "quantifier_scratch")
+            piquant_options[po.QUANT_OUTPUT_DIR.option_name],
+            "quantifier_scratch")
 
         quant_params = _get_quant_params(
             reads_dir, quantifier_dir, transcript_gtf, genome_fasta,
@@ -242,7 +242,7 @@ def write_run_quantification_script(
                 quantifier_dir, transcript_gtf)
 
         with writer.section():
-            cleanup = not piquant_options[po.NO_CLEANUP]
+            cleanup = not piquant_options[po.NO_CLEANUP.option_name]
             _add_quantify_transcripts(
                 writer, quant_method, quant_params, cleanup)
 
