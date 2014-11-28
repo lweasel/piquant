@@ -150,14 +150,18 @@ QUANT_METHOD = _PiquantOption(
 READ_DEPTH = _PiquantOption(
     "read_depth",
     "Comma-separated list of read-depths to perform quantification for",
-    title="Read depth", option_validator=int, is_numeric=True,
+    title="Read depth", is_numeric=True,
+    option_validator=lambda x: opt.validate_int_option(
+        x, "Read depth must be a positive integer", min_val=1),
     value_namer=lambda x: "{d}x".format(d=x),
     option_type=_PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
 
 READ_LENGTH = _PiquantOption(
     "read_length",
     "Comma-separated list of read-lengths to perform quantification for",
-    title="Read length", option_validator=int, is_numeric=True,
+    title="Read length", is_numeric=True,
+    option_validator=lambda x: opt.validate_int_option(
+        x, "Read length must be a positive integer", min_val=1),
     value_namer=lambda x: "{l}b".format(l=x),
     option_type=_PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
 
@@ -202,7 +206,9 @@ NOISE_DEPTH_PERCENT = _PiquantOption(
     "Comma-separated list of percentages of the overall read-depth: " +
     "quantification will be performed on sets of reads containing noise " +
     "from a specified set of transcripts at these depths",
-    title="Noise depth percentage", option_validator=int, is_numeric=True,
+    title="Noise depth percentage", is_numeric=True,
+    option_validator=lambda x: opt.validate_int_option(
+        x, "Noise depth percentage must be a positive integer", min_val=1),
     value_namer=lambda x: "no_noise" if x == 0 else "noise-{d}x".format(d=x),
     option_type=_PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
 
