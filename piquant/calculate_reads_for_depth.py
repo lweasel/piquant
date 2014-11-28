@@ -67,7 +67,7 @@ def _read_expression_profiles(logger, pro_file):
 def _calculate_reads_for_depth(profiles, read_length, required_depth):
     total_transcript_length = profiles[fs.PRO_FILE_LENGTH_COL].sum()
     bases_to_sequence = total_transcript_length * required_depth
-    return bases_to_sequence // read_length
+    return int(bases_to_sequence // read_length)
 
 
 def _main(docstring):
