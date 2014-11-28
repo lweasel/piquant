@@ -11,7 +11,7 @@ def _get_test_multi_quant_run_option(
         is_numeric=False, value_namer=None, file_namer=None):
 
     option = po._QuantRunOption(
-        option_name, value_name, description, title, name,
+        name, option_name, value_name, description, title,
         option_validator=option_validator, is_numeric=is_numeric,
         value_namer=value_namer, file_namer=file_namer,
         multiple_quant_run_option=True)
@@ -47,7 +47,7 @@ def test_get_multi_quant_run_options_returns_quant_run_option_instances():
 def test_mqr_option_name_is_correct():
     name = "mqr_option name"
     o = _get_test_multi_quant_run_option(name=name)
-    assert o.param_name == name
+    assert o.name == name
 
 
 def test_mqr_option_title_is_correct():

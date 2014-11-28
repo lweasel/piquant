@@ -37,13 +37,13 @@ def _get_options_dir(run_dir, options, **qr_options):
     """
     qr_options = dict(qr_options)
     print(qr_options)
-    if not run_dir and po.QUANT_METHOD.param_name in qr_options:
-        del qr_options[po.QUANT_METHOD.param_name]
+    if not run_dir and po.QUANT_METHOD.name in qr_options:
+        del qr_options[po.QUANT_METHOD.name]
 
     dir_option = po.QUANT_OUTPUT_DIR if run_dir else po.READS_OUTPUT_DIR
 
     return os.path.join(
-        options[dir_option.option_name], po.get_file_name(**qr_options))
+        options[dir_option.name], po.get_file_name(**qr_options))
 
 
 def _reads_directory_checker(should_exist):
@@ -84,11 +84,11 @@ def _prepare_read_simulation(logger, options, **qr_options):
     instances to option values, describing properties of the read simulation
     to be performed.
     """
-    if not os.path.exists(options[po.READS_OUTPUT_DIR.option_name]):
-        os.mkdir(options[po.READS_OUTPUT_DIR.option_name])
+    if not os.path.exists(options[po.READS_OUTPUT_DIR.name]):
+        os.mkdir(options[po.READS_OUTPUT_DIR.name])
 
     reads_dir = _get_options_dir(False, options, **qr_options)
-    cleanup = not options[po.NO_CLEANUP.option_name]
+    cleanup = not options[po.NO_CLEANUP.name]
     logger.debug("Creating simulation files in " + reads_dir)
 
     prs.create_simulation_files(reads_dir, cleanup, **qr_options)
@@ -104,8 +104,8 @@ def _create_reads(logger, options, **qr_options):
 def _check_reads_created(logger, options, **qr_options):
     reads_dir = _get_options_dir(False, options, **qr_options)
     reads_file = fs.get_reads_file(
-        qr_options[po.ERRORS.param_name],
-        paired_end=(fs.LEFT_READS if qr_options[po.PAIRED_END.param_name]
+        qr_options[po.ERRORS.name],
+        paired_end=(fs.LEFT_READS if qr_options[po.PAIRED_END.name]
                     else None))
 
     if not os.path.exists(os.path.join(reads_dir, reads_file)):
@@ -145,8 +145,8 @@ def _prepare_quantification(logger, options, **qr_options):
     instances to option values, describing properties of the quantification run
     to be performed.
     """
-    if not os.path.exists(options[po.QUANT_OUTPUT_DIR.option_name]):
-        os.mkdir(options[po.QUANT_OUTPUT_DIR.option_name])
+    if not os.path.exists(options[po.QUANT_OUTPUT_DIR.name]):
+        os.mkdir(options[po.QUANT_OUTPUT_DIR.name])
 
     reads_dir = _get_options_dir(False, options, **qr_options)
     run_dir = _get_options_dir(True, options, **qr_options)
@@ -161,7 +161,7 @@ def _prequantifier():
     def prequantify(logger, options, **qr_options):
         run_dir = _get_options_dir(True, options, **qr_options)
 
-        quant_method = qr_options[po.QUANT_METHOD.param_name]
+        quant_method = qr_options[po.QUANT_METHOD.name]
         if quant_method not in quantifiers_used:
             quantifiers_used.append(quant_method)
             logger.info("Executing prequantification for " + str(quant_method))

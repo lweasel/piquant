@@ -12,26 +12,26 @@ import utils
 
 def _get_test_options(output_dir):
     return {
-        po.READS_OUTPUT_DIR.option_name: output_dir,
-        po.QUANT_OUTPUT_DIR.option_name: output_dir,
-        po.NO_CLEANUP.option_name: True,
-        po.PLOT_FORMAT.option_name: "pdf",
-        po.GROUPED_THRESHOLD.option_name: 3000,
-        po.ERROR_FRACTION_THRESHOLD.option_name: 10,
-        po.NOT_PRESENT_CUTOFF.option_name: 0.1
+        po.READS_OUTPUT_DIR.name: output_dir,
+        po.QUANT_OUTPUT_DIR.name: output_dir,
+        po.NO_CLEANUP.name: True,
+        po.PLOT_FORMAT.name: "pdf",
+        po.GROUPED_THRESHOLD.name: 3000,
+        po.ERROR_FRACTION_THRESHOLD.name: 10,
+        po.NOT_PRESENT_CUTOFF.name: 0.1
     }
 
 
 def get_test_qr_options(quant_method=None):
     qr_options = {
-        po.READ_DEPTH.param_name: 30,
-        po.READ_LENGTH.param_name: 50,
-        po.PAIRED_END.param_name: True,
-        po.BIAS.param_name: False
+        po.READ_DEPTH.name: 30,
+        po.READ_LENGTH.name: 50,
+        po.PAIRED_END.name: True,
+        po.BIAS.name: False
     }
 
     if quant_method:
-        qr_options[po.QUANT_METHOD.param_name] = quant_method
+        qr_options[po.QUANT_METHOD.name] = quant_method
 
     return qr_options
 
