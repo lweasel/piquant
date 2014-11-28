@@ -6,6 +6,7 @@ import options as opt
 import os
 import os.path
 import pandas as pd
+import piquant_commands as pc
 import piquant_options as po
 import plot
 import prepare_quantification_run as prq
@@ -216,21 +217,21 @@ class _StatsAccumulator:
 
 def _get_executables_for_commands():
     execs = {}
-    execs[po.PREPARE_READ_DIRS] = \
+    execs[pc.PREPARE_READ_DIRS] = \
         [_reads_directory_checker(False), _prepare_read_simulation]
-    execs[po.CREATE_READS] = \
+    execs[pc.CREATE_READS] = \
         [_reads_directory_checker(True), _create_reads]
-    execs[po.CHECK_READS] = \
+    execs[pc.CHECK_READS] = \
         [_reads_directory_checker(True), _check_reads_created]
-    execs[po.PREPARE_QUANT_DIRS] = \
+    execs[pc.PREPARE_QUANT_DIRS] = \
         [_run_directory_checker(False), _prepare_quantification]
-    execs[po.PREQUANTIFY] = [_prequantifier()]
-    execs[po.QUANTIFY] = \
+    execs[pc.PREQUANTIFY] = [_prequantifier()]
+    execs[pc.QUANTIFY] = \
         [_reads_directory_checker(True),
          _run_directory_checker(True), _quantify]
-    execs[po.CHECK_QUANTIFICATION] = \
+    execs[pc.CHECK_QUANTIFICATION] = \
         [_run_directory_checker(True), _check_quantification_completed]
-    execs[po.ANALYSE_RUNS] = \
+    execs[pc.ANALYSE_RUNS] = \
         [_run_directory_checker(True)] + \
         [_StatsAccumulator(tpms.TRANSCRIPT, {})] + \
         [_StatsAccumulator(tpms.GENE, {})] + \
@@ -308,7 +309,7 @@ def _run_piquant_command(logger, piquant_command, options, qr_options):
         _get_executables_for_commands()[piquant_command],
         logger, options, **qr_options)
 
-    if piquant_command == po.ANALYSE_RUNS:
+    if piquant_command == pc.ANALYSE_RUNS:
         _analyse_runs(logger, options)
 
 
@@ -320,22 +321,23 @@ def piquant(args):
               "run that command with the --help option.\n\nFor further " +
               "documentation on piquant, please see " +
               "http://piquant.readthedocs.org/en/latest/.").format(
-             cs="\n    ".join(po.get_command_names())))
+             cs="\n    ".join(pc.get_command_names())))
 
     command_name, args = sys.argv[1], sys.argv[2:]
 
     # Check the specified command is valid
-    command = po.get_command(command_name)
+    command = pc.get_command(command_name)
 
     # Read command-line options
-    usage = po.get_usage_message(command)
+    usage = pc.get_usage_message(command)
     options = docopt.docopt(usage, version="piquant v" + __version__)
 
     # Validate and process command-line options
     qr_options = None
     try:
+        options_to_check = pc.COMMANDS[command]
         options, qr_options = \
-            po.validate_command_line_options(command, options)
+            po.validate_command_line_options(command, options_to_check, options)
     except schema.SchemaError as exc:
         exit("Exiting. " + exc.code)
 

@@ -254,114 +254,7 @@ NOT_PRESENT_CUTOFF = _PiquantOption(
         x, "Cutoff value must be non-negative", min_val=0))
 
 
-COMMANDS = {}
-
-
-class _PiquantCommand:
-    INDEX = 0
-
-    def __init__(self, name, option_list):
-        self.name = name
-        self.option_list = option_list
-        self.index = _PiquantCommand.INDEX
-        _PiquantCommand.INDEX += 1
-
-        COMMANDS[name] = self
-
-PREPARE_READ_DIRS = _PiquantCommand(
-    "prepare_read_dirs",
-    [READS_OUTPUT_DIR, NUM_MOLECULES, NUM_NOISE_MOLECULES,
-     NO_CLEANUP, OPTIONS_FILE, READ_LENGTH, READ_DEPTH,
-     PAIRED_END, ERRORS, BIAS, STRANDED, NOISE_DEPTH_PERCENT,
-     TRANSCRIPT_GTF, NOISE_TRANSCRIPT_GTF, GENOME_FASTA_DIR])
-
-CREATE_READS = _PiquantCommand(
-    "create_reads",
-    [READS_OUTPUT_DIR, OPTIONS_FILE, READ_LENGTH, READ_DEPTH,
-     PAIRED_END, ERRORS, BIAS, STRANDED, NOISE_DEPTH_PERCENT])
-
-CHECK_READS = _PiquantCommand(
-    "check_reads",
-    [READS_OUTPUT_DIR, OPTIONS_FILE, READ_LENGTH, READ_DEPTH,
-     PAIRED_END, ERRORS, BIAS, STRANDED, NOISE_DEPTH_PERCENT])
-
-PREPARE_QUANT_DIRS = _PiquantCommand(
-    "prepare_quant_dirs",
-    [READS_OUTPUT_DIR, QUANT_OUTPUT_DIR, NO_CLEANUP, NUM_THREADS,
-     OPTIONS_FILE, READ_LENGTH, READ_DEPTH, PAIRED_END, ERRORS,
-     BIAS, STRANDED, QUANT_METHOD, NOISE_DEPTH_PERCENT,
-     TRANSCRIPT_GTF, GENOME_FASTA_DIR, PLOT_FORMAT,
-     GROUPED_THRESHOLD, ERROR_FRACTION_THRESHOLD, NOT_PRESENT_CUTOFF])
-
-PREQUANTIFY = _PiquantCommand(
-    "prequantify",
-    [QUANT_OUTPUT_DIR, OPTIONS_FILE, READ_LENGTH, READ_DEPTH,
-     PAIRED_END, ERRORS, BIAS, STRANDED, QUANT_METHOD,
-     NOISE_DEPTH_PERCENT])
-
-QUANTIFY = _PiquantCommand(
-    "quantify",
-    [READS_OUTPUT_DIR, QUANT_OUTPUT_DIR, OPTIONS_FILE, READ_LENGTH,
-     READ_DEPTH, PAIRED_END, ERRORS, BIAS, STRANDED,
-     QUANT_METHOD, NOISE_DEPTH_PERCENT])
-
-CHECK_QUANTIFICATION = _PiquantCommand(
-    "check_quant",
-    [QUANT_OUTPUT_DIR, OPTIONS_FILE, READ_LENGTH, READ_DEPTH,
-     PAIRED_END, ERRORS, BIAS, STRANDED, QUANT_METHOD,
-     NOISE_DEPTH_PERCENT])
-
-ANALYSE_RUNS = _PiquantCommand(
-    "analyse_runs",
-    [QUANT_OUTPUT_DIR, STATS_DIRECTORY, OPTIONS_FILE, READ_LENGTH,
-     READ_DEPTH, PAIRED_END, ERRORS, BIAS, STRANDED,
-     QUANT_METHOD, NOISE_DEPTH_PERCENT, PLOT_FORMAT])
-
-
-def get_command_names():
-    return sorted(COMMANDS.keys(), key=lambda c: COMMANDS[c].index)
-
-
-def get_command(command_name):
-    command_names = get_command_names()
-    if command_name not in command_names:
-        exit(("Exiting - unknown piquant command '{c}'. The command must be " +
-              "one of:\n    {cns}\nTo get help on a particular command, run " +
-              "that command with the --help option.\n\nFor further " +
-              "documentation on piquant, please see " +
-              "http://piquant.readthedocs.org/en/latest/.").
-             format(c=command_name, cns="\n    ".join(command_names)))
-
-    return COMMANDS[command_name]
-
-
-def get_usage_message(command):
-    option_list = sorted(command.option_list, key=lambda opt: opt.index)
-
-    usage = "Usage:\n"
-    usage += "{ind}piquant_{c}\n".format(ind=_INDENT, c=command.name)
-    usage += "{ind}[{{log_option_spec}}]\n".format(ind=_INDENT * 2)
-
-    for option in option_list:
-        usage += "{ind}[{usg}]\n".format(
-            ind=_INDENT * 2, usg=option.get_usage_string())
-
-    usage += "\nOptions:\n"
-
-    for common_opt in ["help", "ver", "log"]:
-        usage += "{{{co}_option_spec}}\n{ind}{{{co}_option_description}}\n".\
-            format(ind=_INDENT, co=common_opt)
-
-    for option in option_list:
-        usage += option.get_option_description()
-
-    usage = opt.substitute_common_options_into_usage(
-        usage, plot_formats=plot.PLOT_FORMATS)
-
-    return usage
-
-
-def validate_command_line_options(command, options):
+def validate_command_line_options(command, options_to_check, options):
     opt.validate_log_level(options)
 
     #options[READS_OUTPUT_DIR.option_name] = \
@@ -371,8 +264,6 @@ def validate_command_line_options(command, options):
     #options[STATS_DIRECTORY.option_name] = \
         #os.path.abspath(options[STATS_DIRECTORY.option_name])
 
-    options_to_check = list(COMMANDS[command])
-
     if options[NOISE_DEPTH_PERCENT.get_option_name()] == "0":
         options_to_check.remove(NOISE_TRANSCRIPT_GTF)
 
@@ -381,7 +272,8 @@ def validate_command_line_options(command, options):
     file_option_vals = {}
     if options_file_path:
         with open(options_file_path) as options_file:
-            option_names = [o.get_option_name() for o in _PiquantOption._OPTIONS]
+            option_names = \
+                [o.get_option_name() for o in _PiquantOption._OPTIONS]
             file_option_vals = {}
             for option_name, vals in \
                     [line.strip().split() for line in options_file]:
@@ -401,7 +293,8 @@ def validate_command_line_options(command, options):
             if option.get_option_name() in values_dict and \
                     values_dict[option.get_option_name()] is not None:
                 validated_vals = opt.validate_options_list(
-                    values_dict[option.get_option_name()], option.option_validator,
+                    values_dict[option.get_option_name()],
+                    option.option_validator,
                     option.title.lower())
 
                 if option in _PiquantOption._QUANT_RUN_OPTIONS:
