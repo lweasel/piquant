@@ -5,19 +5,19 @@ import tempfile
 
 
 def _get_test_multi_quant_run_option(
-        name="name", title="The Name", value_name="<option-value>",
+        name="name", title="The Name",
         description="description for the option",
-        option_name="--option-name", option_validator=int,
+        option_validator=int,
         is_numeric=False, value_namer=None, file_namer=None):
 
-    option = po._QuantRunOption(
-        name, option_name, value_name, description, title,
+    option = po._PiquantOption(
+        name, description, title=title,
         option_validator=option_validator, is_numeric=is_numeric,
         value_namer=value_namer, file_namer=file_namer,
-        multiple_quant_run_option=True)
+        option_type=po._PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
 
-    po._QUANT_RUN_OPTIONS.remove(option)
-    po._MULTI_QUANT_RUN_OPTIONS.remove(option)
+    po._PiquantOption._QUANT_RUN_OPTIONS.remove(option)
+    po._PiquantOption._MULTI_QUANT_RUN_OPTIONS.remove(option)
 
     return option
 
@@ -39,13 +39,13 @@ def _get_ignore_options():
     ]
 
 
-def test_get_multi_quant_run_options_returns_quant_run_option_instances():
+def test_get_multi_quant_run_options_returns_piquant_option_instances():
     opts = po.get_multiple_quant_run_options()
-    assert all([isinstance(o, po._QuantRunOption) for o in opts])
+    assert all([isinstance(o, po._PiquantOption) for o in opts])
 
 
 def test_mqr_option_name_is_correct():
-    name = "mqr_option name"
+    name = "mqr_option_name"
     o = _get_test_multi_quant_run_option(name=name)
     assert o.name == name
 
@@ -57,9 +57,9 @@ def test_mqr_option_title_is_correct():
 
 
 def test_mqr_option_option_name_is_correct():
-    option_name = "--polyA"
-    o = _get_test_multi_quant_run_option(option_name=option_name)
-    assert o.option_name == option_name
+    name = "mqr_option_name"
+    o = _get_test_multi_quant_run_option(name=name)
+    assert o.get_option_name() == "--" + name.replace("_", "-")
 
 
 def test_mqr_option_option_validator_is_correct():

@@ -122,7 +122,7 @@ def _add_analyse_quantification_results(
     # Finally perform analysis on the calculated TPMs
     writer.add_comment("Perform analysis on calculated TPMs.")
 
-    options_dict = {o.name: o.option_name for
+    options_dict = {o.name: o.get_option_name() for
                     o in po.get_multiple_quant_run_options()}
 
     mqr_options_spec = ""

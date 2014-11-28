@@ -79,7 +79,7 @@ def _validate_command_line_options(options):
 
         for option in [po.PLOT_FORMAT, po.GROUPED_THRESHOLD,
                        po.ERROR_FRACTION_THRESHOLD, po.NOT_PRESENT_CUTOFF]:
-            option.option_validator(options[option.option_name])
+            option.option_validator(options[option.get_option_name()])
     except schema.SchemaError as exc:
         exit(exc.code)
 
@@ -91,7 +91,7 @@ def _get_tpm_infos(non_zero, tp_tpms):
 
 def _add_mqr_option_values_to_stats(stats, options):
     for option in po.get_multiple_quant_run_options():
-        stats[option.name] = options[option.option_name]
+        stats[option.name] = options[option.get_option_name()]
 
 
 def _write_overall_stats(transcript_tpms, tp_transcript_tpms,

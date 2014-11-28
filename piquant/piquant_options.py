@@ -6,33 +6,55 @@ import schema
 import textwrap
 
 _INDENT = "    "
-_OPTIONS = []
-_QUANT_RUN_OPTIONS = []
-_MULTI_QUANT_RUN_OPTIONS = []
 
 
 class _PiquantOption:
     INDEX = 0
 
-    def __init__(self, name, option_name, value_name, description,
-                 default_value=None, option_validator=lambda x: True):
+    _OPTIONS = []
+    _QUANT_RUN_OPTIONS = []
+    _MULTI_QUANT_RUN_OPTIONS = []
+
+    _BASIC_OPTION_TYPE = "BASIC"
+    _QUANT_RUN_OPTION_TYPE = "QUANT_RUN"
+    _MULTIPLE_QUANT_RUN_OPTION_TYPE = "MULTI_QUANT_RUN"
+
+    def __init__(self, name, description, default_value=None,
+                 option_validator=lambda x: True, has_value=True,
+                 title=None, is_numeric=False, value_namer=None,
+                 file_namer=None, option_type=_BASIC_OPTION_TYPE):
 
         self.name = name
-        self.option_name = option_name
-        self.value_name = value_name
         self.description = description
         self.default_value = default_value
         self.option_validator = option_validator
+        self.has_value = has_value
+        self.title = title
+        self.is_numeric = is_numeric
+        self.value_namer = value_namer if value_namer else lambda x: x
+        self.file_namer = file_namer if file_namer else self.value_namer
+
+        _PiquantOption._OPTIONS.append(self)
+
+        if option_type != _PiquantOption._BASIC_OPTION_TYPE:
+            _PiquantOption._QUANT_RUN_OPTIONS.append(self)
+            if option_type == _PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE:
+                _PiquantOption._MULTI_QUANT_RUN_OPTIONS.append(self)
 
         self.index = _PiquantOption.INDEX
         _PiquantOption.INDEX += 1
 
-        _OPTIONS.append(self)
-
     def get_usage_string(self):
-        ret = self.option_name
-        if self.value_name:
-            ret += "=" + self.value_name
+        ret = self.get_option_name()
+        if self.has_value:
+            ret += "=<{val}>".format(
+                val=self.get_option_name(include_dashes=False))
+        return ret
+
+    def get_option_name(self, include_dashes=True):
+        ret = self.name.replace("_", "-")
+        if include_dashes:
+            ret = "--" + ret
         return ret
 
     def get_option_description(self):
@@ -46,238 +68,166 @@ class _PiquantOption:
         ret += ".\n"
         return ret
 
-
-class _QuantRunOption(_PiquantOption):
-    def __init__(self, name, option_name, value_name,
-                 description, title, default_value=None,
-                 option_validator=lambda x: True,
-                 is_numeric=False, value_namer=None, file_namer=None,
-                 multiple_quant_run_option=False):
-
-        _PiquantOption.__init__(
-            self, name, option_name, value_name, description,
-            option_validator=option_validator)
-
-        self.title = title
-        self.is_numeric = is_numeric
-        self.value_namer = value_namer if value_namer else lambda x: x
-        self.file_namer = file_namer if file_namer else self.value_namer
-        self.multiple_quant_run_option = multiple_quant_run_option
-
-        _QUANT_RUN_OPTIONS.append(self)
-        if self.multiple_quant_run_option:
-            _MULTI_QUANT_RUN_OPTIONS.append(self)
-
     def get_value_name(self, value):
         return self.value_namer(value)
 
     def get_file_name_part(self, value):
         return self.file_namer(value)
 
+
 READS_OUTPUT_DIR = _PiquantOption(
     "reads_dir",
-    "--reads-dir",
-    "<reads-dir>",
     "Parent output directory to which read simulation directories will be " +
     "written",
     default_value="output")
 
 QUANT_OUTPUT_DIR = _PiquantOption(
     "quant_dir",
-    "--quant-dir",
-    "<quant-dir>",
     "Parent output directory to which quantification run directories will be " +
     "written",
     default_value="output")
 
 STATS_DIRECTORY = _PiquantOption(
     "stats_dir",
-    "--stats-dir",
-    "<stats-dir>",
     "Directory to output assembled stats and graphs to",
     default_value="output/analysis")
 
-NUM_MOLECULES = _QuantRunOption(
+NUM_MOLECULES = _PiquantOption(
     "num_molecules",
-    "--num-molecules",
-    "<num-molecules>",
-    "Flux Simulator parameters will be set for the main simulation to start with " +
-    "this number of transcript molecules in the initial population",
-    "Number of molecules",
+    "Flux Simulator parameters will be set for the main simulation to start " +
+    "with this number of transcript molecules in the initial population",
     default_value="30000000",
     option_validator=lambda x: opt.validate_int_option(
-        x, "Number of molecules must be a positive integer", min_val=1))
+        x, "Number of molecules must be a positive integer", min_val=1),
+    option_type=_PiquantOption._QUANT_RUN_OPTION_TYPE)
 
-NUM_NOISE_MOLECULES = _QuantRunOption(
+NUM_NOISE_MOLECULES = _PiquantOption(
     "num_noise_molecules",
-    "--num-noise-molecules",
-    "<num-noise-molecules",
     "Flux Simulator parameters will be set for the noise simulation to start " +
     "with this number of noise transcript molecules in the initial population",
-    "Number of noise molecules",
     default_value="2000000",
     option_validator=lambda x: opt.validate_int_option(
-        x, "Number of noise molecules must be a positive integer", min_val=1))
+        x, "Number of noise molecules must be a positive integer", min_val=1),
+    option_type=_PiquantOption._QUANT_RUN_OPTION_TYPE)
 
 NO_CLEANUP = _PiquantOption(
     "nocleanup",
-    "--nocleanup",
-    None,
-    "If not specified, files non-essential for subsequent quantification (when " +
-    "creating reads) and assessing quantification accuracy (when quantifying) " +
-    "will be deleted")
+    "If not specified, files non-essential for subsequent quantification " +
+    "(when creating reads) and assessing quantification accuracy (when " +
+    "quantifying) will be deleted",
+    has_value=False)
 
-NUM_THREADS = _QuantRunOption(
+NUM_THREADS = _PiquantOption(
     "num_threads",
-    "--num-threads",
-    "<num-threads>",
     "Number of threads to be used by multi-threaded quantification methods",
-    "Number of threads",
     default_value=1,
     option_validator=lambda x: opt.validate_int_option(
-        x, "Number of threads must be a positive integer", min_val=1))
+        x, "Number of threads must be a positive integer", min_val=1),
+    option_type=_PiquantOption._QUANT_RUN_OPTION_TYPE)
 
 OPTIONS_FILE = _PiquantOption(
     "options_file",
-    "--options-file",
-    "<options-file>",
     "File containing specification of command-line options and values",
     option_validator=lambda x: opt.validate_file_option(
         x, "Option specification file should exist", nullable=True))
 
-QUANT_METHOD = _QuantRunOption(
+QUANT_METHOD = _PiquantOption(
     "quant_method",
-    "--quant-method",
-    "<quant-methods>",
     "Comma-separated list of quantification methods to run",
-    "Quantifier",
+    title="Quantifier",
     option_validator=lambda x: quantifiers.get_quantification_methods()[x],
     value_namer=lambda x: str(x),
-    multiple_quant_run_option=True)
+    option_type=_PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
 
-READ_DEPTH = _QuantRunOption(
+READ_DEPTH = _PiquantOption(
     "read_depth",
-    "--read-depth",
-    "<read-depths>",
     "Comma-separated list of read-depths to perform quantification for",
-    "Read depth",
-    option_validator=int,
-    is_numeric=True,
+    title="Read depth", option_validator=int, is_numeric=True,
     value_namer=lambda x: "{d}x".format(d=x),
-    multiple_quant_run_option=True)
+    option_type=_PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
 
-READ_LENGTH = _QuantRunOption(
+READ_LENGTH = _PiquantOption(
     "read_length",
-    "--read-length",
-    "<read-lengths>",
     "Comma-separated list of read-lengths to perform quantification for",
-    "Read length",
-    option_validator=int,
-    is_numeric=True,
+    title="Read length", option_validator=int, is_numeric=True,
     value_namer=lambda x: "{l}b".format(l=x),
-    multiple_quant_run_option=True)
+    option_type=_PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
 
-PAIRED_END = _QuantRunOption(
+PAIRED_END = _PiquantOption(
     "paired_end",
-    "--paired-end",
-    "<paired-ends>",
     "Comma-separated list of True/False strings indicating whether " +
     "quantification should be performed for single or paired-end reads",
-    "End type",
-    option_validator=opt.check_boolean_value,
+    title="End type", option_validator=opt.check_boolean_value,
     value_namer=lambda x: "paired-end" if x else "single-end",
     file_namer=lambda x: "pe" if x else "se",
-    multiple_quant_run_option=True)
+    option_type=_PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
 
-ERRORS = _QuantRunOption(
+ERRORS = _PiquantOption(
     "errors",
-    "--errors",
-    "<errors>",
     "Comma-separated list of True/False strings indicating whether " +
     "quantification should be performed with or without read errors",
-    "Error type",
-    option_validator=opt.check_boolean_value,
+    title="Error type", option_validator=opt.check_boolean_value,
     value_namer=lambda x: "with errors" if x else "no errors",
     file_namer=lambda x: "errors" if x else "no_errors",
-    multiple_quant_run_option=True)
+    option_type=_PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
 
-BIAS = _QuantRunOption(
+BIAS = _PiquantOption(
     "bias",
-    "--bias",
-    "<biases>",
     "Comma-separated list of True/False strings indicating whether " +
     "quantification should be performed with or without read sequence bias",
-    "Bias",
-    option_validator=opt.check_boolean_value,
+    title="Bias", option_validator=opt.check_boolean_value,
     value_namer=lambda x: "with bias" if x else "no bias",
     file_namer=lambda x: "bias" if x else "no_bias",
-    multiple_quant_run_option=True)
+    option_type=_PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
 
-STRANDED = _QuantRunOption(
+STRANDED = _PiquantOption(
     "stranded",
-    "--stranded",
-    "<stranded>",
-    "Comma-separated list of True/False strings indicating whether reads should " +
-    "be generated, or quantification performed, simulating a protocol that " +
-    "produces stranded reads",
-    "Strandedness",
-    option_validator=opt.check_boolean_value,
+    "Comma-separated list of True/False strings indicating whether reads " +
+    "should be generated, or quantification performed, simulating a " +
+    "protocol that produces stranded reads",
+    title="Strandedness", option_validator=opt.check_boolean_value,
     value_namer=lambda x: "stranded" if x else "unstranded",
-    multiple_quant_run_option=True)
+    option_type=_PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
 
-NOISE_DEPTH_PERCENT = _QuantRunOption(
+NOISE_DEPTH_PERCENT = _PiquantOption(
     "noise_perc",
-    "--noise-perc",
-    "<noise-depth-percentage>",
     "Comma-separated list of percentages of the overall read-depth: " +
-    "quantification will be performed on sets of reads containing noise from a " +
-    "specified set of transcripts at these depths",
-    "Noise depth percentage",
-    option_validator=int,
-    is_numeric=True,
+    "quantification will be performed on sets of reads containing noise " +
+    "from a specified set of transcripts at these depths",
+    title="Noise depth percentage", option_validator=int, is_numeric=True,
     value_namer=lambda x: "no_noise" if x == 0 else "noise-{d}x".format(d=x),
-    multiple_quant_run_option=True)
+    option_type=_PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
 
-TRANSCRIPT_GTF = _QuantRunOption(
+TRANSCRIPT_GTF = _PiquantOption(
     "transcript_gtf",
-    "--transcript-gtf",
-    "<gtf-file>",
     "GTF formatted file describing the transcripts to be simulated",
-    "Transcript GTF file",
     option_validator=lambda x: opt.validate_file_option(
-        x, "Transript GTF file does not exist"))
+        x, "Transript GTF file does not exist"),
+    option_type=_PiquantOption._QUANT_RUN_OPTION_TYPE)
 
-NOISE_TRANSCRIPT_GTF = _QuantRunOption(
+NOISE_TRANSCRIPT_GTF = _PiquantOption(
     "noise_transcript_gtf",
-    "--noise-transcript-gtf",
-    "<noise-gtf-file>",
     "GTF formatted file describing transcripts to be simulated as background " +
     "noise",
-    "Noise transcript GTF file",
     option_validator=lambda x: opt.validate_file_option(
-        x, "Noise transript GTF file does not exist"))
+        x, "Noise transript GTF file does not exist"),
+    option_type=_PiquantOption._QUANT_RUN_OPTION_TYPE)
 
-GENOME_FASTA_DIR = _QuantRunOption(
+GENOME_FASTA_DIR = _PiquantOption(
     "genome_fasta",
-    "--genome-fasta",
-    "<genome-fasta-dir>",
-    "Genome FASTA directory",
     "Directory containing per-chromosome sequences as FASTA files",
     option_validator=lambda x: opt.validate_dir_option(
-        x, "Genome FASTA directory does not exist"))
+        x, "Genome FASTA directory does not exist"),
+    option_type=_PiquantOption._QUANT_RUN_OPTION_TYPE)
 
 PLOT_FORMAT = _PiquantOption(
     "plot_format",
-    "--plot-format",
-    "<plot-format>",
     "Output format for graphs (one of {plot_formats})",
     option_validator=lambda x: opt.validate_list_option(
         x, plot.PLOT_FORMATS, "Invalid plot format"))
 
 GROUPED_THRESHOLD = _PiquantOption(
     "grouped_threshold",
-    "--grouped-threshold",
-    "<gp-threshold>",
     "Minimum number of data points required for a group of transcripts to be " +
     "shown on a plot",
     default_value=300,
@@ -287,11 +237,9 @@ GROUPED_THRESHOLD = _PiquantOption(
 
 ERROR_FRACTION_THRESHOLD = _PiquantOption(
     "error_fraction_threshold",
-    "--error-fraction-threshold",
-    "<ef-threshold>",
-    "Transcripts whose estimated TPM is greater than this percentage higher or " +
-    "lower than their real TPM are considered above threshold for the \"error " +
-    "fraction\" statistic",
+    "Transcripts whose estimated TPM is greater than this percentage " +
+    "higher or lower than their real TPM are considered above threshold " +
+    "for the \"error " + "fraction\" statistic",
     default_value=10,
     option_validator=lambda x: opt.validate_int_option(
         x, "Error fraction threshold percentage must be positive",
@@ -299,8 +247,6 @@ ERROR_FRACTION_THRESHOLD = _PiquantOption(
 
 NOT_PRESENT_CUTOFF = _PiquantOption(
     "not_present_cutoff",
-    "--not-present-cutoff",
-    "<cutoff>",
     "Cut-off value for the number of transcripts per-million below which a " +
     "transcript is considered to be \"not present\"",
     default_value=0.1,
@@ -427,15 +373,15 @@ def validate_command_line_options(command, options):
 
     options_to_check = list(COMMANDS[command])
 
-    if options[NOISE_DEPTH_PERCENT.option_name] == "0":
+    if options[NOISE_DEPTH_PERCENT.get_option_name()] == "0":
         options_to_check.remove(NOISE_TRANSCRIPT_GTF)
 
-    options_file_path = options[OPTIONS_FILE.option_name]
+    options_file_path = options[OPTIONS_FILE.get_option_name()]
 
     file_option_vals = {}
     if options_file_path:
         with open(options_file_path) as options_file:
-            option_names = [o.option_name for o in _OPTIONS]
+            option_names = [o.get_option_name() for o in _PiquantOption._OPTIONS]
             file_option_vals = {}
             for option_name, vals in \
                     [line.strip().split() for line in options_file]:
@@ -447,23 +393,24 @@ def validate_command_line_options(command, options):
 
     option_values = {}
     quant_run_option_values = {}
-    for option in _OPTIONS:
+    for option in _PiquantOption._OPTIONS:
         if option not in options_to_check:
             continue
 
         for values_dict in [file_option_vals, options]:
-            if option.option_name in values_dict and \
-                    values_dict[option.option_name] is not None:
+            if option.get_option_name() in values_dict and \
+                    values_dict[option.get_option_name()] is not None:
                 validated_vals = opt.validate_options_list(
-                    values_dict[option.option_name], option.option_validator,
+                    values_dict[option.get_option_name()], option.option_validator,
                     option.title.lower())
 
-                if option in _QUANT_RUN_OPTIONS:
+                if option in _PiquantOption._QUANT_RUN_OPTIONS:
                     quant_run_option_values[option.name] = set(validated_vals) \
                         if option.multiple_quant_run_option \
                         else validated_vals[0]
                 else:
-                    option_values[option.name] = values_dict[option.option_name]
+                    option_values[option.name] = \
+                        values_dict[option.get_option_name()]
 
         if option.name not in quant_run_option_values:
             raise schema.SchemaError(
@@ -473,12 +420,12 @@ def validate_command_line_options(command, options):
 
 
 def get_multiple_quant_run_options():
-    return set(_MULTI_QUANT_RUN_OPTIONS)
+    return set(_PiquantOption._MULTI_QUANT_RUN_OPTIONS)
 
 
 def get_file_name(**mqr_options):
     elements = []
-    for option in _MULTI_QUANT_RUN_OPTIONS:
+    for option in _PiquantOption._MULTI_QUANT_RUN_OPTIONS:
         if option.name in mqr_options:
             value = mqr_options[option.name]
             elements.append(option.get_file_name_part(value))
@@ -487,7 +434,7 @@ def get_file_name(**mqr_options):
 
 def get_value_names(mqr_option_values):
     value_names = []
-    for option in _QUANT_RUN_OPTIONS:
+    for option in _PiquantOption._QUANT_RUN_OPTIONS:
         if option in mqr_option_values:
             value = mqr_option_values[option]
             value_names.append(option.get_value_name(value))
@@ -495,7 +442,7 @@ def get_value_names(mqr_option_values):
 
 
 def execute_for_mqr_option_sets(callables, logger, options, **qr_option_values):
-    all_qr_option_names = [qr.name for qr in _QUANT_RUN_OPTIONS]
+    all_qr_option_names = [qr.name for qr in _PiquantOption._QUANT_RUN_OPTIONS]
 
     mqr_option_values = {}
     non_mqr_option_values = {}
