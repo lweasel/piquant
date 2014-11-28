@@ -272,7 +272,8 @@ def validate_command_line_options(command, options):
 
     options_to_check = list(command.option_list)
 
-    if options[NOISE_DEPTH_PERCENT.get_option_name()] == "0":
+    if NOISE_TRANSCRIPT_GTF in options_to_check and \
+            options[NOISE_DEPTH_PERCENT.get_option_name()] == "0":
         options_to_check.remove(NOISE_TRANSCRIPT_GTF)
 
     options_file_path = options[OPTIONS_FILE.get_option_name()]
