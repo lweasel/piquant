@@ -33,6 +33,7 @@ class _PiquantOption:
         self.is_numeric = is_numeric
         self.value_namer = value_namer if value_namer else lambda x: x
         self.file_namer = file_namer if file_namer else self.value_namer
+        self.option_type = option_type
 
         _PiquantOption._OPTIONS.append(self)
 
@@ -43,6 +44,13 @@ class _PiquantOption:
 
         self.index = _PiquantOption.INDEX
         _PiquantOption.INDEX += 1
+
+    def is_quant_run_option(self):
+        return self.option_type != _PiquantOption._BASIC_OPTION_TYPE
+
+    def is_multiple_quant_run_option(self):
+        return self.option_type == \
+            _PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE
 
     def get_usage_string(self):
         ret = self.get_option_name()
@@ -74,6 +82,12 @@ class _PiquantOption:
     def get_file_name_part(self, value):
         return self.file_namer(value)
 
+
+OPTIONS_FILE = _PiquantOption(
+    "options_file",
+    "File containing specification of command-line options and values",
+    option_validator=lambda x: opt.validate_file_option(
+        x, "Option specification file should exist", nullable=True))
 
 READS_OUTPUT_DIR = _PiquantOption(
     "reads_dir",
@@ -124,12 +138,6 @@ NUM_THREADS = _PiquantOption(
     option_validator=lambda x: opt.validate_int_option(
         x, "Number of threads must be a positive integer", min_val=1),
     option_type=_PiquantOption._QUANT_RUN_OPTION_TYPE)
-
-OPTIONS_FILE = _PiquantOption(
-    "options_file",
-    "File containing specification of command-line options and values",
-    option_validator=lambda x: opt.validate_file_option(
-        x, "Option specification file should exist", nullable=True))
 
 QUANT_METHOD = _PiquantOption(
     "quant_method",
@@ -254,15 +262,15 @@ NOT_PRESENT_CUTOFF = _PiquantOption(
         x, "Cutoff value must be non-negative", min_val=0))
 
 
-def validate_command_line_options(command, options_to_check, options):
-    opt.validate_log_level(options)
-
+def validate_command_line_options(command, options):
     #options[READS_OUTPUT_DIR.option_name] = \
         #os.path.abspath(options[READS_OUTPUT_DIR.option_name])
     #options[QUANT_OUTPUT_DIR.option_name] = \
         #os.path.abspath(options[QUANT_OUTPUT_DIR.option_name])
     #options[STATS_DIRECTORY.option_name] = \
         #os.path.abspath(options[STATS_DIRECTORY.option_name])
+
+    options_to_check = list(command.option_list)
 
     if options[NOISE_DEPTH_PERCENT.get_option_name()] == "0":
         options_to_check.remove(NOISE_TRANSCRIPT_GTF)
@@ -292,24 +300,27 @@ def validate_command_line_options(command, options_to_check, options):
         for values_dict in [file_option_vals, options]:
             if option.get_option_name() in values_dict and \
                     values_dict[option.get_option_name()] is not None:
-                validated_vals = opt.validate_options_list(
-                    values_dict[option.get_option_name()],
-                    option.option_validator,
-                    option.title.lower())
+                if option.has_value:
+                    validated_vals = opt.validate_options_list(
+                        values_dict[option.get_option_name()],
+                        option.option_validator, option.name)
 
-                if option in _PiquantOption._QUANT_RUN_OPTIONS:
+                if option.is_quant_run_option():
                     quant_run_option_values[option.name] = set(validated_vals) \
-                        if option.multiple_quant_run_option \
+                        if option.is_multiple_quant_run_option() \
                         else validated_vals[0]
                 else:
-                    option_values[option.name] = \
-                        values_dict[option.get_option_name()]
+                    new_value = values_dict[option.get_option_name()]
+                    if option.name not in option_values \
+                            or new_value != option.default_value:
+                        option_values[option.name] = new_value
 
-        if option.name not in quant_run_option_values:
+        if option.is_quant_run_option() and \
+                option.name not in quant_run_option_values:
             raise schema.SchemaError(
-                None, option.title + " option value(s) must be specified.")
+                None, option.name + " option value(s) must be specified.")
 
-    return option_name, quant_run_option_values
+    return option_values, quant_run_option_values
 
 
 def get_multiple_quant_run_options():
@@ -335,12 +346,13 @@ def get_value_names(mqr_option_values):
 
 
 def execute_for_mqr_option_sets(callables, logger, options, **qr_option_values):
-    all_qr_option_names = [qr.name for qr in _PiquantOption._QUANT_RUN_OPTIONS]
+    all_mqr_option_names = \
+        [qr.name for qr in _PiquantOption._MULTI_QUANT_RUN_OPTIONS]
 
     mqr_option_values = {}
     non_mqr_option_values = {}
     for option, values in qr_option_values.items():
-        if option in all_qr_option_names:
+        if option in all_mqr_option_names:
             mqr_option_values[option] = values
         else:
             non_mqr_option_values[option] = values

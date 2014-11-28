@@ -37,7 +37,6 @@ def _get_options_dir(run_dir, options, **qr_options):
     instances to option values.
     """
     qr_options = dict(qr_options)
-    print(qr_options)
     if not run_dir and po.QUANT_METHOD.name in qr_options:
         del qr_options[po.QUANT_METHOD.name]
 
@@ -323,26 +322,26 @@ def piquant(args):
               "http://piquant.readthedocs.org/en/latest/.").format(
              cs="\n    ".join(pc.get_command_names())))
 
-    command_name, args = sys.argv[1], sys.argv[2:]
+    command_name, args = sys.argv[1], sys.argv[1:]
 
     # Check the specified command is valid
     command = pc.get_command(command_name)
 
     # Read command-line options
     usage = pc.get_usage_message(command)
-    options = docopt.docopt(usage, version="piquant v" + __version__)
+    options = docopt.docopt(usage, argv=args, version="piquant v" + __version__)
+
+    # Set up logger
+    opt.validate_log_level(options)
+    logger = opt.get_logger_for_options(options)
 
     # Validate and process command-line options
     qr_options = None
     try:
-        options_to_check = pc.COMMANDS[command]
         options, qr_options = \
-            po.validate_command_line_options(command, options_to_check, options)
+            po.validate_command_line_options(command, options)
     except schema.SchemaError as exc:
         exit("Exiting. " + exc.code)
-
-    # Set up logger
-    logger = opt.get_logger_for_options(options)
 
     # Run the specified piquant command
     _run_piquant_command(logger, command, options, qr_options)

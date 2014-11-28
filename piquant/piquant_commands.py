@@ -89,7 +89,7 @@ def get_usage_message(command):
     option_list = sorted(command.option_list, key=lambda opt: opt.index)
 
     usage = "Usage:\n"
-    usage += "{ind}piquant_{c}\n".format(ind=_INDENT, c=command.name)
+    usage += "{ind}piquant.py {c}\n".format(ind=_INDENT, c=command.name)
     usage += "{ind}[{{log_option_spec}}]\n".format(ind=_INDENT * 2)
 
     for option in option_list:
