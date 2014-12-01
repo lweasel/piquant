@@ -237,6 +237,7 @@ GENOME_FASTA_DIR = _PiquantOption(
 PLOT_FORMAT = _PiquantOption(
     "plot_format",
     "Output format for graphs (one of {plot_formats})",
+    default_value="pdf",
     option_validator=lambda x: opt.validate_list_option(
         x, plot.PLOT_FORMATS, "Invalid plot format"))
 
