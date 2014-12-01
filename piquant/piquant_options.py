@@ -353,7 +353,7 @@ def get_value_names(mqr_option_values):
     return value_names
 
 
-def execute_for_mqr_option_sets(callables, logger, options, **qr_option_values):
+def execute_for_mqr_option_sets(command, logger, options, **qr_option_values):
     all_mqr_option_names = \
         [qr.name for qr in _PiquantOption._MULTI_QUANT_RUN_OPTIONS]
 
@@ -366,7 +366,7 @@ def execute_for_mqr_option_sets(callables, logger, options, **qr_option_values):
             non_mqr_option_values[option] = values
 
     mqr_option_names = mqr_option_values.keys()
-    for to_call in callables:
+    for to_call in command.executables:
         for option_set in itertools.product(*mqr_option_values.values()):
             option_map = dict(zip(mqr_option_names, option_set))
             option_map.update(non_mqr_option_values)

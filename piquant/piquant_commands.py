@@ -13,6 +13,8 @@ class _PiquantCommand:
     def __init__(self, name, option_list):
         self.name = name
         self.option_list = option_list
+        self.executables = []
+
         self.index = _PiquantCommand.INDEX
         _PiquantCommand.INDEX += 1
 

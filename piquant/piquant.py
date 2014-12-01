@@ -214,29 +214,35 @@ class _StatsAccumulator:
             overall_stats_file, self.overall_stats_df, index=False)
 
 
-def _get_executables_for_commands():
-    execs = {}
-    execs[pc.PREPARE_READ_DIRS] = \
-        [_reads_directory_checker(False), _prepare_read_simulation]
-    execs[pc.CREATE_READS] = \
-        [_reads_directory_checker(True), _create_reads]
-    execs[pc.CHECK_READS] = \
-        [_reads_directory_checker(True), _check_reads_created]
-    execs[pc.PREPARE_QUANT_DIRS] = \
-        [_run_directory_checker(False), _prepare_quantification]
-    execs[pc.PREQUANTIFY] = [_prequantifier()]
-    execs[pc.QUANTIFY] = \
-        [_reads_directory_checker(True),
-         _run_directory_checker(True), _quantify]
-    execs[pc.CHECK_QUANTIFICATION] = \
-        [_run_directory_checker(True), _check_quantification_completed]
-    execs[pc.ANALYSE_RUNS] = \
-        [_run_directory_checker(True)] + \
-        [_StatsAccumulator(tpms.TRANSCRIPT, {})] + \
-        [_StatsAccumulator(tpms.GENE, {})] + \
+def _set_executables_for_commands():
+    pc.PREPARE_READ_DIRS.executables = [
+        _reads_directory_checker(False),
+        _prepare_read_simulation]
+    pc.CREATE_READS.executables = [
+        _reads_directory_checker(True),
+        _create_reads]
+    pc.CHECK_READS.executables = [
+        _reads_directory_checker(True),
+        _check_reads_created]
+    pc.PREPARE_QUANT_DIRS.executables = [
+        _run_directory_checker(False),
+        _prepare_quantification]
+    pc.PREQUANTIFY.executables = [
+        _run_directory_checker(True),
+        _prequantifier()]
+    pc.QUANTIFY.executables = [
+        _reads_directory_checker(True),
+        _run_directory_checker(True),
+        _quantify]
+    pc.CHECK_QUANTIFICATION.executables = [
+        _run_directory_checker(True),
+        _check_quantification_completed]
+    pc.ANALYSE_RUNS.executables = [
+        _run_directory_checker(True),
+        _StatsAccumulator(tpms.TRANSCRIPT, {}),
+        _StatsAccumulator(tpms.GENE, {})] + \
         [_StatsAccumulator(tpms.TRANSCRIPT, t) for t
             in statistics.get_stratified_stats_types()]
-    return execs
 
 
 def _write_accumulated_stats(options):
@@ -304,9 +310,10 @@ def _analyse_runs(logger, options):
 
 
 def _run_piquant_command(logger, piquant_command, options, qr_options):
+    _set_executables_for_commands()
+
     po.execute_for_mqr_option_sets(
-        _get_executables_for_commands()[piquant_command],
-        logger, options, **qr_options)
+        piquant_command, logger, options, **qr_options)
 
     if piquant_command == pc.ANALYSE_RUNS:
         _analyse_runs(logger, options)

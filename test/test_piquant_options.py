@@ -1,4 +1,5 @@
 import piquant.piquant_options as po
+import piquant.piquant_commands as pc
 import pytest
 import schema
 import tempfile
@@ -227,8 +228,10 @@ def test_execute_for_mqr_option_sets_executes_for_correct_number_of_option_sets(
     def count_incrementer(logger, options, **mqr_options):
         execute_counter.append(1)
 
+    command = pc._PiquantCommand("dummy", [])
+    command.executables = [count_incrementer]
     po.execute_for_mqr_option_sets(
-        [count_incrementer], None, None, **mqr_options_values)
+        command, None, None, **mqr_options_values)
 
     assert len(execute_counter) == len1 * len2 * len3
 
@@ -242,8 +245,10 @@ def test_execute_for_mqr_option_sets_executes_all_callables():
     def callable2(logger, options, **mqr_options):
         execute_record.append(2)
 
+    command = pc._PiquantCommand("dummy", [])
+    command.executables = [callable1, callable2]
     po.execute_for_mqr_option_sets(
-        [callable1, callable2], None, None, mqr_option=["a"])
+        command, None, None, mqr_option=["a"])
 
     assert 1 in execute_record
     assert 2 in execute_record
@@ -263,7 +268,9 @@ def test_execute_for_mqr_option_sets_executes_for_correct_sets_of_mqr_options():
     def callable1(logger, options, **mqr_options):
         execute_record.append([v for v in mqr_options.values()])
 
-    po.execute_for_mqr_option_sets([callable1], None, None, **mqr_options_values)
+    command = pc._PiquantCommand("dummy", [])
+    command.executables = [callable1]
+    po.execute_for_mqr_option_sets(command, None, None, **mqr_options_values)
 
     execute_record = [set(mqr_options) for mqr_options in execute_record]
     assert set([mqr_options1[0], mqr_options2[0]]) in execute_record
