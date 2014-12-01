@@ -1,5 +1,6 @@
 import itertools
 import options as opt
+import os.path
 import plot
 import quantifiers
 import schema
@@ -44,6 +45,9 @@ class _PiquantOption:
 
         self.index = _PiquantOption.INDEX
         _PiquantOption.INDEX += 1
+
+    def __str__(self):
+        return "{n} ({on})".format(n=self.name, on=self.get_option_name())
 
     def is_quant_run_option(self):
         return self.option_type != _PiquantOption._BASIC_OPTION_TYPE
@@ -269,14 +273,7 @@ NOT_PRESENT_CUTOFF = _PiquantOption(
         x, "Cutoff value must be non-negative", min_val=0))
 
 
-def validate_command_line_options(command, options):
-    #options[READS_OUTPUT_DIR.option_name] = \
-        #os.path.abspath(options[READS_OUTPUT_DIR.option_name])
-    #options[QUANT_OUTPUT_DIR.option_name] = \
-        #os.path.abspath(options[QUANT_OUTPUT_DIR.option_name])
-    #options[STATS_DIRECTORY.option_name] = \
-        #os.path.abspath(options[STATS_DIRECTORY.option_name])
-
+def validate_command_line_options(logger, command, options):
     options_to_check = list(command.option_list)
 
     if NOISE_TRANSCRIPT_GTF in options_to_check and \
@@ -301,16 +298,21 @@ def validate_command_line_options(command, options):
 
     option_values = {}
     quant_run_option_values = {}
+
     for option in _PiquantOption._OPTIONS:
+        logger.debug(option)
         if option not in options_to_check:
+            logger.debug("..not checking " + str(option))
             continue
 
         for values_dict in [file_option_vals, options]:
-            if option.get_option_name() in values_dict and \
-                    values_dict[option.get_option_name()] is not None:
+            option_name = option.get_option_name()
+            if option_name in values_dict and \
+                    values_dict[option_name] is not None:
+                logger.debug("..found value " + str(values_dict[option_name]))
                 if option.has_value:
                     validated_vals = opt.validate_options_list(
-                        values_dict[option.get_option_name()],
+                        values_dict[option_name],
                         option.option_validator, option.name)
 
                 if option.is_quant_run_option():
@@ -318,9 +320,10 @@ def validate_command_line_options(command, options):
                         if option.is_multiple_quant_run_option() \
                         else validated_vals[0]
                 else:
-                    new_value = values_dict[option.get_option_name()]
+                    new_value = values_dict[option_name]
                     if option.name not in option_values \
                             or new_value != option.default_value:
+                        logger.debug("..setting option value " + str(new_value))
                         option_values[option.name] = new_value
 
         if option.is_quant_run_option() and \
@@ -328,7 +331,19 @@ def validate_command_line_options(command, options):
             raise schema.SchemaError(
                 None, option.name + " option value(s) must be specified.")
 
+    _fix_paths_for_dir_options(option_values)
+
+    logger.debug("Option values:" + str(option_values))
+    logger.debug("Quant run option values:" + str(quant_run_option_values))
+
     return option_values, quant_run_option_values
+
+
+def _fix_paths_for_dir_options(option_values):
+    for option in [READS_OUTPUT_DIR, QUANT_OUTPUT_DIR, STATS_DIRECTORY]:
+        if option.name in option_values:
+            option_values[option.name] = \
+                os.path.abspath(option_values[option.name])
 
 
 def get_multiple_quant_run_options():
