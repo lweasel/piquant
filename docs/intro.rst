@@ -1,8 +1,6 @@
 Introduction
 ============
 
-Test develop branch.
-
 *piquant* is a pipeline to help assess the accuracy of quantification of transcripts from RNA-sequencing data.
 
 `RNA-sequencing <http://en.wikipedia.org/wiki/RNA-Seq>`_ has become an important technique in cellular biology for characterising and quantifying the `transcriptome <http://en.wikipedia.org/wiki/Transcriptome>`_, and many bioinformatics methods have been developed to reconstruct transcripts from RNA-seq data and then estimate their abundances. Gene expression estimates calculated by these methods have been shown to be relatively robust. However, at the level of transcripts, problems arising from the ambiguous origin of short RNA-seq reads and from bias in their sequence composition are compounded, and thus estimates of isoform abundance may be less accurate. It is therefore useful to be able to assess the conditions under which different transcriptome quantification tools perform well or more poorly, and how the many optional parameter choices available for each tool may affect their performance.
