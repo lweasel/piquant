@@ -108,7 +108,7 @@ class _Cufflinks(_quantifierBase):
                 l=params[LEFT_SIMULATED_READS],
                 r=params[RIGHT_SIMULATED_READS])
 
-        stranded_spec = "--library-type" + \
+        stranded_spec = "--library-type " + \
             ("fr-secondstrand" if params[STRANDED_READS] else "fr-unstranded")
 
         writer.add_line(cls.MAP_READS_TO_GENOME_WITH_TOPHAT.format(
