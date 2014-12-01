@@ -21,6 +21,8 @@ Simulation of RNA-seq reads proceeds in two steps. In the first, run via the ``p
 * single- or paired-end reads
 * reads with or without errors
 * reads with or without sequence bias
+* strand-specific or unstranded reads
+* presence or absence of background read "noise"
 
 In the second step, RNA-seq reads are simulated. Each directory created in the first step contains a script which, when run, will use the *FluxSimulator* RNA-seq experiment simulator [FluxSimulator]_ to generate an expression profile for transcripts, then simulate reads for those transcripts according to the specified combination of sequencing parameters. This script can be run directly; however, using the ``piquant`` command ``create_reads``, reads for several combinations of sequencing parameters can be simulated at once as a batch.
 
