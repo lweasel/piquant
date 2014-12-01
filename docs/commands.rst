@@ -34,9 +34,11 @@ The following command line options control which combinations of sequencing para
 * ``--paired-end``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed for single- or paired-end reads or both.
 * ``--error``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed without or with sequencing errors introduced into the reads, or both.
 * ``--bias``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed without or with sequence bias introduced into the reads, or both.
+* ``--stranded``: A comma-separated list of "False" or "True" strings  indicating whether reads should be simulated as coming from an unstranded or strand-specific RNA-seq protocol.
+* ``--noise-perc``: A comma-separated list of positive integers. Each indicates a percentage of the main sequencing depth; in each case a set "noise transcripts" will be sequence to this depths. A value of zero indicates that no noise reads will be simulated.
 * ``--quant-method``: A comma-separated list of quantification methods for which transcript quantification should be performed. By default, *piquant* can quantify via the methods "Cufflinks", "RSEM", "Express" and "Sailfish". (Note that this option is not relevant for the simulation of reads).
 
-Except in the case of the ``--quant-method`` option when simulating reads, values for each of these options *must* be specified; otherwise ``piquant.py`` will exit with an error. For ease of use, however, the options can also be specified in a parameters file, via the common command line option ``--params-file``. Such a parameters file should take the form of one option and its value per-line, with option and value separated by whitespace, e.g.::
+Except in the case of the ``--quant-method`` option when simulating reads, values for each of these options *must* be specified; otherwise ``piquant.py`` will exit with an error. For ease of use, however, the options can also be specified in fan options file, via the common command line option ``--options-file`` (indeed, any command-line option can be specified in this file). Such an options file should take the form of one option and its value per-line, with option and value separated by whitespace, e.g.::
 
   --quant-method Cufflinks,RSEM,Express,Sailfish
   --read-length 35,50,75,100
@@ -44,51 +46,63 @@ Except in the case of the ``--quant-method`` option when simulating reads, value
   --paired-end False,True
   --error False,True
   --bias False
+  --stranded True
+  --noise-perc 0,5,10
 
-Sequencing parameters can be specified in both a parameters file, and via individual command line options, in which case the values specified on the command line override those in the parameters file. 
+As options can be specified both in an options file, and via individual command line options, in case of conflict the values specified on the command line override those in the options file.
 
 ``piquant.py`` commands also share the following additional common command line options:
 
 * ``--log-level``: One of the strings "debug", "info", "warning", "error" or "critical" (default "info"), determining the maximum severity level at which log messages will be written to standard error.
-* ``--out-dir``: The parent directory into which directories in which reads will be simulated, or quantification performed, will be written (default "output"). This directory must already exist.
+* ``--options-file``: Specifies the path to a file containing options as described above.
 
 .. _prepare-read-dirs:
 
 Prepare read directories (``prepare_read_dirs``)
 ------------------------------------------------
 
-The ``prepare_read_dirs`` command is used to prepare the directories in which RNA-seq reads will subsequently be simulated - one such directory is created for each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error`` and ``--bias``, and each directory is named according to its particular set of sequencing parameters. For example, with the following command line options specified:
+The ``prepare_read_dirs`` command is used to prepare the directories in which RNA-seq reads will subsequently be simulated - one such directory is created for each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias``, ``--stranded`` and ``--noise-perc``, and each directory is named according to its particular set of sequencing parameters. For example, with the following command line options specified:
 
 * ``--read-length``: 50
 * ``--read-depth``: 30
 * ``--paired-end``: False,True
 * ``--error``: False,True
 * ``--bias``: False,True
+* ``--stranded``: False
+* ``--noise_perc``: 0
 
 eight read simulation directories will be created:
 
-* ``30x_50b_se_no_errors_no_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, single-end reads, no read errors or sequence bias
-* ``30x_50b_se_errors_no_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, single-end reads, with read errors, no sequence bias
-* ``30x_50b_se_no_errors_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, single-end reads, no read errors, with sequence bias
-* ``30x_50b_se_errors_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, single-end reads, with read errors and sequence bias
-* ``30x_50b_pe_no_errors_no_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, paired-reads, no read errors or sequence bias
-* ``30x_50b_pe_errors_no_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, paired-end reads, with read errors, no sequence bias
-* ``30x_50b_pe_no_errors_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, paired-end reads, no read errors, with sequence bias
-* ``30x_50b_pe_errors_bias``: i.e. 30x sequencing depth, 50 base-pairs read length, paired-end reads, with read errors and sequence bias
+* ``30x_50b_se_no_errors_unstranded_no_bias_no_noise``: i.e. 30x sequencing depth, 50 base-pairs read length, unstranded protocol, no background noise, single-end reads, no read errors or sequence bias
+* ``30x_50b_se_errors_unstranded_no_bias_no_noise``: i.e. 30x sequencing depth, 50 base-pairs read length, unstranded protocol, no background noise, single-end reads, with read errors, no sequence bias
+* ``30x_50b_se_no_errors_unstranded_bias_no_noise``: i.e. 30x sequencing depth, 50 base-pairs read length, unstranded protocol, no background noise, single-end reads, no read errors, with sequence bias
+* ``30x_50b_se_errors_unstranded_bias_no_noise``: i.e. 30x sequencing depth, 50 base-pairs read length, unstranded protocol, no background noise, single-end reads, with read errors and sequence bias
+* ``30x_50b_pe_no_errors_no_unstranded_bias_no_noise``: i.e. 30x sequencing depth, 50 base-pairs read length, unstranded protocol, no background noise, paired-reads, no read errors or sequence bias
+* ``30x_50b_pe_errors_no_unstranded_bias_no_noise``: i.e. 30x sequencing depth, 50 base-pairs read length, unstranded protocol, no background noise, paired-end reads, with read errors, no sequence bias
+* ``30x_50b_pe_no_errors_unstranded_bias_no_noise``: i.e. 30x sequencing depth, 50 base-pairs read length, unstranded protocol, no background noise, paired-end reads, no read errors, with sequence bias
+* ``30x_50b_pe_errors_unstranded_bias_no_noise``: i.e. 30x sequencing depth, 50 base-pairs read length, unstranded protocol, no background noise, paired-end reads, with read errors and sequence bias
 
-Within each read simulation directory, three files are written:
+Within each read simulation directory, three files are always written:
 
-* ``flux_simulator_expression.par``: A *FluxSimulator* [FluxSimulator]_ parameters file suitable for creating a transcript expression profile.
-* ``flux_simulator_simulation.par``: A *FluxSimulator* parameters file suitable for simulating RNA-seq reads according to the created transcript expression profile.
+* ``flux_simulator_main_expression.par``: A *FluxSimulator* [FluxSimulator]_ parameters file suitable for creating a transcript expression profile.
+* ``flux_simulator_main_simulation.par``: A *FluxSimulator* parameters file suitable for simulating RNA-seq reads according to the created transcript expression profile.
 * ``run_simulation.sh``: A Bash script which, when executed, will use *FluxSimulator* and the above two parameters files to simulate reads for the appropriate combination of sequencing parameters. 
+
+In addition, if "background noise" reads are being simulated (i.e. the value of the ``--noise-perc`` option is greater than zero), the following two additional files are written:
+
+* ``flux_simulator_noise_expression.par``: A *FluxSimulator* parameters file suitable for creating a transcript expression profile for the set of transcripts that will be used to simulate background noise.
+``flux_simulator_noise_simulation.par``" A *FluxSimulator* parameter file suitable for simulating RNA-seq reads according to the created noise transcript expression profile.
 
 Note that it is possible to execute the ``run_simulation.sh`` script directly; however by using the ``piquant.py`` command ``create_reads``, sets of reads for several combinations of sequencing parameters can be created simultaneously as a batch (see :ref:`Create reads <simulate-reads>` below).
 
 In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``prepare-read-dirs`` command takes the following additional options:
 
-* ``--transcript-gtf``: The path to a GTF formatted file describing the transcripts to be simulated by *FluxSimulator*. This GTF file location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``. Note that the GTF file should only contain features of feature type "exon", and that every exon feature should specify both "gene_id" and "transcript_id" among its attributes.
+* ``--reads-dir``: The parent directory into which directories in which reads will be simulated will be written. This directory will be created if it does not already exist.
+* ``--transcript-gtf``: The path to a GTF formatted file describing the main set of transcripts to be simulated by *FluxSimulator*. This GTF file location must be supplied. Note that the GTF file should only contain features of feature type "exon", and that every exon feature should specify both "gene_id" and "transcript_id" among its attributes.
+* ``--noise-transcript-gtf``: The path to a GTF formatted file describing a set of transcripts that will be used to simulated background noise. This GTF file location needs only be specified if background noise is being simulated (ie. for values of ``--noise-perc`` other than zero); however, in these cases it must be specified. The same requirements as to GTF file format apply as above for the option ``--transcript-gtf``.
 * ``--genome-fasta``: The path to a directory containing per-chromosome genome sequences in FASTA-formatted files. This directory location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``.
-* ``--num-molecules``: *FluxSimulator* parameters will be set so that the initial pool of transcripts contains this many molecules. Note that although it depends on this value, the number of fragments in the final library from which reads will be sequenced is also a complicated function of the parameters at each stage of *FluxSimulator*'s sequencing process. This parameter should be set high enough that the number of fragments in the final library exceeds the number of reads necessary to give any of the sequencing depths required (default: 30,000,000). 
+* ``--num-molecules``: *FluxSimulator* parameters will be set so that the initial pool of main transcripts contains this many molecules. Note that although it depends on this value, the number of fragments in the final library from which reads will be sequenced is also a complicated function of the parameters at each stage of *FluxSimulator*'s sequencing process. This parameter should be set high enough that the number of fragments in the final library exceeds the number of reads necessary to give any of the sequencing depths required (default: 30,000,000). If the initial number of molecules is not great enought to create the required number of reads, the ``run_simulation.sh`` script will exit with an error.
+* ``--num-noise-molecules``: *FluxSimulator* parameters will be set so that the initial pool of noise transcripts contains this many molecules; this parameter should be set hight enough that the number of fragments in the final noise simulation library exceeds the number of reads necessary to give any required sequencing depth (default: 2,000,000).
 * ``--nocleanup``: When run, *FluxSimulator* creates a number of large intermediate files. Unless ``--nocleanup`` is specified, the ``run_simulation.sh`` Bash script will be constructed so as to delete these intermediate files once read simulation has finished.
 
 .. _simulate-reads:
