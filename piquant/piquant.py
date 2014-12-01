@@ -346,7 +346,7 @@ def piquant(args):
     qr_options = None
     try:
         options, qr_options = \
-            po.validate_command_line_options(logger, command, options)
+            po.validate_options(logger, command, options)
     except schema.SchemaError as exc:
         exit("Exiting. " + exc.code)
 

@@ -273,63 +273,14 @@ NOT_PRESENT_CUTOFF = _PiquantOption(
         x, "Cutoff value must be non-negative", min_val=0))
 
 
-def validate_command_line_options(logger, command, options):
-    options_to_check = list(command.option_list)
+def validate_options(logger, command, cl_options):
+    options_to_check = _get_options_to_check(command, cl_options)
 
-    if NOISE_TRANSCRIPT_GTF in options_to_check and \
-            options[NOISE_DEPTH_PERCENT.get_option_name()] == "0":
-        options_to_check.remove(NOISE_TRANSCRIPT_GTF)
+    options_file_path = cl_options[OPTIONS_FILE.get_option_name()]
+    file_options = _read_file_options(options_file_path)
 
-    options_file_path = options[OPTIONS_FILE.get_option_name()]
-
-    file_option_vals = {}
-    if options_file_path:
-        with open(options_file_path) as options_file:
-            option_names = \
-                [o.get_option_name() for o in _PiquantOption._OPTIONS]
-            file_option_vals = {}
-            for option_name, vals in \
-                    [line.strip().split() for line in options_file]:
-                if option_name not in option_names:
-                    raise schema.SchemaError(
-                        None, "Unknown option '{o}' in options file.".
-                        format(o=option_name))
-                file_option_vals[option_name] = vals
-
-    option_values = {}
-    quant_run_option_values = {}
-
-    for option in _PiquantOption._OPTIONS:
-        logger.debug(option)
-        if option not in options_to_check:
-            logger.debug("..not checking " + str(option))
-            continue
-
-        for values_dict in [file_option_vals, options]:
-            option_name = option.get_option_name()
-            if option_name in values_dict and \
-                    values_dict[option_name] is not None:
-                logger.debug("..found value " + str(values_dict[option_name]))
-                if option.has_value:
-                    validated_vals = opt.validate_options_list(
-                        values_dict[option_name],
-                        option.option_validator, option.name)
-
-                if option.is_quant_run_option():
-                    quant_run_option_values[option.name] = set(validated_vals) \
-                        if option.is_multiple_quant_run_option() \
-                        else validated_vals[0]
-                else:
-                    new_value = values_dict[option_name]
-                    if option.name not in option_values \
-                            or new_value != option.default_value:
-                        logger.debug("..setting option value " + str(new_value))
-                        option_values[option.name] = new_value
-
-        if option.is_quant_run_option() and \
-                option.name not in quant_run_option_values:
-            raise schema.SchemaError(
-                None, option.name + " option value(s) must be specified.")
+    option_values, quant_run_option_values = _validate_option_values(
+        logger, cl_options, file_options, options_to_check)
 
     _fix_paths_for_dir_options(option_values)
 
@@ -337,6 +288,78 @@ def validate_command_line_options(logger, command, options):
     logger.debug("Quant run option values:" + str(quant_run_option_values))
 
     return option_values, quant_run_option_values
+
+
+def _get_options_to_check(command, cl_options):
+    options_to_check = list(command.option_list)
+
+    if NOISE_TRANSCRIPT_GTF in options_to_check and \
+            cl_options[NOISE_DEPTH_PERCENT.get_option_name()] == "0":
+        options_to_check.remove(NOISE_TRANSCRIPT_GTF)
+
+    return options_to_check
+
+
+def _read_file_options(options_file_path):
+    file_options = {}
+    if options_file_path:
+        with open(options_file_path) as options_file:
+            option_names = \
+                [o.get_option_name() for o in _PiquantOption._OPTIONS]
+            for option_name, vals in \
+                    [line.strip().split() for line in options_file]:
+                if option_name not in option_names:
+                    raise schema.SchemaError(
+                        None, "Unknown option '{o}' in options file.".
+                        format(o=option_name))
+                file_options[option_name] = vals
+
+    return file_options
+
+
+def _validate_option_values(logger, cl_options, file_options, options_to_check):
+    option_values = {}
+    quant_run_option_values = {}
+
+    for option in _PiquantOption._OPTIONS:
+        logger.debug(option)
+
+        if option in options_to_check:
+            _validate_option_value(logger, option, cl_options, file_options,
+                                   option_values, quant_run_option_values)
+        else:
+            logger.debug("..not checking " + str(option))
+
+    return option_values, quant_run_option_values
+
+
+def _validate_option_value(logger, option, cl_options, file_options,
+                           option_values, quant_run_option_values):
+
+    for values_dict in [file_options, cl_options]:
+        option_name = option.get_option_name()
+        if option_name in values_dict and values_dict[option_name] is not None:
+            logger.debug("..found value " + str(values_dict[option_name]))
+            if option.has_value:
+                validated_vals = opt.validate_options_list(
+                    values_dict[option_name],
+                    option.option_validator, option.name)
+
+            if option.is_quant_run_option():
+                quant_run_option_values[option.name] = set(validated_vals) \
+                    if option.is_multiple_quant_run_option() \
+                    else validated_vals[0]
+            else:
+                new_value = values_dict[option_name]
+                if option.name not in option_values \
+                        or new_value != option.default_value:
+                    logger.debug("..setting option value " + str(new_value))
+                    option_values[option.name] = new_value
+
+    if option.is_quant_run_option() and \
+            option.name not in quant_run_option_values:
+        raise schema.SchemaError(
+            None, option.name + " option value(s) must be specified.")
 
 
 def _fix_paths_for_dir_options(option_values):
