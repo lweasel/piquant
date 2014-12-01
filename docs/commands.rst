@@ -91,7 +91,7 @@ Within each read simulation directory, three files are always written:
 In addition, if "background noise" reads are being simulated (i.e. the value of the ``--noise-perc`` option is greater than zero), the following two additional files are written:
 
 * ``flux_simulator_noise_expression.par``: A *FluxSimulator* parameters file suitable for creating a transcript expression profile for the set of transcripts that will be used to simulate background noise.
-``flux_simulator_noise_simulation.par``" A *FluxSimulator* parameter file suitable for simulating RNA-seq reads according to the created noise transcript expression profile.
+* ``flux_simulator_noise_simulation.par``" A *FluxSimulator* parameter file suitable for simulating RNA-seq reads according to the created noise transcript expression profile.
 
 Note that it is possible to execute the ``run_simulation.sh`` script directly; however by using the ``piquant.py`` command ``create_reads``, sets of reads for several combinations of sequencing parameters can be created simultaneously as a batch (see :ref:`Create reads <simulate-reads>` below).
 
