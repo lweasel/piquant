@@ -1,8 +1,14 @@
+import piquant.log as log
 import piquant.piquant_options as po
 import piquant.piquant_commands as pc
 #import pytest
 #import schema
-#import tempfile
+import tempfile
+import sys
+
+
+def _get_logger():
+    return log.get_logger(sys.stderr, "critical")
 
 
 def _get_test_option(
@@ -206,47 +212,45 @@ def test_get_multi_quant_run_options_returns_piquant_option_instances():
     assert all([isinstance(o, po._PiquantOption) for o in opts])
 
 
-#def test_validate_command_line_parameter_sets_returns_correct_number_of_param_sets():
-    #options = {
-        #"--quant-method": "Cufflinks",
-        #"--read-length": "10,20",
-    #}
-#
-    #ignore_options = _get_ignore_options()
-#
-    #param_vals = parameters.validate_command_line_parameter_sets(
-        #None, options, ignore_options)
-    #assert len(param_vals) == 2
+def test_validate_option_values_returns_correct_number_of_options():
+    options = {
+        po.PLOT_FORMAT: "svg",
+        po.QUANT_METHOD: "Cufflinks",
+        po.READ_LENGTH: "10,20",
+    }
+
+    opt_vals, qr_opt_vals = po._validate_option_values(
+        _get_logger(), {o.get_option_name(): v for o, v in options.items()},
+        {}, options.keys())
+    assert len(opt_vals) == 1
+    assert len(qr_opt_vals) == 2
 
 
-#def test_validate_command_line_parameter_sets_returns_correct_number_of_transformed_values():
-    #num_values = 5
-    #options = {
-        #"--read-length": ",".join([str(i) for i in range(0, num_values)])
-    #}
+def test_validate_option_values_returns_correct_number_of_transformed_values():
+    num_values = 5
+    options = {
+        po.READ_LENGTH: ",".join([str(i) for i in range(1, num_values + 1)])
+    }
 
-    #ignore_options = _get_ignore_options()
-    #ignore_options.append(parameters.QUANT_METHOD)
-#
-    #param_vals = parameters.validate_command_line_parameter_sets(
-        #None, options, ignore_options)
-    #assert len(param_vals[parameters.READ_LENGTH.name]) == num_values
+    opt_vals, qr_opt_vals = po._validate_option_values(
+        _get_logger(), {o.get_option_name(): v for o, v in options.items()},
+        {}, options.keys())
+    assert len(qr_opt_vals[po.READ_LENGTH.name]) == num_values
 
 
-#def test_validate_command_line_parameter_sets_returns_correct_transformed_values():
-    #len1 = 10
-    #len2 = 20
-    #options = {
-        #"--read-length": str(len1) + "," + str(len2)
-    #}
-#
-    #ignore_options = _get_ignore_options()
-    #ignore_options.append(parameters.QUANT_METHOD)
-#
-    #param_vals = parameters.validate_command_line_parameter_sets(
-        #None, options, ignore_options)
-    #assert len1 in param_vals[parameters.READ_LENGTH.name]
-    #assert len2 in param_vals[parameters.READ_LENGTH.name]
+def test_validate_option_values_returns_correct_transformed_values():
+    len1 = 10
+    len2 = 20
+    options = {
+        po.READ_LENGTH: str(len1) + "," + str(len2)
+    }
+
+    opt_vals, qr_opt_vals = po._validate_option_values(
+        _get_logger(), {o.get_option_name(): v for o, v in options.items()},
+        {}, options.keys())
+
+    for val in [len1, len2]:
+        assert val in qr_opt_vals[po.READ_LENGTH.name]
 
 
 #def test_validate_command_line_parameter_sets_raises_exception_for_invalid_param_values():
@@ -268,21 +272,18 @@ def test_get_multi_quant_run_options_returns_piquant_option_instances():
             #None, options, ignore_options)
 
 
-#def test_validate_command_line_parameter_sets_reads_parameters_from_file():
-    #len1 = 10
-    #len2 = 20
-    #with tempfile.NamedTemporaryFile() as f:
-        #f.write("--quant-method Cufflinks\n")
-        #f.write("--read-length " + str(len1) + "," + str(len2) + "\n")
-        #f.flush()
-#
-        #ignore_options = _get_ignore_options()
-#
-        #param_vals = parameters.validate_command_line_parameter_sets(
-            #f.name, {}, ignore_options)
-#
-        #assert len1 in param_vals[parameters.READ_LENGTH.name]
-        #assert len2 in param_vals[parameters.READ_LENGTH.name]
+def test_read_file_options_reads_options_from_file():
+    quant_method = "Cufflinks"
+    read_length = "10,20"
+    with tempfile.NamedTemporaryFile() as f:
+        f.write(po.QUANT_METHOD.get_option_name() + " " + quant_method + "\n")
+        f.write(po.READ_LENGTH.get_option_name() + " " + read_length + "\n")
+        f.flush()
+
+        options = po._read_file_options(f.name)
+
+        assert options[po.QUANT_METHOD.get_option_name()] == quant_method
+        assert options[po.READ_LENGTH.get_option_name()] == read_length
 
 
 #def test_validate_command_line_parameter_sets_overrides_file_parameters_with_cl_options():
