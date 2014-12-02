@@ -1,24 +1,28 @@
 import piquant.piquant_options as po
 import piquant.piquant_commands as pc
-import pytest
-import schema
-import tempfile
+#import pytest
+#import schema
+#import tempfile
 
 
-def _get_test_multi_quant_run_option(
+def _get_test_option(
         name="name", title="The Name",
         description="description for the option",
-        option_validator=int,
-        is_numeric=False, value_namer=None, file_namer=None):
+        default_value=None, option_validator=int, has_value=True,
+        is_numeric=False, value_namer=None, file_namer=None,
+        option_type=po._PiquantOption._BASIC_OPTION_TYPE):
 
     option = po._PiquantOption(
         name, description, title=title,
-        option_validator=option_validator, is_numeric=is_numeric,
+        default_value=default_value, option_validator=option_validator,
+        has_value=has_value, is_numeric=is_numeric,
         value_namer=value_namer, file_namer=file_namer,
-        option_type=po._PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
+        option_type=option_type)
 
-    po._PiquantOption._QUANT_RUN_OPTIONS.remove(option)
-    po._PiquantOption._MULTI_QUANT_RUN_OPTIONS.remove(option)
+    if option_type != po._PiquantOption._BASIC_OPTION_TYPE:
+        po._PiquantOption._QUANT_RUN_OPTIONS.remove(option)
+        if option_type == po._PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE:
+            po._PiquantOption._MULTI_QUANT_RUN_OPTIONS.remove(option)
 
     return option
 
@@ -40,69 +44,166 @@ def _get_ignore_options():
     ]
 
 
-def test_get_multi_quant_run_options_returns_piquant_option_instances():
-    opts = po.get_multiple_quant_run_options()
-    assert all([isinstance(o, po._PiquantOption) for o in opts])
+def test_piquant_option_name_is_correct():
+    name = "piquant_option_name"
+    opt = _get_test_option(name=name)
+    assert opt.name == name
 
 
-def test_mqr_option_name_is_correct():
-    name = "mqr_option_name"
-    o = _get_test_multi_quant_run_option(name=name)
-    assert o.name == name
+def test_piquant_option_description_is_correct():
+    description = "This is an option"
+    opt = _get_test_option(description=description)
+    assert opt.description == description
 
 
-def test_mqr_option_title_is_correct():
-    title = "A Title"
-    o = _get_test_multi_quant_run_option(title=title)
-    assert o.title == title
+def test_piquant_option_default_value_is_correct():
+    default_value = "DEF"
+    opt = _get_test_option(default_value=default_value)
+    assert opt.default_value == default_value
 
 
-def test_mqr_option_option_name_is_correct():
-    name = "mqr_option_name"
-    o = _get_test_multi_quant_run_option(name=name)
-    assert o.get_option_name() == "--" + name.replace("_", "-")
-
-
-def test_mqr_option_option_validator_is_correct():
+def test_piquant_option_option_validator_is_correct():
     option_validator = lambda x: x
-    o = _get_test_multi_quant_run_option(option_validator=option_validator)
-    assert o.option_validator == option_validator
+    opt = _get_test_option(option_validator=option_validator)
+    assert opt.option_validator == option_validator
 
 
-def test_mqr_option_is_numeric_is_correct():
+def test_piquant_option_has_value_is_correct():
+    has_value = False
+    opt = _get_test_option(has_value=has_value)
+    assert opt.has_value == has_value
+
+
+def test_piquant_option_title_is_correct():
+    title = "A Title"
+    opt = _get_test_option(title=title)
+    assert opt.title == title
+
+
+def test_piquant_option_is_numeric_is_correct():
     is_numeric = True
-    o = _get_test_multi_quant_run_option(is_numeric=is_numeric)
-    assert o.is_numeric == is_numeric
+    opt = _get_test_option(is_numeric=is_numeric)
+    assert opt.is_numeric == is_numeric
+
+
+def test_piquant_option_value_namer_is_correct():
+    value_namer = lambda x: x + "bp"
+    opt = _get_test_option(value_namer=value_namer)
+    assert opt.value_namer == value_namer
+
+
+def test_piquant_option_file_namer_is_correct():
+    file_namer = lambda x: x + "bp"
+    opt = _get_test_option(file_namer=file_namer)
+    assert opt.file_namer == file_namer
+
+
+def test_piquant_option_option_type_is_correct():
+    option_type = po._PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE
+    opt = _get_test_option(option_type=option_type)
+    assert opt.option_type == option_type
+
+
+def test_is_quant_run_option_type_returns_correct_value_for_basic_options():
+    opt = _get_test_option()
+    assert not opt.is_quant_run_option()
+
+
+def test_is_quant_run_option_type_returns_correct_value_for_quant_run_options():
+    for opt_type in [po._PiquantOption._QUANT_RUN_OPTION_TYPE,
+                     po._PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE]:
+        opt = _get_test_option(option_type=opt_type)
+        assert opt.is_quant_run_option()
+
+
+def test_is_multiple_quant_run_option_type_returns_correct_value_for_basic_and_quant_run_options():
+    for opt_type in [po._PiquantOption._QUANT_RUN_OPTION_TYPE,
+                     po._PiquantOption._BASIC_OPTION_TYPE]:
+        opt = _get_test_option(option_type=opt_type)
+        assert not opt.is_multiple_quant_run_option()
+
+
+def test_is_multiple_quant_run_option_type_returns_correct_value_for_mqr_options():
+    opt = _get_test_option(
+        option_type=po._PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
+    assert opt.is_multiple_quant_run_option()
+
+
+def test_get_usage_string_returns_correct_string_when_option_has_value():
+    opt = _get_test_option(name="the_opt")
+    assert opt.get_usage_string() == "--the-opt=<the-opt>"
+
+
+def test_get_usage_string_returns_correct_string_when_option_does_not_have_value():
+    opt = _get_test_option(name="the_opt", has_value=False)
+    assert opt.get_usage_string() == "--the-opt"
+
+
+def test_get_option_name_returns_correct_value_when_dashes_included():
+    opt = _get_test_option(name="the_opt")
+    assert opt.get_option_name() == "--the-opt"
+
+
+def test_get_option_name_returns_correct_value_when_dashes_not_included():
+    opt = _get_test_option(name="the_opt")
+    assert opt.get_option_name(include_dashes=False) == "the-opt"
+
+
+def test_get_option_description_includes_usage_string():
+    opt = _get_test_option()
+    assert opt.get_option_description().find(opt.get_usage_string()) > -1
+
+
+def test_get_option_description_includes_description():
+    opt = _get_test_option()
+    assert opt.get_option_description().find(opt.description) > -1
+
+
+def test_get_option_description_includes_default_value_specification_when_default_specified():
+    default_value = "DEF"
+    opt = _get_test_option(default_value=default_value)
+    assert opt.get_option_description().find("default:") > -1
+    assert opt.get_option_description().find(default_value) > -1
+
+
+def test_get_option_description_does_not_include_default_value_when_default_value_not_specified():
+    opt = _get_test_option()
+    assert opt.get_option_description().find("default") == -1
 
 
 def test_get_value_name_returns_correct_value_when_no_value_namer_supplied():
     value = 30
-    o = _get_test_multi_quant_run_option()
-    assert o.get_value_name(value) == value
+    opt = _get_test_option()
+    assert opt.get_value_name(value) == value
 
 
 def test_get_value_name_returns_correct_value_when_value_namer_supplied():
     value = 30
-    o = _get_test_multi_quant_run_option(value_namer=lambda x: "VAL{v}".format(v=x))
-    assert o.get_value_name(value) == "VAL" + str(value)
+    opt = _get_test_option(value_namer=lambda x: "VAL{v}".format(v=x))
+    assert opt.get_value_name(value) == "VAL" + str(value)
 
 
 def test_get_file_name_part_returns_correct_value_when_no_value_or_file_namer_supplied():
     value = 30
-    o = _get_test_multi_quant_run_option()
-    assert o.get_file_name_part(value) == value
+    opt = _get_test_option()
+    assert opt.get_file_name_part(value) == value
 
 
 def test_get_file_name_part_returns_correct_value_when_no_file_namer_supplied():
     value = 30
-    o = _get_test_multi_quant_run_option(value_namer=lambda x: "VAL{v}".format(v=x))
-    assert o.get_file_name_part(value) == "VAL" + str(value)
+    opt = _get_test_option(value_namer=lambda x: "VAL{v}".format(v=x))
+    assert opt.get_file_name_part(value) == "VAL" + str(value)
 
 
 def test_get_file_name_part_returns_correct_value_when_file_namer_supplied():
     value = 30
-    o = _get_test_multi_quant_run_option(file_namer=lambda x: "{v}bp".format(v=x))
-    assert o.get_file_name_part(value) == str(value) + "bp"
+    opt = _get_test_option(file_namer=lambda x: "{v}bp".format(v=x))
+    assert opt.get_file_name_part(value) == str(value) + "bp"
+
+
+def test_get_multi_quant_run_options_returns_piquant_option_instances():
+    opts = po.get_multiple_quant_run_options()
+    assert all([isinstance(o, po._PiquantOption) for o in opts])
 
 
 #def test_validate_command_line_parameter_sets_returns_correct_number_of_param_sets():
@@ -217,7 +318,7 @@ def test_execute_for_mqr_option_sets_executes_for_correct_number_of_option_sets(
     len1 = 3
     len2 = 5
     len3 = 7
-    mqr_options_values = {
+    piquant_options_values = {
         "read_length": [1] * len1,
         "read_depth": [2] * len2,
         "errors": [True] * len3
@@ -225,13 +326,13 @@ def test_execute_for_mqr_option_sets_executes_for_correct_number_of_option_sets(
 
     execute_counter = []
 
-    def count_incrementer(logger, options, **mqr_options):
+    def count_incrementer(logger, options, **piquant_options):
         execute_counter.append(1)
 
     command = pc._PiquantCommand("dummy", [])
     command.executables = [count_incrementer]
     po.execute_for_mqr_option_sets(
-        command, None, None, **mqr_options_values)
+        command, None, None, **piquant_options_values)
 
     assert len(execute_counter) == len1 * len2 * len3
 
@@ -239,41 +340,41 @@ def test_execute_for_mqr_option_sets_executes_for_correct_number_of_option_sets(
 def test_execute_for_mqr_option_sets_executes_all_callables():
     execute_record = []
 
-    def callable1(logger, options, **mqr_options):
+    def callable1(logger, options, **piquant_options):
         execute_record.append(1)
 
-    def callable2(logger, options, **mqr_options):
+    def callable2(logger, options, **piquant_options):
         execute_record.append(2)
 
     command = pc._PiquantCommand("dummy", [])
     command.executables = [callable1, callable2]
     po.execute_for_mqr_option_sets(
-        command, None, None, mqr_option=["a"])
+        command, None, None, piquant_option=["a"])
 
     assert 1 in execute_record
     assert 2 in execute_record
     assert len(execute_record) == 2
 
 
-def test_execute_for_mqr_option_sets_executes_for_correct_sets_of_mqr_options():
-    mqr_options1 = [75, 100]
-    mqr_options2 = [30, 50]
-    mqr_options_values = {
-        "read_length": mqr_options1,
-        "read_depth": mqr_options2
+def test_execute_for_mqr_option_sets_executes_for_correct_sets_of_piquant_options():
+    piquant_options1 = [75, 100]
+    piquant_options2 = [30, 50]
+    piquant_options_values = {
+        "read_length": piquant_options1,
+        "read_depth": piquant_options2
     }
 
     execute_record = []
 
-    def callable1(logger, options, **mqr_options):
-        execute_record.append([v for v in mqr_options.values()])
+    def callable1(logger, options, **piquant_options):
+        execute_record.append([v for v in piquant_options.values()])
 
     command = pc._PiquantCommand("dummy", [])
     command.executables = [callable1]
-    po.execute_for_mqr_option_sets(command, None, None, **mqr_options_values)
+    po.execute_for_mqr_option_sets(command, None, None, **piquant_options_values)
 
-    execute_record = [set(mqr_options) for mqr_options in execute_record]
-    assert set([mqr_options1[0], mqr_options2[0]]) in execute_record
-    assert set([mqr_options1[0], mqr_options2[1]]) in execute_record
-    assert set([mqr_options1[1], mqr_options2[0]]) in execute_record
-    assert set([mqr_options1[1], mqr_options2[1]]) in execute_record
+    execute_record = [set(piquant_options) for piquant_options in execute_record]
+    assert set([piquant_options1[0], piquant_options2[0]]) in execute_record
+    assert set([piquant_options1[0], piquant_options2[1]]) in execute_record
+    assert set([piquant_options1[1], piquant_options2[0]]) in execute_record
+    assert set([piquant_options1[1], piquant_options2[1]]) in execute_record
