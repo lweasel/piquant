@@ -95,9 +95,9 @@ In addition, if "background noise" reads are being simulated (i.e. the value of 
 
 Note that it is possible to execute the ``run_simulation.sh`` script directly; however by using the ``piquant.py`` command ``create_reads``, sets of reads for several combinations of sequencing parameters can be created simultaneously as a batch (see :ref:`Create reads <simulate-reads>` below).
 
-In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``prepare-read-dirs`` command takes the following additional options:
+In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``prepare_read_dirs`` command takes the following additional options:
 
-* ``--reads-dir``: The parent directory into which directories in which reads will be simulated will be written. This directory will be created if it does not already exist.
+* ``--reads-dir``: The parent directory into which directories in which reads will be simulated will be written. This directory will be created if it does not already exist (default: output).
 * ``--transcript-gtf``: The path to a GTF formatted file describing the main set of transcripts to be simulated by *FluxSimulator*. This GTF file location must be supplied. Note that the GTF file should only contain features of feature type "exon", and that every exon feature should specify both "gene_id" and "transcript_id" among its attributes.
 * ``--noise-transcript-gtf``: The path to a GTF formatted file describing a set of transcripts that will be used to simulated background noise. This GTF file location needs only be specified if background noise is being simulated (ie. for values of ``--noise-perc`` other than zero); however, in these cases it must be specified. The same requirements as to GTF file format apply as above for the option ``--transcript-gtf``.
 * ``--genome-fasta``: The path to a directory containing per-chromosome genome sequences in FASTA-formatted files. This directory location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``.
@@ -110,7 +110,11 @@ In addition to the command line options common to all ``piquant.py`` commands (s
 Create reads (``create_reads``)
 ---------------------------------
 
-The ``create_reads`` command is used to simulate RNA-seq reads via the ``run_simulation.sh`` scripts that have been written by the ``prepare_read_dirs`` command (see :ref:`Prepare read directories <prepare-read-dirs>` above). For each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error`` and ``--bias``, the appropriate ``run_simulation.sh`` script is launched as a background process, ignoring hangup signals (via the ``nohup`` command). After launching the scripts, ``piquant.py`` exits.
+The ``create_reads`` command is used to simulate RNA-seq reads via the ``run_simulation.sh`` scripts that have been written by the ``prepare_read_dirs`` command (see :ref:`Prepare read directories <prepare-read-dirs>` above). For each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias``, ``--stranded`` and ``--noise-perc``, the appropriate ``run_simulation.sh`` script is launched as a background process, ignoring hangup signals (via the ``nohup`` command). After launching the scripts, ``piquant.py`` exits.
+
+In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``create_reads`` command takes the following additional options:
+
+* ``--reads-dir``: The parent directory in which directories in which reads will be simulated have been written (default: output).
 
 For details on the process of read simulation executed via ``run_simulation.sh``, see :doc:`simulation`.
 
@@ -119,16 +123,20 @@ For details on the process of read simulation executed via ``run_simulation.sh``
 Check reads were successfully created (``check_reads``)
 -------------------------------------------------------
 
-The ``check_reads`` command is used to confirm that simulation of RNA-seq reads via ``run_simulation.sh`` scripts successfully completed. For each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error`` and ``--bias``, the relevant read simulation directory is checked for the existence of the appropriate FASTA or FASTQ files containing simulated reads. A message is printed to standard error for those combinations of sequencing parameters for which read simulation has not yet finished, or for which simulation terminated unsuccessfully.
+The ``check_reads`` command is used to confirm that simulation of RNA-seq reads via ``run_simulation.sh`` scripts successfully completed. For each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias``, ``--stranded`` and ``--noise-perc``, the relevant read simulation directory is checked for the existence of the appropriate FASTA or FASTQ files containing simulated reads. A message is printed to standard error for those combinations of sequencing parameters for which read simulation has not yet finished, or for which simulation terminated unsuccessfully.
 
 In the case of unsuccessful termination, the file ``nohup.out`` in the relevant simulation directory contains the messages output by both *FluxSimulator* and the *piquant* scripts that were executed, and this file can be examined for the source of error.
+
+In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``check_reads`` command takes the following additional options:
+
+* ``--reads-dir``: The parent directory in which directories in which reads were simulated are located (default: output).
 
 .. _prepare-quant-dirs:
 
 Prepare quantification directories (``prepare_quant_dirs``)
 -----------------------------------------------------------
 
-The ``prepare_quant_dirs`` command is used to prepare the directories in which transcript quantification will take place - one such directory is created for each possible combination of sequencing and quantification parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias`` and ``--quant-method``, and each directory is named according to its particular set of parameters. For example with the following command line options specified:
+The ``prepare_quant_dirs`` command is used to prepare the directories in which transcript quantification will take place - one such directory is created for each possible combination of sequencing and quantification parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias``, ``--stranded``, ``--noise-perc`` and ``--quant-method``, and each directory is named according to its particular set of parameters. For example with the following command line options specified:
 
 * ``--quant-method``: Cufflinks, RSEM, Express, Sailfish
 * ``--read-length``: 50
@@ -136,17 +144,19 @@ The ``prepare_quant_dirs`` command is used to prepare the directories in which t
 * ``--paired-end``: False,True
 * ``--error``: True
 * ``--bias``: True
+* ``--stranded``: False
+* ``--noise-perc`` 10
 
 eight quantification directories will be created:
 
-* ``Cufflinks_30x_50b_se_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, single-end reads with both errors and bias, with transcripts quantified by Cufflinks.
-* ``Cufflinks_30x_50b_pe_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, paired-end reads with both errors and bias, with transcripts quantified by Cufflinks.
-* ``RSEM_30x_50b_se_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, single-end reads with both errors and bias, with transcripts quantified by RSEM.
-* ``RSEM_30x_50b_pe_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, paired-end reads with both errors and bias, with transcripts quantified by RSEM.
-* ``Express_30x_50b_se_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, single-end reads with both errors and bias, with transcripts quantified by eXpress.
-* ``Express_30x_50b_pe_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, paired-end reads with both errors and bias, with transcripts quantified by eXpress.
-* ``Sailfish_30x_50b_se_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, single-end reads with both errors and bias, with transcripts quantified by Sailfish.
-* ``Sailfish_30x_50b_pe_errors_bias``: i.e. 30x read depth, 50 base-pairs read length, paired-end reads with both errors and bias, with transcripts quantified by Sailfish.
+* ``Cufflinks_30x_50b_se_errors_stranded_bias_noise-10x``: i.e. 30x read depth, 50 base-pairs read length, unstranded protocol, noise transcripts at 10% of the main read depth (i.e. at 0.1 * 30 = 3x sequencing depth), single-end reads with both errors and bias, with transcripts quantified by Cufflinks.
+* ``Cufflinks_30x_50b_pe_errors_stranded_bias_noise-10x``: i.e. 30x read depth, 50 base-pairs read length, unstranded protocol, noise transcripts at 10% of the main read depth, paired-end reads with both errors and bias, with transcripts quantified by Cufflinks.
+* ``RSEM_30x_50b_se_errors_stranded_bias_noise-10x``: i.e. 30x read depth, 50 base-pairs read length, unstranded protocol, noise transcripts at 10% of the main read depth, single-end reads with both errors and bias, with transcripts quantified by RSEM.
+* ``RSEM_30x_50b_pe_errors_stranded_bias_noise-10x``: i.e. 30x read depth, 50 base-pairs read length, unstranded protocol, noise transcripts at 10% of the main read depth, paired-end reads with both errors and bias, with transcripts quantified by RSEM.
+* ``Express_30x_50b_se_errors_stranded_bias_noise-10x``: i.e. 30x read depth, 50 base-pairs read length, unstranded protocol, noise transcripts at 10% of the main read depth, single-end reads with both errors and bias, with transcripts quantified by eXpress.
+* ``Express_30x_50b_pe_errors_stranded_bias_noise-10x``: i.e. 30x read depth, 50 base-pairs read length, unstranded protocol, noise transcripts at 10% of the main read depth, paired-end reads with both errors and bias, with transcripts quantified by eXpress.
+* ``Sailfish_30x_50b_se_errors_stranded_bias_noise-10x``: i.e. 30x read depth, 50 base-pairs read length, unstranded protocol, noise transcripts at 10% of the main read depth, single-end reads with both errors and bias, with transcripts quantified by Sailfish.
+* ``Sailfish_30x_50b_pe_errors_stranded_bias_noise-10x``: i.e. 30x read depth, 50 base-pairs read length, unstranded protocol, noise transcripts at 10% of the main read depth, paired-end reads with both errors and bias, with transcripts quantified by Sailfish.
 
 Within each quantification directory, a single file is written:
 
@@ -154,13 +164,18 @@ Within each quantification directory, a single file is written:
 
 As is the case when simulating reads, it is possible to execute the ``run_quantification.sh`` script directly; however, by using the ``piquant.py`` command ``quantify``, quantification for several combinations for sequencing parameters and quantification tools can be executed simultaneously as a batch (see :ref:`Perform quantification <quantify>` below).
 
-In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``prepare-quant-dirs`` command takes the following additional options:
+In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``prepare_quant_dirs`` command takes the following additional options:
 
+* ``--reads-dir``: The parent directory in which directories in which reads were simulated are located (default: output).
+* ``--quant-dir``: The parent directory into which directories in which quantification will be performed will be written. This directory will be created if it does not already exist (default: output).
 * ``--transcript-gtf``: The path to a GTF formatted file describing the transcripts from which reads were simulated by *FluxSimulator*. This GTF file location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``. The transcripts GTF file should be the same as was supplied to the ``prepare_read_dirs`` command (see :ref:`Prepare read directories <prepare-read-dirs>` above).
 * ``--genome-fasta``: The path to a directory containing per-chromosome genome sequences in FASTA-formatted files. This directory location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``. The genome sequences should be the same as were supplied to the ``prepare_read_dirs`` command.
+* ``--num-threads``: Multi-threaded quantification methods will use this number of threads (default: 1).
 * ``--nocleanup``: When run, quantification tools may create a number of output files. Unless ``--nocleanup`` is specified, the  ``run_quantification`` Bash script will be constructed so as to delete all of these, except those essential for *piquant* to calculate the accuracy with which quantification has been performed. 
 * ``--plot-format``: The file format in which graphs produced during the analysis of this quantification run will be written to - one of "pdf", "svg" or "png" (default "pdf").
 * ``--grouped-threshold``: When producing graphs against groups of transcripts determined by a transcript classifier (see :ref:`assessment-transcript-classifiers`_), only groups with greater than this number of transcripts will contribute to the plot.
+* ``--error-fraction-threshold``: When producing graphs, transcripts whose estimated TPM (transcripts per million) is greater than this percentage higher or lower than their real TPM are considered above threshold for the "error fraction" statistic (default: 10).
+* ``--not-present-cutoff``: When producing graphs, for example of the sensitivity and specificity of transcript detection by quantification methods, this is the cut-off value of the transcript TPM is used to determine whether the transcript is considered to be present or not (default: 0.1).
 
 Prepare for quantification (``prequantify``)
 --------------------------------------------
