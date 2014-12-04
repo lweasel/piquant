@@ -50,8 +50,8 @@ def get_stratified_stats_types():
     grp_clsfrs = [c for c in clsfrs if c.produces_grouped_stats()]
     dist_clsfrs = [c for c in clsfrs if c.produces_distribution_plots()]
 
-    return [{}] + \
-        [{"classifier": c} for c in grp_clsfrs] + \
+    return [{"classifier": None, "ascending": False}] + \
+        [{"classifier": c, "ascending": False} for c in grp_clsfrs] + \
         [{"classifier": c, "ascending": asc}
             for c, asc in itertools.product(dist_clsfrs, [True, False])]
 

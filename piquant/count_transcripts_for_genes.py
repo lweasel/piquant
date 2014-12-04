@@ -36,32 +36,32 @@ def _validate_command_line_options(options):
         exit(exc.code)
 
 
-def _get_transcript_to_gene_mappings(gtf_info):
-    transcript_to_gene_mappings = {}
+def _get_transcript_to_gene_map(gtf_info):
+    transcript_to_gene_map = {}
 
-    for index, row in gtf_info.iterrows():
+    for dummy, row in gtf_info.iterrows():
         attributes_dict = gtf.get_attributes_dict(row[gtf.ATTRIBUTES_COL])
         transcript = attributes_dict[gtf.TRANSCRIPT_ID_ATTRIBUTE]
-        if transcript not in transcript_to_gene_mappings:
-            transcript_to_gene_mappings[transcript] = \
+        if transcript not in transcript_to_gene_map:
+            transcript_to_gene_map[transcript] = \
                 attributes_dict[gtf.GENE_ID_ATTRIBUTE]
 
-    return transcript_to_gene_mappings
+    return transcript_to_gene_map
 
 
-def _get_transcript_counts_for_genes(transcript_to_gene_mappings):
+def _get_gene_transcript_counts(transcript_to_gene_map):
     transcript_counts = collections.Counter()
-    for gene in transcript_to_gene_mappings.values():
+    for gene in transcript_to_gene_map.values():
         transcript_counts[gene] += 1
 
     return transcript_counts
 
 
 def _output_transcript_counts_for_genes(
-        transcript_to_gene_mappings, transcript_counts):
+        transcript_to_gene_map, transcript_counts):
 
     print(",".join([tpms.TRANSCRIPT, tpms.GENE, tpms.TRANSCRIPT_COUNT]))
-    for transcript, gene in transcript_to_gene_mappings.items():
+    for transcript, gene in transcript_to_gene_map.items():
         print("{t},{g},{c}".format(
             t=transcript, g=gene, c=transcript_counts[gene]))
 
@@ -71,15 +71,15 @@ def _count_transcripts_for_genes(logger, options):
     gtf_info = gtf.read_gtf_file(options[GTF_FILE])
 
     logger.info("Extracting transcript to gene mappings...")
-    transcript_to_gene_mappings = _get_transcript_to_gene_mappings(gtf_info)
+    transcript_to_gene_map = _get_transcript_to_gene_map(gtf_info)
 
     logger.info("Calculating transcript counts for genes...")
-    transcript_counts = _get_transcript_counts_for_genes(
-        transcript_to_gene_mappings)
+    transcript_counts = _get_gene_transcript_counts(
+        transcript_to_gene_map)
 
     logger.info("Printing transcript counts for genes...")
     _output_transcript_counts_for_genes(
-        transcript_to_gene_mappings, transcript_counts)
+        transcript_to_gene_map, transcript_counts)
 
 
 def _main(docstring):

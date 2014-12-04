@@ -153,7 +153,8 @@ def _prepare_quantification(logger, options, **qr_options):
     run_dir = _get_options_dir(True, options, **qr_options)
     logger.debug("Creating quantification files in " + run_dir)
 
-    prq.write_run_quantification_script(reads_dir, run_dir, options, **qr_options)
+    prq.write_run_quantification_script(
+        reads_dir, run_dir, options, **qr_options)
 
 
 def _prequantifier():
@@ -189,13 +190,14 @@ def _check_quantification_completed(logger, options, **qr_options):
         logger.error("Run " + run_name + " did not complete")
 
 
-class _StatsAccumulator:
+class _StatsAccumulator(object):
     ACCUMULATORS = []
 
-    def __init__(self, tpm_level, stratified_stats_type):
+    def __init__(self, tpm_level, classifier=None, ascending=False):
         self.overall_stats_df = pd.DataFrame()
         self.tpm_level = tpm_level
-        self.stratified_stats_type = stratified_stats_type
+        self.classifier = classifier
+        self.ascending = ascending
         _StatsAccumulator.ACCUMULATORS.append(self)
 
     def __call__(self, logger, options, **qr_options):
@@ -203,14 +205,14 @@ class _StatsAccumulator:
         run_dir = _get_options_dir(True, options, **qr_options)
 
         stats_file = statistics.get_stats_file(
-            run_dir, run_name, self.tpm_level, **self.stratified_stats_type)
+            run_dir, run_name, self.tpm_level, self.classifier, self.ascending)
         stats_df = pd.read_csv(stats_file)
         self.overall_stats_df = self.overall_stats_df.append(stats_df)
 
-    def _write_stats(self, stats_dir):
+    def write_stats(self, stats_dir):
         overall_stats_file = statistics.get_stats_file(
             stats_dir, statistics.OVERALL_STATS_PREFIX,
-            self.tpm_level, **self.stratified_stats_type)
+            self.tpm_level, self.classifier, self.ascending)
         statistics.write_stats_data(
             overall_stats_file, self.overall_stats_df, index=False)
 
@@ -240,17 +242,17 @@ def _set_executables_for_commands():
         _check_quantification_completed]
     pc.ANALYSE_RUNS.executables = [
         _run_directory_checker(True),
-        _StatsAccumulator(tpms.TRANSCRIPT, {}),
-        _StatsAccumulator(tpms.GENE, {})] + \
-        [_StatsAccumulator(tpms.TRANSCRIPT, t) for t
-            in statistics.get_stratified_stats_types()]
+        _StatsAccumulator(tpms.TRANSCRIPT),
+        _StatsAccumulator(tpms.GENE)] + \
+        [_StatsAccumulator(tpms.TRANSCRIPT, classifier=clsfr, ascending=asc)
+            for clsfr, asc in statistics.get_stratified_stats_types()]
 
 
 def _write_accumulated_stats(options):
     if not os.path.exists(options[po.STATS_DIRECTORY]):
         os.mkdir(options[po.STATS_DIRECTORY])
     for stats_acc in _StatsAccumulator.ACCUMULATORS:
-        stats_acc._write_stats(options[po.STATS_DIRECTORY])
+        stats_acc.write_stats(options[po.STATS_DIRECTORY])
 
 
 def _get_overall_stats(options, tpm_level):
