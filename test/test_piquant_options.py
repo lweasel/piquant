@@ -11,19 +11,23 @@ def _get_logger():
     return log.get_logger(sys.stderr, "critical")
 
 
+def _get_test_option_value(
+        default_value=None, option_validator=int,
+        value_namer=lambda x: x, file_namer=None):
+
+    return po._OptionValue(default_value, option_validator,
+                           value_namer, file_namer)
+
+
 def _get_test_option(
         name="name", title="The Name",
         description="description for the option",
-        default_value=None, option_validator=int, has_value=True,
-        is_numeric=False, value_namer=None, file_namer=None,
+        is_numeric=False, option_value=_get_test_option_value(),
         option_type=po._PiquantOption._BASIC_OPTION_TYPE):
 
     option = po._PiquantOption(
-        name, description, title=title,
-        default_value=default_value, option_validator=option_validator,
-        has_value=has_value, is_numeric=is_numeric,
-        value_namer=value_namer, file_namer=file_namer,
-        option_type=option_type)
+        name, description, title=title, option_value=option_value,
+        is_numeric=is_numeric, option_type=option_type)
 
     if option_type != po._PiquantOption._BASIC_OPTION_TYPE:
         po._PiquantOption._QUANT_RUN_OPTIONS.remove(option)
@@ -64,20 +68,23 @@ def test_piquant_option_description_is_correct():
 
 def test_piquant_option_default_value_is_correct():
     default_value = "DEF"
-    opt = _get_test_option(default_value=default_value)
-    assert opt.default_value == default_value
+    opt = _get_test_option(
+        option_value=_get_test_option_value(default_value=default_value))
+    assert opt.default_value() == default_value
 
 
 def test_piquant_option_option_validator_is_correct():
     option_validator = lambda x: x
-    opt = _get_test_option(option_validator=option_validator)
-    assert opt.option_validator == option_validator
+    opt = _get_test_option(
+        option_value=_get_test_option_value(option_validator=option_validator))
+    assert opt.option_value.validator == option_validator
 
 
 def test_piquant_option_has_value_is_correct():
-    has_value = False
-    opt = _get_test_option(has_value=has_value)
-    assert opt.has_value == has_value
+    opt = _get_test_option(option_value=None)
+    assert not opt.has_value()
+    opt = _get_test_option(option_value=_get_test_option_value())
+    assert opt.has_value()
 
 
 def test_piquant_option_title_is_correct():
@@ -94,14 +101,16 @@ def test_piquant_option_is_numeric_is_correct():
 
 def test_piquant_option_value_namer_is_correct():
     value_namer = lambda x: x + "bp"
-    opt = _get_test_option(value_namer=value_namer)
-    assert opt.value_namer == value_namer
+    opt = _get_test_option(
+        option_value=_get_test_option_value(value_namer=value_namer))
+    assert opt.option_value.value_namer == value_namer
 
 
 def test_piquant_option_file_namer_is_correct():
     file_namer = lambda x: x + "bp"
-    opt = _get_test_option(file_namer=file_namer)
-    assert opt.file_namer == file_namer
+    opt = _get_test_option(
+        option_value=_get_test_option_value(file_namer=file_namer))
+    assert opt.option_value.file_namer == file_namer
 
 
 def test_piquant_option_option_type_is_correct():
@@ -141,7 +150,7 @@ def test_get_usage_string_returns_correct_string_when_option_has_value():
 
 
 def test_get_usage_string_returns_correct_string_when_option_does_not_have_value():
-    opt = _get_test_option(name="the_opt", has_value=False)
+    opt = _get_test_option(name="the_opt", option_value=None)
     assert opt.get_usage_string() == "--the-opt"
 
 
@@ -167,7 +176,8 @@ def test_get_option_description_includes_description():
 
 def test_get_option_description_includes_default_value_specification_when_default_specified():
     default_value = "DEF"
-    opt = _get_test_option(default_value=default_value)
+    opt = _get_test_option(
+        option_value=_get_test_option_value(default_value=default_value))
     assert opt.get_option_description().find("default:") > -1
     assert opt.get_option_description().find(default_value) > -1
 
@@ -185,7 +195,9 @@ def test_get_value_name_returns_correct_value_when_no_value_namer_supplied():
 
 def test_get_value_name_returns_correct_value_when_value_namer_supplied():
     value = 30
-    opt = _get_test_option(value_namer=lambda x: "VAL{v}".format(v=x))
+    opt = _get_test_option(
+        option_value=_get_test_option_value(
+            value_namer=lambda x: "VAL{v}".format(v=x)))
     assert opt.get_value_name(value) == "VAL" + str(value)
 
 
@@ -197,13 +209,17 @@ def test_get_file_name_part_returns_correct_value_when_no_value_or_file_namer_su
 
 def test_get_file_name_part_returns_correct_value_when_no_file_namer_supplied():
     value = 30
-    opt = _get_test_option(value_namer=lambda x: "VAL{v}".format(v=x))
+    opt = _get_test_option(
+        option_value=_get_test_option_value(
+            value_namer=lambda x: "VAL{v}".format(v=x)))
     assert opt.get_file_name_part(value) == "VAL" + str(value)
 
 
 def test_get_file_name_part_returns_correct_value_when_file_namer_supplied():
     value = 30
-    opt = _get_test_option(file_namer=lambda x: "{v}bp".format(v=x))
+    opt = _get_test_option(
+        option_value=_get_test_option_value(
+            file_namer=lambda x: "{v}bp".format(v=x)))
     assert opt.get_file_name_part(value) == str(value) + "bp"
 
 
@@ -372,9 +388,11 @@ def test_execute_for_mqr_option_sets_executes_for_correct_sets_of_piquant_option
 
     command = pc._PiquantCommand("dummy", [])
     command.executables = [callable1]
-    po.execute_for_mqr_option_sets(command, None, None, **piquant_options_values)
+    po.execute_for_mqr_option_sets(
+        command, None, None, **piquant_options_values)
 
-    execute_record = [set(piquant_options) for piquant_options in execute_record]
+    execute_record = \
+        [set(piquant_options) for piquant_options in execute_record]
     assert set([piquant_options1[0], piquant_options2[0]]) in execute_record
     assert set([piquant_options1[0], piquant_options2[1]]) in execute_record
     assert set([piquant_options1[1], piquant_options2[0]]) in execute_record
