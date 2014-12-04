@@ -23,7 +23,7 @@ def _quantifier(cls):
     return cls
 
 
-class _quantifierBase(object):
+class _QuantifierBase(object):
     def __init__(self):
         self.abundances = None
 
@@ -36,22 +36,22 @@ class _quantifierBase(object):
 
 
 @_quantifier
-class _Cufflinks(_quantifierBase):
+class _Cufflinks(_QuantifierBase):
     FPKM_COLUMN = "FPKM"
 
-    CALCULATE_BOWTIE_INDEX_DIRECTORY = \
+    CALC_BOWTIE_INDEX_DIR = \
         "BOWTIE_INDEX_DIR=$(dirname {bowtie_index})"
-    CHECK_BOWTIE_INDEX_DIRECTORY_EXISTS = \
+    BOWTIE_INDEX_DIR_EXISTS = \
         "! -d $BOWTIE_INDEX_DIR"
-    MAKE_BOWTIE_INDEX_DIRECTORY = \
+    MAKE_BOWTIE_INDEX_DIR = \
         "mkdir -p $BOWTIE_INDEX_DIR"
-    GET_GENOME_REFERENCE_FASTA_FILE_LIST = \
+    GET_GENOME_REF_FASTA_LIST = \
         "REF_FILES=$(ls -1 {genome_fasta_dir}/*.fa | tr '\\n' ',')"
-    STRIP_TRAILING_COMMA_FROM_FASTA_FILE_LIST = \
+    STRIP_LAST_COMMA_FROM_FASTA_LIST = \
         "REF_FILES=${REF_FILES%,}"
     BUILD_BOWTIE_INDEX = \
         "bowtie-build $REF_FILES {bowtie_index}"
-    CONSTRUCT_BOWTIE_REFERENCE_FASTA = \
+    CONSTRUCT_BOWTIE_REF_FASTA = \
         "bowtie-inspect {bowtie_index} > {bowtie_index}.fa"
 
     MAP_READS_TO_GENOME_WITH_TOPHAT = \
@@ -62,9 +62,9 @@ class _Cufflinks(_quantifierBase):
         "-p {num_threads} " + "{stranded_spec} -G {transcript_gtf} " + \
         "tho/accepted_hits.bam"
 
-    REMOVE_TOPHAT_OUTPUT_DIRECTORY = \
+    REMOVE_TOPHAT_OUTPUT_DIR = \
         "rm -rf tho"
-    REMOVE_CUFFLINKS_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
+    REMOVE_OUTPUT_EXCEPT_ABUNDANCES = \
         r"find transcriptome \! -name 'isoforms.fpkm_tracking' -type f -delete"
 
     @classmethod
@@ -84,19 +84,19 @@ class _Cufflinks(_quantifierBase):
 
         bowtie_index = cls._get_bowtie_index(params[QUANTIFIER_DIRECTORY])
 
-        writer.add_line(cls.CALCULATE_BOWTIE_INDEX_DIRECTORY.format(
+        writer.add_line(cls.CALC_BOWTIE_INDEX_DIR.format(
             bowtie_index=bowtie_index))
 
         with writer.section():
-            with writer.if_block(cls.CHECK_BOWTIE_INDEX_DIRECTORY_EXISTS):
-                writer.add_line(cls.MAKE_BOWTIE_INDEX_DIRECTORY)
+            with writer.if_block(cls.BOWTIE_INDEX_DIR_EXISTS):
+                writer.add_line(cls.MAKE_BOWTIE_INDEX_DIR)
                 writer.add_line(
-                    cls.GET_GENOME_REFERENCE_FASTA_FILE_LIST.format(
+                    cls.GET_GENOME_REF_FASTA_LIST.format(
                         genome_fasta_dir=params[GENOME_FASTA_DIR]))
-                writer.add_line(cls.STRIP_TRAILING_COMMA_FROM_FASTA_FILE_LIST)
+                writer.add_line(cls.STRIP_LAST_COMMA_FROM_FASTA_LIST)
                 writer.add_line(cls.BUILD_BOWTIE_INDEX.format(
                     bowtie_index=bowtie_index))
-                writer.add_line(cls.CONSTRUCT_BOWTIE_REFERENCE_FASTA.format(
+                writer.add_line(cls.CONSTRUCT_BOWTIE_REF_FASTA.format(
                     bowtie_index=bowtie_index))
 
     @classmethod
@@ -124,9 +124,9 @@ class _Cufflinks(_quantifierBase):
             num_threads=params[NUM_THREADS]))
 
     @classmethod
-    def write_post_quantification_cleanup(cls, writer):
-        writer.add_line(cls.REMOVE_TOPHAT_OUTPUT_DIRECTORY)
-        writer.add_line(cls.REMOVE_CUFFLINKS_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES)
+    def write_cleanup(cls, writer):
+        writer.add_line(cls.REMOVE_TOPHAT_OUTPUT_DIR)
+        writer.add_line(cls.REMOVE_OUTPUT_EXCEPT_ABUNDANCES)
 
     def get_transcript_abundance(self, transcript_id):
         if self.abundances is None:
@@ -142,14 +142,14 @@ class _Cufflinks(_quantifierBase):
         return self.norm_constant * fpkm
 
 
-class _TranscriptomeBasedQuantifierBase(_quantifierBase):
-    CALCULATE_TRANSCRIPT_REFERENCE_DIRECTORY = \
+class _TranscriptomeBasedQuantifierBase(_QuantifierBase):
+    CALC_TRANSCRIPT_REF_DIR = \
         "REF_DIR=$(dirname {ref_name})"
-    CHECK_TRANSCRIPT_REFERENCE_DIRECTORY_EXISTS = \
+    TRANSCRIPT_REF_DIR_EXISTS = \
         "! -d $REF_DIR"
-    MAKE_TRANSCRIPT_REFERENCE_DIRECTORY = \
+    MAKE_TRANSCRIPT_REF_DIR = \
         "mkdir -p $REF_DIR"
-    PREPARE_TRANSCRIPT_REFERENCE = \
+    PREPARE_TRANSCRIPT_REF = \
         "rsem-prepare-reference --gtf {transcript_gtf} --no-polyA " + \
         "{bowtie_spec} {genome_fasta_dir} {ref_name}"
 
@@ -175,13 +175,13 @@ class _TranscriptomeBasedQuantifierBase(_quantifierBase):
             bowtie_spec = "" if cls._needs_bowtie_index() else "--no-bowtie"
 
             writer.add_line(
-                cls.CALCULATE_TRANSCRIPT_REFERENCE_DIRECTORY.format(
+                cls.CALC_TRANSCRIPT_REF_DIR.format(
                     ref_name=ref_name))
 
             with writer.if_block(
-                    cls.CHECK_TRANSCRIPT_REFERENCE_DIRECTORY_EXISTS):
-                writer.add_line(cls.MAKE_TRANSCRIPT_REFERENCE_DIRECTORY)
-                writer.add_line(cls.PREPARE_TRANSCRIPT_REFERENCE.format(
+                    cls.TRANSCRIPT_REF_DIR_EXISTS):
+                writer.add_line(cls.MAKE_TRANSCRIPT_REF_DIR)
+                writer.add_line(cls.PREPARE_TRANSCRIPT_REF.format(
                     transcript_gtf=params[TRANSCRIPT_GTF_FILE],
                     genome_fasta_dir=params[GENOME_FASTA_DIR],
                     ref_name=ref_name,
@@ -199,7 +199,7 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
         "{num_threads} " + "{stranded_spec} {reads_spec} {ref_name} " + \
         "rsem_sample"
 
-    REMOVE_RSEM_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
+    REMOVE_OUTPUT_EXCEPT_ABUNDANCES = \
         "find . -name \"rsem_sample*\"" + r" \! " + \
         "-name rsem_sample.isoforms.results -type f -delete"
 
@@ -232,8 +232,8 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
             num_threads=params[NUM_THREADS]))
 
     @classmethod
-    def write_post_quantification_cleanup(cls, writer):
-        writer.add_line(cls.REMOVE_RSEM_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES)
+    def write_cleanup(cls, writer):
+        writer.add_line(cls.REMOVE_OUTPUT_EXCEPT_ABUNDANCES)
 
     def get_transcript_abundance(self, transcript_id):
         if self.abundances is None:
@@ -247,7 +247,7 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
 
 @_quantifier
 class _Express(_TranscriptomeBasedQuantifierBase):
-    MAP_READS_TO_TRANSCRIPT_REFERENCE = \
+    MAP_READS_TO_TRANSCRIPT_REF = \
         "bowtie {qualities_spec} -e 99999999 -l 25 -I 1 -X 1000 -a -S " + \
         "-m 200 -p {num_threads} {ref_name} {reads_spec}"
     CONVERT_SAM_TO_BAM = \
@@ -257,7 +257,7 @@ class _Express(_TranscriptomeBasedQuantifierBase):
 
     REMOVE_MAPPED_READS = \
         "rm hits.bam"
-    REMOVE_EXPRESS_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
+    REMOVE_OUTPUT_EXCEPT_ABUNDANCES = \
         "rm params.xprs"
 
     @classmethod
@@ -283,7 +283,7 @@ class _Express(_TranscriptomeBasedQuantifierBase):
                          else "--fr-stranded") if params[STRANDED_READS] else ""
 
         writer.add_pipe(
-            cls.MAP_READS_TO_TRANSCRIPT_REFERENCE.format(
+            cls.MAP_READS_TO_TRANSCRIPT_REF.format(
                 qualities_spec=qualities_spec,
                 ref_name=ref_name,
                 reads_spec=reads_spec,
@@ -295,9 +295,9 @@ class _Express(_TranscriptomeBasedQuantifierBase):
             ref_name=ref_name))
 
     @classmethod
-    def write_post_quantification_cleanup(cls, writer):
+    def write_cleanup(cls, writer):
         writer.add_line(cls.REMOVE_MAPPED_READS)
-        writer.add_line(cls.REMOVE_EXPRESS_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES)
+        writer.add_line(cls.REMOVE_OUTPUT_EXCEPT_ABUNDANCES)
 
     def get_transcript_abundance(self, transcript_id):
         if self.abundances is None:
@@ -310,7 +310,7 @@ class _Express(_TranscriptomeBasedQuantifierBase):
 
 @_quantifier
 class _Sailfish(_TranscriptomeBasedQuantifierBase):
-    CREATE_SAILFISH_TRANSCRIPT_INDEX = \
+    CREATE_TRANSCRIPT_INDEX = \
         "sailfish index -p {num_threads} -t {ref_name}.transcripts.fa " + \
         "-k 20 -o {index_dir}"
 
@@ -322,7 +322,7 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
         "sed -e 's/# //'i > quant_filtered.csv"
     ]
 
-    REMOVE_SAILFISH_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
+    REMOVE_OUTPUT_EXCEPT_ABUNDANCES = \
         "rm -rf logs quant_bias_corrected.sf quant.sf " + \
         "reads.count_info reads.sfc"
 
@@ -352,7 +352,7 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
             ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
             index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
 
-            writer.add_line(cls.CREATE_SAILFISH_TRANSCRIPT_INDEX.format(
+            writer.add_line(cls.CREATE_TRANSCRIPT_INDEX.format(
                 ref_name=ref_name, index_dir=index_dir,
                 num_threads=params[NUM_THREADS]))
 
@@ -380,8 +380,8 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
         writer.add_pipe(*cls.FILTER_COMMENT_LINES)
 
     @classmethod
-    def write_post_quantification_cleanup(cls, writer):
-        writer.add_line(cls.REMOVE_SAILFISH_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES)
+    def write_cleanup(cls, writer):
+        writer.add_line(cls.REMOVE_OUTPUT_EXCEPT_ABUNDANCES)
 
     def get_transcript_abundance(self, transcript_id):
         if self.abundances is None:
@@ -406,7 +406,7 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
         "sed -e 's/# //'i > quant_filtered.csv"
     ]
 
-    REMOVE_SALMON_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
+    REMOVE_OUTPUT_EXCEPT_ABUNDANCES = \
         "rm -rf logs quant.sf"
 
     @classmethod
@@ -459,8 +459,8 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
         writer.add_pipe(*cls.FILTER_COMMENT_LINES)
 
     @classmethod
-    def write_post_quantification_cleanup(cls, writer):
-        writer.add_line(cls.REMOVE_SALMON_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES)
+    def write_cleanup(cls, writer):
+        writer.add_line(cls.REMOVE_OUTPUT_EXCEPT_ABUNDANCES)
 
     def get_transcript_abundance(self, transcript_id):
         if self.abundances is None:

@@ -62,7 +62,7 @@ def _add_quantify_transcripts(writer, quant_method, quant_params, cleanup):
         if cleanup:
             writer.add_comment(
                 "Remove files not necessary for analysis of quantification.")
-            quant_method.write_post_quantification_cleanup(writer)
+            quant_method.write_cleanup(writer)
 
 
 def _add_calculate_transcripts_per_gene(
