@@ -317,8 +317,9 @@ def _create_final_reads_files(writer, paired_end, errors):
 
         writer.add_pipe(
             "paste " + ("- " * (4 if errors else 2)) + "< " + tmp_reads_file,
-            ("awk -F '\\t' '$1~/\/1/ {{print $0 > \"{tmp_left_reads}\"}} " +
-             "$1~/\/2/ {{print $0 > \"{tmp_right_reads}\"}}'").format(
+            ("awk -F '\\t' " + r"'$1~/\/1/" +
+             " {{print $0 > \"{tmp_left_reads}\"}} " + r"$1~/\/2/" +
+             " {{print $0 > \"{tmp_right_reads}\"}}'").format(
                 tmp_left_reads=TMP_LEFT_READS_FILE,
                 tmp_right_reads=TMP_RIGHT_READS_FILE)
         )

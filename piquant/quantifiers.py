@@ -65,7 +65,7 @@ class _Cufflinks(_quantifierBase):
     REMOVE_TOPHAT_OUTPUT_DIRECTORY = \
         "rm -rf tho"
     REMOVE_CUFFLINKS_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
-        "find transcriptome \! -name 'isoforms.fpkm_tracking' -type f -delete"
+        r"find transcriptome \! -name 'isoforms.fpkm_tracking' -type f -delete"
 
     @classmethod
     def get_name(cls):
@@ -200,7 +200,7 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
         "rsem_sample"
 
     REMOVE_RSEM_OUTPUT_EXCEPT_ISOFORM_ABUNDANCES = \
-        "find . -name \"rsem_sample*\" \! " + \
+        "find . -name \"rsem_sample*\"" + r" \! " + \
         "-name rsem_sample.isoforms.results -type f -delete"
 
     @classmethod
@@ -318,7 +318,7 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
         "sailfish quant -p {num_threads} -i {index_dir} -l {library_spec} " + \
         "{reads_spec} -o ."
     FILTER_COMMENT_LINES = [
-        "grep -v '^# \[' quant_bias_corrected.sf",
+        r"grep -v '^# \[' quant_bias_corrected.sf",
         "sed -e 's/# //'i > quant_filtered.csv"
     ]
 
@@ -402,7 +402,7 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
         "salmon quant -p {num_threads} -i {index_dir} -l " + \
         "{library_spec} {reads_spec} -o ."
     FILTER_COMMENT_LINES = [
-        "grep -v '^# \[\|salmon' quant.sf",
+        r"grep -v '^# \[\|salmon' quant.sf",
         "sed -e 's/# //'i > quant_filtered.csv"
     ]
 

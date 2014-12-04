@@ -165,7 +165,7 @@ def _add_process_command_line_options(writer):
                 writer.set_variable(QUANTIFY_TRANSCRIPTS_VARIABLE, 1)
             with writer.case_option_block("a"):
                 writer.set_variable(ANALYSE_RESULTS_VARIABLE, 1)
-            with writer.case_option_block("\?"):
+            with writer.case_option_block(r"\?"):
                 writer.add_line("echo \"Invalid option: -$OPTARG\" >&2")
 
 
