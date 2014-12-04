@@ -1,2 +1,4 @@
 strictness: veryhigh
 max-line-length: 81
+ignore-paths:
+    - docs
