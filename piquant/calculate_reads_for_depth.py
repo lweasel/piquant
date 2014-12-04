@@ -22,9 +22,10 @@ Options:
 """
 
 import docopt
-import flux_simulator as fs
-import options as opt
 import schema
+
+from .import flux_simulator as fs
+from .import options as opt
 
 from __init__ import __version__
 

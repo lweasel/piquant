@@ -11,8 +11,6 @@ import statistics
 import sys
 import tpms as t
 
-PLOT_FORMATS = ["pdf", "svg", "png"]
-
 # Don't embed characters as paths when outputting SVG - assume fonts are
 # installed on machine where SVG will be viewed (see
 # http://matplotlib.org/users/customizing.html)

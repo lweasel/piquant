@@ -23,15 +23,15 @@ Options:
     File containing unique sequence lengths per-transcript.
 """
 
+import pandas as pd
+
+from . import flux_simulator as fs
+from . import options as opt
+from . import quantifiers as qs
+from . import tpms
+
 from docopt import docopt
 from schema import SchemaError
-
-import flux_simulator as fs
-import options as opt
-import pandas as pd
-import quantifiers as qs
-import tpms
-
 from __init__ import __version__
 
 QUANT_METHOD = "--method"

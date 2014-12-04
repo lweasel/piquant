@@ -4,7 +4,6 @@ import schema
 import textwrap
 
 from . import options as opt
-from . import plot
 from . import quantifiers
 
 _INDENT = "    "
@@ -313,13 +312,14 @@ GENOME_FASTA_DIR = _QuantRunOption(
         validator=lambda x: opt.validate_dir_option(
             x, "Genome FASTA directory does not exist")))
 
+PLOT_FORMATS = ["pdf", "svg", "png"]
 PLOT_FORMAT = _PiquantOption(
     "plot_format",
     "Output format for graphs (one of {plot_formats})",
     option_value=_OptionValue(
         default_value="pdf",
         validator=lambda x: opt.validate_list_option(
-            x, plot.PLOT_FORMATS, "Invalid plot format")))
+            x, PLOT_FORMATS, "Invalid plot format")))
 
 GROUPED_THRESHOLD = _PiquantOption(
     "grouped_threshold",

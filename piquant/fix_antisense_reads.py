@@ -19,9 +19,10 @@ Options:
 """
 
 import docopt
-import options as opt
 import os.path
 import schema
+
+from . import options as opt
 
 from __init__ import __version__
 

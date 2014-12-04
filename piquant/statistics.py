@@ -10,8 +10,9 @@ import classifiers
 import itertools
 import math
 import os.path
-import piquant_options as po
-import tpms as t
+
+from . import piquant_options as po
+from . import tpms as t
 
 TP_NUM_TPMS = "tp-num-tpms"
 OVERALL_STATS_PREFIX = "overall"

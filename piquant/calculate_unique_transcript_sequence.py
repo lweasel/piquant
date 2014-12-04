@@ -14,10 +14,11 @@
 """
 
 import docopt
-import gtf
-import options as opt
 import schema
-import tpms
+
+from . import gtf
+from . import options as opt
+from . import tpms
 
 from collections import defaultdict, namedtuple
 from __init__ import __version__

@@ -47,18 +47,19 @@ Options:
     Basename for output graph and data files.
 """
 
-import classifiers
 import collections
 import docopt
 import itertools
 import numpy as np
-import options as opt
 import pandas as pd
-import piquant_options as po
-import statistics
-import tpms as t
-import plot
 import schema
+
+from . import classifiers
+from . import options as opt
+from . import piquant_options as po
+from . import statistics
+from . import tpms as t
+from . import plot
 
 from __init__ import __version__
 
@@ -79,7 +80,7 @@ def _validate_command_line_options(options):
 
         for option in [po.PLOT_FORMAT, po.GROUPED_THRESHOLD,
                        po.ERROR_FRACTION_THRESHOLD, po.NOT_PRESENT_CUTOFF]:
-            option.option_validator(options[option.get_option_name()])
+            option.validator(options[option.get_option_name()])
     except schema.SchemaError as exc:
         exit(exc.code)
 
@@ -280,7 +281,7 @@ def _analyse_run(logger, options):
 def _main(docstring):
     # Read in command-line options
     docstring = opt.substitute_common_options_into_usage(
-        docstring, plot_formats=plot.PLOT_FORMATS)
+        docstring, plot_formats=po.PLOT_FORMATS)
     options = docopt.docopt(
         docstring, version="analyse_quantification_run v" + __version__)
 

@@ -1,4 +1,4 @@
-import tpms as t
+from . import tpms as t
 
 
 class _Classifier():

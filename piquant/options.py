@@ -18,10 +18,11 @@ message.
 
 from schema import And, Or, Schema, Use
 
-import log
 import os.path
 import sys
 import textwrap
+
+from . import log
 
 _LOG_LEVEL_OPTION = "--" + log.LOG_LEVEL
 

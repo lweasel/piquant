@@ -27,12 +27,13 @@ Options:
 
 import collections
 import docopt
-import options as opt
 import os.path
-import pwm
 import random
 import schema
 import sys
+
+from . import options as opt
+from . import pwm
 
 from __init__ import __version__
 

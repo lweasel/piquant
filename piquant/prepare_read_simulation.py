@@ -1,6 +1,7 @@
-import file_writer as fw
-import flux_simulator as fs
 import os.path
+
+from . import file_writer as fw
+from . import flux_simulator as fs
 
 RUN_SCRIPT = "run_simulation.sh"
 

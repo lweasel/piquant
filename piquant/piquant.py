@@ -1,22 +1,23 @@
 #!/usr/bin/env python
 
 import docopt
-import flux_simulator as fs
-import options as opt
 import os
 import os.path
 import pandas as pd
-import piquant_commands as pc
-import piquant_options as po
-import plot
-import prepare_quantification_run as prq
-import prepare_read_simulation as prs
-import process
 import schema
-import statistics
 import sys
 import time
-import tpms
+
+from . import flux_simulator as fs
+from . import options as opt
+from . import piquant_commands as pc
+from . import piquant_options as po
+from . import plot
+from . import prepare_quantification_run as prq
+from . import prepare_read_simulation as prs
+from . import process
+from . import statistics
+from . import tpms
 
 from __init__ import __version__
 

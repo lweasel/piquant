@@ -1,8 +1,9 @@
-import file_writer as fw
-import flux_simulator as fs
-import quantifiers as qs
 import os.path
-import piquant_options as po
+
+from . import file_writer as fw
+from . import flux_simulator as fs
+from . import quantifiers as qs
+from . import piquant_options as po
 
 RUN_SCRIPT = "run_quantification.sh"
 

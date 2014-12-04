@@ -13,8 +13,9 @@ SIMULATED_READS_PREFIX: FluxSimulator reads FASTA file prefix.
 READ_NUMBER_PLACEHOLDER: Placeholder text for number of reads to simulate.
 """
 
-import file_writer as fw
 import pandas as pd
+
+from . import file_writer as fw
 
 PRO_FILE_TRANSCRIPT_ID_COL = 1
 PRO_FILE_LENGTH_COL = 3

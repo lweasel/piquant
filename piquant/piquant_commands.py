@@ -1,6 +1,5 @@
-import piquant_options as po
-import plot
-import options as opt
+from . import piquant_options as po
+from . import options as opt
 
 COMMANDS = {}
 
@@ -108,6 +107,6 @@ def get_usage_message(command):
         usage += option.get_option_description()
 
     usage = opt.substitute_common_options_into_usage(
-        usage, plot_formats=plot.PLOT_FORMATS)
+        usage, plot_formats=po.PLOT_FORMATS)
 
     return usage
