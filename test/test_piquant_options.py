@@ -22,18 +22,13 @@ def _get_test_option_value(
 def _get_test_option(
         name="name", title="The Name",
         description="description for the option",
-        is_numeric=False, option_value=_get_test_option_value(),
-        option_type=po._PiquantOption._BASIC_OPTION_TYPE):
+        is_numeric=False, option_value=_get_test_option_value()):
 
     option = po._PiquantOption(
         name, description, title=title, option_value=option_value,
-        is_numeric=is_numeric, option_type=option_type)
+        is_numeric=is_numeric)
 
-    if option_type != po._PiquantOption._BASIC_OPTION_TYPE:
-        po._PiquantOption._QUANT_RUN_OPTIONS.remove(option)
-        if option_type == po._PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE:
-            po._PiquantOption._MULTI_QUANT_RUN_OPTIONS.remove(option)
-
+    po._PiquantOption._OPTIONS.remove(option)
     return option
 
 
@@ -111,37 +106,6 @@ def test_piquant_option_file_namer_is_correct():
     opt = _get_test_option(
         option_value=_get_test_option_value(file_namer=file_namer))
     assert opt.option_value.file_namer == file_namer
-
-
-def test_piquant_option_option_type_is_correct():
-    option_type = po._PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE
-    opt = _get_test_option(option_type=option_type)
-    assert opt.option_type == option_type
-
-
-def test_is_quant_run_option_type_returns_correct_value_for_basic_options():
-    opt = _get_test_option()
-    assert not opt.is_quant_run_option()
-
-
-def test_is_quant_run_option_type_returns_correct_value_for_quant_run_options():
-    for opt_type in [po._PiquantOption._QUANT_RUN_OPTION_TYPE,
-                     po._PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE]:
-        opt = _get_test_option(option_type=opt_type)
-        assert opt.is_quant_run_option()
-
-
-def test_is_multiple_quant_run_option_type_returns_correct_value_for_basic_and_quant_run_options():
-    for opt_type in [po._PiquantOption._QUANT_RUN_OPTION_TYPE,
-                     po._PiquantOption._BASIC_OPTION_TYPE]:
-        opt = _get_test_option(option_type=opt_type)
-        assert not opt.is_multiple_quant_run_option()
-
-
-def test_is_multiple_quant_run_option_type_returns_correct_value_for_mqr_options():
-    opt = _get_test_option(
-        option_type=po._PiquantOption._MULTIPLE_QUANT_RUN_OPTION_TYPE)
-    assert opt.is_multiple_quant_run_option()
 
 
 def test_get_usage_string_returns_correct_string_when_option_has_value():
