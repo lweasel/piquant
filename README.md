@@ -1,6 +1,4 @@
-[![Build Status](https://travis-ci.org/lweasel/piquant.svg?branch=develop)](https://travis-ci.org/lweasel/piquant)
-
-[![Coverage Status](https://coveralls.io/repos/lweasel/piquant/badge.png?branch=develop)](https://coveralls.io/r/lweasel/piquant?branch=develop)
+[![Build Status](https://travis-ci.org/lweasel/piquant.svg?branch=develop)](https://travis-ci.org/lweasel/piquant) [![Coverage Status](https://coveralls.io/repos/lweasel/piquant/badge.png?branch=develop)](https://coveralls.io/r/lweasel/piquant?branch=develop) [![Code Health](https://landscape.io/github/lweasel/piquant/develop/landscape.svg)](https://landscape.io/github/lweasel/piquant/develop)
 
 piquant
 =======
