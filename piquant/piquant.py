@@ -18,8 +18,7 @@ from . import prepare_read_simulation as prs
 from . import process
 from . import statistics
 from . import tpms
-
-from __init__ import __version__
+from . import __init__
 
 
 def _get_options_dir(run_dir, options, **qr_options):
@@ -339,7 +338,8 @@ def piquant(args):
 
     # Read command-line options
     usage = pc.get_usage_message(command)
-    options = docopt.docopt(usage, argv=args, version="piquant v" + __version__)
+    options = docopt.docopt(
+        usage, argv=args, version="piquant v" + __init__.__version__)
 
     # Set up logger
     opt.validate_log_level(options)

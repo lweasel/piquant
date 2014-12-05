@@ -28,7 +28,7 @@ def _get_test_option(
         name, description, title=title, option_value=option_value,
         is_numeric=is_numeric)
 
-    po._PiquantOption._OPTIONS.remove(option)
+    po._PiquantOption.OPTIONS.remove(option)
     return option
 
 

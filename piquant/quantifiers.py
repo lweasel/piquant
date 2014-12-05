@@ -47,7 +47,7 @@ class _Cufflinks(_QuantifierBase):
         "mkdir -p $BOWTIE_INDEX_DIR"
     GET_GENOME_REF_FASTA_LIST = \
         "REF_FILES=$(ls -1 {genome_fasta_dir}/*.fa | tr '\\n' ',')"
-    STRIP_LAST_COMMA_FROM_FASTA_LIST = \
+    STRIP_LAST_COMMA_FROM_FA_LIST = \
         "REF_FILES=${REF_FILES%,}"
     BUILD_BOWTIE_INDEX = \
         "bowtie-build $REF_FILES {bowtie_index}"
@@ -93,7 +93,7 @@ class _Cufflinks(_QuantifierBase):
                 writer.add_line(
                     cls.GET_GENOME_REF_FASTA_LIST.format(
                         genome_fasta_dir=params[GENOME_FASTA_DIR]))
-                writer.add_line(cls.STRIP_LAST_COMMA_FROM_FASTA_LIST)
+                writer.add_line(cls.STRIP_LAST_COMMA_FROM_FA_LIST)
                 writer.add_line(cls.BUILD_BOWTIE_INDEX.format(
                     bowtie_index=bowtie_index))
                 writer.add_line(cls.CONSTRUCT_BOWTIE_REF_FASTA.format(

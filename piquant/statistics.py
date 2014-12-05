@@ -6,11 +6,11 @@ get_statistics: Return all statistic instances.
 get_graphable_statistics: Return statistic instances suitable for graphing.
 """
 
-import classifiers
 import itertools
 import math
 import os.path
 
+from . import classifiers
 from . import piquant_options as po
 from . import tpms as t
 
@@ -56,7 +56,9 @@ def get_stratified_stats_types():
             for c, asc in itertools.product(dist_clsfrs, [True, False])]
 
 
-def get_stats_file(directory, prefix, tpm_level, classifier=None, ascending=False):
+def get_stats_file(directory, prefix, tpm_level,
+                   classifier=None, ascending=False):
+
     return os.path.join(directory, "_".join([prefix, tpm_level])) + \
         (classifier.get_stats_file_suffix(ascending=ascending)
             if classifier else "_stats") + ".csv"
@@ -67,14 +69,14 @@ def write_stats_data(filename, data_frame, **kwargs):
         data_frame.to_csv(out_file, float_format="%.5f", **kwargs)
 
 
-def _Statistic(cls):
+def _statistic(cls):
     # Mark a class as capable of calculate a statistic for the results of a
     # quantification run.
     _STATISTICS.append(cls())
     return cls
 
 
-class _BaseStatistic():
+class _BaseStatistic(object):
     # Base for classes capable of calculating a statistic
 
     @classmethod
@@ -120,7 +122,7 @@ class _BaseStatistic():
         raise NotImplementedError
 
 
-@_Statistic
+@_statistic
 class _NumberOfTPMs(_BaseStatistic):
     # Calculates the total number of transcript TPMs in the results.
     def __init__(self):
@@ -135,10 +137,11 @@ class _NumberOfTPMs(_BaseStatistic):
         return stats[_SUMMARY_COUNT]
 
     def stat_range(self, vals_range):
+        del vals_range
         return (0, None)
 
 
-@_Statistic
+@_statistic
 class _NumberOfTruePositiveTPMs(_BaseStatistic):
     # Calculates the total number of transcript TPMs in the results for which
     # both real and calculated TPMs are above a threshold value indicating
@@ -155,10 +158,11 @@ class _NumberOfTruePositiveTPMs(_BaseStatistic):
         return stats[_SUMMARY_COUNT]
 
     def stat_range(self, vals_range):
+        del vals_range
         return (0, None)
 
 
-@_Statistic
+@_statistic
 class _SpearmanCorrelation(_BaseStatistic):
     # Calculates the Spearman rank correlation coefficient between calculated
     # and real TPMs for 'true positive' transcript TPMs (those for which both
@@ -185,7 +189,7 @@ class _SpearmanCorrelation(_BaseStatistic):
         return (min_val - 0.01, 1.01)
 
 
-@_Statistic
+@_statistic
 class _TruePositiveErrorFraction(_BaseStatistic):
     # Calculates the percentage of 'true positive' transcript TPMs (those for
     # which both real and calculated TPMs were above a threshold value
@@ -218,10 +222,11 @@ class _TruePositiveErrorFraction(_BaseStatistic):
             _TruePositiveErrorFraction.ERROR_FRACTION_THRESHOLD)
 
     def stat_range(self, vals_range):
+        del vals_range
         return _ZERO_TO_ONE_STAT_RANGE
 
 
-@_Statistic
+@_statistic
 class _MedianPercentError(_BaseStatistic):
     # Calculates the median of the percent errors of the calculated compared to
     # real TPMs for 'true positive' transcript TPMs (those for which both
@@ -251,7 +256,7 @@ class _MedianPercentError(_BaseStatistic):
             return (closest_div(ymin), closest_div(ymax) + division)
 
 
-@_Statistic
+@_statistic
 class _Sensitivity(_BaseStatistic):
     # Calculates the "sensitivity" of the transcript quantification method -
     # that is, the fraction of all transcripts considered to be 'present'
@@ -281,7 +286,7 @@ class _Sensitivity(_BaseStatistic):
         return (min_val - 0.01, 1.01)
 
 
-@_Statistic
+@_statistic
 class _Specificity(_BaseStatistic):
     # Calculates the "specificity" of the transcript quantification method -
     # that is, the fraction of all transcripts considered to be 'not present'

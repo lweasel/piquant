@@ -22,8 +22,7 @@ import schema
 from . import gtf
 from . import options as opt
 from . import tpms
-
-from __init__ import __version__
+from . import __init__
 
 GTF_FILE = "<gtf-file>"
 
@@ -86,7 +85,8 @@ def _main(docstring):
     # Read in command-line options
     docstring = opt.substitute_common_options_into_usage(docstring)
     options = docopt.docopt(
-        docstring, version="count_transcripts_for_genes.py v" + __version__)
+        docstring,
+        version="count_transcripts_for_genes.py v" + __init__.__version__)
 
     # Validate command-line options
     _validate_command_line_options(options)

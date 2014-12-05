@@ -60,8 +60,7 @@ from . import piquant_options as po
 from . import statistics
 from . import tpms as t
 from . import plot
-
-from __init__ import __version__
+from . import __init__
 
 TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
 TRUE_POSITIVES_LABEL = "true positive TPMs"
@@ -283,7 +282,8 @@ def _main(docstring):
     docstring = opt.substitute_common_options_into_usage(
         docstring, plot_formats=po.PLOT_FORMATS)
     options = docopt.docopt(
-        docstring, version="analyse_quantification_run v" + __version__)
+        docstring,
+        version="analyse_quantification_run v" + __init__.__version__)
 
     # Validate command-line options
     _validate_command_line_options(options)

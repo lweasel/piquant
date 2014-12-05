@@ -20,7 +20,7 @@ class _OptionValue(object):
 
 class _PiquantOption(object):
     INDEX = 0
-    _OPTIONS = []
+    OPTIONS = []
 
     def __init__(self, name, description, option_value=None,
                  title=None, is_numeric=False):
@@ -31,7 +31,7 @@ class _PiquantOption(object):
         self.title = title
         self.is_numeric = is_numeric
 
-        _PiquantOption._OPTIONS.append(self)
+        _PiquantOption.OPTIONS.append(self)
 
         self.index = _PiquantOption.INDEX
         _PiquantOption.INDEX += 1
@@ -92,6 +92,8 @@ class _PiquantOption(object):
     def _set_new_values(self, values_dict, option_values,
                         quant_run_option_values):
 
+        del quant_run_option_values
+
         self._get_validate_vals(values_dict)
 
         new_value = values_dict[self.get_option_name()]
@@ -110,14 +112,14 @@ class _PiquantOption(object):
 
 
 class _QuantRunOption(_PiquantOption):
-    _OPTIONS = []
+    OPTIONS = []
 
     def __init__(self, name, description, option_value=None,
                  title=None, is_numeric=False):
 
         _PiquantOption.__init__(
             self, name, description, option_value, title, is_numeric)
-        _QuantRunOption._OPTIONS.append(self)
+        _QuantRunOption.OPTIONS.append(self)
 
     def validate_value(
             self, cl_options, file_options,
@@ -139,14 +141,14 @@ class _QuantRunOption(_PiquantOption):
 
 
 class _MultiQuantRunOption(_QuantRunOption):
-    _OPTIONS = []
+    OPTIONS = []
 
     def __init__(self, name, description, option_value=None,
                  title=None, is_numeric=False):
 
         _QuantRunOption.__init__(
             self, name, description, option_value, title, is_numeric)
-        _MultiQuantRunOption._OPTIONS.append(self)
+        _MultiQuantRunOption.OPTIONS.append(self)
 
     def _set_new_values(self, values_dict, option_values,
                         quant_run_option_values):
@@ -384,7 +386,7 @@ def _read_file_options(options_file_path):
     if options_file_path:
         with open(options_file_path) as options_file:
             option_names = \
-                [o.get_option_name() for o in _PiquantOption._OPTIONS]
+                [o.get_option_name() for o in _PiquantOption.OPTIONS]
             for option_name, vals in \
                     [line.strip().split() for line in options_file]:
                 if option_name not in option_names:
@@ -400,7 +402,7 @@ def _validate_option_values(logger, cl_options, file_options, options_to_check):
     option_values = {}
     quant_run_option_values = {}
 
-    for option in _PiquantOption._OPTIONS:
+    for option in _PiquantOption.OPTIONS:
         logger.debug(option)
 
         if option in options_to_check:
@@ -420,12 +422,12 @@ def _fix_paths_for_dir_options(option_values):
 
 
 def get_multiple_quant_run_options():
-    return set(_MultiQuantRunOption._OPTIONS)
+    return set(_MultiQuantRunOption.OPTIONS)
 
 
 def get_file_name(**mqr_options):
     elements = []
-    for option in _MultiQuantRunOption._OPTIONS:
+    for option in _MultiQuantRunOption.OPTIONS:
         if option.name in mqr_options:
             value = mqr_options[option.name]
             elements.append(option.get_file_name_part(value))
@@ -434,7 +436,7 @@ def get_file_name(**mqr_options):
 
 def get_value_names(mqr_option_values):
     value_names = []
-    for option in _QuantRunOption._OPTIONS:
+    for option in _QuantRunOption.OPTIONS:
         if option in mqr_option_values:
             value = mqr_option_values[option]
             value_names.append(option.get_value_name(value))
@@ -443,7 +445,7 @@ def get_value_names(mqr_option_values):
 
 def execute_for_mqr_option_sets(command, logger, options, **qr_option_values):
     all_mqr_option_names = \
-        [qr.name for qr in _MultiQuantRunOption._OPTIONS]
+        [qr.name for qr in _MultiQuantRunOption.OPTIONS]
 
     mqr_option_values = {}
     non_mqr_option_values = {}

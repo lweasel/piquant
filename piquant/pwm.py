@@ -3,11 +3,11 @@ import operator
 NEUTRAL_SCORE = 0.25
 
 
-class PWM:
+class PWM(object):
     def __init__(self, filename):
         base_weights = []
-        with open(filename, 'r') as f:
-            base_weights = [line.strip().split(",") for line in f]
+        with open(filename, 'r') as pwm_file:
+            base_weights = [line.strip().split(",") for line in pwm_file]
 
         get_base_scores = lambda x: zip(['a', 'c', 'g', 't', 'n'],
                                         list(x) + [NEUTRAL_SCORE])

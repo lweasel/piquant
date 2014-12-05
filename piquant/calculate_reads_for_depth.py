@@ -24,10 +24,9 @@ Options:
 import docopt
 import schema
 
-from .import flux_simulator as fs
-from .import options as opt
-
-from __init__ import __version__
+from . import flux_simulator as fs
+from . import options as opt
+from . import __init__
 
 PRO_FILE = "<pro-file>"
 READ_LENGTH = "<read-length>"
@@ -75,7 +74,8 @@ def _main(docstring):
     # Read in command-line options
     docstring = opt.substitute_common_options_into_usage(docstring)
     options = docopt.docopt(
-        docstring, version="calculate_reads_for_depth v" + __version__)
+        docstring,
+        version="calculate_reads_for_depth v" + __init__.__version__)
 
     # Validate and process command-line options
     _validate_command_line_options(options)

@@ -23,8 +23,7 @@ import os.path
 import schema
 
 from . import options as opt
-
-from __init__ import __version__
+from . import __init__
 
 OUT_PREFIX = "--out-prefix"
 READS_FILE = "<reads-file>"
@@ -54,7 +53,7 @@ def _reverse_complement(sequence):
     return ("".join(COMPLEMENT[base] for base in sequence))[::-1]
 
 
-def _fix_antisense_reads(reads_file, out_prefix, logger):
+def _fix_antisense_reads(reads_file, out_prefix):
     dirname = os.path.dirname(os.path.abspath(reads_file))
     basename = os.path.basename(reads_file)
     output_file = os.path.join(dirname, out_prefix + "." + basename)
@@ -78,15 +77,15 @@ def _main(docstring):
     # Read in and validate command-line options
     docstring = opt.substitute_common_options_into_usage(docstring)
     options = docopt.docopt(
-        docstring, version="fix_antisense_reads v" + __version__)
+        docstring, version="fix_antisense_reads v" + __init__.__version__)
 
     _validate_command_line_options(options)
 
     # Set up logger
-    logger = opt.get_logger_for_options(options)
+    #logger = opt.get_logger_for_options(options)
 
     # Transform input reads file by reverse complementing all antisense reads
-    _fix_antisense_reads(options[READS_FILE], options[OUT_PREFIX], logger)
+    _fix_antisense_reads(options[READS_FILE], options[OUT_PREFIX])
 
 if __name__ == "__main__":
     _main(__doc__)

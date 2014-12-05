@@ -1,15 +1,16 @@
 import contextlib
-import classifiers
 import itertools
 import matplotlib.pyplot as plt
 import numpy as np
 import os.path
 import pandas as pd
-import piquant_options as po
 import seaborn as sb
-import statistics
 import sys
-import tpms as t
+
+from . import classifiers
+from . import piquant_options as po
+from . import statistics
+from . import tpms as t
 
 # Don't embed characters as paths when outputting SVG - assume fonts are
 # installed on machine where SVG will be viewed (see
@@ -17,11 +18,11 @@ import tpms as t
 plt.rcParams['svg.fonttype'] = 'none'
 
 # matplotlib parameters appropriate for poster output
-#plt.rcParams['font.size'] = 16.0
-#plt.rcParams['axes.labelsize'] = 'medium'
-#plt.rcParams['xtick.labelsize'] = 'x-small'
-#plt.rcParams['ytick.labelsize'] = 'x-small'
-#plt.rcParams['legend.fontsize'] = 'small'
+# plt.rcParams['font.size'] = 16.0
+# plt.rcParams['axes.labelsize'] = 'medium'
+# plt.rcParams['xtick.labelsize'] = 'x-small'
+# plt.rcParams['ytick.labelsize'] = 'x-small'
+# plt.rcParams['legend.fontsize'] = 'small'
 
 
 @contextlib.contextmanager
@@ -50,6 +51,10 @@ def _get_distribution_plot_ylabel(ascending):
 
 
 def _set_distribution_plot_bounds(xmin, xmax, ymin=None, ymax=None):
+    # unused arguments
+    del ymin
+    del ymax
+
     xmargin = (xmax - xmin) / 40.0
     plt.xlim(xmin=xmin - xmargin, xmax=xmax + xmargin)
     plt.ylim(ymin=-2.5, ymax=102.5)
@@ -123,7 +128,7 @@ def _get_grouped_by_mqr_option_stats_plot_title(
     return title
 
 
-def _plot_statistic_grouped_by_mqr_optioneter(
+def _plot_statistic_grouped_by_mqr_option(
         stats_df, group_mqr_option, xcol, ycol, xlabel, ylabel,
         plot_bounds_setter, title):
 
@@ -183,7 +188,7 @@ def _plot_statistic_vs_varying_mqr_option_grouped_by_mqr_option(
         title = _get_grouped_by_mqr_option_stats_plot_title(
             statistic.title, group_mqr_option, fixed_mqr_option_info,
             versus=varying_mqr_option.title)
-        _plot_statistic_grouped_by_mqr_optioneter(
+        _plot_statistic_grouped_by_mqr_option(
             stats, group_mqr_option, varying_mqr_option.name, statistic.name,
             varying_mqr_option.title, statistic.title,
             _get_plot_bounds_setter(statistic), title)
@@ -206,7 +211,7 @@ def _plot_statistic_vs_classifier_grouped_by_mqr_option(
             statistic.title, group_mqr_option,
             fixed_mqr_option_info, versus=xlabel)
 
-        _plot_statistic_grouped_by_mqr_optioneter(
+        _plot_statistic_grouped_by_mqr_option(
             stats, group_mqr_option, clsfr_col,
             statistic.name, xlabel, statistic.title,
             _get_plot_bounds_setter(statistic), title)
@@ -232,7 +237,7 @@ def _plot_cumulative_distribution_grouped_by_mqr_option(
         title = _get_grouped_by_mqr_option_stats_plot_title(
             _capitalized(clsfr_col) + " threshold", group_mqr_option,
             fixed_mqr_option_info)
-        _plot_statistic_grouped_by_mqr_optioneter(
+        _plot_statistic_grouped_by_mqr_option(
             stats, group_mqr_option, clsfr_col, t.TRUE_POSITIVE_PERCENTAGE,
             _capitalized(clsfr_col),
             _get_distribution_plot_ylabel(ascending),

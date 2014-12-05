@@ -34,8 +34,7 @@ import sys
 
 from . import options as opt
 from . import pwm
-
-from __init__ import __version__
+from . import __init__
 
 NUM_READS = "--num-reads"
 OUT_PREFIX = "--out-prefix"
@@ -47,7 +46,7 @@ READS_FILE = "<reads-file>"
 ReadScore = collections.namedtuple("ReadScore", ["read_number", "score"])
 
 
-class SequenceLinePicker:
+class SequenceLinePicker(object):
     def __init__(self, lines_per_fragment):
         self.lines_per_fragment = lines_per_fragment
 
@@ -55,7 +54,7 @@ class SequenceLinePicker:
         return (line_no - 1) % self.lines_per_fragment == 0
 
 
-class OutputPicker:
+class OutputPicker(object):
     def __init__(self, scores, lines_per_fragment):
         self.scores = scores
         self.lines_per_fragment = lines_per_fragment
@@ -139,7 +138,7 @@ def _write_output_file(input_file, out_prefix, scores, lines_per_fragment):
     output_file = os.path.join(dirname, out_prefix + "." + basename)
 
     with open(input_file, 'r') as in_f, open(output_file, 'w') as out_f:
-        for i, line in enumerate(_yield_elements(
+        for dummy, line in enumerate(_yield_elements(
                 in_f, OutputPicker(scores, lines_per_fragment))):
             out_f.write(line)
 
@@ -173,7 +172,8 @@ def _main(docstring):
     # Read in and validate command-line options
     docstring = opt.substitute_common_options_into_usage(docstring)
     options = docopt.docopt(
-        docstring, version="simulate_read_bias v" + __version__)
+        docstring,
+        version="simulate_read_bias v" + __init__.__version__)
 
     _validate_command_line_options(options)
 
