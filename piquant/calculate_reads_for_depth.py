@@ -21,6 +21,8 @@ Options:
     length.
 """
 
+from __future__ import print_function
+
 import docopt
 import schema
 

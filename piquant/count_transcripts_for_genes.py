@@ -15,6 +15,8 @@ Options:
     GTF file containing genes and transcripts.
 """
 
+from __future__ import print_function
+
 import collections
 import docopt
 import schema

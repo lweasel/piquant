@@ -13,6 +13,8 @@
     GTF file containing genes and transcripts.
 """
 
+from __future__ import print_function
+
 import docopt
 import schema
 
