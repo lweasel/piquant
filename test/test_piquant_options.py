@@ -1,8 +1,8 @@
 import piquant.log as log
 import piquant.piquant_options as po
 import piquant.piquant_commands as pc
-#import pytest
-#import schema
+import pytest
+import schema
 import tempfile
 import sys
 
@@ -209,12 +209,13 @@ def test_validate_option_values_returns_correct_number_of_options():
 def test_validate_option_values_returns_correct_number_of_transformed_values():
     num_values = 5
     options = {
-        po.READ_LENGTH: ",".join([str(i) for i in range(1, num_values + 1)])
+        po.READ_LENGTH.get_option_name():
+        ",".join([str(i) for i in range(1, num_values + 1)])
     }
 
     opt_vals, qr_opt_vals = po._validate_option_values(
-        _get_logger(), {o.get_option_name(): v for o, v in options.items()},
-        {}, options.keys())
+        _get_logger(), options, {}, [po.READ_LENGTH])
+
     assert len(qr_opt_vals[po.READ_LENGTH.name]) == num_values
 
 
@@ -222,34 +223,34 @@ def test_validate_option_values_returns_correct_transformed_values():
     len1 = 10
     len2 = 20
     options = {
-        po.READ_LENGTH: str(len1) + "," + str(len2)
+        po.READ_LENGTH.get_option_name(): str(len1) + "," + str(len2)
     }
 
     opt_vals, qr_opt_vals = po._validate_option_values(
-        _get_logger(), {o.get_option_name(): v for o, v in options.items()},
-        {}, options.keys())
+        _get_logger(), options, {}, [po.READ_LENGTH])
 
     for val in [len1, len2]:
         assert val in qr_opt_vals[po.READ_LENGTH.name]
 
 
-#def test_validate_command_line_parameter_sets_raises_exception_for_invalid_param_values():
-    #options = {
-        #"--read-length": "abc"
-    #}
-    #with pytest.raises(schema.SchemaError):
-        #parameters.validate_command_line_parameter_sets(None, options)
+def test_validate_option_values_raises_exception_for_invalid_option_values():
+    options = {
+        po.READ_LENGTH.get_option_name(): "abc"
+    }
 
-#def test_validate_command_line_parameter_sets_raises_exception_if_param_values_not_supplied():
-    #options = {
-        #"--read-length": "10,20",
-    #}
-#
-    #ignore_options = _get_ignore_options()
-#
-    #with pytest.raises(schema.SchemaError):
-        #parameters.validate_command_line_parameter_sets(
-            #None, options, ignore_options)
+    with pytest.raises(schema.SchemaError):
+        po._validate_option_values(
+            _get_logger(), options, {}, [po.READ_LENGTH])
+
+
+def test_validate_option_values_raises_exception_if_quant_run_option_values_not_supplied():
+    options = {
+        po.READ_LENGTH.get_option_name(): "10,20",
+    }
+
+    with pytest.raises(schema.SchemaError):
+        po._validate_option_values(
+            _get_logger(), options, {}, [po.READ_LENGTH, po.READ_DEPTH])
 
 
 def test_read_file_options_reads_options_from_file():
@@ -266,27 +267,25 @@ def test_read_file_options_reads_options_from_file():
         assert options[po.READ_LENGTH.get_option_name()] == read_length
 
 
-#def test_validate_command_line_parameter_sets_overrides_file_parameters_with_cl_options():
-    #len1 = 10
-    #len2 = 20
-    #len3 = 30
-    #with tempfile.NamedTemporaryFile() as f:
-        #f.write("--read-length " + str(len1) + "," + str(len2))
-        #f.flush()
-#
-        #options = {
-            #"--read-length": str(len3)
-        #}
-#
-        #ignore_options = _get_ignore_options()
-        #ignore_options.append(parameters.QUANT_METHOD)
-#
-        #param_vals = parameters.validate_command_line_parameter_sets(
-            #f.name, options, ignore_options)
-#
-        #assert len1 not in param_vals[parameters.READ_LENGTH.name]
-        #assert len2 not in param_vals[parameters.READ_LENGTH.name]
-        #assert len3 in param_vals[parameters.READ_LENGTH.name]
+def test_validate_option_values_overrides_file_parameters_with_cl_options():
+    len1 = 10
+    len2 = 20
+    len3 = 30
+
+    file_options = {
+        po.READ_LENGTH.get_option_name(): str(len1) + "," + str(len2)
+    }
+
+    cl_options = {
+        po.READ_LENGTH.get_option_name(): str(len3)
+    }
+
+    opts, qr_opts = po._validate_option_values(
+        _get_logger(), cl_options, file_options, [po.READ_LENGTH])
+
+    assert len1 not in qr_opts[po.READ_LENGTH.name]
+    assert len2 not in qr_opts[po.READ_LENGTH.name]
+    assert len3 in qr_opts[po.READ_LENGTH.name]
 
 
 def test_get_file_name_returns_correct_name():
