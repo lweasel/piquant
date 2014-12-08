@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+import piquant.simulate_read_bias as entry_point
+import sys
+
+entry_point.simulate_read_bias(sys.argv)

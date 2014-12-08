@@ -15,9 +15,8 @@ TMP_LEFT_READS_FILE = "lr.tmp"
 TMP_RIGHT_READS_FILE = "rr.tmp"
 
 
-def _get_script_path(script_name):
-    return os.path.join(
-        os.path.abspath(os.path.dirname(__file__)), script_name)
+def _get_script_path(script_dir, script_name):
+    return os.path.join(script_dir, script_name)
 
 
 def _add_create_flux_simulator_temporary_directory(writer):
@@ -73,7 +72,7 @@ def _get_read_number_variable(final, transcript_set=None):
 
 
 def _add_calculate_required_read_depth(
-        writer, transcript_set, read_length, read_depth, bias):
+        writer, script_dir, transcript_set, read_length, read_depth, bias):
 
     # Given the expression profile created, calculate the number of reads
     # required to give the (approximate) read depth specified. Then edit the
@@ -88,7 +87,7 @@ def _add_calculate_required_read_depth(
     writer.set_variable(
         read_number_variable,
         "$({command} {pro_file} {length} {depth})".format(
-            command=_get_script_path(CALC_READ_DEPTH_SCRIPT),
+            command=_get_script_path(script_dir, CALC_READ_DEPTH_SCRIPT),
             pro_file=fs.get_expression_profile_file(transcript_set),
             length=read_length, depth=read_depth))
 
@@ -106,17 +105,18 @@ def _add_calculate_required_read_depth(
 
 
 def _add_calculate_required_read_depths(
-        writer, read_length, read_depth, bias, noise_perc):
+        writer, script_dir, read_length, read_depth, bias, noise_perc):
 
     with writer.section():
         _add_calculate_required_read_depth(
-            writer, fs.MAIN_TRANSCRIPTS, read_length, read_depth, bias)
+            writer, script_dir, fs.MAIN_TRANSCRIPTS,
+            read_length, read_depth, bias)
 
     if noise_perc != 0:
         with writer.section():
             noise_read_depth = read_depth * noise_perc / 100.0
             _add_calculate_required_read_depth(
-                writer, fs.NOISE_TRANSCRIPTS, read_length,
+                writer, script_dir, fs.NOISE_TRANSCRIPTS, read_length,
                 noise_read_depth, bias)
 
 
@@ -252,7 +252,7 @@ def _add_shuffle_simulated_reads(writer, paired_end, errors):
         tmp_reads_file=TMP_READS_FILE, reads_file=reads_file))
 
 
-def _add_simulate_read_bias(writer, paired_end, errors, noise_perc):
+def _add_simulate_read_bias(writer, script_dir, paired_end, errors, noise_perc):
     # Use a position weight matrix to simulate sequence bias in the reads
     writer.add_comment(
         "Use a position weight matrix to simulate sequence bias in " +
@@ -280,16 +280,16 @@ def _add_simulate_read_bias(writer, paired_end, errors, noise_perc):
     writer.add_line(
         ("{command} -n ${final_reads} --out-prefix={out_prefix} " +
          "{end_spec} {pwm_file} {reads_file}").format(
-            command=_get_script_path(SIMULATE_BIAS_SCRIPT),
+            command=_get_script_path(script_dir, SIMULATE_BIAS_SCRIPT),
             final_reads=final_reads_var,
             out_prefix=out_prefix,
             end_spec=("--paired-end" if paired_end else ""),
-            pwm_file=_get_script_path(BIAS_PWM_FILE),
+            pwm_file=_get_script_path(script_dir, BIAS_PWM_FILE),
             reads_file=reads_file))
     writer.add_line("mv " + out_prefix + "." + reads_file + " " + reads_file)
 
 
-def _add_fix_antisense_reads(writer, errors):
+def _add_fix_antisense_reads(writer, script_dir, errors):
     # If we're simulating a stranded protocol for single-end reads, reverse
     # complement all antisense reads (for paired-end reads, the reads produced
     # by FluxSimulator are effectively always stranded)
@@ -300,7 +300,7 @@ def _add_fix_antisense_reads(writer, errors):
     out_prefix = "stranded"
 
     writer.add_line("{command} --out-prefix={out_prefix} {reads_file}".format(
-        command=_get_script_path(FIX_ANTISENSE_READS_SCRIPT),
+        command=_get_script_path(script_dir, FIX_ANTISENSE_READS_SCRIPT),
         out_prefix=out_prefix,
         reads_file=reads_file))
     writer.add_line("mv " + out_prefix + "." + reads_file + " " + reads_file)
@@ -346,7 +346,7 @@ def _create_final_reads_files(writer, paired_end, errors):
 
 
 def _add_create_reads(
-        writer, read_length, read_depth, paired_end,
+        writer, script_dir, read_length, read_depth, paired_end,
         errors, bias, stranded, noise_perc):
 
     with writer.section():
@@ -359,7 +359,7 @@ def _add_create_reads(
         # _add_fix_zero_length_transcripts(writer)
 
     _add_calculate_required_read_depths(
-        writer, read_length, read_depth, bias, noise_perc)
+        writer, script_dir, read_length, read_depth, bias, noise_perc)
 
     with writer.section():
         _add_update_flux_simulator_parameters(writer, noise_perc)
@@ -375,11 +375,12 @@ def _add_create_reads(
 
     if stranded and not paired_end:
         with writer.section():
-            _add_fix_antisense_reads(writer, errors)
+            _add_fix_antisense_reads(writer, script_dir, errors)
 
     if bias:
         with writer.section():
-            _add_simulate_read_bias(writer, paired_end, errors, noise_perc)
+            _add_simulate_read_bias(
+                writer, script_dir, paired_end, errors, noise_perc)
 
     with writer.section():
         _create_final_reads_files(writer, paired_end, errors)
@@ -406,21 +407,21 @@ def _create_simulator_parameter_files(
 
 
 def _write_read_simulation_script(
-        reads_dir, read_length, read_depth, paired_end,
+        reads_dir, script_dir, read_length, read_depth, paired_end,
         errors, bias, stranded, noise_perc, cleanup):
 
     with fw.writing_to_file(
             fw.BashScriptWriter, reads_dir, RUN_SCRIPT) as writer:
 
-        _add_create_reads(writer, read_length, read_depth, paired_end,
-                          errors, bias, stranded, noise_perc)
+        _add_create_reads(writer, script_dir, read_length, read_depth,
+                          paired_end, errors, bias, stranded, noise_perc)
 
         if cleanup:
             _add_cleanup_intermediate_files(writer)
 
 
 def create_simulation_files(
-        reads_dir, cleanup, read_length=30, read_depth=10,
+        reads_dir, script_dir, cleanup, read_length=30, read_depth=10,
         paired_end=False, errors=False, bias=False, stranded=False,
         noise_perc=0, transcript_gtf=None, noise_transcript_gtf=None,
         genome_fasta=None, num_molecules=30000000, num_noise_molecules=2000000):
@@ -435,5 +436,5 @@ def create_simulation_files(
 
     # Write shell script to run read simulation
     _write_read_simulation_script(
-        reads_dir, read_length, read_depth, paired_end,
+        reads_dir, script_dir, read_length, read_depth, paired_end,
         errors, bias, stranded, noise_perc, cleanup)

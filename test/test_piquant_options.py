@@ -307,13 +307,13 @@ def test_execute_for_mqr_option_sets_executes_for_correct_number_of_option_sets(
 
     execute_counter = []
 
-    def count_incrementer(logger, options, **piquant_options):
+    def count_incrementer(logger, script_dir, options, **piquant_options):
         execute_counter.append(1)
 
     command = pc._PiquantCommand("dummy", [])
     command.executables = [count_incrementer]
     po.execute_for_mqr_option_sets(
-        command, None, None, **piquant_options_values)
+        command, None, None, None, **piquant_options_values)
 
     assert len(execute_counter) == len1 * len2 * len3
 
@@ -321,16 +321,16 @@ def test_execute_for_mqr_option_sets_executes_for_correct_number_of_option_sets(
 def test_execute_for_mqr_option_sets_executes_all_callables():
     execute_record = []
 
-    def callable1(logger, options, **piquant_options):
+    def callable1(logger, script_dir, options, **piquant_options):
         execute_record.append(1)
 
-    def callable2(logger, options, **piquant_options):
+    def callable2(logger, script_dir, options, **piquant_options):
         execute_record.append(2)
 
     command = pc._PiquantCommand("dummy", [])
     command.executables = [callable1, callable2]
     po.execute_for_mqr_option_sets(
-        command, None, None, piquant_option=["a"])
+        command, None, None, None, piquant_option=["a"])
 
     assert 1 in execute_record
     assert 2 in execute_record
@@ -347,13 +347,13 @@ def test_execute_for_mqr_option_sets_executes_for_correct_sets_of_piquant_option
 
     execute_record = []
 
-    def callable1(logger, options, **piquant_options):
+    def callable1(logger, script_dir, options, **piquant_options):
         execute_record.append([v for v in piquant_options.values()])
 
     command = pc._PiquantCommand("dummy", [])
     command.executables = [callable1]
     po.execute_for_mqr_option_sets(
-        command, None, None, **piquant_options_values)
+        command, None, None, None, **piquant_options_values)
 
     execute_record = \
         [set(piquant_options) for piquant_options in execute_record]

@@ -23,7 +23,7 @@ import os.path
 import schema
 
 from . import options as opt
-from . import __init__
+from .__init__ import __version__
 
 OUT_PREFIX = "--out-prefix"
 READS_FILE = "<reads-file>"
@@ -73,11 +73,12 @@ def _fix_antisense_reads(reads_file, out_prefix):
                 out_f.write(line)
 
 
-def _main(docstring):
+def fix_antisense_reads(args):
     # Read in and validate command-line options
-    docstring = opt.substitute_common_options_into_usage(docstring)
+    docstring = opt.substitute_common_options_into_usage(__doc__)
     options = docopt.docopt(
-        docstring, version="fix_antisense_reads v" + __init__.__version__)
+        docstring, argv=args,
+        version="fix_antisense_reads v" + __version__)
 
     _validate_command_line_options(options)
 
@@ -86,6 +87,3 @@ def _main(docstring):
 
     # Transform input reads file by reverse complementing all antisense reads
     _fix_antisense_reads(options[READS_FILE], options[OUT_PREFIX])
-
-if __name__ == "__main__":
-    _main(__doc__)

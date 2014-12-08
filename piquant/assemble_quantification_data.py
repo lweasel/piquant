@@ -29,7 +29,7 @@ from . import flux_simulator as fs
 from . import options as opt
 from . import quantifiers as qs
 from . import tpms
-from . import __init__
+from .__init__ import __version__
 
 from docopt import docopt
 from schema import SchemaError
@@ -138,12 +138,12 @@ def _assemble_and_write_quantification_data(logger, options):
     _write_quantification_data(options[OUT_FILE], profiles)
 
 
-def _main(docstring):
+def assemble_quantification_data(args):
     # Read in command-line options
-    docstring = opt.substitute_common_options_into_usage(docstring)
+    docstring = opt.substitute_common_options_into_usage(__doc__)
     options = docopt(
-        docstring,
-        version="assemble_quantification_data v" + __init__.__version__)
+        docstring, argv=args,
+        version="assemble_quantification_data v" + __version__)
 
     # Validate command-line options
     _validate_command_line_options(options)
@@ -153,7 +153,3 @@ def _main(docstring):
 
     # Assemble and write quantification data
     _assemble_and_write_quantification_data(logger, options)
-
-
-if __name__ == "__main__":
-    _main(__doc__)

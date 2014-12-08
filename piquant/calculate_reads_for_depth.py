@@ -28,7 +28,7 @@ import schema
 
 from . import flux_simulator as fs
 from . import options as opt
-from . import __init__
+from .__init__ import __version__
 
 PRO_FILE = "<pro-file>"
 READ_LENGTH = "<read-length>"
@@ -72,12 +72,12 @@ def _calculate_reads_for_depth(profiles, read_length, required_depth):
     return int(bases_to_sequence // read_length)
 
 
-def _main(docstring):
+def calculate_reads_for_depth(args):
     # Read in command-line options
-    docstring = opt.substitute_common_options_into_usage(docstring)
+    docstring = opt.substitute_common_options_into_usage(__doc__)
     options = docopt.docopt(
-        docstring,
-        version="calculate_reads_for_depth v" + __init__.__version__)
+        docstring, argv=args,
+        version="calculate_reads_for_depth v" + __version__)
 
     # Validate and process command-line options
     _validate_command_line_options(options)
@@ -92,7 +92,3 @@ def _main(docstring):
     # specified overall average depth of coverage
     print(_calculate_reads_for_depth(
         profiles, options[READ_LENGTH], options[READ_DEPTH]))
-
-
-if __name__ == "__main__":
-    _main(__doc__)

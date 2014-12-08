@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+import piquant.analyse_quantification_run as entry_point
+import sys
+
+entry_point.analyse_quantification_run(sys.argv)

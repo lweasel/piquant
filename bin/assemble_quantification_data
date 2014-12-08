@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+import piquant.assemble_quantification_run as entry_point
+import sys
+
+entry_point.assemble_quantification_run(sys.argv)

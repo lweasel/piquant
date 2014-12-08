@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+import piquant.calculate_reads_for_depth as entry_point
+import sys
+
+entry_point.calculate_reads_for_depth(sys.argv)

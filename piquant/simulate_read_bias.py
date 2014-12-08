@@ -34,7 +34,7 @@ import sys
 
 from . import options as opt
 from . import pwm
-from . import __init__
+from .__init__ import __version__
 
 NUM_READS = "--num-reads"
 OUT_PREFIX = "--out-prefix"
@@ -168,12 +168,12 @@ def _simulate_bias(logger, options):
                        selected_scores, lines_per_fragment)
 
 
-def _main(docstring):
+def simulate_read_bias(args):
     # Read in and validate command-line options
-    docstring = opt.substitute_common_options_into_usage(docstring)
+    docstring = opt.substitute_common_options_into_usage(__doc__)
     options = docopt.docopt(
-        docstring,
-        version="simulate_read_bias v" + __init__.__version__)
+        docstring, argv=args,
+        version="simulate_read_bias v" + __version__)
 
     _validate_command_line_options(options)
 
@@ -183,7 +183,3 @@ def _main(docstring):
     # Simulate bias by preferentially selecting reads according to a position
     # weight matrix
     _simulate_bias(logger, options)
-
-
-if __name__ == "__main__":
-    _main(__doc__)

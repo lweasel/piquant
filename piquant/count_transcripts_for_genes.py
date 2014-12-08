@@ -24,7 +24,7 @@ import schema
 from . import gtf
 from . import options as opt
 from . import tpms
-from . import __init__
+from .__init__ import __version__
 
 GTF_FILE = "<gtf-file>"
 
@@ -83,12 +83,12 @@ def _count_transcripts_for_genes(logger, options):
         transcript_to_gene_map, transcript_counts)
 
 
-def _main(docstring):
+def count_transcripts_for_genes(args):
     # Read in command-line options
-    docstring = opt.substitute_common_options_into_usage(docstring)
+    docstring = opt.substitute_common_options_into_usage(__doc__)
     options = docopt.docopt(
-        docstring,
-        version="count_transcripts_for_genes.py v" + __init__.__version__)
+        docstring, argv=args,
+        version="count_transcripts_for_genes.py v" + __version__)
 
     # Validate command-line options
     _validate_command_line_options(options)
@@ -98,7 +98,3 @@ def _main(docstring):
 
     # Calculate and print per-gene transcript counts to standard out
     _count_transcripts_for_genes(logger, options)
-
-
-if __name__ == "__main__":
-    _main(__doc__)

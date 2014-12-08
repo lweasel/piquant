@@ -21,7 +21,7 @@ import schema
 from . import gtf
 from . import options as opt
 from . import tpms
-from . import __init__
+from .__init__ import __version__
 
 from collections import defaultdict, namedtuple
 
@@ -174,12 +174,12 @@ def _calculate_unique_transcript_sequence(logger, options):
     _output_unique_transcript_lengths(transcript_lengths)
 
 
-def _main(docstring):
+def calculate_unique_transcript_sequence(args):
     # Read in command-line options
     docstring = opt.substitute_common_options_into_usage(__doc__)
     options = docopt.docopt(
-        docstring,
-        version="calculate_unique_transcript_sequence v" + __init__.__version__)
+        docstring, argv=args,
+        version="calculate_unique_transcript_sequence v" + __version__)
 
     # Validate command-line options
     _validate_command_line_options(options)
@@ -189,7 +189,3 @@ def _main(docstring):
 
     # Calculate and output number of unique bases per transcript
     _calculate_unique_transcript_sequence(logger, options)
-
-
-if __name__ == "__main__":
-    _main(__doc__)

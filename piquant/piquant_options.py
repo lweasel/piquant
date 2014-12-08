@@ -57,7 +57,7 @@ class _PiquantOption(object):
         ret += "\n".join(textwrap.wrap(
             self.description, width=75, initial_indent=_INDENT,
             subsequent_indent=_INDENT))
-        if self.default_value():
+        if self.has_value() and self.default_value():
             ret += "\n{ind}[default: {def_val}]".format(
                 ind=_INDENT, def_val=self.default_value())
         ret += ".\n"
@@ -137,7 +137,7 @@ class _QuantRunOption(_PiquantOption):
                         quant_run_option_values):
 
         quant_run_option_values[self.name] = \
-            self._get_validate_vals(values_dict)[1]
+            self._get_validate_vals(values_dict)[0]
 
 
 class _MultiQuantRunOption(_QuantRunOption):
@@ -443,7 +443,9 @@ def get_value_names(mqr_option_values):
     return value_names
 
 
-def execute_for_mqr_option_sets(command, logger, options, **qr_option_values):
+def execute_for_mqr_option_sets(
+        command, logger, script_dir, options, **qr_option_values):
+
     all_mqr_option_names = \
         [qr.name for qr in _MultiQuantRunOption.OPTIONS]
 
@@ -460,4 +462,4 @@ def execute_for_mqr_option_sets(command, logger, options, **qr_option_values):
         for option_set in itertools.product(*mqr_option_values.values()):
             option_map = dict(zip(mqr_option_names, option_set))
             option_map.update(non_mqr_option_values)
-            to_call(logger, options, **option_map)
+            to_call(logger, script_dir, options, **option_map)

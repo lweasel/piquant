@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+import piquant.fix_antisense_reads as entry_point
+import sys
+
+entry_point.fix_antisense_reads(sys.argv)

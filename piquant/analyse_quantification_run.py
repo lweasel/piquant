@@ -60,7 +60,7 @@ from . import piquant_options as po
 from . import statistics
 from . import tpms as t
 from . import plot
-from . import __init__
+from .__init__ import __version__
 
 TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
 TRUE_POSITIVES_LABEL = "true positive TPMs"
@@ -277,13 +277,13 @@ def _analyse_run(logger, options):
                  tp_gene_tpms, clsfr_stats, options[po.NOT_PRESENT_CUTOFF])
 
 
-def _main(docstring):
+def analyse_quantification_run(args):
     # Read in command-line options
     docstring = opt.substitute_common_options_into_usage(
-        docstring, plot_formats=po.PLOT_FORMATS)
+        __doc__, plot_formats=po.PLOT_FORMATS)
     options = docopt.docopt(
-        docstring,
-        version="analyse_quantification_run v" + __init__.__version__)
+        docstring, argv=args,
+        version="analyse_quantification_run v" + __version__)
 
     # Validate command-line options
     _validate_command_line_options(options)
@@ -293,7 +293,3 @@ def _main(docstring):
 
     # Write statistics and graphs for the quantification run
     _analyse_run(logger, options)
-
-
-if __name__ == "__main__":
-    _main(__doc__)
