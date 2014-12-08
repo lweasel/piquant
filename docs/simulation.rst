@@ -1,7 +1,7 @@
 Simulating reads
 ================
 
-For each particular combination of sequencing parameters - sequencing depth, read length, single- or paired-end reads, and lack or presence of errors and bias - reads are simulated by running the ``run_simulation.sh`` script in the relevant directory that has been created by the ``piquant.py`` command ``prepare_read_dirs``.
+For each particular combination of sequencing parameters - sequencing depth, read length, single- or paired-end reads, and lack or presence of errors and bias - reads are simulated by running the ``run_simulation.sh`` script in the relevant directory that has been created by the ``piquant`` command ``prepare_read_dirs``.
 
 Running ``run_simulation.sh`` results in the following main steps being executed:
 

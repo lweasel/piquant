@@ -1,7 +1,7 @@
-``piquant.py`` commands
+``piquant`` commands
 =======================
 
-Stages of the *piquant* pipeline are executed via the following commands of the ``piquant.py`` script:
+Stages of the *piquant* pipeline are executed via the following commands of the ``piquant`` script:
 
 * Simulating reads
 
@@ -27,7 +27,7 @@ Further information on each command is given in the sections below. Note first, 
 Common options
 --------------
 
-The following command line options control which combinations of sequencing parameters and quantification tools the particular ``piquant.py`` command will be executed for. The value of each option should be a comma-separated list:
+The following command line options control which combinations of sequencing parameters and quantification tools the particular ``piquant`` command will be executed for. The value of each option should be a comma-separated list:
 
 * ``--read-length``: A comma-separated list of integer read lengths for which to simulate reads or perform quantification.
 * ``--read-depth``: A comma-separated list of integer read depths for which to simulate reads or perform quantification.
@@ -38,7 +38,7 @@ The following command line options control which combinations of sequencing para
 * ``--noise-perc``: A comma-separated list of positive integers. Each indicates a percentage of the main sequencing depth; in each case a set "noise transcripts" will be sequence to this depths. A value of zero indicates that no noise reads will be simulated.
 * ``--quant-method``: A comma-separated list of quantification methods for which transcript quantification should be performed. By default, *piquant* can quantify via the methods "Cufflinks", "RSEM", "Express" and "Sailfish". (Note that this option is not relevant for the simulation of reads).
 
-Except in the case of the ``--quant-method`` option when simulating reads, values for each of these options *must* be specified; otherwise ``piquant.py`` will exit with an error. For ease of use, however, the options can also be specified in fan options file, via the common command line option ``--options-file`` (indeed, any command-line option can be specified in this file). Such an options file should take the form of one option and its value per-line, with option and value separated by whitespace, e.g.::
+Except in the case of the ``--quant-method`` option when simulating reads, values for each of these options *must* be specified; otherwise ``piquant`` will exit with an error. For ease of use, however, the options can also be specified in fan options file, via the common command line option ``--options-file`` (indeed, any command-line option can be specified in this file). Such an options file should take the form of one option and its value per-line, with option and value separated by whitespace, e.g.::
 
   --quant-method Cufflinks,RSEM,Express,Sailfish
   --read-length 35,50,75,100
@@ -51,7 +51,7 @@ Except in the case of the ``--quant-method`` option when simulating reads, value
 
 As options can be specified both in an options file, and via individual command line options, in case of conflict the values specified on the command line override those in the options file.
 
-``piquant.py`` commands also share the following additional common command line options:
+``piquant`` commands also share the following additional common command line options:
 
 * ``--log-level``: One of the strings "debug", "info", "warning", "error" or "critical" (default "info"), determining the maximum severity level at which log messages will be written to standard error.
 * ``--options-file``: Specifies the path to a file containing options as described above.
@@ -93,9 +93,9 @@ In addition, if "background noise" reads are being simulated (i.e. the value of 
 * ``flux_simulator_noise_expression.par``: A *FluxSimulator* parameters file suitable for creating a transcript expression profile for the set of transcripts that will be used to simulate background noise.
 * ``flux_simulator_noise_simulation.par``" A *FluxSimulator* parameter file suitable for simulating RNA-seq reads according to the created noise transcript expression profile.
 
-Note that it is possible to execute the ``run_simulation.sh`` script directly; however by using the ``piquant.py`` command ``create_reads``, sets of reads for several combinations of sequencing parameters can be created simultaneously as a batch (see :ref:`Create reads <simulate-reads>` below).
+Note that it is possible to execute the ``run_simulation.sh`` script directly; however by using the ``piquant`` command ``create_reads``, sets of reads for several combinations of sequencing parameters can be created simultaneously as a batch (see :ref:`Create reads <simulate-reads>` below).
 
-In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``prepare_read_dirs`` command takes the following additional options:
+In addition to the command line options common to all ``piquant`` commands (see :ref:`common-options` above), the ``prepare_read_dirs`` command takes the following additional options:
 
 * ``--reads-dir``: The parent directory into which directories in which reads will be simulated will be written. This directory will be created if it does not already exist (default: output).
 * ``--transcript-gtf``: The path to a GTF formatted file describing the main set of transcripts to be simulated by *FluxSimulator*. This GTF file location must be supplied. Note that the GTF file should only contain features of feature type "exon", and that every exon feature should specify both "gene_id" and "transcript_id" among its attributes.
@@ -110,9 +110,9 @@ In addition to the command line options common to all ``piquant.py`` commands (s
 Create reads (``create_reads``)
 ---------------------------------
 
-The ``create_reads`` command is used to simulate RNA-seq reads via the ``run_simulation.sh`` scripts that have been written by the ``prepare_read_dirs`` command (see :ref:`Prepare read directories <prepare-read-dirs>` above). For each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias``, ``--stranded`` and ``--noise-perc``, the appropriate ``run_simulation.sh`` script is launched as a background process, ignoring hangup signals (via the ``nohup`` command). After launching the scripts, ``piquant.py`` exits.
+The ``create_reads`` command is used to simulate RNA-seq reads via the ``run_simulation.sh`` scripts that have been written by the ``prepare_read_dirs`` command (see :ref:`Prepare read directories <prepare-read-dirs>` above). For each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias``, ``--stranded`` and ``--noise-perc``, the appropriate ``run_simulation.sh`` script is launched as a background process, ignoring hangup signals (via the ``nohup`` command). After launching the scripts, ``piquant`` exits.
 
-In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``create_reads`` command takes the following additional options:
+In addition to the command line options common to all ``piquant`` commands (see :ref:`common-options` above), the ``create_reads`` command takes the following additional options:
 
 * ``--reads-dir``: The parent directory in which directories in which reads will be simulated have been written (default: output).
 
@@ -127,7 +127,7 @@ The ``check_reads`` command is used to confirm that simulation of RNA-seq reads 
 
 In the case of unsuccessful termination, the file ``nohup.out`` in the relevant simulation directory contains the messages output by both *FluxSimulator* and the *piquant* scripts that were executed, and this file can be examined for the source of error.
 
-In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``check_reads`` command takes the following additional options:
+In addition to the command line options common to all ``piquant`` commands (see :ref:`common-options` above), the ``check_reads`` command takes the following additional options:
 
 * ``--reads-dir``: The parent directory in which directories in which reads were simulated are located (default: output).
 
@@ -162,9 +162,9 @@ Within each quantification directory, a single file is written:
 
 * ``run_quantification.sh``: A Bash script which, when executed, will use the appropriate tool and simulated RNA-seq reads to quantify transcript expression.
 
-As is the case when simulating reads, it is possible to execute the ``run_quantification.sh`` script directly; however, by using the ``piquant.py`` command ``quantify``, quantification for several combinations for sequencing parameters and quantification tools can be executed simultaneously as a batch (see :ref:`Perform quantification <quantify>` below).
+As is the case when simulating reads, it is possible to execute the ``run_quantification.sh`` script directly; however, by using the ``piquant`` command ``quantify``, quantification for several combinations for sequencing parameters and quantification tools can be executed simultaneously as a batch (see :ref:`Perform quantification <quantify>` below).
 
-In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``prepare_quant_dirs`` command takes the following additional options:
+In addition to the command line options common to all ``piquant`` commands (see :ref:`common-options` above), the ``prepare_quant_dirs`` command takes the following additional options:
 
 * ``--reads-dir``: The parent directory in which directories in which reads were simulated are located (default: output).
 * ``--quant-dir``: The parent directory into which directories in which quantification will be performed will be written. This directory will be created if it does not already exist (default: output).
@@ -180,7 +180,7 @@ In addition to the command line options common to all ``piquant.py`` commands (s
 Prepare for quantification (``prequantify``)
 --------------------------------------------
 
-Some quantification tools may require some action to be taken prior to quantifying transcript expression which, however, only needs to be executed once for a particular set of transcripts and genome sequences - for example, preparing a *Bowtie* [Bowtie]_ index for the genome, or creating transcript FASTA sequences. The ``piquant.py`` command ``prequantify`` will execute these pre-quantification actions for any quantification tools specified by the command line option ``--quant-method``.
+Some quantification tools may require some action to be taken prior to quantifying transcript expression which, however, only needs to be executed once for a particular set of transcripts and genome sequences - for example, preparing a *Bowtie* [Bowtie]_ index for the genome, or creating transcript FASTA sequences. The ``piquant`` command ``prequantify`` will execute these pre-quantification actions for any quantification tools specified by the command line option ``--quant-method``.
 
 Note that prequantification can, if necessary, be run manually for any particular quantification tool by executing the appropriate ``run_simulation.sh`` script with the ``-p`` command line option.
 
@@ -189,7 +189,7 @@ Note that prequantification can, if necessary, be run manually for any particula
 Perform quantification (``quantify``)
 -------------------------------------
 
-The ``quantify`` command is used to quantify transcript expression via the ``run_quantification.sh`` scripts that have been written by the ``prepare_quant_dirs`` command (see :ref:`Prepare quantification directories <prepare-quant-dirs>` above). For each possible combination of parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias`` and ``--quant-method``, the appropriate ``run_quantification.sh`` script is launched as a background process, ignoring hangup signals (via the ``nohup`` command). After launching the scripts, ``piquant.py`` exits.
+The ``quantify`` command is used to quantify transcript expression via the ``run_quantification.sh`` scripts that have been written by the ``prepare_quant_dirs`` command (see :ref:`Prepare quantification directories <prepare-quant-dirs>` above). For each possible combination of parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias`` and ``--quant-method``, the appropriate ``run_quantification.sh`` script is launched as a background process, ignoring hangup signals (via the ``nohup`` command). After launching the scripts, ``piquant`` exits.
 
 For details on the process of quantification executed via ``run_quantification.sh``, see :doc:`quantification`.
 
@@ -209,7 +209,7 @@ The ``analyse_runs`` command is used to gather data and calculate statistics, an
 
 For more details on the statistics calculated and the graphs drawn, see :doc:`assessment`.
 
-In addition to the command line options common to all ``piquant.py`` commands (see :ref:`common-options` above), the ``analyse_runs`` command takes the following additional options:
+In addition to the command line options common to all ``piquant`` commands (see :ref:`common-options` above), the ``analyse_runs`` command takes the following additional options:
 
 * ``--stats-dir``: The path to a directory into which statistics and graph files will be written. The directory will be created if it does not already exist.
 * ``--plot-format``: The file format in which graphs produced during analysis will be written to - one of "pdf", "svg" or "png" (default "pdf").

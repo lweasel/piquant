@@ -1,7 +1,7 @@
 Support scripts
 ===============
 
-RNA-seq read simulation, transcript quantification, and abundance estimate accuracy analysis performed via commands of the ``piquant.py`` script are supported by a number of supplementary Python scripts. These are normally executed when running a ``run_simulation.sh`` or ``run_quantification.sh`` shell script; however, if necessary, they can also be run independently.
+RNA-seq read simulation, transcript quantification, and abundance estimate accuracy analysis performed via commands of the ``piquant`` script are supported by a number of supplementary Python scripts. These are normally executed when running a ``run_simulation.sh`` or ``run_quantification.sh`` shell script; however, if necessary, they can also be run independently.
 
 Further information on each script and their command line options is given in the sections below. Note first, that all scripts share the following common command line option:
 
