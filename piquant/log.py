@@ -5,7 +5,6 @@ get_logger: Return a logger with a specified severity threshold.
 """
 
 import logging
-import sys
 
 LEVELS = {
     "debug": logging.DEBUG,
@@ -13,7 +12,7 @@ LEVELS = {
     "warning": logging.WARNING,
     "error": logging.ERROR,
     "critical": logging.CRITICAL
-    }
+}
 
 LOG_LEVEL = "log-level"
 

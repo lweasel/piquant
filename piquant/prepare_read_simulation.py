@@ -355,8 +355,8 @@ def _add_create_reads(
         _add_create_expression_profiles(writer, noise_perc)
 
     # NOT SURE IF THIS IS NEEDED ANYMORE?
-    #with writer.section():
-        #_add_fix_zero_length_transcripts(writer)
+    # with writer.section():
+        # _add_fix_zero_length_transcripts(writer)
 
     _add_calculate_required_read_depths(
         writer, read_length, read_depth, bias, noise_perc)

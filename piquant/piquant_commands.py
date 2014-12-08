@@ -6,7 +6,7 @@ COMMANDS = {}
 _INDENT = "    "
 
 
-class _PiquantCommand:
+class _PiquantCommand(object):
     INDEX = 0
 
     def __init__(self, name, option_list):

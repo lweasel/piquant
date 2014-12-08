@@ -1,7 +1,7 @@
 from . import tpms as t
 
 
-class _Classifier():
+class _Classifier(object):
     def __init__(self, column_name, value_extractor,
                  grouped_stats=True, distribution_plot_range=None,
                  plot_title=None):

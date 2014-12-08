@@ -14,7 +14,7 @@ def writing_to_file(writer_cls, directory, filename):
         writer.write_to_file(directory, filename)
 
 
-class _Writer:
+class _Writer(object):
     def __init__(self):
         self.lines = []
 
@@ -22,8 +22,8 @@ class _Writer:
         self.lines.append(line_string)
 
     def write_to_file(self, directory, filename):
-        with open(os.path.join(directory, filename), "w") as f:
-            f.write("\n".join(self.lines) + '\n')
+        with open(os.path.join(directory, filename), "w") as output_file:
+            output_file.write("\n".join(self.lines) + '\n')
 
 
 class FluxSimulatorParamsWriter(_Writer):
