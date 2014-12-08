@@ -50,5 +50,10 @@ in the tool's top-level directory.
 Changelog
 =========
 
-* 1.0: First full release (28/10/14)
-* 0.1: Initial beta development.
+* 1.1 (xx/xx/xx):
+  - Added gene-level analysis
+  - Added strandedness and transcript "noise" as sequencing parameters
+  - Separate parent directories for read and quantification directories
+  - Some hardcoded quantification and analysis values made user-definable
+* 1.0 (28/10/14): First full release
+* 0.1: Initial beta development
