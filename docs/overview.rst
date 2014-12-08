@@ -31,7 +31,7 @@ The ``piquant`` command ``check_reads`` provides an easy way to check that the r
 Quantify transcripts
 --------------------
 
-Quantification of transcripts proceeds in three steps. In the first, run via the ``piquant`` command ``prepare_quant_dirs``, directories are prepared in which quantification results will be produced. For each combination of sequencing parameters for which reads were simulated, there will such a directory for each quantification tool (or, alternatively, for each different combination of quantification tool parameters that are being assessed).
+Quantification of transcripts proceeds in three steps. In the first, run via the ``piquant`` command ``prepare_quant_dirs``, directories are prepared in which quantification results will be produced. For each combination of sequencing parameters for which reads were simulated, there will be such a directory for each quantification tool (or, alternatively, for each different combination of quantification tool parameters that are being assessed).
 
 In the second step, the ``piquant`` command ``prequantify`` runs, for each quantification tool, commands that only need to be executed once, regardless of how many different sets of simulated reads are being used for quantification. For example, such commands might include creating a *Bowtie* [Bowtie]_ index for the genome to which reads will be mapped, or deriving FASTA sequences for the transcripts whose abundance is being measured.
 
@@ -68,8 +68,8 @@ and these tools are required to be installed, and their relevant executables add
 In addition, the use of each quantification tool within the *piquant* pipeline has additional dependencies, which are enumerated below:
 
 * *Cufflinks*: *Bowtie* [Bowtie]_ and *TopHat* [TopHat]_ are required to map simulated reads to the genome. 
-* *RSEM*: *Bowtie* [Bowtie]_ is required by RSEM to map simulated reads to the transcriptome.
-* *eXpress*: *Bowtie* [Bowtie]_ is required to map simulated reads to the transcriptome. In this case, *piquant* creates transcriptome sequences for mapping using a tool from the *RSEM* package (``rsem-prepare-reference``).
+* *RSEM*: *Bowtie* is required by RSEM to map simulated reads to the transcriptome.
+* *eXpress*: *Bowtie* is required to map simulated reads to the transcriptome. In this case, *piquant* creates transcriptome sequences for mapping using a tool from the *RSEM* package (``rsem-prepare-reference``).
 * *Sailfish*: *piquant* again uses ``rsem-prepare-reference`` from the *RSEM* package to create reference transcriptome sequences.
 
 *piquant* has been tested with *Bowtie* version 1.0.0 and *TopHat* version 2.0.10.
