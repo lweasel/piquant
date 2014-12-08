@@ -128,6 +128,10 @@ class _Cufflinks(_QuantifierBase):
         writer.add_line(cls.REMOVE_TOPHAT_OUTPUT_DIR)
         writer.add_line(cls.REMOVE_OUTPUT_EXCEPT_ABUNDANCES)
 
+    def __init__(self):
+        _QuantifierBase.__init__(self)
+        self.norm_constant = 0
+
     def get_transcript_abundance(self, transcript_id):
         if self.abundances is None:
             self.abundances = pd.read_csv(
@@ -138,7 +142,7 @@ class _Cufflinks(_QuantifierBase):
                 1000000 / (self.abundances[_Cufflinks.FPKM_COLUMN].sum())
 
         fpkm = self.abundances.ix[transcript_id][_Cufflinks.FPKM_COLUMN] \
-            if transcript_id in self.abundances.index else 0
+            if transcript_id in self.abundances.index else 0  # pylint: disable=E1103
         return self.norm_constant * fpkm
 
 
@@ -242,7 +246,7 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
                 index_col="transcript_id")
 
         return self.abundances.ix[transcript_id]["TPM"] \
-            if transcript_id in self.abundances.index else 0
+            if transcript_id in self.abundances.index else 0  # pylint: disable=E1103
 
 
 @_quantifier
@@ -305,7 +309,7 @@ class _Express(_TranscriptomeBasedQuantifierBase):
                 "results.xprs", delim_whitespace=True, index_col="target_id")
 
         return self.abundances.ix[transcript_id]["tpm"] \
-            if transcript_id in self.abundances.index else 0
+            if transcript_id in self.abundances.index else 0  # pylint: disable=E1103
 
 
 @_quantifier
@@ -469,4 +473,4 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
                 index_col="Name")
 
         return self.abundances.ix[transcript_id]["TPM"] \
-            if transcript_id in self.abundances.index else 0
+            if transcript_id in self.abundances.index else 0  # pylint: disable=E1103

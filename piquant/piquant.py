@@ -58,6 +58,8 @@ def _reads_directory_checker(should_exist):
     will exit if the reads or quantification directory does already exist.
     """
     def check_reads_directory(logger, script_dir, options, **qr_options):
+        del script_dir
+
         reads_dir = _get_options_dir(False, options, **qr_options)
         logger.debug("Checking reads directory {d}, should_exist={s}".
                      format(d=reads_dir, s=should_exist))
@@ -95,6 +97,8 @@ def _prepare_read_simulation(logger, script_dir, options, **qr_options):
 
 
 def _create_reads(logger, script_dir, options, **qr_options):
+    del script_dir
+
     run_dir = _get_options_dir(False, options, **qr_options)
     logger.debug("Creating reads in " + run_dir)
 
@@ -102,6 +106,8 @@ def _create_reads(logger, script_dir, options, **qr_options):
 
 
 def _check_reads_created(logger, script_dir, options, **qr_options):
+    del script_dir
+
     reads_dir = _get_options_dir(False, options, **qr_options)
     reads_file = fs.get_reads_file(
         qr_options[po.ERRORS.name],
@@ -115,6 +121,8 @@ def _check_reads_created(logger, script_dir, options, **qr_options):
 
 def _run_directory_checker(should_exist):
     def check_run_directory(logger, script_dir, options, **qr_options):
+        del script_dir
+
         run_dir = _get_options_dir(True, options, **qr_options)
         logger.debug("Checking run directory {d}, should_exist={s}".
                      format(d=run_dir, s=should_exist))
@@ -160,6 +168,8 @@ def _prequantifier():
     quantifiers_used = []
 
     def prequantify(logger, script_dir, options, **qr_options):
+        del script_dir
+
         run_dir = _get_options_dir(True, options, **qr_options)
 
         quant_method = qr_options[po.QUANT_METHOD.name]
@@ -173,6 +183,8 @@ def _prequantifier():
 
 
 def _quantify(logger, script_dir, options, **qr_options):
+    del script_dir
+
     run_dir = _get_options_dir(True, options, **qr_options)
 
     logger.info("Executing shell script to run quantification analysis.")
@@ -180,6 +192,8 @@ def _quantify(logger, script_dir, options, **qr_options):
 
 
 def _check_quantification_completed(logger, script_dir, options, **qr_options):
+    del script_dir
+
     run_dir = _get_options_dir(True, options, **qr_options)
 
     main_stats_file = statistics.get_stats_file(

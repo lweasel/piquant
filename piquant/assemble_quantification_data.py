@@ -78,7 +78,7 @@ def _read_transcript_counts(count_file, profiles):
     transcript_counts = pd.read_csv(count_file, index_col=tpms.TRANSCRIPT)
 
     def set_transcript_count_and_gene(t_id):
-        tc_row = transcript_counts.ix[t_id]
+        tc_row = transcript_counts.ix[t_id]  # pylint: disable=E1103
         return pd.Series({
             tpms.GENE: tc_row[tpms.GENE],
             tpms.TRANSCRIPT_COUNT: tc_row[tpms.TRANSCRIPT_COUNT]
@@ -94,7 +94,7 @@ def _read_unique_sequence_lengths(unique_seq_file, profiles):
 
     set_unique_length = lambda t_id: \
         unique_seqs.ix[t_id][tpms.UNIQUE_SEQ_LENGTH] \
-        if t_id in unique_seqs.index else 0
+        if t_id in unique_seqs.index else 0  # pylint: disable=E1103
 
     profiles[tpms.UNIQUE_SEQ_LENGTH] = \
         profiles[fs.PRO_FILE_TRANSCRIPT_ID_COL].map(set_unique_length)

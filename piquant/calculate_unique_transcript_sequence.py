@@ -33,6 +33,18 @@ Exon = namedtuple('Exon', ['sequence', 'start', 'end', 'strand', 'bases'])
 ExonAndTranscript = namedtuple('ExonAndTranscript', ['exon', 'transcript'])
 
 
+def _replace_bases(exon, new_bases):
+    return Exon(exon.sequence,
+                exon.start,
+                exon.end,
+                exon.strand,
+                new_bases)
+
+
+def _replace_exon(e_and_t, new_exon):
+    return ExonAndTranscript(new_exon, e_and_t.transcript)
+
+
 def _validate_command_line_options(options):
     try:
         opt.validate_log_level(options)
@@ -99,9 +111,10 @@ def _get_unique_transcript_lengths(
 
         indices = range(len(e_and_t_list))
 
-        e_and_t_list = [e_and_t._replace(
-            exon=e_and_t.exon._replace(
-                bases=set(range(e_and_t.exon.start, e_and_t.exon.end + 1))))
+        e_and_t_list = [
+            _replace_exon(e_and_t, _replace_bases(
+                e_and_t.exon,
+                set(range(e_and_t.exon.start, e_and_t.exon.end + 1))))
             for e_and_t in e_and_t_list]
 
         for i in indices:

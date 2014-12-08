@@ -227,7 +227,7 @@ def _write_statistics(
 
 
 def _draw_graphs(options, tp_transcript_tpms, non_zero_transcript_tpms,
-                 tp_gene_tpms, clsfr_stats, not_present_cutoff):
+                 tp_gene_tpms, clsfr_stats):
 
     # Make a scatter plot of log transformed calculated vs real TPMs
     _draw_tpm_scatter_plot(
@@ -274,7 +274,7 @@ def _analyse_run(logger, options):
     # Draw graphs
     logger.info("Plotting graphs...")
     _draw_graphs(options, tp_transcript_tpms, non_zero_transcript_tpms,
-                 tp_gene_tpms, clsfr_stats, options[po.NOT_PRESENT_CUTOFF])
+                 tp_gene_tpms, clsfr_stats)
 
 
 def analyse_quantification_run(args):
