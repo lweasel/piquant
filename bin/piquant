@@ -4,4 +4,4 @@ import os.path
 import piquant.piquant as entry_point
 import sys
 
-entry_point.piquant(os.path.abspath(os.path.dirname(__file__)), sys.argv)
+entry_point.piquant(os.path.abspath(os.path.dirname(__file__)), sys.argv[1:])

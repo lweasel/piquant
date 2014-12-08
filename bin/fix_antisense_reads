@@ -3,4 +3,4 @@
 import piquant.fix_antisense_reads as entry_point
 import sys
 
-entry_point.fix_antisense_reads(sys.argv)
+entry_point.fix_antisense_reads(sys.argv[1:])

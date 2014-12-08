@@ -3,4 +3,4 @@
 import piquant.calculate_unique_transcript_sequence as entry_point
 import sys
 
-entry_point.calculate_unique_transcript_sequence(sys.argv)
+entry_point.calculate_unique_transcript_sequence(sys.argv[1:])

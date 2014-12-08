@@ -333,9 +333,8 @@ def piquant(script_dir, args):
               "http://piquant.readthedocs.org/en/latest/.").format(
              cs="\n    ".join(pc.get_command_names())))
 
-    command_name, args = sys.argv[1], sys.argv[1:]
-
     # Check the specified command is valid
+    command_name = args[0]
     command = pc.get_command(command_name)
 
     # Read command-line options

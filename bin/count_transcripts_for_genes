@@ -3,4 +3,4 @@
 import piquant.count_transcripts_for_genes as entry_point
 import sys
 
-entry_point.count_transcripts_for_genes(sys.argv)
+entry_point.count_transcripts_for_genes(sys.argv[1:])
