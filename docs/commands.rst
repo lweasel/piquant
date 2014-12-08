@@ -1,7 +1,7 @@
 ``piquant`` commands
 =======================
 
-Stages of the *piquant* pipeline are executed via the following commands of the ``piquant`` script:
+Stages of the *piquant* pipeline are executed via the following commands of the ``piquant`` executable:
 
 * Simulating reads
 
@@ -34,11 +34,11 @@ The following command line options control which combinations of sequencing para
 * ``--paired-end``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed for single- or paired-end reads or both.
 * ``--error``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed without or with sequencing errors introduced into the reads, or both.
 * ``--bias``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed without or with sequence bias introduced into the reads, or both.
-* ``--stranded``: A comma-separated list of "False" or "True" strings  indicating whether reads should be simulated as coming from an unstranded or strand-specific RNA-seq protocol.
-* ``--noise-perc``: A comma-separated list of positive integers. Each indicates a percentage of the main sequencing depth; in each case a set "noise transcripts" will be sequence to this depths. A value of zero indicates that no noise reads will be simulated.
+* ``--stranded``: A comma-separated list of "False" or "True" strings  indicating whether reads should be simulated as coming from an unstranded or strand-specific RNA-seq protocol, or both.
+* ``--noise-perc``: A comma-separated list of positive integers. Each indicates a percentage of the main sequencing depth; in each case a set "noise transcripts" will be sequenced to this depth. A value of zero indicates that no noise reads will be simulated.
 * ``--quant-method``: A comma-separated list of quantification methods for which transcript quantification should be performed. By default, *piquant* can quantify via the methods "Cufflinks", "RSEM", "Express" and "Sailfish". (Note that this option is not relevant for the simulation of reads).
 
-Except in the case of the ``--quant-method`` option when simulating reads, values for each of these options *must* be specified; otherwise ``piquant`` will exit with an error. For ease of use, however, the options can also be specified in fan options file, via the common command line option ``--options-file`` (indeed, any command-line option can be specified in this file). Such an options file should take the form of one option and its value per-line, with option and value separated by whitespace, e.g.::
+Except in the case of the ``--quant-method`` option when simulating reads, values for each of these options *must* be specified; otherwise ``piquant`` will exit with an error. For ease of use, however, the options can also be specified in an options file, via the common command line option ``--options-file`` (indeed, any command-line option can be specified in this file). Such an options file should take the form of one option and its value per-line, with option and value separated by whitespace, e.g.::
 
   --quant-method Cufflinks,RSEM,Express,Sailfish
   --read-length 35,50,75,100
@@ -91,7 +91,7 @@ Within each read simulation directory, three files are always written:
 In addition, if "background noise" reads are being simulated (i.e. the value of the ``--noise-perc`` option is greater than zero), the following two additional files are written:
 
 * ``flux_simulator_noise_expression.par``: A *FluxSimulator* parameters file suitable for creating a transcript expression profile for the set of transcripts that will be used to simulate background noise.
-* ``flux_simulator_noise_simulation.par``" A *FluxSimulator* parameter file suitable for simulating RNA-seq reads according to the created noise transcript expression profile.
+* ``flux_simulator_noise_simulation.par``: A *FluxSimulator* parameters file suitable for simulating RNA-seq reads according to the created noise transcript expression profile.
 
 Note that it is possible to execute the ``run_simulation.sh`` script directly; however by using the ``piquant`` command ``create_reads``, sets of reads for several combinations of sequencing parameters can be created simultaneously as a batch (see :ref:`Create reads <simulate-reads>` below).
 
@@ -100,9 +100,9 @@ In addition to the command line options common to all ``piquant`` commands (see 
 * ``--reads-dir``: The parent directory into which directories in which reads will be simulated will be written. This directory will be created if it does not already exist (default: output).
 * ``--transcript-gtf``: The path to a GTF formatted file describing the main set of transcripts to be simulated by *FluxSimulator*. This GTF file location must be supplied. Note that the GTF file should only contain features of feature type "exon", and that every exon feature should specify both "gene_id" and "transcript_id" among its attributes.
 * ``--noise-transcript-gtf``: The path to a GTF formatted file describing a set of transcripts that will be used to simulated background noise. This GTF file location needs only be specified if background noise is being simulated (ie. for values of ``--noise-perc`` other than zero); however, in these cases it must be specified. The same requirements as to GTF file format apply as above for the option ``--transcript-gtf``.
-* ``--genome-fasta``: The path to a directory containing per-chromosome genome sequences in FASTA-formatted files. This directory location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``.
-* ``--num-molecules``: *FluxSimulator* parameters will be set so that the initial pool of main transcripts contains this many molecules. Note that although it depends on this value, the number of fragments in the final library from which reads will be sequenced is also a complicated function of the parameters at each stage of *FluxSimulator*'s sequencing process. This parameter should be set high enough that the number of fragments in the final library exceeds the number of reads necessary to give any of the sequencing depths required (default: 30,000,000). If the initial number of molecules is not great enought to create the required number of reads, the ``run_simulation.sh`` script will exit with an error.
-* ``--num-noise-molecules``: *FluxSimulator* parameters will be set so that the initial pool of noise transcripts contains this many molecules; this parameter should be set hight enough that the number of fragments in the final noise simulation library exceeds the number of reads necessary to give any required sequencing depth (default: 2,000,000).
+* ``--genome-fasta``: The path to a directory containing per-chromosome genome sequences in FASTA-formatted files. This directory location must be supplied.
+* ``--num-molecules``: *FluxSimulator* parameters will be set so that the initial pool of main transcripts contains this many molecules. Note that although it depends on this value, the number of fragments in the final library from which reads will be sequenced is also a complicated function of the parameters at each stage of *FluxSimulator*'s sequencing process. This parameter should be set high enough that the number of fragments in the final library exceeds the number of reads necessary to give any of the sequencing depths required. If the initial number of molecules is not great enough to create the required number of reads, the ``run_simulation.sh`` script will exit with an error (default: 30,000,000).
+* ``--num-noise-molecules``: *FluxSimulator* parameters will be set so that the initial pool of noise transcripts contains this many molecules; this parameter should be set high enough that the number of fragments in the final noise simulation library exceeds the number of reads necessary to give any required sequencing depth (default: 2,000,000).
 * ``--nocleanup``: When run, *FluxSimulator* creates a number of large intermediate files. Unless ``--nocleanup`` is specified, the ``run_simulation.sh`` Bash script will be constructed so as to delete these intermediate files once read simulation has finished.
 
 .. _simulate-reads:
@@ -168,14 +168,14 @@ In addition to the command line options common to all ``piquant`` commands (see 
 
 * ``--reads-dir``: The parent directory in which directories in which reads were simulated are located (default: output).
 * ``--quant-dir``: The parent directory into which directories in which quantification will be performed will be written. This directory will be created if it does not already exist (default: output).
-* ``--transcript-gtf``: The path to a GTF formatted file describing the transcripts from which reads were simulated by *FluxSimulator*. This GTF file location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``. The transcripts GTF file should be the same as was supplied to the ``prepare_read_dirs`` command (see :ref:`Prepare read directories <prepare-read-dirs>` above).
-* ``--genome-fasta``: The path to a directory containing per-chromosome genome sequences in FASTA-formatted files. This directory location must be supplied; however the specification can also be placed in the parameters file determined by the option ``--params-file``. The genome sequences should be the same as were supplied to the ``prepare_read_dirs`` command.
+* ``--transcript-gtf``: The path to a GTF formatted file describing the transcripts from which reads were simulated by *FluxSimulator*. This GTF file location must be supplied. The transcripts GTF file should be the same as was supplied to the ``prepare_read_dirs`` command (see :ref:`Prepare read directories <prepare-read-dirs>` above).
+* ``--genome-fasta``: The path to a directory containing per-chromosome genome sequences in FASTA-formatted files. This directory location must be supplied. The genome sequences should be the same as were supplied to the ``prepare_read_dirs`` command.
 * ``--num-threads``: Multi-threaded quantification methods will use this number of threads (default: 1).
-* ``--nocleanup``: When run, quantification tools may create a number of output files. Unless ``--nocleanup`` is specified, the  ``run_quantification`` Bash script will be constructed so as to delete all of these, except those essential for *piquant* to calculate the accuracy with which quantification has been performed. 
+* ``--nocleanup``: When run, quantification tools may create a number of output files. Unless ``--nocleanup`` is specified, the  ``run_quantification.sh`` Bash script will be constructed so as to delete all of these, except those essential for *piquant* to calculate the accuracy with which quantification has been performed. 
 * ``--plot-format``: The file format in which graphs produced during the analysis of this quantification run will be written to - one of "pdf", "svg" or "png" (default "pdf").
-* ``--grouped-threshold``: When producing graphs against groups of transcripts determined by a transcript classifier (see :ref:`assessment-transcript-classifiers`_), only groups with greater than this number of transcripts will contribute to the plot.
+* ``--grouped-threshold``: When producing graphs of statistics plotted against groups of transcripts determined by a transcript classifier (see :ref:`assessment-transcript-classifiers`), only groups with greater than this number of transcripts will contribute to the plot.
 * ``--error-fraction-threshold``: When producing graphs, transcripts whose estimated TPM (transcripts per million) is greater than this percentage higher or lower than their real TPM are considered above threshold for the "error fraction" statistic (default: 10).
-* ``--not-present-cutoff``: When producing graphs, for example of the sensitivity and specificity of transcript detection by quantification methods, this is the cut-off value of the transcript TPM is used to determine whether the transcript is considered to be present or not (default: 0.1).
+* ``--not-present-cutoff``: When producing graphs, for example of the sensitivity and specificity of transcript detection by quantification methods, this cut-off value of the transcript TPM is used to determine whether the transcript is considered to be present or not (default: 0.1).
 
 Prepare for quantification (``prequantify``)
 --------------------------------------------
@@ -189,14 +189,14 @@ Note that prequantification can, if necessary, be run manually for any particula
 Perform quantification (``quantify``)
 -------------------------------------
 
-The ``quantify`` command is used to quantify transcript expression via the ``run_quantification.sh`` scripts that have been written by the ``prepare_quant_dirs`` command (see :ref:`Prepare quantification directories <prepare-quant-dirs>` above). For each possible combination of parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias`` and ``--quant-method``, the appropriate ``run_quantification.sh`` script is launched as a background process, ignoring hangup signals (via the ``nohup`` command). After launching the scripts, ``piquant`` exits.
+The ``quantify`` command is used to quantify transcript expression via the ``run_quantification.sh`` scripts that have been written by the ``prepare_quant_dirs`` command (see :ref:`Prepare quantification directories <prepare-quant-dirs>` above). For each possible combination of parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias``, ``--stranded``, ``noise-perc``, and ``--quant-method``, the appropriate ``run_quantification.sh`` script is launched as a background process, ignoring hangup signals (via the ``nohup`` command). After launching the scripts, ``piquant`` exits.
 
 For details on the process of quantification executed via ``run_quantification.sh``, see :doc:`quantification`.
 
 Check quantification was successfully completed (``check_quant``)
 -----------------------------------------------------------------
 
-The ``check_quant`` command is used to confirm that quantification of transcript expression via ``run_quantification.sh`` scripts successfully completed. For each possible combination of parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias`` and ``--quant-method``, the relevant quantification directory is checked for the existence of the appropriate output files of the quantification tool that will subsequently be used for assessing quantification accuracy. A message is printed to standard error for those combinations of parameters for which quantification has not yet finished, or for which quantification terminated unsuccessfully.
+The ``check_quant`` command is used to confirm that quantification of transcript expression via ``run_quantification.sh`` scripts successfully completed. For each possible combination of parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias``, ``--stranded``, ``--noise-perc`` and ``--quant-method``, the relevant quantification directory is checked for the existence of the appropriate output files of the quantification tool that will subsequently be used for assessing quantification accuracy. A message is printed to standard error for those combinations of parameters for which quantification has not yet finished, or for which quantification terminated unsuccessfully.
 
 In the case of unsuccessful termination, the file ``nohup.out`` in the relevant quantification directory contains the messages output by both the quantification tool and the *piquant* scripts that were executed, and this file can be examined for the source of error.
 
@@ -205,12 +205,13 @@ In the case of unsuccessful termination, the file ``nohup.out`` in the relevant 
 Analyse quantification results (``analyse_runs``)
 -------------------------------------------------
 
-The ``analyse_runs`` command is used to gather data and calculate statistics, and to draw graphs, pertaining to the accuracy of quantification of transcript expression. Statistics are calculated, and graphs drawn, for those combinations of quantification tools and sequencing parameters determined by the options ``--read-length``,  ``--read-depth``, ``--paired-end``, ``--error``, ``--bias`` and ``--quant-method``.
+The ``analyse_runs`` command is used to gather data and calculate statistics, and to draw graphs, pertaining to the accuracy of quantification of transcript expression. Statistics are calculated, and graphs drawn, for those combinations of quantification tools and sequencing parameters determined by the options ``--read-length``,  ``--read-depth``, ``--paired-end``, ``--error``, ``--bias``, ``--stranded``, ``--noise-perc`` and ``--quant-method``.
 
 For more details on the statistics calculated and the graphs drawn, see :doc:`assessment`.
 
 In addition to the command line options common to all ``piquant`` commands (see :ref:`common-options` above), the ``analyse_runs`` command takes the following additional options:
 
+* ``--quant-dir``: The parent directory into which directories in which quantification was performed were written.
 * ``--stats-dir``: The path to a directory into which statistics and graph files will be written. The directory will be created if it does not already exist.
 * ``--plot-format``: The file format in which graphs produced during analysis will be written to - one of "pdf", "svg" or "png" (default "pdf").
-* ``--grouped-threshold``: When producing graphs against groups of transcripts determined by a transcript classifier, only groups with greater than this number of transcripts will contribute to the plot.
+* ``--grouped-threshold``: When producing graphs of statistics plotted against groups of transcripts determined by a transcript classifier, only groups with greater than this number of transcripts will contribute to the plot.
