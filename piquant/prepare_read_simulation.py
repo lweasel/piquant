@@ -5,9 +5,9 @@ from . import flux_simulator as fs
 
 RUN_SCRIPT = "run_simulation.sh"
 
-CALC_READ_DEPTH_SCRIPT = "calculate_reads_for_depth.py"
-SIMULATE_BIAS_SCRIPT = "simulate_read_bias.py"
-FIX_ANTISENSE_READS_SCRIPT = "fix_antisense_reads.py"
+CALC_READ_DEPTH_SCRIPT = "calculate_reads_for_depth"
+SIMULATE_BIAS_SCRIPT = "simulate_read_bias"
+FIX_ANTISENSE_READS_SCRIPT = "fix_antisense_reads"
 BIAS_PWM_FILE = "bias_motif.pwm"
 
 TMP_READS_FILE = "reads.tmp"
@@ -15,7 +15,7 @@ TMP_LEFT_READS_FILE = "lr.tmp"
 TMP_RIGHT_READS_FILE = "rr.tmp"
 
 
-def _get_script_path(script_dir, script_name):
+def _get_file_path(script_dir, script_name):
     return os.path.join(script_dir, script_name)
 
 
@@ -87,7 +87,7 @@ def _add_calculate_required_read_depth(
     writer.set_variable(
         read_number_variable,
         "$({command} {pro_file} {length} {depth})".format(
-            command=_get_script_path(script_dir, CALC_READ_DEPTH_SCRIPT),
+            command=_get_file_path(script_dir, CALC_READ_DEPTH_SCRIPT),
             pro_file=fs.get_expression_profile_file(transcript_set),
             length=read_length, depth=read_depth))
 
@@ -280,11 +280,13 @@ def _add_simulate_read_bias(writer, script_dir, paired_end, errors, noise_perc):
     writer.add_line(
         ("{command} -n ${final_reads} --out-prefix={out_prefix} " +
          "{end_spec} {pwm_file} {reads_file}").format(
-            command=_get_script_path(script_dir, SIMULATE_BIAS_SCRIPT),
+            command=_get_file_path(script_dir, SIMULATE_BIAS_SCRIPT),
             final_reads=final_reads_var,
             out_prefix=out_prefix,
             end_spec=("--paired-end" if paired_end else ""),
-            pwm_file=_get_script_path(script_dir, BIAS_PWM_FILE),
+            pwm_file=_get_file_path(
+                os.path.abspath(os.path.dirname(__file__)),
+                BIAS_PWM_FILE),
             reads_file=reads_file))
     writer.add_line("mv " + out_prefix + "." + reads_file + " " + reads_file)
 
@@ -300,7 +302,7 @@ def _add_fix_antisense_reads(writer, script_dir, errors):
     out_prefix = "stranded"
 
     writer.add_line("{command} --out-prefix={out_prefix} {reads_file}".format(
-        command=_get_script_path(script_dir, FIX_ANTISENSE_READS_SCRIPT),
+        command=_get_file_path(script_dir, FIX_ANTISENSE_READS_SCRIPT),
         out_prefix=out_prefix,
         reads_file=reads_file))
     writer.add_line("mv " + out_prefix + "." + reads_file + " " + reads_file)
