@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# pylint: disable=E1103
+
 """
 Usage:
     calculate_reads_for_depth [{log_option_spec}]

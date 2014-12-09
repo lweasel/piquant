@@ -3,7 +3,7 @@ Functions for writing and reading FluxSimulator parameter and output files.
 Exports:
 
 read_expression_profiles: Return data from a FluxSimulator .pro file.
-write_flux_simulator_params_files: Write FluxSimulator parameters files.
+write_params_files: Write FluxSimulator parameters files.
 
 PRO_FILE_TRANSCRIPT_ID_COL: Transcript ID column in FluxSimulator .pro file.
 PRO_FILE_LENGTH_COL: Transcript length column in FluxSimulator .pro file.
@@ -46,7 +46,7 @@ _FRAGMENTS_PER_MOLECULE = 8.26
 _ERROR_MODEL_LONG = 76
 
 
-def _get_common_flux_simulator_params(
+def _get_common_params(
         transcript_gtf_file, genome_fasta_dir, num_molecules):
 
     return {
@@ -80,11 +80,11 @@ def get_simulation_library_file(transcript_set):
     return get_simulation_params_file(transcript_set).replace("par", "lib")
 
 
-def _write_flux_simulator_expression_params(
+def _write_expression_params(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
         transcript_set, output_dir):
 
-    fs_params = _get_common_flux_simulator_params(
+    fs_params = _get_common_params(
         transcript_gtf_file, genome_fasta_dir, num_molecules)
 
     with fw.writing_to_file(
@@ -93,26 +93,26 @@ def _write_flux_simulator_expression_params(
         writer.add_vars(fs_params)
 
 
-def _write_flux_simulator_expression_params_files(
+def _write_expression_params_files(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
         noise_transcript_gtf_file, noise_perc, num_noise_molecules,
         output_dir):
 
-    _write_flux_simulator_expression_params(
+    _write_expression_params(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
         MAIN_TRANSCRIPTS, output_dir)
 
     if noise_perc != 0:
-        _write_flux_simulator_expression_params(
+        _write_expression_params(
             noise_transcript_gtf_file, genome_fasta_dir,
             num_noise_molecules, NOISE_TRANSCRIPTS, output_dir)
 
 
-def _write_flux_simulator_simulation_params(
+def _write_simulation_params(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
         read_length, paired_end, errors, transcript_set, output_dir):
 
-    fs_params = _get_common_flux_simulator_params(
+    fs_params = _get_common_params(
         transcript_gtf_file, genome_fasta_dir, num_molecules)
 
     fs_params["SEQ_FILE_NAME"] = \
@@ -136,18 +136,18 @@ def _write_flux_simulator_simulation_params(
         writer.add_vars(fs_params)
 
 
-def _write_flux_simulator_simulation_params_files(
+def _write_simulation_params_files(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
         read_length, paired_end, errors,
         noise_transcript_gtf_file, noise_perc, num_noise_molecules,
         output_dir):
 
-    _write_flux_simulator_simulation_params(
+    _write_simulation_params(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
         read_length, paired_end, errors, MAIN_TRANSCRIPTS, output_dir)
 
     if noise_perc != 0:
-        _write_flux_simulator_simulation_params(
+        _write_simulation_params(
             noise_transcript_gtf_file, genome_fasta_dir, num_noise_molecules,
             read_length, paired_end, errors, NOISE_TRANSCRIPTS, output_dir)
 
@@ -164,7 +164,7 @@ def read_expression_profiles(pro_file):
                        header=None, names=_PRO_FILE_COLS)
 
 
-def write_flux_simulator_params_files(
+def write_params_files(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
         read_length, paired_end, errors,
         noise_transcript_gtf_file, noise_perc, num_noise_molecules,
@@ -193,11 +193,11 @@ def write_flux_simulator_params_files(
     written.
     """
 
-    _write_flux_simulator_expression_params_files(
+    _write_expression_params_files(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
         noise_transcript_gtf_file, noise_perc, num_noise_molecules,
         output_dir)
-    _write_flux_simulator_simulation_params_files(
+    _write_simulation_params_files(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
         read_length, paired_end, errors,
         noise_transcript_gtf_file, noise_perc, num_noise_molecules,

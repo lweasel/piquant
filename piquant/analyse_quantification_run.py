@@ -155,7 +155,7 @@ def _draw_tpm_scatter_plot(tp_transcript_tpms, tp_gene_tpms, plot_format,
         TRUE_POSITIVES_LABEL, not_present_cutoff)
 
 
-def _draw_stratified_log_ratio_boxplots(non_zero, tp_tpms, options):
+def _draw_log_ratio_boxplots(non_zero, tp_tpms, options):
     tpm_infos = _get_tpm_infos(non_zero, tp_tpms)
     clsfrs = [c for c in classifiers.get_classifiers()
               if c.produces_grouped_stats()]
@@ -167,17 +167,17 @@ def _draw_stratified_log_ratio_boxplots(non_zero, tp_tpms, options):
             options[po.GROUPED_THRESHOLD.name])
 
 
-def _draw_stats_vs_transcript_classifier_graphs(clsfr_stats, options):
+def _draw_stats_vs_clsfr_plots(clsfr_stats, options):
     for classifier, stats in clsfr_stats.items():
         stats.reset_index(level=0, inplace=True)
         for statistic in statistics.get_graphable_statistics():
-            plot.plot_statistic_vs_transcript_classifier(
+            plot.plot_statistic_vs_classifier(
                 options[po.PLOT_FORMAT.name], stats,
                 options[OUT_FILE_BASENAME], statistic, classifier,
                 options[po.GROUPED_THRESHOLD.name])
 
 
-def _draw_cumulative_transcript_distribution_graphs(
+def _draw_cumulative_dist_plots(
         tp_tpms, non_zero, options):
 
     tpm_infos = _get_tpm_infos(non_zero, tp_tpms)
@@ -186,7 +186,7 @@ def _draw_cumulative_transcript_distribution_graphs(
     ascending = [True, False]
 
     for clsfr, asc, tpm_info in itertools.product(clsfrs, ascending, tpm_infos):
-        plot.plot_cumulative_transcript_distribution(
+        plot.plot_transcript_cumul_dist(
             options[po.PLOT_FORMAT.name], tpm_info.tpms,
             options[OUT_FILE_BASENAME], tpm_info.label, clsfr, asc)
 
@@ -244,16 +244,16 @@ def _draw_graphs(options, tp_transcript_tpms, non_zero_transcript_tpms,
 
     # Make boxplots of log ratios stratified by various classification measures
     # (e.g. the number of transcripts per-originating gene of each transcript)
-    _draw_stratified_log_ratio_boxplots(
+    _draw_log_ratio_boxplots(
         non_zero_transcript_tpms, tp_transcript_tpms, options)
 
     # Make plots of statistics calculated on groups of transcripts stratified
     # by classification measures
-    _draw_stats_vs_transcript_classifier_graphs(clsfr_stats, options)
+    _draw_stats_vs_clsfr_plots(clsfr_stats, options)
 
     # Make plots showing the percentage of isoforms above or below threshold
     # values according to various classification measures
-    _draw_cumulative_transcript_distribution_graphs(
+    _draw_cumulative_dist_plots(
         tp_transcript_tpms, non_zero_transcript_tpms, options)
 
 

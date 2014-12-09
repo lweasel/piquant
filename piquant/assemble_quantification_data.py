@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# pylint: disable=E1103
+
 """
 Usage:
     assemble_quantification_data [{log_option_spec}] --method=<quantification-method> --out=<output-file> <pro-file> <transcript-count-file> <unique-sequence-file>

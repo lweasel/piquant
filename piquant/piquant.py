@@ -160,7 +160,7 @@ def _prepare_quantification(logger, script_dir, options, **qr_options):
     run_dir = _get_options_dir(True, options, **qr_options)
     logger.debug("Creating quantification files in " + run_dir)
 
-    prq.write_run_quantification_script(
+    prq.write_script(
         reads_dir, run_dir, script_dir, options, **qr_options)
 
 

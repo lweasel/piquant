@@ -1,3 +1,6 @@
+# pylint: disable=W0142
+# pylint: disable=R0903
+
 import operator
 
 NEUTRAL_SCORE = 0.25

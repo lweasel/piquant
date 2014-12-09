@@ -43,10 +43,10 @@ def _add_run_prequantification(
         # include mapping reads to the genome with TopHat
         quant_method.write_preparatory_commands(writer, quant_params)
         with writer.section():
-            _add_calculate_transcripts_per_gene(
+            _add_calc_transcripts_per_gene(
                 writer, script_dir, quantifier_dir, transcript_gtf_file)
         with writer.section():
-            _add_calculate_unique_sequence_length(
+            _add_calc_uniq_seq_length(
                 writer, script_dir, quantifier_dir, transcript_gtf_file)
 
 
@@ -65,7 +65,7 @@ def _add_quantify_transcripts(writer, quant_method, quant_params, cleanup):
             quant_method.write_cleanup(writer)
 
 
-def _add_calculate_transcripts_per_gene(
+def _add_calc_transcripts_per_gene(
         writer, script_dir, quantifier_dir, transcript_gtf_file):
 
     # Calculate the number of transcripts per gene and write to a file
@@ -79,7 +79,7 @@ def _add_calculate_transcripts_per_gene(
             counts_file=counts_file))
 
 
-def _add_calculate_unique_sequence_length(
+def _add_calc_uniq_seq_length(
         writer, script_dir, quantifier_dir, transcript_gtf_file):
 
     # Calculate the length of unique sequence per transcript and write to a
@@ -96,7 +96,7 @@ def _add_calculate_unique_sequence_length(
                 unique_seq_file=unique_seq_file))
 
 
-def _add_assemble_quantification_data(
+def _add_assemble_quant_data(
         writer, script_dir, quantifier_dir, fs_pro_file, quant_method):
 
     # Now assemble data required for analysis of quantification performance
@@ -116,7 +116,7 @@ def _add_assemble_quantification_data(
             unique_seq_file=_get_unique_sequence_file(quantifier_dir)))
 
 
-def _add_analyse_quantification_results(
+def _add_analyse_quant_results(
         writer, script_dir, run_dir, options, **mqr_options):
 
     # Finally perform analysis on the calculated TPMs
@@ -180,9 +180,9 @@ def _add_analyse_results(
 
     with writer.if_block("-n \"$ANALYSE_RESULTS\""):
         with writer.section():
-            _add_assemble_quantification_data(
+            _add_assemble_quant_data(
                 writer, script_dir, quantifier_dir, fs_pro_file, quant_method)
-        _add_analyse_quantification_results(
+        _add_analyse_quant_results(
             writer, script_dir, run_dir, piquant_options,
             quant_method=quant_method,
             read_length=read_length, read_depth=read_depth,
@@ -216,7 +216,7 @@ def _get_quant_params(reads_dir, quantifier_dir, transcript_gtf, genome_fasta,
     return quant_params
 
 
-def write_run_quantification_script(
+def write_script(
         reads_dir, run_dir, script_dir, piquant_options,
         quant_method=None, read_length=50, read_depth=10,
         paired_end=False, errors=False, bias=False,

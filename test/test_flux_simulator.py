@@ -12,7 +12,7 @@ READ_LENGTH = 50
 
 def _write_flux_simulator_params_files(
         output_dir, paired_end=False, errors=False, read_length=READ_LENGTH):
-    fs.write_flux_simulator_params_files(
+    fs.write_params_files(
         TRANSCRIPT_GTF_FILE, GENOME_FASTA_DIR, NUM_MOLECULES, read_length,
         paired_end, errors, TRANSCRIPT_GTF_FILE, 0, 0, output_dir)
 

@@ -19,7 +19,7 @@ def _get_file_path(script_dir, script_name):
     return os.path.join(script_dir, script_name)
 
 
-def _add_create_flux_simulator_temporary_directory(writer):
+def _add_create_fs_temp_dir(writer):
     writer.add_comment("Create temporary directory for FluxSimulator")
     writer.add_line("mkdir " + fs.TEMPORARY_DIRECTORY)
 
@@ -39,28 +39,6 @@ def _add_create_expression_profiles(writer, noise_perc):
         _add_create_expression_profile(writer, fs.NOISE_TRANSCRIPTS)
 
 
-def _add_fix_zero_length_transcripts(writer):
-    # When creating expression profiles, Flux Simulator sometimes appears to
-    # output (incorrectly) one transcript with zero length - which then causes
-    # read simulation to fail. The following hack will remove the offending
-    # transcript(s).
-    writer.add_comment(
-        "(this is a hack - Flux Simulator seems to sometimes " +
-        "incorrectly output transcripts with zero length)")
-
-    pro_file = fs.get_expression_profile_file(fs.MAIN_TRANSCRIPTS)
-    writer.add_line(
-        ("ZERO_LENGTH_COUNT=$(awk 'BEGIN {{i=0}} $4 == 0 {{i++;}} " +
-         "END {{print i}}' {pro_file})").format(pro_file=pro_file))
-    writer.add_echo()
-    writer.add_echo(
-        "Removing $ZERO_LENGTH_COUNT transcripts with zero length...")
-    writer.add_echo()
-    writer.add_line(
-        "awk '$4 > 0' {pro_file} > tmp; mv tmp {pro_file}".format(
-            pro_file=pro_file))
-
-
 def _get_read_number_variable(final, transcript_set=None):
     read_number_variable = "READS"
 
@@ -71,7 +49,7 @@ def _get_read_number_variable(final, transcript_set=None):
     return "FINAL_" + read_number_variable if final else read_number_variable
 
 
-def _add_calculate_required_read_depth(
+def _add_calc_required_read_depth(
         writer, script_dir, transcript_set, read_length, read_depth, bias):
 
     # Given the expression profile created, calculate the number of reads
@@ -104,23 +82,23 @@ def _add_calculate_required_read_depth(
             "$(echo \"2*${var}\" | bc)".format(var=read_number_variable))
 
 
-def _add_calculate_required_read_depths(
+def _add_calc_required_read_depths(
         writer, script_dir, read_length, read_depth, bias, noise_perc):
 
     with writer.section():
-        _add_calculate_required_read_depth(
+        _add_calc_required_read_depth(
             writer, script_dir, fs.MAIN_TRANSCRIPTS,
             read_length, read_depth, bias)
 
     if noise_perc != 0:
         with writer.section():
             noise_read_depth = read_depth * noise_perc / 100.0
-            _add_calculate_required_read_depth(
+            _add_calc_required_read_depth(
                 writer, script_dir, fs.NOISE_TRANSCRIPTS, read_length,
                 noise_read_depth, bias)
 
 
-def _add_update_flux_simulator_read_number_parameter(writer, transcript_set):
+def _add_update_fs_read_num_param(writer, transcript_set):
     writer.add_line(
         "sed -i \"s/{read_num_placeholder}/${var}/\" {sim_params_file}".format(
             read_num_placeholder=fs.READ_NUMBER_PLACEHOLDER,
@@ -128,15 +106,15 @@ def _add_update_flux_simulator_read_number_parameter(writer, transcript_set):
             sim_params_file=fs.get_simulation_params_file(transcript_set)))
 
 
-def _add_update_flux_simulator_parameters(writer, noise_perc):
+def _add_update_fs_params(writer, noise_perc):
     writer.add_comment(
         "Update the Flux Simulator parameters files with the correct " +
         "number of reads.")
-    _add_update_flux_simulator_read_number_parameter(
+    _add_update_fs_read_num_param(
         writer, fs.MAIN_TRANSCRIPTS)
 
     if noise_perc != 0:
-        _add_update_flux_simulator_read_number_parameter(
+        _add_update_fs_read_num_param(
             writer, fs.NOISE_TRANSCRIPTS)
 
 
@@ -160,7 +138,7 @@ def _add_simulate_reads_lines(writer, noise_perc):
     writer.add_line("rm -rf " + fs.TEMPORARY_DIRECTORY)
 
 
-def _check_correct_number_of_reads_created_for_transcripts(
+def _add_check_num_reads(
         writer, errors, transcript_set):
 
     lines_per_read = 2
@@ -196,22 +174,22 @@ def _check_correct_number_of_reads_created_for_transcripts(
         writer.add_line("exit 1")
 
 
-def _check_correct_number_of_reads_created(writer, errors, noise_perc):
+def _add_num_read_checks(writer, errors, noise_perc):
     writer.add_comment(
         "Check that the number of transcript molecules in the initial " +
         "populations were high enough to create the required number of reads.")
 
     with writer.section():
-        _check_correct_number_of_reads_created_for_transcripts(
+        _add_check_num_reads(
             writer, errors, fs.MAIN_TRANSCRIPTS)
 
     if noise_perc != 0:
         with writer.section():
-            _check_correct_number_of_reads_created_for_transcripts(
+            _add_check_num_reads(
                 writer, errors, fs.NOISE_TRANSCRIPTS)
 
 
-def _add_create_intermediate_reads_file(writer, errors, noise_perc):
+def _add_create_midpoint_reads(writer, errors, noise_perc):
     main_reads = fs.get_reads_file(
         errors, intermediate=True, transcript_set=fs.MAIN_TRANSCRIPTS)
     reads = fs.get_reads_file(errors, intermediate=True)
@@ -352,26 +330,22 @@ def _add_create_reads(
         errors, bias, stranded, noise_perc):
 
     with writer.section():
-        _add_create_flux_simulator_temporary_directory(writer)
+        _add_create_fs_temp_dir(writer)
     with writer.section():
         _add_create_expression_profiles(writer, noise_perc)
 
-    # NOT SURE IF THIS IS NEEDED ANYMORE?
-    # with writer.section():
-        # _add_fix_zero_length_transcripts(writer)
-
-    _add_calculate_required_read_depths(
+    _add_calc_required_read_depths(
         writer, script_dir, read_length, read_depth, bias, noise_perc)
 
     with writer.section():
-        _add_update_flux_simulator_parameters(writer, noise_perc)
+        _add_update_fs_params(writer, noise_perc)
     with writer.section():
         _add_simulate_reads_lines(writer, noise_perc)
 
-    _check_correct_number_of_reads_created(writer, errors, noise_perc)
+    _add_num_read_checks(writer, errors, noise_perc)
 
     with writer.section():
-        _add_create_intermediate_reads_file(writer, errors, noise_perc)
+        _add_create_midpoint_reads(writer, errors, noise_perc)
     with writer.section():
         _add_shuffle_simulated_reads(writer, paired_end, errors)
 
@@ -396,12 +370,12 @@ def _add_cleanup_intermediate_files(writer):
         writer.add_line("rm *.bed")
 
 
-def _create_simulator_parameter_files(
+def _create_fs_param_files(
         reads_dir, transcript_gtf_file, genome_fasta_dir,
         num_molecules, read_length, paired_end, errors,
         noise_transcript_gtf, noise_perc, num_noise_molecules):
 
-    fs.write_flux_simulator_params_files(
+    fs.write_params_files(
         transcript_gtf_file, genome_fasta_dir, num_molecules,
         read_length, paired_end, errors,
         noise_transcript_gtf, noise_perc, num_noise_molecules,
@@ -431,7 +405,7 @@ def create_simulation_files(
     os.mkdir(reads_dir)
 
     # Write Flux Simulator parameters files
-    _create_simulator_parameter_files(
+    _create_fs_param_files(
         reads_dir, transcript_gtf, genome_fasta,
         num_molecules, read_length, paired_end, errors,
         noise_transcript_gtf, noise_perc, num_noise_molecules)

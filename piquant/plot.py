@@ -26,7 +26,7 @@ plt.rcParams['svg.fonttype'] = 'none'
 
 
 @contextlib.contextmanager
-def _saving_new_plot(fformat, *file_name_elements):
+def _saving_new_plot(fformat, file_name_elements):
     plt.figure()
     try:
         yield
@@ -88,9 +88,10 @@ def _get_group_mqr_option_values(stats_df, group_mqr_option):
     return group_mqr_option_vals
 
 
-def _get_grouped_by_mqr_option_stats_plot_file_name_elements(
+def _get_grouped_plot_fname_parts(
         base_name, plotted, group_mqr_option, fixed_mqr_option_info,
         versus=None, ascending=None):
+
     name_elements = [base_name, plotted]
     if versus:
         name_elements += ["vs", versus]
@@ -103,17 +104,7 @@ def _get_grouped_by_mqr_option_stats_plot_file_name_elements(
     return name_elements
 
 
-def _get_stats_plot_file_name_elements(
-        base_name, plotted, versus=None, ascending=None):
-    name_elements = [base_name, plotted]
-    if versus:
-        name_elements += ["vs", versus]
-    if ascending is not None:
-        name_elements += ["asc" if ascending else "desc", "distribution"]
-    return name_elements
-
-
-def _get_grouped_by_mqr_option_stats_plot_title(
+def _get_grouped_plot_title(
         plotted, group_mqr_option, fixed_mqr_option_info, versus=None):
 
     title_elements = [plotted]
@@ -128,7 +119,7 @@ def _get_grouped_by_mqr_option_stats_plot_title(
     return title
 
 
-def _plot_statistic_grouped_by_mqr_option(
+def _plot_grouped_statistic(
         stats_df, group_mqr_option, xcol, ycol, xlabel, ylabel,
         plot_bounds_setter, title):
 
@@ -174,44 +165,44 @@ def _plot_statistic_grouped_by_mqr_option(
     return (ymin, ymax)
 
 
-def _plot_statistic_vs_varying_mqr_option_grouped_by_mqr_option(
+def _plot_grouped_stat_vs_mqr_opt(
         fformat, stats, base_name, statistic, group_mqr_option,
         varying_mqr_option, fixed_mqr_option_values):
 
     fixed_mqr_option_info = po.get_value_names(fixed_mqr_option_values)
 
-    name_elements = _get_grouped_by_mqr_option_stats_plot_file_name_elements(
+    name_elements = _get_grouped_plot_fname_parts(
         base_name, statistic.name, group_mqr_option,
         fixed_mqr_option_info, versus=varying_mqr_option.name)
 
-    with _saving_new_plot(fformat, *name_elements):
-        title = _get_grouped_by_mqr_option_stats_plot_title(
+    with _saving_new_plot(fformat, name_elements):
+        title = _get_grouped_plot_title(
             statistic.title, group_mqr_option, fixed_mqr_option_info,
             versus=varying_mqr_option.title)
-        _plot_statistic_grouped_by_mqr_option(
+        _plot_grouped_statistic(
             stats, group_mqr_option, varying_mqr_option.name, statistic.name,
             varying_mqr_option.title, statistic.title,
             _get_plot_bounds_setter(statistic), title)
 
 
-def _plot_statistic_vs_classifier_grouped_by_mqr_option(
+def _plot_grouped_stat_vs_clsfr(
         fformat, stats, base_name, statistic, group_mqr_option,
         classifier, fixed_mqr_option_values):
 
     clsfr_col = classifier.get_column_name()
     fixed_mqr_option_info = po.get_value_names(fixed_mqr_option_values)
 
-    name_elements = _get_grouped_by_mqr_option_stats_plot_file_name_elements(
+    name_elements = _get_grouped_plot_fname_parts(
         base_name, statistic.name, group_mqr_option,
         fixed_mqr_option_info, versus=clsfr_col)
 
-    with _saving_new_plot(fformat, *name_elements):
+    with _saving_new_plot(fformat, name_elements):
         xlabel = _capitalized(classifier.get_plot_title())
-        title = _get_grouped_by_mqr_option_stats_plot_title(
+        title = _get_grouped_plot_title(
             statistic.title, group_mqr_option,
             fixed_mqr_option_info, versus=xlabel)
 
-        _plot_statistic_grouped_by_mqr_option(
+        _plot_grouped_statistic(
             stats, group_mqr_option, clsfr_col,
             statistic.name, xlabel, statistic.title,
             _get_plot_bounds_setter(statistic), title)
@@ -222,22 +213,22 @@ def _plot_statistic_vs_classifier_grouped_by_mqr_option(
             np.arange(min_xval, max_xval + 1), classifier)
 
 
-def _plot_cumulative_distribution_grouped_by_mqr_option(
+def _plot_grouped_cumulative_dist(
         fformat, stats, base_name, group_mqr_option,
         classifier, ascending, fixed_mqr_option_values):
 
     clsfr_col = classifier.get_column_name()
     fixed_mqr_option_info = po.get_value_names(fixed_mqr_option_values)
 
-    name_elements = _get_grouped_by_mqr_option_stats_plot_file_name_elements(
+    name_elements = _get_grouped_plot_fname_parts(
         base_name, clsfr_col, group_mqr_option,
         fixed_mqr_option_info, ascending=ascending)
 
-    with _saving_new_plot(fformat, *name_elements):
-        title = _get_grouped_by_mqr_option_stats_plot_title(
+    with _saving_new_plot(fformat, name_elements):
+        title = _get_grouped_plot_title(
             _capitalized(clsfr_col) + " threshold", group_mqr_option,
             fixed_mqr_option_info)
-        _plot_statistic_grouped_by_mqr_option(
+        _plot_grouped_statistic(
             stats, group_mqr_option, clsfr_col, t.TRUE_POSITIVE_PERCENTAGE,
             _capitalized(clsfr_col),
             _get_distribution_plot_ylabel(ascending),
@@ -247,7 +238,7 @@ def _plot_cumulative_distribution_grouped_by_mqr_option(
 def log_tpm_scatter_plot(
         fformat, tpms, base_name, tpm_label, not_present_cutoff):
 
-    with _saving_new_plot(fformat, base_name, tpm_label, "log10 scatter"):
+    with _saving_new_plot(fformat, [base_name, tpm_label, "log10 scatter"]):
         plt.scatter(tpms[t.LOG10_REAL_TPM].values,
                     tpms[t.LOG10_CALCULATED_TPM].values,
                     c="lightblue", alpha=0.4)
@@ -271,7 +262,7 @@ def log_ratio_boxplot(
         lambda x: len(x[t.REAL_TPM]) > threshold)
 
     with _saving_new_plot(
-            fformat, base_name, grouping_column, tpm_label, "boxplot"):
+            fformat, [base_name, grouping_column, tpm_label, "boxplot"]):
         sb.boxplot(tpms[t.LOG10_RATIO], groupby=tpms[grouping_column],
                    sym='', color='lightblue')
 
@@ -282,13 +273,13 @@ def log_ratio_boxplot(
         _set_ticks_for_classifier_plot(plt.xticks()[0], classifier)
 
 
-def plot_statistic_vs_transcript_classifier(
+def plot_statistic_vs_classifier(
         fformat, stats, base_name, statistic, classifier, threshold):
 
     stats = stats[stats[statistics.TP_NUM_TPMS] > threshold]
     clsfr_col = classifier.get_column_name()
 
-    with _saving_new_plot(fformat, base_name, statistic.name, "vs", clsfr_col):
+    with _saving_new_plot(fformat, [base_name, statistic.name, "vs", clsfr_col]):
         xvals = stats[clsfr_col]
         min_xval = xvals.min()
         max_xval = xvals.max()
@@ -307,14 +298,14 @@ def plot_statistic_vs_transcript_classifier(
             np.arange(min_xval, max_xval + 1), classifier)
 
 
-def plot_cumulative_transcript_distribution(
+def plot_transcript_cumul_dist(
         fformat, tpms, base_name, tpm_label, classifier, ascending):
 
     clsfr_col = classifier.get_column_name()
 
     with _saving_new_plot(
-            fformat, base_name, clsfr_col, tpm_label,
-            ("asc" if ascending else "desc"), "distribution"):
+            fformat, [base_name, clsfr_col, tpm_label,
+                      ("asc" if ascending else "desc"), "distribution"]):
 
         xvals, yvals = t.get_distribution(tpms, classifier, ascending)
         plt.plot(xvals, yvals, '-o')
@@ -344,7 +335,7 @@ def _remove_from(mqr_options, to_remove):
     return get_pset(mqr_options) - get_pset(to_remove)
 
 
-def _get_fixed_mqr_options(all_mqr_options, non_fixed, mqr_option_values):
+def _get_fixed_mqr_opts(all_mqr_options, non_fixed, mqr_option_values):
     fixed_mqr_options = [o for o in _remove_from(all_mqr_options, non_fixed)
                          if not _degenerate_mqr_option(o, mqr_option_values)]
     value_sets = [v for v in itertools.product(
@@ -352,7 +343,7 @@ def _get_fixed_mqr_options(all_mqr_options, non_fixed, mqr_option_values):
     return fixed_mqr_options, value_sets
 
 
-def _get_stats_for_fixed_mqr_options(stats_df, fixed_mqr_options, fo_values_set):
+def _get_stats_for_fixed_mqr_opts(stats_df, fixed_mqr_options, fo_values_set):
     fixed_mqr_option_values = {}
     for i, fixed_o in enumerate(fixed_mqr_options):
         fo_value = fo_values_set[i]
@@ -400,12 +391,12 @@ def draw_overall_stats_graphs(
                 mqr_option_stats_dir, "by_" + num_p.name)
 
             fixed_mqr_options, fp_values_sets = \
-                _get_fixed_mqr_options(po.get_multiple_quant_run_options(),
-                                       [mqr_option, num_p], mqr_option_values)
+                _get_fixed_mqr_opts(po.get_multiple_quant_run_options(),
+                                    [mqr_option, num_p], mqr_option_values)
 
             for fp_values_set in fp_values_sets:
                 stats_df, fixed_mqr_option_values = \
-                    _get_stats_for_fixed_mqr_options(
+                    _get_stats_for_fixed_mqr_opts(
                         overall_stats, fixed_mqr_options, fp_values_set)
 
                 for stat in statistics.get_graphable_statistics():
@@ -414,7 +405,7 @@ def draw_overall_stats_graphs(
 
                     graph_file_basename = os.path.join(
                         statistic_dir, statistics.OVERALL_STATS_PREFIX)
-                    _plot_statistic_vs_varying_mqr_option_grouped_by_mqr_option(
+                    _plot_grouped_stat_vs_mqr_opt(
                         fformat, stats_df, graph_file_basename,
                         stat, mqr_option, num_p, fixed_mqr_option_values)
 
@@ -449,12 +440,12 @@ def draw_grouped_stats_graphs(fformat, stats_dir, mqr_option_values, threshold):
                 clsfr_dir, "per_" + mqr_option.name)
 
             fixed_mqr_options, fp_values_sets = \
-                _get_fixed_mqr_options(po.get_multiple_quant_run_options(),
-                                       mqr_option, mqr_option_values)
+                _get_fixed_mqr_opts(po.get_multiple_quant_run_options(),
+                                    mqr_option, mqr_option_values)
 
             for fp_values_set in fp_values_sets:
                 stats_df, fixed_mqr_option_values = \
-                    _get_stats_for_fixed_mqr_options(
+                    _get_stats_for_fixed_mqr_opts(
                         clsfr_stats, fixed_mqr_options, fp_values_set)
 
                 for stat in statistics.get_graphable_statistics():
@@ -464,7 +455,7 @@ def draw_grouped_stats_graphs(fformat, stats_dir, mqr_option_values, threshold):
                         statistic_dir, "grouped")
 
                     filtered_stats_df = stats_df[num_tpms_filter(stats_df)]
-                    _plot_statistic_vs_classifier_grouped_by_mqr_option(
+                    _plot_grouped_stat_vs_clsfr(
                         fformat, filtered_stats_df, graph_file_basename,
                         stat, mqr_option, clsfr, fixed_mqr_option_values)
 
@@ -498,14 +489,14 @@ def draw_distribution_graphs(fformat, stats_dir, mqr_option_values):
                 mqr_option_stats_dir, "distribution")
 
             fixed_mqr_options, fp_values_sets = \
-                _get_fixed_mqr_options(po.get_multiple_quant_run_options(),
-                                       mqr_option, mqr_option_values)
+                _get_fixed_mqr_opts(po.get_multiple_quant_run_options(),
+                                    mqr_option, mqr_option_values)
 
             for fp_values_set in fp_values_sets:
                 stats_df, fixed_mqr_option_values = \
-                    _get_stats_for_fixed_mqr_options(
+                    _get_stats_for_fixed_mqr_opts(
                         clsfr_stats, fixed_mqr_options, fp_values_set)
 
-                _plot_cumulative_distribution_grouped_by_mqr_option(
+                _plot_grouped_cumulative_dist(
                     fformat, stats_df, graph_file_basename, mqr_option,
                     clsfr, asc, fixed_mqr_option_values)
