@@ -257,20 +257,20 @@ def _set_executables_for_commands():
         _run_directory_checker(True),
         _StatsAccumulator(tpms.TRANSCRIPT),
         _StatsAccumulator(tpms.GENE)] + \
-        [_StatsAccumulator(tpms.TRANSCRIPT, classifier=clsfr, ascending=asc)
-            for clsfr, asc in statistics.get_stratified_stats_types()]
+        [_StatsAccumulator(tpms.TRANSCRIPT, classifier=d['classifier'], ascending=d['ascending'])
+            for d in statistics.get_stratified_stats_types()]
 
 
 def _write_accumulated_stats(options):
-    if not os.path.exists(options[po.STATS_DIRECTORY]):
-        os.mkdir(options[po.STATS_DIRECTORY])
+    if not os.path.exists(options[po.STATS_DIRECTORY.name]):
+        os.mkdir(options[po.STATS_DIRECTORY.name])
     for stats_acc in _StatsAccumulator.ACCUMULATORS:
-        stats_acc.write_stats(options[po.STATS_DIRECTORY])
+        stats_acc.write_stats(options[po.STATS_DIRECTORY.name])
 
 
 def _get_overall_stats(options, tpm_level):
     overall_stats_file = statistics.get_stats_file(
-        options[po.STATS_DIRECTORY], statistics.OVERALL_STATS_PREFIX, tpm_level)
+        options[po.STATS_DIRECTORY.name], statistics.OVERALL_STATS_PREFIX, tpm_level)
     return pd.read_csv(overall_stats_file)
 
 
@@ -284,7 +284,7 @@ def _draw_overall_stats_graphs(
     logger.info("Drawing graphs derived from statistics calculated for the " +
                 "whole set of TPMs...")
     plot.draw_overall_stats_graphs(
-        options[po.PLOT_FORMAT], options[po.STATS_DIRECTORY],
+        options[po.PLOT_FORMAT.name], options[po.STATS_DIRECTORY.name],
         overall_stats, stats_option_values, tpm_level)
 
 
@@ -292,14 +292,14 @@ def _draw_grouped_stats_graphs(logger, options, stats_option_values):
     logger.info("Drawing graphs derived from statistics calculated on " +
                 "subsets of TPMs...")
     plot.draw_grouped_stats_graphs(
-        options[po.PLOT_FORMAT], options[po.STATS_DIRECTORY],
-        stats_option_values, options[po.GROUPED_THRESHOLD])
+        options[po.PLOT_FORMAT.name], options[po.STATS_DIRECTORY.name],
+        stats_option_values, po.GROUPED_THRESHOLD.option_value)
 
 
 def _draw_distribution_graphs(logger, options, stats_option_values):
     logger.info("Drawing distribution plots...")
     plot.draw_distribution_graphs(
-        options[po.PLOT_FORMAT], options[po.STATS_DIRECTORY],
+        options[po.PLOT_FORMAT.name], options[po.STATS_DIRECTORY.name],
         stats_option_values)
 
 
