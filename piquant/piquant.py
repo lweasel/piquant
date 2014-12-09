@@ -331,7 +331,7 @@ def _run_piquant_command(
     _set_executables_for_commands()
 
     po.execute_for_mqr_option_sets(
-        piquant_command, logger, script_dir, options, **qr_options)
+        piquant_command, logger, script_dir, options, qr_options)
 
     if piquant_command == pc.ANALYSE_RUNS:
         _analyse_runs(logger, options)
