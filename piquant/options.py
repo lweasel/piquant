@@ -106,15 +106,16 @@ def validate_list_option(list_option, values_list, msg):
     """
     Check if a command line option is an item in a list.
 
-    Check if a command line option is an item in the specified list. If the
-    option is not in the list, a SchemaError is raised.
+    Check if a command line option value is an item in the specified list and,
+    if so, return the option value. If the option is not in the list, a
+    SchemaError is raised.
 
     list_option: The command line option, a string.
     values_list: A list in which a valid command line option should be an item.
     msg: Text for the SchemaError exception raised if the test fails.
     """
     msg = "{msg}: '{opt}'.".format(msg=msg, opt=list_option)
-    Schema(lambda x: x in values_list, error=msg).validate(list_option)
+    return Schema(lambda x: x in values_list, error=msg).validate(list_option)
 
 
 def validate_dict_option(dict_option, values_dict, msg):

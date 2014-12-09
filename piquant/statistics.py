@@ -200,7 +200,7 @@ class _TruePositiveErrorFraction(_BaseStatistic):
 
     @classmethod
     def set_options(cls, options):
-        cls.ERROR_FRACTION_THRESHOLD = options[po.ERROR_FRACTION_THRESHOLD]
+        cls.ERROR_FRACTION_THRESHOLD = options[po.ERROR_FRACTION_THRESHOLD.name]
 
     def __init__(self):
         _BaseStatistic.__init__(

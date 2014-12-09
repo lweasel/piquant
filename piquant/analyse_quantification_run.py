@@ -2,7 +2,7 @@
 
 """
 Usage:
-    analyse_quantification_run [{log_option_spec} --plot-format=<plot-format> --grouped-threshold=<grouped-threshold> --error-fraction-threshold=<ef-threshold> --not-present-cutoff=<cutoff>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --error=<errors> --bias=<bias> --stranded=<stranded> --noise-perc=<noise-depth-percentage> <tpm-file> <out-file>
+    analyse_quantification_run [{log_option_spec} --plot-format=<plot-format> --grouped-threshold=<grouped-threshold> --error-fraction-threshold=<ef-threshold> --not-present-cutoff=<cutoff>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --errors=<errors> --bias=<bias> --stranded=<stranded> --noise-perc=<noise-depth-percentage> <tpm-file> <out-file>
 
 Options:
 {help_option_spec}
@@ -31,7 +31,7 @@ Options:
     The depth of reads sequenced across the transcriptome.
 --paired-end=<paired-end>
     Whether paired-end sequence reads were used.
---error=<errors>
+--errors=<errors>
     Whether the reads contain sequencing errors.
 --bias=<bias>
     Whether the reads contain sequence bias.
@@ -66,8 +66,13 @@ TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
 TRUE_POSITIVES_LABEL = "true positive TPMs"
 TPM_FILE = "<tpm-file>"
 OUT_FILE_BASENAME = "<out-file>"
-PLOT_FORMAT = "--plot-format"
-GROUPED_THRESHOLD = "--grouped-threshold"
+
+PIQUANT_OPTIONS = [
+    po.PLOT_FORMAT,
+    po.GROUPED_THRESHOLD,
+    po.ERROR_FRACTION_THRESHOLD,
+    po.NOT_PRESENT_CUTOFF
+]
 
 TpmInfo = collections.namedtuple("TpmInfo", ["tpms", "label"])
 
@@ -77,9 +82,10 @@ def _validate_command_line_options(options):
         opt.validate_log_level(options)
         opt.validate_file_option(options[TPM_FILE], "Could not open TPM file")
 
-        for option in [po.PLOT_FORMAT, po.GROUPED_THRESHOLD,
-                       po.ERROR_FRACTION_THRESHOLD, po.NOT_PRESENT_CUTOFF]:
-            option.validator(options[option.get_option_name()])
+        for option in PIQUANT_OPTIONS:
+            opt_name = option.get_option_name()
+            options[option.name] = option.validator()(options[opt_name])
+            del options[opt_name]
     except schema.SchemaError as exc:
         exit(exc.code)
 
@@ -156,9 +162,9 @@ def _draw_stratified_log_ratio_boxplots(non_zero, tp_tpms, options):
 
     for clsfr, tpm_info in itertools.product(clsfrs, tpm_infos):
         plot.log_ratio_boxplot(
-            options[PLOT_FORMAT], tpm_info.tpms,
+            options[po.PLOT_FORMAT.name], tpm_info.tpms,
             options[OUT_FILE_BASENAME], tpm_info.label, clsfr,
-            options[GROUPED_THRESHOLD])
+            options[po.GROUPED_THRESHOLD.name])
 
 
 def _draw_stats_vs_transcript_classifier_graphs(clsfr_stats, options):
@@ -166,9 +172,9 @@ def _draw_stats_vs_transcript_classifier_graphs(clsfr_stats, options):
         stats.reset_index(level=0, inplace=True)
         for statistic in statistics.get_graphable_statistics():
             plot.plot_statistic_vs_transcript_classifier(
-                options[PLOT_FORMAT], stats,
+                options[po.PLOT_FORMAT.name], stats,
                 options[OUT_FILE_BASENAME], statistic, classifier,
-                options[GROUPED_THRESHOLD])
+                options[po.GROUPED_THRESHOLD.name])
 
 
 def _draw_cumulative_transcript_distribution_graphs(
@@ -181,7 +187,7 @@ def _draw_cumulative_transcript_distribution_graphs(
 
     for clsfr, asc, tpm_info in itertools.product(clsfrs, ascending, tpm_infos):
         plot.plot_cumulative_transcript_distribution(
-            options[PLOT_FORMAT], tpm_info.tpms,
+            options[po.PLOT_FORMAT.name], tpm_info.tpms,
             options[OUT_FILE_BASENAME], tpm_info.label, clsfr, asc)
 
 
@@ -231,8 +237,10 @@ def _draw_graphs(options, tp_transcript_tpms, non_zero_transcript_tpms,
 
     # Make a scatter plot of log transformed calculated vs real TPMs
     _draw_tpm_scatter_plot(
-        tp_transcript_tpms, tp_gene_tpms, options[PLOT_FORMAT],
-        options[OUT_FILE_BASENAME], options[po.NOT_PRESENT_CUTOFF])
+        tp_transcript_tpms, tp_gene_tpms,
+        options[po.PLOT_FORMAT.name],
+        options[OUT_FILE_BASENAME],
+        options[po.NOT_PRESENT_CUTOFF.name])
 
     # Make boxplots of log ratios stratified by various classification measures
     # (e.g. the number of transcripts per-originating gene of each transcript)
@@ -258,7 +266,7 @@ def _analyse_run(logger, options):
         groupby(t.GENE).aggregate(np.sum)
 
     _prepare_data(transcript_tpms, gene_tpms,
-                  options[po.NOT_PRESENT_CUTOFF], logger)
+                  options[po.NOT_PRESENT_CUTOFF.name], logger)
 
     # Get data frames containing only true positive TPMs and TPMs with non-zero
     # real and estimated abundances
