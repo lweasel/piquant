@@ -4,6 +4,7 @@ script. Exports:
 
 execute_for_mqr_option_sets: Execute a piquant command for multiple option sets.
 get_value_names: Translate option values for plot titles and legends.
+get_run_name: Get the name of a read simulation or quantification run.
 """
 
 import itertools
@@ -433,16 +434,27 @@ def get_multiple_quant_run_options():
     return set(_MultiQuantRunOption.OPTIONS)
 
 
-def get_file_name(**mqr_options):
+def get_run_name(qr_options):
+    """
+    Get the name of a read simulation or quantification run.
+
+    Given a map from options (instance of _QuantRunOption) to option values,
+    return a string, the name of the read simulation or quantification run
+    corresponding to the option values. Note that only options that are
+    instances of _MultiQuantRunOption will be used to construct the name.
+
+    qr_options: A map from options (instances of _QuantRunOption) to option
+    values.
+    """
     elements = []
     for option in _MultiQuantRunOption.OPTIONS:
-        if option.name in mqr_options:
-            value = mqr_options[option.name]
+        if option.name in qr_options:
+            value = qr_options[option.name]
             elements.append(option.get_file_name_part(value))
     return "_".join(elements)
 
 
-def get_value_names(mqr_option_values):
+def get_value_names(mqr_options):
     """
     Translate option values for plot titles and legends.
 
@@ -450,13 +462,13 @@ def get_value_names(mqr_option_values):
     values, return a list of strings containing those option values translated
     into forms suitable for filenames and plot titles.
 
-    mqr_option_values: A map from options (instances of _MultiQuantRunOption)
+    mqr_options: A map from options (instances of _MultiQuantRunOption)
     to option values.
     """
     value_names = []
     for option in _MultiQuantRunOption.OPTIONS:
-        if option in mqr_option_values:
-            value = mqr_option_values[option]
+        if option in mqr_options:
+            value = mqr_options[option]
             value_names.append(option.get_value_name(value))
     return value_names
 

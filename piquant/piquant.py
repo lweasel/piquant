@@ -43,7 +43,7 @@ def _get_options_dir(run_dir, options, **qr_options):
     dir_option = po.QUANT_OUTPUT_DIR if run_dir else po.READS_OUTPUT_DIR
 
     return os.path.join(
-        options[dir_option.name], po.get_file_name(**qr_options))
+        options[dir_option.name], po.get_run_name(qr_options))
 
 
 def _reads_directory_checker(should_exist):
@@ -199,7 +199,7 @@ def _check_quantification_completed(logger, script_dir, options, **qr_options):
     main_stats_file = statistics.get_stats_file(
         run_dir, os.path.basename(run_dir), tpms.TRANSCRIPT)
     if not os.path.exists(main_stats_file):
-        run_name = po.get_file_name(**qr_options)
+        run_name = po.get_run_name(qr_options)
         logger.error("Run " + run_name + " did not complete")
 
 
@@ -214,7 +214,7 @@ class _StatsAccumulator(object):
         _StatsAccumulator.ACCUMULATORS.append(self)
 
     def __call__(self, logger, script_dir, options, **qr_options):
-        run_name = po.get_file_name(**qr_options)
+        run_name = po.get_run_name(qr_options)
         run_dir = _get_options_dir(True, options, **qr_options)
 
         stats_file = statistics.get_stats_file(

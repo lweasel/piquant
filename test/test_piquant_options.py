@@ -288,10 +288,15 @@ def test_validate_option_values_overrides_file_parameters_with_cl_options():
     assert len3 in qr_opts[po.READ_LENGTH.name]
 
 
-def test_get_file_name_returns_correct_name():
-    assert po.get_file_name(
-        read_depth=30, read_length=50,
-        paired_end=True, bias=False) == "30x_50b_pe_no_bias"
+def test_get_run_name_returns_correct_name():
+    qr_options = {
+        po.READ_LENGTH.name: 50,
+        po.READ_DEPTH.name: 30,
+        po.PAIRED_END.name: True,
+        po.BIAS.name: False,
+    }
+
+    assert po.get_run_name(qr_options) == "30x_50b_pe_no_bias"
 
 
 def test_get_value_names_returns_correct_translated_values():
