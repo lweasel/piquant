@@ -3,6 +3,7 @@ Functions and classes to handle command line options of the main piquant
 script. Exports:
 
 execute_for_mqr_option_sets: Execute a piquant command for multiple option sets.
+get_value_names: Translate option values for plot titles and legends.
 """
 
 import itertools
@@ -442,8 +443,18 @@ def get_file_name(**mqr_options):
 
 
 def get_value_names(mqr_option_values):
+    """
+    Translate option values for plot titles and legends.
+
+    Given a map from options (instances of _MultiQuantRunOption) to option
+    values, return a list of strings containing those option values translated
+    into forms suitable for filenames and plot titles.
+
+    mqr_option_values: A map from options (instances of _MultiQuantRunOption)
+    to option values.
+    """
     value_names = []
-    for option in _QuantRunOption.OPTIONS:
+    for option in _MultiQuantRunOption.OPTIONS:
         if option in mqr_option_values:
             value = mqr_option_values[option]
             value_names.append(option.get_value_name(value))

@@ -294,6 +294,23 @@ def test_get_file_name_returns_correct_name():
         paired_end=True, bias=False) == "30x_50b_pe_no_bias"
 
 
+def test_get_value_names_returns_correct_translated_values():
+    mqr_options = {
+        po.READ_LENGTH: 50,
+        po.READ_DEPTH: 10,
+        po.STRANDED: False,
+        po.PAIRED_END: True,
+        po.ERRORS: False,
+        po.BIAS: True,
+        po.NOISE_DEPTH_PERCENT: 5,
+        po.QUANT_METHOD: "Cufflinks",
+    }
+
+    assert po.get_value_names(mqr_options) == \
+        ["Cufflinks", "10x", "50b", "paired-end", "no errors",
+         "unstranded", "with bias", "noise-5x"]
+
+
 def test_execute_for_mqr_option_sets_executes_for_correct_number_of_option_sets():
     len1 = 3
     len2 = 5
