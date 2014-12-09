@@ -25,6 +25,38 @@ plt.rcParams['svg.fonttype'] = 'none'
 # plt.rcParams['legend.fontsize'] = 'small'
 
 
+class _GroupedPlotInfo(object):
+    def __init__(self, group_mqr_option, fixed_mqr_option_info):
+        self.group_mqr_option = group_mqr_option
+        self.fixed_mqr_option_info = fixed_mqr_option_info
+
+    def get_filename_parts(
+            self, base_name, plotted, versus=None, ascending=None):
+
+        name_elements = [base_name, plotted]
+        if versus:
+            name_elements += ["vs", versus]
+        name_elements += ["per", self.group_mqr_option.title.lower()]
+        if ascending is not None:
+            name_elements.append("asc" if ascending else "desc")
+        name_elements += self.fixed_mqr_option_info
+        if ascending is not None:
+            name_elements.append("distribution")
+        return name_elements
+
+    def get_plot_title(self, plotted, versus=None):
+        title_elements = [plotted]
+        if versus:
+            title_elements += ["vs", _decapitalized(versus)]
+        title_elements += ["per", self.group_mqr_option.title.lower()]
+
+        title = " ".join(title_elements)
+        if len(self.fixed_mqr_option_info) > 0:
+            title += ": " + ", ".join(self.fixed_mqr_option_info)
+
+        return title
+
+
 @contextlib.contextmanager
 def _saving_new_plot(fformat, file_name_elements):
     plt.figure()
@@ -88,37 +120,6 @@ def _get_group_mqr_option_values(stats_df, group_mqr_option):
     return group_mqr_option_vals
 
 
-def _get_grouped_plot_fname_parts(
-        base_name, plotted, group_mqr_option, fixed_mqr_option_info,
-        versus=None, ascending=None):
-
-    name_elements = [base_name, plotted]
-    if versus:
-        name_elements += ["vs", versus]
-    name_elements += ["per", group_mqr_option.title.lower()]
-    if ascending is not None:
-        name_elements.append("asc" if ascending else "desc")
-    name_elements += fixed_mqr_option_info
-    if ascending is not None:
-        name_elements.append("distribution")
-    return name_elements
-
-
-def _get_grouped_plot_title(
-        plotted, group_mqr_option, fixed_mqr_option_info, versus=None):
-
-    title_elements = [plotted]
-    if versus:
-        title_elements += ["vs", _decapitalized(versus)]
-    title_elements += ["per", group_mqr_option.title.lower()]
-
-    title = " ".join(title_elements)
-    if len(fixed_mqr_option_info) > 0:
-        title += ": " + ", ".join(fixed_mqr_option_info)
-
-    return title
-
-
 def _plot_grouped_statistic(
         stats_df, group_mqr_option, xcol, ycol, xlabel, ylabel,
         plot_bounds_setter, title):
@@ -171,14 +172,13 @@ def _plot_grouped_stat_vs_mqr_opt(
 
     fixed_mqr_option_info = po.get_value_names(fixed_mqr_option_values)
 
-    name_elements = _get_grouped_plot_fname_parts(
-        base_name, statistic.name, group_mqr_option,
-        fixed_mqr_option_info, versus=varying_mqr_option.name)
+    plot_info = _GroupedPlotInfo(group_mqr_option, fixed_mqr_option_info)
+    name_elements = plot_info.get_filename_parts(
+        base_name, statistic.name, versus=varying_mqr_option.name)
 
     with _saving_new_plot(fformat, name_elements):
-        title = _get_grouped_plot_title(
-            statistic.title, group_mqr_option, fixed_mqr_option_info,
-            versus=varying_mqr_option.title)
+        title = plot_info.get_plot_title(
+            statistic.title, versus=varying_mqr_option.title)
         _plot_grouped_statistic(
             stats, group_mqr_option, varying_mqr_option.name, statistic.name,
             varying_mqr_option.title, statistic.title,
@@ -192,15 +192,14 @@ def _plot_grouped_stat_vs_clsfr(
     clsfr_col = classifier.get_column_name()
     fixed_mqr_option_info = po.get_value_names(fixed_mqr_option_values)
 
-    name_elements = _get_grouped_plot_fname_parts(
-        base_name, statistic.name, group_mqr_option,
-        fixed_mqr_option_info, versus=clsfr_col)
+    plot_info = _GroupedPlotInfo(group_mqr_option, fixed_mqr_option_info)
+    name_elements = plot_info.get_filename_parts(
+        base_name, statistic.name, versus=clsfr_col)
 
     with _saving_new_plot(fformat, name_elements):
         xlabel = _capitalized(classifier.get_plot_title())
-        title = _get_grouped_plot_title(
-            statistic.title, group_mqr_option,
-            fixed_mqr_option_info, versus=xlabel)
+        title = plot_info.get_plot_title(
+            statistic.title, versus=xlabel)
 
         _plot_grouped_statistic(
             stats, group_mqr_option, clsfr_col,
@@ -220,14 +219,13 @@ def _plot_grouped_cumulative_dist(
     clsfr_col = classifier.get_column_name()
     fixed_mqr_option_info = po.get_value_names(fixed_mqr_option_values)
 
-    name_elements = _get_grouped_plot_fname_parts(
-        base_name, clsfr_col, group_mqr_option,
-        fixed_mqr_option_info, ascending=ascending)
+    plot_info = _GroupedPlotInfo(group_mqr_option, fixed_mqr_option_info)
+    name_elements = plot_info.get_filename_parts(
+        base_name, clsfr_col, ascending=ascending)
 
     with _saving_new_plot(fformat, name_elements):
-        title = _get_grouped_plot_title(
-            _capitalized(clsfr_col) + " threshold", group_mqr_option,
-            fixed_mqr_option_info)
+        title = plot_info.get_plot_title(
+            _capitalized(clsfr_col) + " threshold")
         _plot_grouped_statistic(
             stats, group_mqr_option, clsfr_col, t.TRUE_POSITIVE_PERCENTAGE,
             _capitalized(clsfr_col),
