@@ -257,20 +257,22 @@ def _set_executables_for_commands():
         _run_directory_checker(True),
         _StatsAccumulator(tpms.TRANSCRIPT),
         _StatsAccumulator(tpms.GENE)] + \
-        [_StatsAccumulator(tpms.TRANSCRIPT, classifier=d['classifier'], ascending=d['ascending'])
-            for d in statistics.get_stratified_stats_types()]
+        [_StatsAccumulator(tpms.TRANSCRIPT, classifier=clsfr, ascending=asc)
+            for clsfr, asc in statistics.get_stratified_stats_types()]
 
 
 def _write_accumulated_stats(options):
-    if not os.path.exists(options[po.STATS_DIRECTORY.name]):
-        os.mkdir(options[po.STATS_DIRECTORY.name])
+    stats_dir = options[po.STATS_DIRECTORY.name]
+    if not os.path.exists(stats_dir):
+        os.mkdir(stats_dir)
     for stats_acc in _StatsAccumulator.ACCUMULATORS:
-        stats_acc.write_stats(options[po.STATS_DIRECTORY.name])
+        stats_acc.write_stats(stats_dir)
 
 
 def _get_overall_stats(options, tpm_level):
     overall_stats_file = statistics.get_stats_file(
-        options[po.STATS_DIRECTORY.name], statistics.OVERALL_STATS_PREFIX, tpm_level)
+        options[po.STATS_DIRECTORY.name],
+        statistics.OVERALL_STATS_PREFIX, tpm_level)
     return pd.read_csv(overall_stats_file)
 
 
