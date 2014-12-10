@@ -156,7 +156,7 @@ class _TranscriptomeBasedQuantifierBase(_QuantifierBase):
     MAKE_TRANSCRIPT_REF_DIR = \
         "mkdir -p $REF_DIR"
     PREPARE_TRANSCRIPT_REF = \
-        "rsem-prepare-reference --gtf {transcript_gtf} --no-polyA " + \
+        "rsem-prepare-reference --gtf {transcript_gtf} " + \
         "{bowtie_spec} {genome_fasta_dir} {ref_name}"
 
     @classmethod
@@ -174,11 +174,7 @@ class _TranscriptomeBasedQuantifierBase(_QuantifierBase):
                 "be done once for a particular set of transcripts.")
 
             ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
-
-            # TODO: this will need to be changed when updating beyond RSEM
-            # 1.2.14, where building the Bowtie index must be specified
-            # explicitly
-            bowtie_spec = "" if cls._needs_bowtie_index() else "--no-bowtie"
+            bowtie_spec = "--bowtie" if cls._needs_bowtie_index() else ""
 
             writer.add_line(
                 cls.CALC_TRANSCRIPT_REF_DIR.format(
