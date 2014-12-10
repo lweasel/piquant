@@ -103,7 +103,9 @@ class _PiquantOption(object):
 
         del quant_run_option_values
 
-        new_value = self._get_validate_vals(values_dict)[0]
+        new_value = self._get_validate_vals(values_dict)[0] \
+            if self.has_value() else values_dict[self.get_option_name()]
+
         if self.name not in option_values \
                 or new_value != self.default_value():
             option_values[self.name] = new_value
@@ -144,7 +146,8 @@ class _QuantRunOption(_PiquantOption):
                         quant_run_option_values):
 
         quant_run_option_values[self.name] = \
-            self._get_validate_vals(values_dict)[0]
+            self._get_validate_vals(values_dict)[0] \
+            if self.has_value() else values_dict[self.get_option_name()]
 
 
 class _MultiQuantRunOption(_QuantRunOption):
