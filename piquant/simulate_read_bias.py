@@ -23,6 +23,10 @@ Options:
     PWM file with positional base weights used to bias reads.
 <reads-file>
     FASTA/Q file containing single- or paired-end reads.
+
+Approximate a particular type of sequence bias by preferentially selecting reads
+from an input FASTA or FASTQ file the beginning of whose sequence is closer to
+having a specified nucleotide composition.
 """
 
 import collections

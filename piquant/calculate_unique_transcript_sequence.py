@@ -11,6 +11,9 @@
     {log_option_description}
 <gtf-file>
     GTF file containing genes and transcripts.
+
+Calculate the length of sequence in base pairs that is unique to each transcript
+in the specified GTF file.
 """
 
 from __future__ import print_function

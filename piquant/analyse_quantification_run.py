@@ -45,6 +45,11 @@ Options:
     File containing real and calculated TPMs.
 <out-file>
     Basename for output graph and data files.
+
+analyse_quantification_run reads a tpms.csv file produced by the
+assemble_quantification_data script, then calculates statistics and plots
+graphs to assess the accuracy of transcript abundance estimates produced in a
+single quantification run.
 """
 
 import collections

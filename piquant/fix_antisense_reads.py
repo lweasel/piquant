@@ -16,6 +16,9 @@ Options:
     String to be prepended to input file name for output [default: sense]
 <reads-file>
     FASTA/Q file containing single-end reads.
+
+Reverse complement any reads in the input FASTA or FASTQ file that originate from
+the antisense strand.
 """
 
 import docopt

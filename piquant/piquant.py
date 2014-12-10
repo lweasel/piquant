@@ -362,7 +362,7 @@ def piquant(script_dir, args):
     command = pc.get_command(command_name)
 
     # Read command-line options
-    usage = pc.get_usage_message(command)
+    usage = command.get_usage_message()
     options = docopt.docopt(
         usage, argv=args, version="piquant v" + __version__)
 

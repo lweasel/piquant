@@ -13,6 +13,9 @@ Options:
     {log_option_description}
 <gtf-file>
     GTF file containing genes and transcripts.
+
+Calculate the number of transcripts shared by the gene of origin for each
+transcript in the specified GTF file.
 """
 
 from __future__ import print_function

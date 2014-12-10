@@ -335,7 +335,7 @@ def test_execute_for_mqr_option_sets_executes_for_correct_number_of_option_sets(
         del qr_options
         execute_counter.append(1)
 
-    command = pc._PiquantCommand("dummy", [])
+    command = pc._PiquantCommand("dummy", "dummy", [])
     command.executables = [count_incrementer]
     po.execute_for_mqr_option_sets(
         command, None, None, None, qr_options)
@@ -364,7 +364,7 @@ def test_execute_for_mqr_option_sets_executes_all_callables():
         del qr_options
         execute_record.append(2)
 
-    command = pc._PiquantCommand("dummy", [])
+    command = pc._PiquantCommand("dummy", "dummy", [])
     command.executables = [callable1, callable2]
 
     po.execute_for_mqr_option_sets(
@@ -391,7 +391,7 @@ def test_execute_for_mqr_option_sets_executes_for_correct_sets_of_piquant_option
         del options
         execute_record.append([v for v in qr_option.values()])
 
-    command = pc._PiquantCommand("dummy", [])
+    command = pc._PiquantCommand("dummy", "dummy", [])
     command.executables = [callable1]
     po.execute_for_mqr_option_sets(
         command, None, None, None, qr_options)

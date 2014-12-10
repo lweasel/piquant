@@ -23,6 +23,10 @@ Options:
     File containing per-gene transcript counts.
 <unique-sequence-file>
     File containing unique sequence lengths per-transcript.
+
+assemble_quantification_data assembles data required to assess the accuracy of
+transcript abundance estimates produced in a single quantification run, then
+writes these data to an output CSV file.
 """
 
 import pandas as pd

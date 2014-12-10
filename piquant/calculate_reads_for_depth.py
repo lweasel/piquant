@@ -21,6 +21,10 @@ Options:
 <read-depth>
     The (approximate) read depth that is required given the specified read
     length.
+
+Calculate the approximate number of reads required to be simulated for a set of
+transcripts in order to provide the specified sequencing depth, given a particular
+length of read.
 """
 
 from __future__ import print_function
