@@ -19,7 +19,7 @@ _INDENT = "    "
 
 
 class _OptionValue(object):
-    def __init__(self, default_value=0, validator=lambda x: True,
+    def __init__(self, default_value=0, validator=lambda x: x,
                  value_namer=lambda x: x, file_namer=None):
         self.default_value = default_value
         self.validator = validator
@@ -103,9 +103,7 @@ class _PiquantOption(object):
 
         del quant_run_option_values
 
-        self._get_validate_vals(values_dict)
-
-        new_value = values_dict[self.get_option_name()]
+        new_value = self._get_validate_vals(values_dict)[0]
         if self.name not in option_values \
                 or new_value != self.default_value():
             option_values[self.name] = new_value
