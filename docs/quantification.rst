@@ -1,7 +1,7 @@
 Quantifying expression
 ======================
 
-For each particular combination of sequencing parameters - sequencing depth, read length, single- or paired-end reads, and lack or presence of errors and bias - and quantification tool, transcript quantification is performed by running the ``run_quantification.sh`` script in the relevant directory that has been created by the ``piquant`` command ``prepare_quant_dirs``.
+For each particular combination of sequencing parameters - sequencing depth, read length, single- or paired-end reads, lack or presence of errors and bias, strandedness and noise sequencing depth - and each quantification tool, transcript quantification is performed by running the ``run_quantification.sh`` script in the relevant directory that has been created by the ``piquant`` command ``prepare_quant_dirs``.
 
 The ``run_quantification`` script takes a number of command line flags which control its operation:
 
@@ -28,7 +28,7 @@ For more details on the prequantification actions performed for each particular 
 Calculate number of transcripts per gene
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Next, the support script ``count_transcripts_for_genes.py`` (see :ref:`count-transcripts-for-genes`) is used to calculate the number of transcripts shared by each gene in the set determined by the transcript GTF file specified when the ``run_quantification.sh`` script was created. This data is stored in the file ``transcript_counts.csv`` in the directory ``quantifier_scratch``, as described above.
+Next, the support script ``count_transcripts_for_genes`` (see :ref:`count-transcripts-for-genes`) is used to calculate the number of transcripts shared by each gene in the set determined by the main transcript GTF file specified when the ``run_quantification.sh`` script was created. This data is stored in the file ``transcript_counts.csv`` in the directory ``quantifier_scratch``, as described above.
 
 Note that this action will only be performed once, regardless of how many ``run_quantification.sh`` scripts are run. The per-gene transcript counts thus calculated will be used when assessing the accuracy of transcript abundance estimation (see :doc:`assessment`). 
 
@@ -37,7 +37,7 @@ Note that this action will only be performed once, regardless of how many ``run_
 Calculate unique sequence per transcript
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Finally, the support script ``calculate_unique_transcript_sequence.py`` (see :ref:`calculate-unique-transcript-sequence`) is used to calculate the length of sequence in base pairs that is unique to each transcript enumerated in the transcript GTF file specified when the ``run_quantification.sh`` script was created. This data is stored in the file ``unique_sequence.csv`` in the directory ``quantifier_scratch``, as described above (see :doc:`assessment`).
+Finally, the support script ``calculate_unique_transcript_sequence`` (see :ref:`calculate-unique-transcript-sequence`) is used to calculate the length of sequence in base pairs that is unique to each transcript enumerated in the transcript GTF file specified when the ``run_quantification.sh`` script was created. This data is stored in the file ``unique_sequence.csv`` in the directory ``quantifier_scratch``, as described above (see :doc:`assessment`).
 
 Again, this action will only be performed once for any particular set of input transcripts. The unique sequence lengths thus calculated will be used when assessing abundance estimation accuracy.
 
@@ -58,9 +58,9 @@ Running ``run_quantification.sh`` with the ``-a`` flag results in the following 
 Assemble data
 ^^^^^^^^^^^^^
 
-The support script ``assemble_quantification_data.py`` (see :ref:`assemble-quantification-data`) assembles the data required to assess the accuracy of transcript abundance estimation from the following sources:
+The support script ``assemble_quantification_data`` (see :ref:`assemble-quantification-data`) assembles the data required to assess the accuracy of transcript abundance estimation from the following sources:
 
-* The *FluxSimulator* [FluxSimulator]_ expression profile file created during read simulation, containing the 'ground truth' relative transcript abundances.
+* The *FluxSimulator* [FluxSimulator]_ main transcript expression profile file created during read simulation, containing the 'ground truth' relative transcript abundances.
 * A quantification tool-specific output file containing estimated transcript abundances.
 * The file ``transcript_counts.csv`` containing per-gene transcript counts, created by the step :ref:`quantification-calculate-transcripts-per-gene` above.
 * The file ``unique_sequence.csv`` containing lengths of sequence unique to each transcript, created by the step :ref:`quantification-calculate-unique-sequence` above.
@@ -79,4 +79,4 @@ Assembled data is written to a CSV file ``tpms.csv`` in the quantification direc
 Perform accuracy analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Finally, the support script ``analyse_quantification_run.py`` reads the CSV file ``tpms.csv`` produced by the assembly step above, and calculates statistics and plots graphs that can be used to assess the accuracy of transcript abundance estimation by the particular quantification tool. The statistics calculated, transcript classification measures used, and graphs drawn are described in full in :doc:`assessment`.
+Finally, the support script ``analyse_quantification_run`` reads the CSV file ``tpms.csv`` produced by the assembly step above, and calculates statistics and plots graphs that can be used to assess the accuracy of transcript abundance estimation by the particular quantification tool. The statistics calculated, transcript classification measures used, and graphs drawn are described in full in :doc:`assessment`.

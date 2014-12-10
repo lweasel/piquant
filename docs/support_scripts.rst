@@ -12,7 +12,7 @@ Further information on each script and their command line options is given in th
 Analyse a single quantification run
 -----------------------------------
 
-``analyse_quantification_run.py`` is executed when a ``run_quantification.sh`` script is run with the ``-a`` flag. It reads the ``tpms.csv`` file produced by ``assemble_quantification_data.py`` (see :ref:`below <assemble-quantification-data>`), and then calculates statistics and plots graphs to assess the accuracy of transcript abundance estimates produced in a single quantification run.
+``analyse_quantification_run`` is executed when a ``run_quantification.sh`` script is run with the ``-a`` flag. It reads the ``tpms.csv`` file produced by ``assemble_quantification_data`` (see :ref:`below <assemble-quantification-data>`), and then calculates statistics and plots graphs to assess the accuracy of transcript abundance estimates produced in a single quantification run.
 
 For full details of the analyses produced, see :ref:`here <assessment-single-run>`.
 
@@ -46,7 +46,7 @@ while these command-line parameters are optional:
 Assemble data for a single quantification run
 ---------------------------------------------
 
-``assemble_quantification_data.py`` is also executed when a ``run_quantification.sh`` script is run with the ``-a`` flag. It assembles data required to assess the accuracy of transcript abundance estimates produced in a single quantification run, and writes these data to an output CSV file. See :ref:`here <quantification-assemble-data>` for full details of the data sources and output file contents.
+``assemble_quantification_data`` is also executed when a ``run_quantification.sh`` script is run with the ``-a`` flag. It assembles data required to assess the accuracy of transcript abundance estimates produced in a single quantification run, and writes these data to an output CSV file. See :ref:`here <quantification-assemble-data>` for full details of the data sources and output file contents.
 
 Usage::
 
@@ -62,15 +62,15 @@ The following command-line options and positional arguments are required:
 * ``--out``: The output CSV file name.
 * ``<pro-file>``: Full path of the *FluxSimulator* [FluxSimulator]_ expression profile file which contains 'ground truth' transcript abundances.
 * ``<quantification-file>``: Full path of the quantification tool-specific file containing estimated transcript abundances.
-* ``<transcript-count-file>``: Full path of a file containing per-gene transcript counts, as produced by :ref:`the script <count-transcripts-for-genes>` ``count_transcripts_for_genes.py``.
-* ``<unique-sequence-file>``: Full path of a file containing lengths of sequence unique to each transcript, as produced by :ref:`the script <calculate-unique-transcript-sequence>` ``calculate_unique_transcript_sequence.py``.
+* ``<transcript-count-file>``: Full path of a file containing per-gene transcript counts, as produced by :ref:`the script <count-transcripts-for-genes>` ``count_transcripts_for_genes``.
+* ``<unique-sequence-file>``: Full path of a file containing lengths of sequence unique to each transcript, as produced by :ref:`the script <calculate-unique-transcript-sequence>` ``calculate_unique_transcript_sequence``.
 
 .. _calculate-reads-for-depth:
 
 Calculate reads required for sequencing depth
 ---------------------------------------------
 
-``calculate_reads_for_depth.py`` is run when a ``run_simulation.sh`` script is executed. It calculates the approximate number of reads required to be simulated for a set of transcripts in order to provide the specified sequencing depth, given a particular length of read.
+``calculate_reads_for_depth`` is run when a ``run_simulation.sh`` script is executed. It calculates the approximate number of reads required to be simulated for a set of transcripts in order to provide the specified sequencing depth, given a particular length of read.
 
 Usage::
 
@@ -89,7 +89,7 @@ The following positional arguments are required:
 Calculate unique transcript sequence
 ------------------------------------
 
-``calculate_unique_transcript_sequence.py`` is executed when a ``run_quantification.sh`` script is run with the ``-p`` flag. It calculates the length of sequence in base pairs that is unique to each transcript from which reads will be simulated.
+``calculate_unique_transcript_sequence`` is executed when a ``run_quantification.sh`` script is run with the ``-p`` flag. It calculates the length of sequence in base pairs that is unique to each transcript from which reads will be simulated.
 
 Usage::
 
@@ -106,7 +106,7 @@ The following positional argument is required:
 Count transcripts for genes
 ---------------------------
 
-``count_transcripts_for_genes.py`` is also executed when a ``run_quantification.sh`` script is run with the ``-p`` flag. It calculates the number of transcripts shared by the gene of origin for each transcript from which reads will be simulated.
+``count_transcripts_for_genes`` is also executed when a ``run_quantification.sh`` script is run with the ``-p`` flag. It calculates the number of transcripts shared by the gene of origin for each transcript from which reads will be simulated.
 
 Usage::
 
@@ -123,7 +123,7 @@ The following positional argument is required:
 Simulate sequence bias in reads
 -------------------------------
 
-``simulate_read_bias.py`` is run when a ``run_simulation.sh`` script is executed. It approximates a particular type of sequence bias by preferentially selecting reads from an input FASTA or FASTQ file the beginning of whose sequence is closer to having a specified nucleotide composition.
+``simulate_read_bias`` is run when a ``run_simulation.sh`` script is executed. It approximates a particular type of sequence bias by preferentially selecting reads from an input FASTA or FASTQ file the beginning of whose sequence is closer to having a specified nucleotide composition.
 
 Usage::
 

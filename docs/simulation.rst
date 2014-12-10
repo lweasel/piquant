@@ -15,7 +15,7 @@ For more information on the model and algorithm used by *FluxSimulator* to creat
 Calculate required number of reads
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Given a particular read length and (approximate) desired sequencing depths, a certain number of reads will need to be simulated for both the main and noise transcript sets. These numbers are calculated by the support script ``calculate_reads_for_depth.py`` (see :ref:`calculate-reads-for-depth` for more details) and the *FluxSimulator* simulation parameters files, ``flux_simulator_main_simulation.par`` and ``flux_simulator_noise_expression.par``, are updated accordingly.
+Given a particular read length and (approximate) desired sequencing depths, a certain number of reads will need to be simulated for both the main and noise transcript sets. These numbers are calculated by the support script ``calculate_reads_for_depth`` (see :ref:`calculate-reads-for-depth` for more details) and the *FluxSimulator* simulation parameters files, ``flux_simulator_main_simulation.par`` and ``flux_simulator_noise_expression.par``, are updated accordingly.
 
 .. _simulate-reads:
 
@@ -53,7 +53,7 @@ Apply sequence bias
 
 In a real RNA-seq experiment, there are many sources of potential bias, some only poorly understood, that may lead to non-uniform coverage of expressed transcripts by sequenced reads; for example the biases in nucleotide composition at the beginning of reads sequenced in certain Illumina protocols, as described by Hansen *et al.* [Hansen]_.
 
-If sequencing bias has been specified, then the support script ``simulate_read_bias.py`` (see :ref:`simulate-read-bias` for more details) is executed to approximate one form of such bias. A position weight matrix is used to preferentially select reads with a nucleotide composition at their beginning similar to that observed by Hansen *et al.*
+If sequencing bias has been specified, then the support script ``simulate_read_bias`` (see :ref:`simulate-read-bias` for more details) is executed to approximate one form of such bias. A position weight matrix is used to preferentially select reads with a nucleotide composition at their beginning similar to that observed by Hansen *et al.*
 
 Finalise output files
 ^^^^^^^^^^^^^^^^^^^^^

@@ -164,7 +164,7 @@ This "distribution" classifier splits transcripts into two groups according to w
 Assessment of a single quantification run
 -----------------------------------------
 
-Statistics and plots for a single execution of a quantification tool are produced by the support script ``analyse_quantification_run.py`` (see :ref:`quantification-perform-accuracy-analysis`) that is run by invoking ``run_quantification`` with the ``-a`` command line option (see :doc:`quantification`). The following CSV files and plots (written as PDF files by default) are produced:
+Statistics and plots for a single execution of a quantification tool are produced by the support script ``analyse_quantification_run`` (see :ref:`quantification-perform-accuracy-analysis`) that is run by invoking ``run_quantification`` with the ``-a`` command line option (see :doc:`quantification`). The following CSV files and plots (written as PDF files by default) are produced:
 
 CSV files
 ^^^^^^^^^
