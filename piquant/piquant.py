@@ -282,32 +282,30 @@ def _get_stats_option_values(overall_stats):
 
 
 def _draw_overall_stats_graphs(
-        logger, options, overall_stats, stats_option_values, tpm_level):
+        logger, plot_format, stats_dir, overall_stats,
+        stats_option_values, tpm_level):
+
     logger.info("Drawing graphs derived from statistics calculated for the " +
-                "whole set of TPMs...")
+                "whole set of {tpm_level} TPMs...".format(tpm_level=tpm_level))
     plot.draw_overall_stats_graphs(
-        options[po.PLOT_FORMAT.name], options[po.STATS_DIRECTORY.name],
-        overall_stats, stats_option_values, tpm_level)
+        plot_format, stats_dir, overall_stats, stats_option_values, tpm_level)
 
 
-def _draw_grouped_stats_graphs(logger, options, stats_option_values):
+def _draw_grouped_stats_graphs(
+        logger, plot_format, stats_dir, grouped_threshold, stats_option_values):
+
     logger.info("Drawing graphs derived from statistics calculated on " +
-                "subsets of TPMs...")
-
-    group_thresh = po.GROUPED_THRESHOLD.default_value()
-    if po.GROUPED_THRESHOLD.get_option_name in options:
-        group_thresh = options[po.GROUPED_THRESHOLD.get_option_name]
-
+                "subsets of transcript TPMs...")
     plot.draw_grouped_stats_graphs(
-        options[po.PLOT_FORMAT.name], options[po.STATS_DIRECTORY.name],
-        stats_option_values, group_thresh)
+        plot_format, stats_dir, stats_option_values, grouped_threshold)
 
 
-def _draw_distribution_graphs(logger, options, stats_option_values):
+def _draw_distribution_graphs(
+        logger, plot_format, stats_dir, stats_option_values):
+
     logger.info("Drawing distribution plots...")
     plot.draw_distribution_graphs(
-        options[po.PLOT_FORMAT.name], options[po.STATS_DIRECTORY.name],
-        stats_option_values)
+        plot_format, stats_dir, stats_option_values)
 
 
 def _analyse_runs(logger, options):
@@ -320,16 +318,21 @@ def _analyse_runs(logger, options):
     overall_gene_stats = _get_overall_stats(options, tpms.GENE)
     gene_stats_option_values = _get_stats_option_values(overall_gene_stats)
 
+    plot_format = options[po.PLOT_FORMAT.name]
+    stats_dir = options[po.STATS_DIRECTORY.name]
+
     _draw_overall_stats_graphs(
-        logger, options, overall_transcript_stats,
+        logger, plot_format, stats_dir, overall_transcript_stats,
         transcript_stats_option_values, tpms.TRANSCRIPT)
     _draw_overall_stats_graphs(
-        logger, options, overall_gene_stats,
+        logger, plot_format, stats_dir, overall_gene_stats,
         gene_stats_option_values, tpms.GENE)
     _draw_grouped_stats_graphs(
-        logger, options, transcript_stats_option_values)
+        logger, plot_format, stats_dir, options[po.GROUPED_THRESHOLD.name],
+        transcript_stats_option_values)
+
     _draw_distribution_graphs(
-        logger, options, transcript_stats_option_values)
+        logger, plot_format, stats_dir, transcript_stats_option_values)
 
 
 def _run_piquant_command(

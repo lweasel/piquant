@@ -87,7 +87,8 @@ _CLASSIFIERS.append(_LevelsClassifier(
 
 _CLASSIFIERS.append(_LevelsClassifier(
     "unique sequence percentage",
-    lambda x: 100 * float(x[t.UNIQUE_SEQ_LENGTH]) / x[t.LENGTH] if x[t.LENGTH] > 0 else 0.0,
+    lambda x: 100 * float(x[t.UNIQUE_SEQ_LENGTH]) / x[t.LENGTH]
+    if x[t.LENGTH] > 0 else 0.0,
     [20, 40, 60, 80, 100],
     closed=True))
 
