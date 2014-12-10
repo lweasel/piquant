@@ -418,7 +418,6 @@ def draw_grouped_stats_graphs(fformat, stats_dir, mqr_option_values, threshold):
     grouped_stats_dir = _get_plot_subdirectory(
         stats_dir, "grouped_stats_graphs")
 
-    print ("THRESHOLD  = {}".format(threshold))
     num_tpms_filter = lambda x: x[statistics.TP_NUM_TPMS] > threshold
 
     clsfrs = classifiers.get_classifiers()
@@ -453,7 +452,6 @@ def draw_grouped_stats_graphs(fformat, stats_dir, mqr_option_values, threshold):
                     graph_file_basename = os.path.join(
                         statistic_dir, "grouped")
 
-                    print("stats_df = {}".format(stats_df))
                     filtered_stats_df = stats_df[num_tpms_filter(stats_df)]
                     _plot_grouped_stat_vs_clsfr(
                         fformat, filtered_stats_df, graph_file_basename,
