@@ -291,9 +291,14 @@ def _draw_overall_stats_graphs(
 def _draw_grouped_stats_graphs(logger, options, stats_option_values):
     logger.info("Drawing graphs derived from statistics calculated on " +
                 "subsets of TPMs...")
+
+    group_thresh = po.GROUPED_THRESHOLD.default_value()
+    if po.GROUPED_THRESHOLD.get_option_name in options:
+        group_thresh = options[po.GROUPED_THRESHOLD.get_option_name]
+
     plot.draw_grouped_stats_graphs(
         options[po.PLOT_FORMAT.name], options[po.STATS_DIRECTORY.name],
-        stats_option_values, po.GROUPED_THRESHOLD.option_value)
+        stats_option_values, group_thresh)
 
 
 def _draw_distribution_graphs(logger, options, stats_option_values):
