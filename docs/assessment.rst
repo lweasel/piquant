@@ -26,9 +26,7 @@ Number of 'true positive' TPMs
 
 Estimating the abundance of very rare transcripts is difficult. Moreover, some quantification tools are also able to assemble transcripts from RNA-seq data; however, *piquant* runs these tools in quantification mode only, and pre-specifies the set of transcripts that exist. Therefore, it is possible that *piquant* might hamper the performance of certain quantification tools by making them account for the potential existence of particular transcripts that they would not have considered had they been allowed to assemble transcripts themselves before quantification.
 
-For this reason, *piquant* defines a cut-off value for the number of transcripts per million below which a transcript is considered to be "not present" - in many cases, it may be fairer to only consider quantification tool performance for those transcripts considered to be present according to both their real and estimated abundances.
-
-.. todo::  The cut-off is set at 0.1 transcripts per million. `Allow <https://github.com/lweasel/piquant/issues/26>`_ the user to change this value.
+For this reason, *piquant* defines a cut-off value for the number of transcripts per million below which a transcript is considered to be "not present" - in many cases, it may be fairer to only consider quantification tool performance for those transcripts considered to be present according to both their real and estimated abundances. The cut-off is defined by the command line option ``--not-present-cutoff``, which must be specified when executing the *piquant* command ``prepare_quant_dirs``. The default value is set at 0.1 transcripts per million.
 
 Given this cut-off, it is possible to split transcripts into four sets:
 
@@ -47,9 +45,7 @@ The `Spearman rank correlation coefficient <http://en.wikipedia.org/wiki/Spearma
 Error fraction
 ^^^^^^^^^^^^^^
 
-The fraction of transcripts considered to be "true positives" for which the estimated TPM is greater than 10% higher or lower than the real TPM; when assessing quantification performance, a lower error fraction is considered to be better.
-
-.. todo:: `Allow <https://github.com/lweasel/piquant/issues/27>`_ the user to change the threshold value of 10%. 
+The fraction of transcripts considered to be "true positives" for which the estimated TPM is greater than a certain threshold percentage higher or lower than the real TPM; when assessing quantification performance, a lower error fraction is considered to be better. The threshold percentage is defined by the command line option ``--error-fraction-threshold``, which must be specified when executing the *piquant* command ``prepare_quant_dirs``. The default value is set at 10%.
 
 Median percent error
 ^^^^^^^^^^^^^^^^^^^^
@@ -169,14 +165,16 @@ Statistics and plots for a single execution of a quantification tool are produce
 CSV files
 ^^^^^^^^^
 
-* ``<run-id>_stats.csv``: A CSV file containing a single row, with a field for each defined statistic (see :ref:`assessment-statistics` above) which has been calculated over the whole set of input transcripts. CSV fields are also present describing the quantification tool and sequencing parameters used (i.e. read length, sequencing depth etc.).
-* ``<run-id>_stats_by_<classifier>.csv``: A CSV file is created for each "grouped" transcript classifier (see :ref:`assessment-grouped-classifiers`). Each CSV file contains the same fields as ``<run-id>_stats.csv``; however, statistics are now calculated for distinct subsets of transcripts as determined by the transcript classifier, and the CSV file contains one row for each such group. For example, the CSV file ``<run-id>_by_gene_trancript_number.csv`` contains statistics calculated over those transcripts whose originating gene has only one isoform, those for which the gene has two isoforms, and so on.
-* ``<run-id>_distribution_stats_<asc|desc>_by_<classifier>.csv``: Two CSV files ("ascending" and "descending") are created for each "distribution" transcript classifier (see :ref:`assessment-distribution-classifiers`). For a range of values of the classifier's threshold variable (such range being appropriate to the classifier), the "ascending" file contains a row for each threshold value, indicating the fraction of transcripts lying below the threshold (note that this fraction is calculated both for all transcripts with non-zero real abundance, and for just those marked as "true positives"). Similarly, for the same range of values, the "descending" file indicates the fraction of transcripts lying above the threshold. 
+* ``<run-id>_transcript_stats.csv``: A CSV file containing a single row, with a field for each defined statistic (see :ref:`assessment-statistics` above) which has been calculated over the whole set of input transcripts. CSV fields are also present describing the quantification tool and sequencing parameters used (i.e. read length, sequencing depth etc.).
+* ``<run-id>_gene_stats.csv``: A corresponding CSV file, also containing a single row, with a field for each defined statistic which has been calculated over the whole set of input *genes*. Both real and estimated gene "TPMs" are calculated by summing the respective TPM values for that gene's transcripts. As above, CSV fields are also present describing the quantification tool and sequencing parameters used.
+* ``<run-id>_transcript_stats_by_<classifier>.csv``: A CSV file is created for each "grouped" transcript classifier (see :ref:`assessment-grouped-classifiers`). Each CSV file contains the same fields as ``<run-id>_transcript_stats.csv``; however, statistics are now calculated for distinct subsets of transcripts as determined by the transcript classifier, and the CSV file contains one row for each such group. For example, the CSV file ``<run-id>_by_gene_trancript_number.csv`` contains statistics calculated over those transcripts whose originating gene has only one isoform, those for which the gene has two isoforms, and so on.
+* ``<run-id>_transcript_distribution_stats_<asc|desc>_by_<classifier>.csv``: Two CSV files ("ascending" and "descending") are created for each "distribution" transcript classifier (see :ref:`assessment-distribution-classifiers`). For a range of values of the classifier's threshold variable (such range being appropriate to the classifier), the "ascending" file contains a row for each threshold value, indicating the fraction of transcripts lying below the threshold (note that this fraction is calculated both for all transcripts with non-zero real abundance, and for just those marked as "true positives"). Similarly, for the same range of values, the "descending" file indicates the fraction of transcripts lying above the threshold. 
 
 Plots
 ^^^^^
 
-* ``<run-id>_true_positive_TPMs_log10_scatter.pdf``: A scatter plot of log-transformed (base 10) estimated against real abundances measured in transcripts per million, for "true positive" transcripts. 
+* ``<run-id>_transcript_true_positive_TPMs_log10_scatter.pdf``: A scatter plot of log-transformed (base 10) estimated against real transcript abundances measured in transcripts per million, for "true positive" transcripts. 
+* ``<run-id>_gene_true_positive_TPMs_log10_scatter.pdf``: A scatter plot of log-transformed (base 10) estimated against real gene abundances measured in transcripts per million, for "true positive" genes. 
 * ``<run-id>_<statistic>_by_<classifier>.pdf``: For each "grouped" transcript classifier, and each statistic marked as being suitable for producing graphs (see :ref:`assessment-statistics` above), a plot is created showing the value of that statistic for each group of transcripts determined by the classifier.
 * ``<run-id>_<classifier>_<non-zero_real|true_positive>_TPMs_boxplot.pdf``: Two boxplots are created for each "grouped" transcript classifier. Each boxplot shows, for each group of transcripts determined by the classifier, the characteristics of the distribution of log (base 10) ratios of estimated to real transcript abundances for transcripts within that group. One boxplot pertains to "true positive" transcripts, while the other is calculated from all transcripts with non-zero real abundance.
 * ``<run-id>_<classifier>_<non-zero_real|true_positive>_TPMs_<asc|desc>_distribution.pdf``: Four plots are drawn for each "distribution" transcript classifier. These correspond to the data in the CSV files described above for these classifiers, and show - either for all transcripts with non-zero real abundance, or for "true positive" transcripts - the cumulative distribution of the fraction of transcripts lying below or above the threshold determined by the classifier.
@@ -193,18 +191,19 @@ The following CSV files and plots (written as PDF files by default) are produced
 CSV files
 ^^^^^^^^^
 
-* ``overall_stats.csv``: A CSV file with a field for each defined statistic which has been calculated over the whole set of input transcripts for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_stats.csv`` files described above.
-* ``overall_stats_by_<classifier>.csv``: A CSV file for each "grouped" transcript classifier, containing the same fields as ``overall_stats.csv``, with statistics calculated for distinct subsets of transcripts as determined by the classifier, for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_stats_by_<classifier>.csv`` files described above.
-* ``overall_distribution_stats_<asc|desc>_by_<classifier>.csv``: Two CSV files ("ascending" and "descending") for each "distribution" transcript classifier, indicating the fraction of transcripts lying above or below values of the classifier threshold variable, for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_distribution_stats_<asc|desc>_by_<classifier>.csv`` files.
+* ``overall_transcript_stats.csv``: A CSV file with a field for each defined statistic which has been calculated over the whole set of input transcripts for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_transcript_stats.csv`` files described above.
+* ``overall_gene_stats.csv``: A corresponding CSV file with a field for each defined statistic which has been calculated over the whole set of input genes for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_gene_stats.csv`` files described above.
+* ``overall_transcript_stats_by_<classifier>.csv``: A CSV file for each "grouped" transcript classifier, containing the same fields as ``overall_transcript_stats.csv``, with statistics calculated for distinct subsets of transcripts as determined by the classifier, for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_transcript_stats_by_<classifier>.csv`` files described above.
+* ``overall_transcript_distribution_stats_<asc|desc>_by_<classifier>.csv``: Two CSV files ("ascending" and "descending") for each "distribution" transcript classifier, indicating the fraction of transcripts lying above or below values of the classifier threshold variable, for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_transcript_distribution_stats_<asc|desc>_by_<classifier>.csv`` files.
 
 Plots
 ^^^^^
 
-Plots produced by the ``analyse_runs`` commands fall into three categories (and these are written into three sub-directories of the main analysis output directory):
+Plots produced by the ``analyse_runs`` commands fall into three categories:
 
 *"Overall statistics" graphs*
 
-In the sub-directory ``overall_stats_graphs``, a sub-directory ``per_<parameter_1>`` is created for each quantification and simulation parameter for which quantification runs were performed for more than one value of that parameter (for example, for read lengths of 35, 50 and 100 base pairs, or for single- and paired-end reads). Graphs written below this directory will plot statistics with a separate, coloured line for each value of that parameter (for example, graphs written below the directory ``per_paired_end`` will each have two lines, one for single-end reads, and one for paired-end).
+In the sub-directory ``overall_transcript_stats_graphs``, a sub-directory ``per_<parameter_1>`` is created for each quantification and simulation parameter for which quantification runs were performed for more than one value of that parameter (for example, for read lengths of 35, 50 and 100 base pairs, or for single- and paired-end reads). Graphs written below this directory will plot statistics with a separate, coloured line for each value of that parameter (for example, graphs written below the directory ``per_paired_end`` will each have two lines, one for single-end reads, and one for paired-end).
 
 Within each ``per_<parameter_1>`` directory, a further ``by_<numerical_parameter_2>`` is created for each parameter that takes numerical values (for example, read length or read depth) for which quantification runs per were performed for more that one value of that parameter. Graphs written below this directory will plot statistics on the y-axis against values of that parameter on the x-axis.
 
@@ -213,6 +212,8 @@ Within each ``by_<numerical_parameter_1>`` directory, a ``<statistic>`` director
     overall_<statistic>_vs_<numerical_parameter_2>_per_<parameter_1>_<other_parameter_values>.pdf
 
 A plot will be produced for every combination of values of quantification and read simulation parameters, excluding *parameter_1* and *numerical_parameter_2* described above. For example, the statistics directories below ``overall_stats_graphs/quant_method/by_read_depth/`` will, for each statistic, contain a plot of that statistic on the y-axis, against read depth on the x-axis, with a line for each quantification method, for each combination of read length, single- or paired-end reads, etc. as specified by the ``analyse_runs`` command that was executed.
+
+The sub-directory ``overall_gene_stats_graphs`` is structured in the same way as the ``overall_transcript_stats_graphs`` directory, but contains graphs of statistics plotted at the level of gene, rather than transcript, TPMs.
 
 *"Grouped statistics" graphs*
 
