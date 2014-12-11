@@ -9,6 +9,8 @@ Extending piquant
 
 All three methods of extension currently require some coding in Python.
 
+.. note::  It is also possible to extend *piquant* to add a new sequencing parameter (e.g. read depth, read length, errors, bias etc), over different values of which reads can be simulated. Doing this, however, is more involved - please contact the author for further information if you wish to do this.
+
 .. _extending-adding-new-quantifiers:
 
 Adding a new quantifier
@@ -41,7 +43,9 @@ Commands are written via the ``writer`` parameter, an instance of the ``BashScri
 * ``TRANSCRIPT_GTF_FILE``: Full path to the GTF file containing transcript definitions.
 * ``GENOME_FASTA_DIR``: Full path to the directory containing genome sequence FASTA files.
 * ``QUANTIFIER_DIRECTORY``: Full path to a directory ``quantifier_scratch``, created within the *piquant* output directory, that quantifiers can write files to necessary for their operation which only need to be created once (for example, a *Bowtie* or *Sailfish* index).
+* ``NUM_THREADS``: The maximum number of threads to be used by any multithreaded program that is to be executed.
 * ``FASTQ_READS``: A boolean, ``True`` if reads have been simulated with errors (and hence quality values), and are thus written in a FASTQ file.
+* ``STRANDED_READS``: A boolean, ``True`` if reads have been simulated as coming from a stranded protocol.
 * ``SIMULATED_READS``: If single-end reads are being quantified, the full path to the file containing simulated reads. This key is not present in the dictionary if paired-end reads are being quantified.
 * ``LEFT_SIMULATED_READS``: If paired-end reads are being quantified, the full path to the file containing the first read for each pair of simulated reads. This key is not present in the dictionary if single-end reads are being quantified.
 * ``RIGHT_SIMULATED_READS``: If paired-end reads are being quantified, the full path to the file containing the second read for each pair of simulated reads. This key is not present in the dictionary if single-end reads are being quantified.
@@ -52,9 +56,9 @@ Commands are written via the ``writer`` parameter, an instance of the ``BashScri
 
 Commands are again written via the ``writer`` parameter, an instance of the ``BashScriptWriter`` class. ``params`` is a dictionary of key-value pairs containing the same items as described for ``write_preparatory_commands`` :ref:`above <extending-write-preparatory-commands>`.
 
-.. py:method:: write_post_quantification_cleanup(writer)
+.. py:method:: write_cleanup(writer)
 
-Running a quantification tool may produce many files in addition to that needed to assess the tool's performance (i.e. the file containing estimated transcript abundances), and if multiple quantification runs are performed, these may occupy significant disk space. ``write_post_quantification_cleanup`` allows an opportunity for commands to be writen to remove these files once quantification has been performed. As before, such commands can be written via the ``writer`` parameter, an instance of the ``BashScriptWriter`` class.
+Running a quantification tool may produce many files in addition to that needed to assess the tool's performance (i.e. the file containing estimated transcript abundances), and if multiple quantification runs are performed, these may occupy significant disk space. ``write_cleanup`` allows an opportunity for commands to be writen to remove these files once quantification has been performed. As before, such commands can be written via the ``writer`` parameter, an instance of the ``BashScriptWriter`` class.
 
 .. py:method:: get_transcript_abundance(transcript_id)
 
@@ -96,7 +100,7 @@ The text specified by the parameter ``comment`` will be written to the Bash scri
 Adding a new statistic
 ----------------------
 
-To add a new statistic, a class should be added to the Python module ``statistics.py``, marked with the decorator ``@_Statistic``, and fulfilling the API requirements detailed below. Any such statistic will be automatically included in the post-quantification analysis performed by *piquant*: graphs will be produced showing the variation of the statistic as measured for different quantification tools as sequencing parameters and transcript classification measures change.
+To add a new statistic, a class should be added to the Python module ``statistics.py``, marked with the decorator ``@_statistic``, and fulfilling the API requirements detailed below. Any such statistic will be automatically included in the post-quantification analysis performed by *piquant*: graphs will be produced showing the variation of the statistic as measured for different quantification tools as sequencing parameters and transcript classification measures change.
 
 A statistics class must have the following attributes and methods (note that the attributes can most easily be provided by extending the class ``_BaseStatistic``):
 
