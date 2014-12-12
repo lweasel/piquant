@@ -222,7 +222,7 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
                 l=params[LEFT_SIMULATED_READS],
                 r=params[RIGHT_SIMULATED_READS])
 
-        stranded_spec = "" if params[STRANDED_READS] else "--strand-specific"
+        stranded_spec = "--strand-specific" if params[STRANDED_READS] else ""
 
         ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
 
