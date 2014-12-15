@@ -8,6 +8,7 @@ RUN_SCRIPT = "run_simulation.sh"
 CALC_READ_DEPTH_SCRIPT = "calculate_reads_for_depth"
 SIMULATE_BIAS_SCRIPT = "simulate_read_bias"
 FIX_ANTISENSE_READS_SCRIPT = "fix_antisense_reads"
+RANDOMISE_READ_STRANDS_SCRIPT = "randomise_read_strands"
 BIAS_PWM_FILE = "bias_motif.pwm"
 
 TMP_READS_FILE = "reads.tmp"
@@ -269,21 +270,37 @@ def _add_simulate_read_bias(writer, script_dir, paired_end, errors, noise_perc):
     writer.add_line("mv " + out_prefix + "." + reads_file + " " + reads_file)
 
 
-def _add_fix_antisense_reads(writer, script_dir, errors):
-    # If we're simulating a stranded protocol for single-end reads, reverse
-    # complement all antisense reads (for paired-end reads, the reads produced
-    # by FluxSimulator are effectively always stranded)
-    writer.add_comment(
-        "Reverse complement antisense reads to simulate a stranded protocol")
+def _add_strand_command(writer, script_dir, errors, command, out_prefix, comment):
+    writer.add_comment(comment)
 
     reads_file = fs.get_reads_file(errors, intermediate=True)
-    out_prefix = "stranded"
 
     writer.add_line("{command} --out-prefix={out_prefix} {reads_file}".format(
-        command=_get_file_path(script_dir, FIX_ANTISENSE_READS_SCRIPT),
+        command=_get_file_path(script_dir, command),
         out_prefix=out_prefix,
         reads_file=reads_file))
-    writer.add_line("mv " + out_prefix + "." + reads_file + " " + reads_file)
+    writer.add_line("mv {out_prefix}.{reads} {reads}".format(
+        out_prefix=out_prefix, reads=reads_file))
+
+
+def _add_fix_antisense_reads(writer, script_dir, errors):
+    # If we're simulating a stranded protocol for single-end reads, reverse
+    # complement all antisense reads (the reads output by FluxSimulator in the
+    # single-end case originate from both sense and antisense strands).
+    _add_strand_command(
+        writer, script_dir, errors, FIX_ANTISENSE_READS_SCRIPT, "stranded",
+        "Reverse complement antisense reads to simulate a stranded protocol")
+
+
+def _add_randomise_read_strands(writer, script_dir, errors):
+    # If we're simulating an unstranded protocol for paired-end reads, randomly
+    # reassign pairs of paired-end reads such that the first read corresponds
+    # to the antisense strand (the read pairs output by FluxSimulator are such
+    # that the first read always corresponds to the sense strand).
+    _add_strand_command(
+        writer, script_dir, errors, RANDOMISE_READ_STRANDS_SCRIPT, "unstranded",
+        "Randomly reassign read pairs such that the first read corresponds " +
+        "to the antisense strand.")
 
 
 def _create_final_reads_files(writer, paired_end, errors):
@@ -352,6 +369,10 @@ def _add_create_reads(
     if stranded and not paired_end:
         with writer.section():
             _add_fix_antisense_reads(writer, script_dir, errors)
+
+    if not stranded and paired_end:
+        with writer.section():
+            _add_randomise_read_strands(writer, script_dir, errors)
 
     if bias:
         with writer.section():

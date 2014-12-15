@@ -142,6 +142,27 @@ The following positional argument is required:
 while the following command-line option is optional:
 
 * ``--out-prefix``: String to be prepended to the input file name to form the output file name [default: "sense"].
+
+.. _randomise-read-strands:
+
+Randomise read strands
+----------------------
+
+``randomise_read_strands`` is run when a ``run_simulation.sh`` script is executed and unstranded paired-end reads are being simulated. In this case, the reads produced by *FluxSimulator* effectively originate from the sense strand. The script randomly reassigns pairs of paired-end reads in the input FASTA or FASTQ file such that the first read no corresponds to the antisense strand.
+
+Usage::
+
+    randomise_read_strands
+        [--log-level=<log-level> --out-prefix=<out-prefix>]
+        <reads-file>
+
+The following positional argument is required:
+
+* ``<reads-file>``: A FASTA or FASTQ file containing paired-end reads for which read pairs strands are to be randomly reassigned.
+
+while the following command-line option is optional:
+
+* ``--out-prefix``: String to be prepended to the input file name to form the output file name [default: "unstranded"].
  
 .. _simulate-read-bias:
 

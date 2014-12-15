@@ -46,7 +46,9 @@ Note that some transcript quantification tools require reads to be presented in 
 Fix strandedness
 ^^^^^^^^^^^^^^^^
 
-For single-end reads, the reads produced by ``FluxSimulator`` come from either the sense or antisense strand. Hence, if a stranded protocol is being simulated, the support script ``fix_antisense_reads`` (see :ref:`fix-antisense-reads` for more details) is used to reverse complement any reads derived from the antisense strand. For paired-end reads, reads are already effectively stranded, and no action is taken.
+For single-end reads, the reads produced by ``FluxSimulator`` come from either the sense or antisense strand. Hence, if a stranded protocol is being simulated, the support script ``fix_antisense_reads`` (see :ref:`fix-antisense-reads` for more details) is used to reverse complement any reads derived from the antisense strand. 
+
+For paired-end reads, reads are already effectively stranded, originating from the forward transcript strand. Hence, if an unstranded protocol is being simulated, the support script ``randomise_read_strands`` (see :ref:`randomise_read_strands` for more details) is used to randomly reassign pairs of paired-end reads such that the first read now corresponds to the antisense strand.
 
 Apply sequence bias
 ^^^^^^^^^^^^^^^^^^^
