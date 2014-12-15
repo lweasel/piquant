@@ -29,6 +29,7 @@ class _GroupedPlotInfo(object):
     def __init__(self, group_mqr_option, fixed_mqr_option_info):
         self.group_mqr_option = group_mqr_option
         self.fixed_mqr_option_info = fixed_mqr_option_info
+        self.title = None
 
     def get_filename_parts(
             self, base_name, plotted, versus=None, ascending=None):
@@ -44,7 +45,7 @@ class _GroupedPlotInfo(object):
             name_elements.append("distribution")
         return name_elements
 
-    def get_plot_title(self, plotted, versus=None):
+    def set_plot_title(self, plotted, versus=None):
         title_elements = [plotted]
         if versus:
             title_elements += ["vs", _decapitalized(versus)]
@@ -54,7 +55,7 @@ class _GroupedPlotInfo(object):
         if len(self.fixed_mqr_option_info) > 0:
             title += ": " + ", ".join(self.fixed_mqr_option_info)
 
-        return title
+        self.title = title
 
 
 @contextlib.contextmanager
@@ -121,23 +122,23 @@ def _get_group_mqr_option_values(stats_df, group_mqr_option):
 
 
 def _plot_grouped_statistic(
-        stats_df, group_mqr_option, xcol, ycol, xlabel, ylabel,
-        plot_bounds_setter, title):
+        stats_df, plot_info, xcol, ycol, xlabel, ylabel,
+        plot_bounds_setter):
 
     group_mqr_option_vals = _get_group_mqr_option_values(
-        stats_df, group_mqr_option)
+        stats_df, plot_info.group_mqr_option)
 
     xmin = ymin = sys.maxsize
     xmax = ymax = -sys.maxsize - 1
 
     for group_mqr_option_value in group_mqr_option_vals:
         group_stats = stats_df[
-            stats_df[group_mqr_option.name] == group_mqr_option_value]
+            stats_df[plot_info.group_mqr_option.name] == group_mqr_option_value]
         group_stats.sort(columns=xcol, axis=0, inplace=True)
         xvals = group_stats[xcol]
         yvals = group_stats[ycol]
         plt.plot(xvals, yvals, '-o',
-                 label=group_mqr_option.get_value_name(
+                 label=plot_info.group_mqr_option.get_value_name(
                      group_mqr_option_value))
 
         group_ymin = yvals.min()
@@ -160,8 +161,8 @@ def _plot_grouped_statistic(
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.legend(title=group_mqr_option.title, loc=4)
-    plt.suptitle(title)
+    plt.legend(title=plot_info.group_mqr_option.title, loc=4)
+    plt.suptitle(plot_info.title)
 
     return (ymin, ymax)
 
@@ -177,12 +178,12 @@ def _plot_grouped_stat_vs_mqr_opt(
         base_name, statistic.name, versus=varying_mqr_option.name)
 
     with _saving_new_plot(fformat, name_elements):
-        title = plot_info.get_plot_title(
+        plot_info.set_plot_title(
             statistic.title, versus=varying_mqr_option.title)
         _plot_grouped_statistic(
-            stats, group_mqr_option, varying_mqr_option.name, statistic.name,
+            stats, plot_info, varying_mqr_option.name, statistic.name,
             varying_mqr_option.title, statistic.title,
-            _get_plot_bounds_setter(statistic), title)
+            _get_plot_bounds_setter(statistic))
 
 
 def _plot_grouped_stat_vs_clsfr(
@@ -198,13 +199,12 @@ def _plot_grouped_stat_vs_clsfr(
 
     with _saving_new_plot(fformat, name_elements):
         xlabel = _capitalized(classifier.get_plot_title())
-        title = plot_info.get_plot_title(
-            statistic.title, versus=xlabel)
+        plot_info.set_plot_title(statistic.title, versus=xlabel)
 
         _plot_grouped_statistic(
-            stats, group_mqr_option, clsfr_col,
+            stats, plot_info, clsfr_col,
             statistic.name, xlabel, statistic.title,
-            _get_plot_bounds_setter(statistic), title)
+            _get_plot_bounds_setter(statistic))
 
         min_xval = stats[clsfr_col].min()
         max_xval = stats[clsfr_col].max()
@@ -224,13 +224,13 @@ def _plot_grouped_cumulative_dist(
         base_name, clsfr_col, ascending=ascending)
 
     with _saving_new_plot(fformat, name_elements):
-        title = plot_info.get_plot_title(
+        plot_info.set_plot_title(
             _capitalized(clsfr_col) + " threshold")
         _plot_grouped_statistic(
-            stats, group_mqr_option, clsfr_col, t.TRUE_POSITIVE_PERCENTAGE,
+            stats, plot_info, clsfr_col, t.TRUE_POSITIVE_PERCENTAGE,
             _capitalized(clsfr_col),
             _get_distribution_plot_ylabel(ascending),
-            _set_distribution_plot_bounds, title)
+            _set_distribution_plot_bounds)
 
 
 def log_tpm_scatter_plot(
