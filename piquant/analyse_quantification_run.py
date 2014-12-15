@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Usage:
     analyse_quantification_run [{log_option_spec} --plot-format=<plot-format> --grouped-threshold=<grouped-threshold> --error-fraction-threshold=<ef-threshold> --not-present-cutoff=<cutoff>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --errors=<errors> --bias=<bias> --stranded=<stranded> --noise-perc=<noise-depth-percentage> <tpm-file> <out-file>
@@ -149,11 +147,11 @@ def _write_stratified_stats(tpms, tp_tpms, non_zero, options):
     return clsfr_stats
 
 
-def _draw_tpm_scatter_plot(tp_transcript_tpms, tp_gene_tpms, plot_format,
-                           basename, not_present_cutoff):
+def _draw_tpm_scatter_plots(tp_transcript_tpms, tp_gene_tpms, plot_format,
+                            basename, not_present_cutoff):
 
     plot.log_tpm_scatter_plot(
-        plot_format, tp_transcript_tpms, basename,
+        plot_format, tp_transcript_tpms, basename + "_transcript",
         TRUE_POSITIVES_LABEL, not_present_cutoff)
     plot.log_tpm_scatter_plot(
         plot_format, tp_gene_tpms, basename + "_gene",
@@ -241,7 +239,7 @@ def _draw_graphs(options, tp_transcript_tpms, non_zero_transcript_tpms,
                  tp_gene_tpms, clsfr_stats):
 
     # Make a scatter plot of log transformed calculated vs real TPMs
-    _draw_tpm_scatter_plot(
+    _draw_tpm_scatter_plots(
         tp_transcript_tpms, tp_gene_tpms,
         options[po.PLOT_FORMAT.name],
         options[OUT_FILE_BASENAME],
