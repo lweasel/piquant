@@ -55,9 +55,7 @@ def _reads_directory_checker(should_exist):
     reads or quantification directory does not exist. If False, the function
     will exit if the reads or quantification directory does already exist.
     """
-    def check_reads_directory(logger, script_dir, options, **qr_options):
-        del script_dir
-
+    def check_reads_directory(logger, options, **qr_options):
         reads_dir = _get_options_dir(False, options, **qr_options)
         logger.debug("Checking reads directory {d}, should_exist={s}".
                      format(d=reads_dir, s=should_exist))
@@ -69,7 +67,7 @@ def _reads_directory_checker(should_exist):
     return check_reads_directory
 
 
-def _prepare_read_simulation(logger, script_dir, options, **qr_options):
+def _prepare_read_simulation(logger, options, **qr_options):
     """
     Write bash script and support files to perform RNA-seq read simulation.
 
@@ -91,21 +89,17 @@ def _prepare_read_simulation(logger, script_dir, options, **qr_options):
     cleanup = not options[po.NO_CLEANUP.name]
     logger.debug("Creating simulation files in " + reads_dir)
 
-    prs.create_simulation_files(reads_dir, script_dir, cleanup, **qr_options)
+    prs.create_simulation_files(reads_dir, cleanup, **qr_options)
 
 
-def _create_reads(logger, script_dir, options, **qr_options):
-    del script_dir
-
+def _create_reads(logger, options, **qr_options):
     run_dir = _get_options_dir(False, options, **qr_options)
     logger.debug("Creating reads in " + run_dir)
 
     process.run_in_directory(run_dir, './run_simulation.sh')
 
 
-def _check_reads_created(logger, script_dir, options, **qr_options):
-    del script_dir
-
+def _check_reads_created(logger, options, **qr_options):
     reads_dir = _get_options_dir(False, options, **qr_options)
     reads_file = fs.get_reads_file(
         qr_options[po.ERRORS.name],
@@ -118,9 +112,7 @@ def _check_reads_created(logger, script_dir, options, **qr_options):
 
 
 def _run_directory_checker(should_exist):
-    def check_run_directory(logger, script_dir, options, **qr_options):
-        del script_dir
-
+    def check_run_directory(logger, options, **qr_options):
         run_dir = _get_options_dir(True, options, **qr_options)
         logger.debug("Checking run directory {d}, should_exist={s}".
                      format(d=run_dir, s=should_exist))
@@ -136,7 +128,7 @@ def _execute_quantification_script(run_dir, cl_opts):
     process.run_in_directory(run_dir, './run_quantification.sh', cl_opts)
 
 
-def _prepare_quantification(logger, script_dir, options, **qr_options):
+def _prepare_quantification(logger, options, **qr_options):
     """
     Write bash script to perform transcriptome quantification.
 
@@ -158,16 +150,13 @@ def _prepare_quantification(logger, script_dir, options, **qr_options):
     run_dir = _get_options_dir(True, options, **qr_options)
     logger.debug("Creating quantification files in " + run_dir)
 
-    prq.write_script(
-        reads_dir, run_dir, script_dir, options, **qr_options)
+    prq.write_script(reads_dir, run_dir, options, **qr_options)
 
 
 def _prequantifier():
     quantifiers_used = []
 
-    def prequantify(logger, script_dir, options, **qr_options):
-        del script_dir
-
+    def prequantify(logger, options, **qr_options):
         run_dir = _get_options_dir(True, options, **qr_options)
 
         quant_method = qr_options[po.QUANT_METHOD.name]
@@ -180,18 +169,14 @@ def _prequantifier():
     return prequantify
 
 
-def _quantify(logger, script_dir, options, **qr_options):
-    del script_dir
-
+def _quantify(logger, options, **qr_options):
     run_dir = _get_options_dir(True, options, **qr_options)
 
     logger.info("Executing shell script to run quantification analysis.")
     _execute_quantification_script(run_dir, ["-qa"])
 
 
-def _check_quantification_completed(logger, script_dir, options, **qr_options):
-    del script_dir
-
+def _check_quantification_completed(logger, options, **qr_options):
     run_dir = _get_options_dir(True, options, **qr_options)
 
     main_stats_file = statistics.get_stats_file(
@@ -211,7 +196,7 @@ class _StatsAccumulator(object):
         self.ascending = ascending
         _StatsAccumulator.ACCUMULATORS.append(self)
 
-    def __call__(self, logger, script_dir, options, **qr_options):
+    def __call__(self, logger, options, **qr_options):
         run_name = po.get_run_name(qr_options)
         run_dir = _get_options_dir(True, options, **qr_options)
 
@@ -333,19 +318,17 @@ def _analyse_runs(logger, options):
         logger, plot_format, stats_dir, transcript_stats_option_values)
 
 
-def _run_piquant_command(
-        logger, piquant_command, script_dir, options, qr_options):
+def _run_piquant_command(logger, piquant_command, options, qr_options):
 
     _set_executables_for_commands()
 
-    po.execute_for_mqr_option_sets(
-        piquant_command, logger, script_dir, options, qr_options)
+    po.execute_for_mqr_option_sets(piquant_command, logger, options, qr_options)
 
     if piquant_command == pc.ANALYSE_RUNS:
         _analyse_runs(logger, options)
 
 
-def piquant(script_dir, args):
+def piquant(args):
     # Check that a piquant command has been specified
     if len(args) < 2:
         exit(("Exiting - one of the following piquant commands must be " +
@@ -377,4 +360,4 @@ def piquant(script_dir, args):
         exit("Exiting. " + exc.code)
 
     # Run the specified piquant command
-    _run_piquant_command(logger, command, script_dir, options, qr_options)
+    _run_piquant_command(logger, command, options, qr_options)

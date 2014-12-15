@@ -11,10 +11,10 @@ Clone the *piquant* GitHub repository into this environment::
 
     git clone https://github.com/lweasel/piquant.git .
 
-Install the Python packages required by *piquant* into the virtual environment (note that it may take some time to install and build these dependencies)::
+Install the *piquant* package and scripts, and their Python package dependencies, into the virtual environment by running (note that it may take some time to install and build the dependencies)::
 
     pip install -r requirements.txt
 
 Run unit tests for *piquant* using the command::
 
-    PYTHONPATH=. py.test test
+    py.test test

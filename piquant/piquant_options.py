@@ -474,8 +474,7 @@ def get_value_names(mqr_options):
     return value_names
 
 
-def execute_for_mqr_option_sets(
-        command, logger, script_dir, options, qr_options):
+def execute_for_mqr_option_sets(command, logger, options, qr_options):
     """
     Execute a piquant command for multiple option sets.
 
@@ -486,8 +485,6 @@ def execute_for_mqr_option_sets(
     command: The piquant command, an instance of
     piquant_command._PiquantCommand.
     logger: A Logger instance to write messages to standard out.
-    script_dir: The directory in which the main piquant script and its support
-    scripts are located.
     options: A dictionary mapping option name to option value for all command
     line options that are not instances of _QuantRunOption or
     _MultiQuantRunOption.
@@ -512,4 +509,4 @@ def execute_for_mqr_option_sets(
         for option_set in itertools.product(*mqr_option_values.values()):
             option_map = dict(zip(mqr_option_names, option_set))
             option_map.update(non_mqr_option_values)
-            to_call(logger, script_dir, options, **option_map)
+            to_call(logger, options, **option_map)

@@ -256,12 +256,14 @@ def test_validate_option_values_raises_exception_if_quant_run_option_values_not_
 def test_read_file_options_reads_options_from_file():
     quant_method = "Cufflinks"
     read_length = "10,20"
-    with tempfile.NamedTemporaryFile() as f:
-        f.write(po.QUANT_METHOD.get_option_name() + " " + quant_method + "\n")
-        f.write(po.READ_LENGTH.get_option_name() + " " + read_length + "\n")
-        f.flush()
+    with tempfile.NamedTemporaryFile() as tmp_file:
+        tmp_file.write(bytes(po.QUANT_METHOD.get_option_name() +
+                             " " + quant_method + "\n", 'UTF-8'))
+        tmp_file.write(bytes(po.READ_LENGTH.get_option_name() +
+                             " " + read_length + "\n", 'UTF-8'))
+        tmp_file.flush()
 
-        options = po._read_file_options(f.name)
+        options = po._read_file_options(tmp_file.name)
 
         assert options[po.QUANT_METHOD.get_option_name()] == quant_method
         assert options[po.READ_LENGTH.get_option_name()] == read_length
@@ -328,9 +330,8 @@ def test_execute_for_mqr_option_sets_executes_for_correct_number_of_option_sets(
 
     execute_counter = []
 
-    def count_incrementer(logger, script_dir, options, **qr_options):
+    def count_incrementer(logger, options, **qr_options):
         del logger
-        del script_dir
         del options
         del qr_options
         execute_counter.append(1)
@@ -338,7 +339,7 @@ def test_execute_for_mqr_option_sets_executes_for_correct_number_of_option_sets(
     command = pc._PiquantCommand("dummy", "dummy", [])
     command.executables = [count_incrementer]
     po.execute_for_mqr_option_sets(
-        command, None, None, None, qr_options)
+        command, None, None, qr_options)
 
     assert len(execute_counter) == len1 * len2 * len3
 
@@ -350,16 +351,14 @@ def test_execute_for_mqr_option_sets_executes_all_callables():
 
     execute_record = []
 
-    def callable1(logger, script_dir, options, **qr_options):
+    def callable1(logger, options, **qr_options):
         del logger
-        del script_dir
         del options
         del qr_options
         execute_record.append(1)
 
-    def callable2(logger, script_dir, options, **qr_options):
+    def callable2(logger, options, **qr_options):
         del logger
-        del script_dir
         del options
         del qr_options
         execute_record.append(2)
@@ -368,7 +367,7 @@ def test_execute_for_mqr_option_sets_executes_all_callables():
     command.executables = [callable1, callable2]
 
     po.execute_for_mqr_option_sets(
-        command, None, None, None, qr_options)
+        command, None, None, qr_options)
 
     assert 1 in execute_record
     assert 2 in execute_record
@@ -385,16 +384,15 @@ def test_execute_for_mqr_option_sets_executes_for_correct_sets_of_piquant_option
 
     execute_record = []
 
-    def callable1(logger, script_dir, options, **qr_option):
+    def callable1(logger, options, **qr_option):
         del logger
-        del script_dir
         del options
         execute_record.append([v for v in qr_option.values()])
 
     command = pc._PiquantCommand("dummy", "dummy", [])
     command.executables = [callable1]
     po.execute_for_mqr_option_sets(
-        command, None, None, None, qr_options)
+        command, None, None, qr_options)
 
     execute_record = \
         [set(piquant_options) for piquant_options in execute_record]
