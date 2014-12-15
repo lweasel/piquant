@@ -256,11 +256,11 @@ def test_validate_option_values_raises_exception_if_quant_run_option_values_not_
 def test_read_file_options_reads_options_from_file():
     quant_method = "Cufflinks"
     read_length = "10,20"
-    with tempfile.NamedTemporaryFile() as tmp_file:
-        tmp_file.write(bytes(po.QUANT_METHOD.get_option_name() +
-                             " " + quant_method + "\n", 'UTF-8'))
-        tmp_file.write(bytes(po.READ_LENGTH.get_option_name() +
-                             " " + read_length + "\n", 'UTF-8'))
+    with tempfile.NamedTemporaryFile(mode='w+') as tmp_file:
+        tmp_file.write(po.QUANT_METHOD.get_option_name() +
+                       " " + quant_method + "\n")
+        tmp_file.write(po.READ_LENGTH.get_option_name() +
+                       " " + read_length + "\n")
         tmp_file.flush()
 
         options = po._read_file_options(tmp_file.name)
