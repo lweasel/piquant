@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import docopt
 import os
 import os.path

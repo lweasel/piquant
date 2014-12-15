@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """Usage:
     calculate_unique_transcript_sequence [{log_option_spec}] <gtf-file>
 

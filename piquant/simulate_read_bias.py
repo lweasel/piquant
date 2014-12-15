@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Usage:
     simulate_read_bias [{log_option_spec} --out-prefix=<out-prefix>]

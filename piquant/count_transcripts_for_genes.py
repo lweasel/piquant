@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Usage:
     count_transcripts_for_genes [{log_option_spec}] <gtf-file>
