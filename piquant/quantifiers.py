@@ -251,7 +251,7 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
 class _Express(_TranscriptomeBasedQuantifierBase):
     MAP_READS_TO_TRANSCRIPT_REF = \
         "bowtie {qualities_spec} -e 99999999 -l 25 -I 1 -X 1000 -a -S " + \
-        "-m 200 -p {num_threads} {ref_name} {reads_spec}"
+        "-m 200 -p {num_threads} {stranded_spec} {ref_name} {reads_spec}"
     CONVERT_SAM_TO_BAM = \
         "samtools view -Sb - > hits.bam"
     QUANTIFY_ISOFORM_EXPRESSION = \
@@ -281,19 +281,24 @@ class _Express(_TranscriptomeBasedQuantifierBase):
                 l=params[LEFT_SIMULATED_READS],
                 r=params[RIGHT_SIMULATED_READS])
 
-        stranded_spec = ("--f-stranded" if SIMULATED_READS in params
-                         else "--fr-stranded") if params[STRANDED_READS] else ""
+        bowtie_stranded_spec = "--norc" if params[STRANDED_READS] else ""
 
         writer.add_pipe(
             cls.MAP_READS_TO_TRANSCRIPT_REF.format(
                 qualities_spec=qualities_spec,
+                stranded_spec=bowtie_stranded_spec,
                 ref_name=ref_name,
                 reads_spec=reads_spec,
                 num_threads=params[NUM_THREADS]),
             cls.CONVERT_SAM_TO_BAM
         )
+
+        express_stranded_spec = \
+            ("--f-stranded" if SIMULATED_READS in params
+             else "--fr-stranded") if params[STRANDED_READS] else ""
+
         writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
-            stranded_spec=stranded_spec,
+            stranded_spec=express_stranded_spec,
             ref_name=ref_name))
 
     @classmethod
