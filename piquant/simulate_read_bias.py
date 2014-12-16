@@ -98,7 +98,7 @@ def _get_fragment_counts(reads_file, num_reads, paired_end):
     if with_errors:
         lines_per_fragment *= 2
     if paired_end:
-        num_fragments /= 2
+        num_fragments //= 2
         lines_per_fragment *= 2
 
     return num_fragments, lines_per_fragment
