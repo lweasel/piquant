@@ -1,6 +1,6 @@
 """
 Usage:
-    analyse_quantification_run [{log_option_spec} --plot-format=<plot-format> --grouped-threshold=<grouped-threshold> --error-fraction-threshold=<ef-threshold> --not-present-cutoff=<cutoff>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --errors=<errors> --bias=<bias> --stranded=<stranded> --noise-perc=<noise-depth-percentage> <tpm-file> <out-file>
+    analyse_quantification_run [{log_option_spec} --plot-format=<plot-format> --grouped-threshold=<grouped-threshold> --error-fraction-threshold=<ef-threshold> --not-present-cutoff=<cutoff>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --errors=<errors> --bias=<bias> --stranded=<stranded> --noise-perc=<noise-depth-percentage> <tpm-file> <resource-usage-file> <out-file>
 
 Options:
 {help_option_spec}
@@ -40,7 +40,9 @@ Options:
     (as a percentage of the depth of reads for the set of transcripts to be
     quantified).
 <tpm-file>
-    File containing real and calculated TPMs.
+    CSV file containing real and calculated TPMs.
+<resource-usage-file>
+    CSV file recording time and memory usage of quantification steps.
 <out-file>
     Basename for output graph and data files.
 
@@ -60,6 +62,7 @@ import schema
 from . import classifiers
 from . import options as opt
 from . import piquant_options as po
+from . import resource_usage as ru
 from . import statistics
 from . import tpms as t
 from . import plot
@@ -68,6 +71,7 @@ from .__init__ import __version__
 TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
 TRUE_POSITIVES_LABEL = "true positive TPMs"
 TPM_FILE = "<tpm-file>"
+RESOURCE_USAGE_FILE = "<timing-file>"
 OUT_FILE_BASENAME = "<out-file>"
 
 PIQUANT_OPTIONS = [
@@ -83,7 +87,10 @@ TpmInfo = collections.namedtuple("TpmInfo", ["tpms", "label"])
 def _validate_command_line_options(options):
     try:
         opt.validate_log_level(options)
-        opt.validate_file_option(options[TPM_FILE], "Could not open TPM file")
+        opt.validate_file_option(
+            options[TPM_FILE], "Could not open TPM file")
+        opt.validate_file_option(
+            options[RESOURCE_USAGE_FILE], "Could not open resource usage file")
 
         for option in PIQUANT_OPTIONS:
             opt_name = option.get_option_name()
@@ -98,7 +105,7 @@ def _get_tpm_infos(non_zero, tp_tpms):
             TpmInfo(tp_tpms, TRUE_POSITIVES_LABEL)]
 
 
-def _add_mqr_option_values_to_stats(stats, options):
+def _add_mqr_option_values(stats, options):
     for option in po.get_multiple_quant_run_options():
         stats[option.name] = options[option.get_option_name()]
 
@@ -110,7 +117,7 @@ def _write_overall_stats(transcript_tpms, tp_transcript_tpms,
             [(transcript_tpms, tp_transcript_tpms, t.TRANSCRIPT),
              (gene_tpms, tp_gene_tpms, t.GENE)]:
         stats = t.get_stats(tpms, tp_tpms, statistics.get_statistics())
-        _add_mqr_option_values_to_stats(stats, options)
+        _add_mqr_option_values(stats, options)
 
         stats_file_name = statistics.get_stats_file(
             ".", options[OUT_FILE_BASENAME], tpm_level)
@@ -125,7 +132,7 @@ def _write_stratified_stats(tpms, tp_tpms, non_zero, options):
             column_name = classifier.get_column_name()
             stats = t.get_grouped_stats(
                 tpms, tp_tpms, column_name, statistics.get_statistics())
-            _add_mqr_option_values_to_stats(stats, options)
+            _add_mqr_option_values(stats, options)
             clsfr_stats[classifier] = stats
 
             stats_file_name = statistics.get_stats_file(
@@ -136,7 +143,7 @@ def _write_stratified_stats(tpms, tp_tpms, non_zero, options):
             for ascending in [True, False]:
                 stats = t.get_distribution_stats(
                     non_zero, tp_tpms, classifier, ascending)
-                _add_mqr_option_values_to_stats(stats, options)
+                _add_mqr_option_values(stats, options)
 
                 stats_file_name = statistics.get_stats_file(
                     ".", options[OUT_FILE_BASENAME], t.TRANSCRIPT,
@@ -288,6 +295,20 @@ def _analyse_run(logger, options):
                  tp_gene_tpms, clsfr_stats)
 
 
+def _analyse_time_and_memory(logger, options):
+    logger.info("Reading timing and memory usage from " +
+                options[RESOURCE_USAGE_FILE])
+
+    # Read timing and memory usage info, then calculate sums of times over
+    # multiple command invocations, and maximum memory usage by any command
+    usage_summary = ru.get_usage_summary(options[RESOURCE_USAGE_FILE])
+
+    # Add run identification data and write resource usage summary to file
+    _add_mqr_option_values(usage_summary, options)
+    ru.write_usage_summary(
+        ".", options[OUT_FILE_BASENAME], ru.QUANT_RESOURCE_TYPE, usage_summary)
+
+
 def analyse_quantification_run(args):
     # Read in command-line options
     docstring = opt.substitute_common_options_into_usage(
@@ -304,3 +325,4 @@ def analyse_quantification_run(args):
 
     # Write statistics and graphs for the quantification run
     _analyse_run(logger, options)
+    _analyse_time_and_memory(logger, options)

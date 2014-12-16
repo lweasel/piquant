@@ -1,6 +1,7 @@
 # pylint: disable=E1103
 
 import pandas as pd
+import resource_usage as ru
 import os.path
 
 TRANSCRIPT_GTF_FILE = "TRANSCRIPT_GTF_FILE"
@@ -36,6 +37,37 @@ class _QuantifierBase(object):
     def __str__(self):
         return self.__class__.get_name()
 
+    @classmethod
+    def _add_timed_line(cls, writer, resource_type, line):
+        writer.add_line(
+            "/usr/bin/time -f \"%C,%e,%U,%S,%M\" -o {ct}.csv -a {line}".
+            format(ct=resource_type, line=line))
+
+    @classmethod
+    def _add_timed_pipe(cls, writer, resource_type, pipe_commands):
+        line = "bash -c \"{pipe}\".".format(pipe=" | ".join(pipe_commands))
+        cls._add_timed_line(writer, resource_type, line)
+
+    @classmethod
+    def _add_timed_prequantification_command(cls, writer, line):
+        cls._add_timed_line(
+            writer, ru.PREQUANT_RESOURCE_TYPE, line)
+
+    @classmethod
+    def _add_timed_quantification_command(cls, writer, line):
+        cls._add_timed_line(
+            writer, ru.QUANT_RESOURCE_TYPE, line)
+
+    @classmethod
+    def _add_timed_prequantification_pipe(cls, writer, pipe_commands):
+        cls._add_timed_pipe(
+            writer, ru.PREQUANT_RESOURCE_TYPE, pipe_commands)
+
+    @classmethod
+    def _add_timed_quantification_pipe(cls, writer, pipe_commands):
+        cls._add_timed_pipe(
+            writer, ru.QUANT_RESOURCE_TYPE, pipe_commands)
+
 
 @_quantifier
 class _Cufflinks(_QuantifierBase):
@@ -43,7 +75,7 @@ class _Cufflinks(_QuantifierBase):
 
     CALC_BOWTIE_INDEX_DIR = \
         "BOWTIE_INDEX_DIR=$(dirname {bowtie_index})"
-    BOWTIE_INDEX_DIR_EXISTS = \
+    BOWTIE_INDEX_DIR_DOESNT_EXIST = \
         "! -d $BOWTIE_INDEX_DIR"
     MAKE_BOWTIE_INDEX_DIR = \
         "mkdir -p $BOWTIE_INDEX_DIR"
@@ -90,16 +122,19 @@ class _Cufflinks(_QuantifierBase):
             bowtie_index=bowtie_index))
 
         with writer.section():
-            with writer.if_block(cls.BOWTIE_INDEX_DIR_EXISTS):
+            with writer.if_block(cls.BOWTIE_INDEX_DIR_DOESNT_EXIST):
                 writer.add_line(cls.MAKE_BOWTIE_INDEX_DIR)
                 writer.add_line(
                     cls.GET_GENOME_REF_FASTA_LIST.format(
                         genome_fasta_dir=params[GENOME_FASTA_DIR]))
                 writer.add_line(cls.STRIP_LAST_COMMA_FROM_FA_LIST)
-                writer.add_line(cls.BUILD_BOWTIE_INDEX.format(
-                    bowtie_index=bowtie_index))
-                writer.add_line(cls.CONSTRUCT_BOWTIE_REF_FASTA.format(
-                    bowtie_index=bowtie_index))
+                cls._add_timed_prequantification_command(
+                    writer,
+                    cls.BUILD_BOWTIE_INDEX.format(bowtie_index=bowtie_index))
+                cls._add_timed_prequantification_command(
+                    writer,
+                    cls.CONSTRUCT_BOWTIE_REF_FASTA.format(
+                        bowtie_index=bowtie_index))
 
     @classmethod
     def write_quantification_commands(cls, writer, params):
@@ -113,17 +148,21 @@ class _Cufflinks(_QuantifierBase):
         stranded_spec = "--library-type " + \
             ("fr-secondstrand" if params[STRANDED_READS] else "fr-unstranded")
 
-        writer.add_line(cls.MAP_READS_TO_GENOME_WITH_TOPHAT.format(
-            bowtie_index=bowtie_index,
-            reads_spec=reads_spec,
-            stranded_spec=stranded_spec,
-            num_threads=params[NUM_THREADS]))
+        cls._add_timed_quantification_command(
+            writer,
+            cls.MAP_READS_TO_GENOME_WITH_TOPHAT.format(
+                bowtie_index=bowtie_index,
+                reads_spec=reads_spec,
+                stranded_spec=stranded_spec,
+                num_threads=params[NUM_THREADS]))
 
-        writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
-            bowtie_index=bowtie_index,
-            transcript_gtf=params[TRANSCRIPT_GTF_FILE],
-            stranded_spec=stranded_spec,
-            num_threads=params[NUM_THREADS]))
+        cls._add_timed_quantification_command(
+            writer,
+            cls.QUANTIFY_ISOFORM_EXPRESSION.format(
+                bowtie_index=bowtie_index,
+                transcript_gtf=params[TRANSCRIPT_GTF_FILE],
+                stranded_spec=stranded_spec,
+                num_threads=params[NUM_THREADS]))
 
     @classmethod
     def write_cleanup(cls, writer):
@@ -226,12 +265,14 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
 
         ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
 
-        writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
-            qualities_spec=qualities_spec,
-            reads_spec=reads_spec,
-            stranded_spec=stranded_spec,
-            ref_name=ref_name,
-            num_threads=params[NUM_THREADS]))
+        cls._add_timed_quantification_command(
+            writer,
+            cls.QUANTIFY_ISOFORM_EXPRESSION.format(
+                qualities_spec=qualities_spec,
+                reads_spec=reads_spec,
+                stranded_spec=stranded_spec,
+                ref_name=ref_name,
+                num_threads=params[NUM_THREADS]))
 
     @classmethod
     def write_cleanup(cls, writer):
@@ -283,23 +324,26 @@ class _Express(_TranscriptomeBasedQuantifierBase):
 
         bowtie_stranded_spec = "--norc" if params[STRANDED_READS] else ""
 
-        writer.add_pipe(
-            cls.MAP_READS_TO_TRANSCRIPT_REF.format(
+        cls._add_timed_quantification_pipe(
+            writer,
+            [cls.MAP_READS_TO_TRANSCRIPT_REF.format(
                 qualities_spec=qualities_spec,
                 stranded_spec=bowtie_stranded_spec,
                 ref_name=ref_name,
                 reads_spec=reads_spec,
                 num_threads=params[NUM_THREADS]),
-            cls.CONVERT_SAM_TO_BAM
+             cls.CONVERT_SAM_TO_BAM]
         )
 
         express_stranded_spec = \
             ("--f-stranded" if SIMULATED_READS in params
              else "--fr-stranded") if params[STRANDED_READS] else ""
 
-        writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
-            stranded_spec=express_stranded_spec,
-            ref_name=ref_name))
+        cls._add_timed_quantification_command(
+            writer,
+            cls.QUANTIFY_ISOFORM_EXPRESSION.format(
+                stranded_spec=express_stranded_spec,
+                ref_name=ref_name))
 
     @classmethod
     def write_cleanup(cls, writer):
@@ -359,9 +403,11 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
             ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
             index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
 
-            writer.add_line(cls.CREATE_TRANSCRIPT_INDEX.format(
-                ref_name=ref_name, index_dir=index_dir,
-                num_threads=params[NUM_THREADS]))
+            cls._add_timed_prequantification_command(
+                writer,
+                cls.CREATE_TRANSCRIPT_INDEX.format(
+                    ref_name=ref_name, index_dir=index_dir,
+                    num_threads=params[NUM_THREADS]))
 
     @classmethod
     def write_quantification_commands(cls, writer, params):
@@ -379,11 +425,13 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
                 l=params[LEFT_SIMULATED_READS],
                 r=params[RIGHT_SIMULATED_READS])
 
-        writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
-            index_dir=index_dir,
-            library_spec=library_spec,
-            reads_spec=reads_spec,
-            num_threads=params[NUM_THREADS]))
+        cls._add_timed_quantification_command(
+            writer,
+            cls.QUANTIFY_ISOFORM_EXPRESSION.format(
+                index_dir=index_dir,
+                library_spec=library_spec,
+                reads_spec=reads_spec,
+                num_threads=params[NUM_THREADS]))
         writer.add_pipe(*cls.FILTER_COMMENT_LINES)
 
     @classmethod
@@ -442,8 +490,10 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
 
                 ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
 
-                writer.add_line(cls.CREATE_SALMON_TRANSCRIPT_INDEX.format(
-                    ref_name=ref_name, index_dir=index_dir))
+                cls._add_timed_prequantification_command(
+                    writer,
+                    cls.CREATE_SALMON_TRANSCRIPT_INDEX.format(
+                        ref_name=ref_name, index_dir=index_dir))
 
     @classmethod
     def write_quantification_commands(cls, writer, params):
@@ -458,11 +508,13 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
                 l=params[LEFT_SIMULATED_READS],
                 r=params[RIGHT_SIMULATED_READS])
 
-        writer.add_line(cls.QUANTIFY_ISOFORM_EXPRESSION.format(
-            index_dir=index_dir,
-            library_spec=library_spec,
-            reads_spec=reads_spec,
-            num_threads=params[NUM_THREADS]))
+        cls._add_timed_quantification_command(
+            writer,
+            cls.QUANTIFY_ISOFORM_EXPRESSION.format(
+                index_dir=index_dir,
+                library_spec=library_spec,
+                reads_spec=reads_spec,
+                num_threads=params[NUM_THREADS]))
         writer.add_pipe(*cls.FILTER_COMMENT_LINES)
 
     @classmethod

@@ -4,6 +4,7 @@ from . import file_writer as fw
 from . import flux_simulator as fs
 from . import quantifiers as qs
 from . import piquant_options as po
+from . import resource_usage as ru
 
 RUN_SCRIPT = "run_quantification.sh"
 
@@ -123,7 +124,8 @@ def _add_analyse_quant_results(writer, run_dir, options, **mqr_options):
          "--grouped-threshold={gp_threshold} " +
          "--error-fraction-threshold={ef_threshold} " +
          "--not-present-cutoff={cutoff} " +
-         "{mqr_options_spec} {tpms_file} {output_basename}").format(
+         "{mqr_options_spec} {tpms_file} {timing_file} " +
+         "{output_basename}").format(
             command=ANALYSE_DATA_SCRIPT,
             format=options[po.PLOT_FORMAT.name],
             gp_threshold=options[po.GROUPED_THRESHOLD.name],
@@ -131,6 +133,7 @@ def _add_analyse_quant_results(writer, run_dir, options, **mqr_options):
             cutoff=options[po.NOT_PRESENT_CUTOFF.name],
             mqr_options_spec=mqr_options_spec,
             tpms_file=TPMS_FILE,
+            timing_file=ru.get_resource_usage_file(ru.QUANT_RESOURCE_TYPE),
             output_basename=os.path.basename(run_dir)))
 
 
