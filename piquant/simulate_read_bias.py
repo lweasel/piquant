@@ -66,7 +66,7 @@ class OutputPicker(object):
         if self.index >= len(self.scores):
             return False
 
-        read_number = line_no / self.lines_per_fragment
+        read_number = line_no // self.lines_per_fragment
         if self.scores[self.index].read_number < read_number:
             self.index += 1
             if self.index >= len(self.scores):
