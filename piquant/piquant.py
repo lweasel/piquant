@@ -14,6 +14,7 @@ from . import plot
 from . import prepare_quantification_run as prq
 from . import prepare_read_simulation as prs
 from . import process
+from . import resource_usage as ru
 from . import statistics
 from . import tpms
 from .__init__ import __version__
@@ -205,12 +206,34 @@ class _StatsAccumulator(object):
         stats_df = pd.read_csv(stats_file)
         self.overall_stats_df = self.overall_stats_df.append(stats_df)
 
-    def write_stats(self, stats_dir):
+    def write_accumulated_data(self, stats_dir):
         overall_stats_file = statistics.get_stats_file(
             stats_dir, statistics.OVERALL_STATS_PREFIX,
             self.tpm_level, self.classifier, self.ascending)
         statistics.write_stats_data(
             overall_stats_file, self.overall_stats_df, index=False)
+
+
+class _ResourceUsageAccumulator(object):
+    ACCUMULATORS = []
+
+    def __init__(self, resource_type):
+        self.resource_usage_df = pd.DataFrame()
+        self.resource_type = resource_type
+
+    def __call__(self, logger, options, **qr_options):
+        run_name = po.get_run_name(qr_options)
+        run_dir = _get_options_dir(True, options, **qr_options)
+
+        usage_file = ru.get_resource_usage_file(
+            self.resource_type, prefix=run_name, directory=run_dir)
+        usage_df = pd.read_csv(usage_file)
+        self.resource_usage_df = self.resource_usage_df.append(usage_df)
+
+    def write_accumulated_data(self, stats_dir):
+        ru.write_usage_summary(
+            stats_dir, "overall_usage", self.resource_type,
+            self.resource_usage_df)
 
 
 def _set_executables_for_commands():
@@ -238,18 +261,20 @@ def _set_executables_for_commands():
         _check_quantification_completed]
     pc.ANALYSE_RUNS.executables = [
         _run_directory_checker(True),
+        _ResourceUsageAccumulator(ru.QUANT_RESOURCE_TYPE),
         _StatsAccumulator(tpms.TRANSCRIPT),
         _StatsAccumulator(tpms.GENE)] + \
         [_StatsAccumulator(tpms.TRANSCRIPT, classifier=clsfr, ascending=asc)
             for clsfr, asc in statistics.get_stratified_stats_types()]
 
 
-def _write_accumulated_stats(options):
+def _write_accumulated_stats_and_usage(options):
     stats_dir = options[po.STATS_DIRECTORY.name]
     if not os.path.exists(stats_dir):
         os.mkdir(stats_dir)
-    for stats_acc in _StatsAccumulator.ACCUMULATORS:
-        stats_acc.write_stats(stats_dir)
+    for acc in _StatsAccumulator.ACCUMULATORS + \
+            _ResourceUsageAccumulator.ACCUMULATORS:
+        acc.write_accumulated_data(stats_dir)
 
 
 def _get_overall_stats(options, tpm_level):
@@ -292,7 +317,7 @@ def _draw_distribution_graphs(
 
 
 def _analyse_runs(logger, options):
-    _write_accumulated_stats(options)
+    _write_accumulated_stats_and_usage(options)
 
     overall_transcript_stats = _get_overall_stats(options, tpms.TRANSCRIPT)
     transcript_stats_option_values = \

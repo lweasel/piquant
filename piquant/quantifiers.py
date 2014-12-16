@@ -1,8 +1,9 @@
 # pylint: disable=E1103
 
 import pandas as pd
-import resource_usage as ru
 import os.path
+
+from . import resource_usage as ru
 
 TRANSCRIPT_GTF_FILE = "TRANSCRIPT_GTF_FILE"
 GENOME_FASTA_DIR = "GENOME_FASTA_DIR"
