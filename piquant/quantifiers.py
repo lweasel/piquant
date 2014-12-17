@@ -39,35 +39,43 @@ class _QuantifierBase(object):
         return self.__class__.get_name()
 
     @classmethod
-    def _add_timed_line(cls, writer, resource_type, line):
-        writer.add_line(
-            "/usr/bin/time -f \"%C,%e,%U,%S,%M\" -o {ct}.csv -a {line}".
-            format(ct=resource_type, line=line))
+    def _add_timed_line(cls, writer, record_usage, resource_type, line):
+        if record_usage:
+            writer.add_line(
+                "/usr/bin/time -f \"%C,%e,%U,%S,%M\" -o {ct}.csv -a {line}".
+                format(ct=resource_type, line=line))
+        else:
+            writer.add_line(line)
 
     @classmethod
-    def _add_timed_pipe(cls, writer, resource_type, pipe_commands):
-        line = "bash -c \"{pipe}\".".format(pipe=" | ".join(pipe_commands))
-        cls._add_timed_line(writer, resource_type, line)
+    def _add_timed_pipe(cls, writer, record_usage, resource_type, pipe_commands):
+        if record_usage:
+            line = "bash -c \"{pipe}\".".format(pipe=" | ".join(pipe_commands))
+            cls._add_timed_line(writer, True, resource_type, line)
+        else:
+            writer.add_pipe(*pipe_commands)
 
     @classmethod
-    def _add_timed_prequantification_command(cls, writer, line):
+    def _add_timed_prequantification_command(cls, writer, record_usage, line):
         cls._add_timed_line(
-            writer, ru.PREQUANT_RESOURCE_TYPE, line)
+            writer, record_usage, ru.PREQUANT_RESOURCE_TYPE, line)
 
     @classmethod
-    def _add_timed_quantification_command(cls, writer, line):
+    def _add_timed_quantification_command(cls, writer, record_usage, line):
         cls._add_timed_line(
-            writer, ru.QUANT_RESOURCE_TYPE, line)
+            writer, record_usage, ru.QUANT_RESOURCE_TYPE, line)
 
     @classmethod
-    def _add_timed_prequantification_pipe(cls, writer, pipe_commands):
+    def _add_timed_prequantification_pipe(
+            cls, writer, record_usage, pipe_commands):
         cls._add_timed_pipe(
-            writer, ru.PREQUANT_RESOURCE_TYPE, pipe_commands)
+            writer, record_usage, ru.PREQUANT_RESOURCE_TYPE, pipe_commands)
 
     @classmethod
-    def _add_timed_quantification_pipe(cls, writer, pipe_commands):
+    def _add_timed_quantification_pipe(
+            cls, writer, record_usage, pipe_commands):
         cls._add_timed_pipe(
-            writer, ru.QUANT_RESOURCE_TYPE, pipe_commands)
+            writer, record_usage, ru.QUANT_RESOURCE_TYPE, pipe_commands)
 
 
 @_quantifier
@@ -111,7 +119,7 @@ class _Cufflinks(_QuantifierBase):
         return os.path.join(quantifier_dir, "bowtie-index", "index")
 
     @classmethod
-    def write_preparatory_commands(cls, writer, params):
+    def write_preparatory_commands(cls, record_usage, writer, params):
         writer.add_comment(
             "Prepare the bowtie index for read mapping if it doesn't " +
             "already exist. Note that this step only needs to be done " +
@@ -130,15 +138,15 @@ class _Cufflinks(_QuantifierBase):
                         genome_fasta_dir=params[GENOME_FASTA_DIR]))
                 writer.add_line(cls.STRIP_LAST_COMMA_FROM_FA_LIST)
                 cls._add_timed_prequantification_command(
-                    writer,
+                    writer, record_usage,
                     cls.BUILD_BOWTIE_INDEX.format(bowtie_index=bowtie_index))
                 cls._add_timed_prequantification_command(
-                    writer,
+                    writer, record_usage,
                     cls.CONSTRUCT_BOWTIE_REF_FASTA.format(
                         bowtie_index=bowtie_index))
 
     @classmethod
-    def write_quantification_commands(cls, writer, params):
+    def write_quantification_commands(cls, writer, record_usage, params):
         bowtie_index = cls._get_bowtie_index(params[QUANTIFIER_DIRECTORY])
 
         reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
@@ -150,7 +158,7 @@ class _Cufflinks(_QuantifierBase):
             ("fr-secondstrand" if params[STRANDED_READS] else "fr-unstranded")
 
         cls._add_timed_quantification_command(
-            writer,
+            writer, record_usage,
             cls.MAP_READS_TO_GENOME_WITH_TOPHAT.format(
                 bowtie_index=bowtie_index,
                 reads_spec=reads_spec,
@@ -158,7 +166,7 @@ class _Cufflinks(_QuantifierBase):
                 num_threads=params[NUM_THREADS]))
 
         cls._add_timed_quantification_command(
-            writer,
+            writer, record_usage,
             cls.QUANTIFY_ISOFORM_EXPRESSION.format(
                 bowtie_index=bowtie_index,
                 transcript_gtf=params[TRANSCRIPT_GTF_FILE],
@@ -205,7 +213,7 @@ class _TranscriptomeBasedQuantifierBase(_QuantifierBase):
         return os.path.join(quantifier_dir, ref_name, ref_name)
 
     @classmethod
-    def write_preparatory_commands(cls, writer, params):
+    def write_preparatory_commands(cls, record_usage, writer, params):
         with writer.section():
             writer.add_comment(
                 "Prepare the transcript reference if it doesn't already " +
@@ -223,11 +231,13 @@ class _TranscriptomeBasedQuantifierBase(_QuantifierBase):
             with writer.if_block(
                     cls.TRANSCRIPT_REF_DIR_EXISTS):
                 writer.add_line(cls.MAKE_TRANSCRIPT_REF_DIR)
-                writer.add_line(cls.PREPARE_TRANSCRIPT_REF.format(
-                    transcript_gtf=params[TRANSCRIPT_GTF_FILE],
-                    genome_fasta_dir=params[GENOME_FASTA_DIR],
-                    ref_name=ref_name,
-                    bowtie_spec=bowtie_spec))
+                cls._add_timed_prequantification_command(
+                    writer, record_usage,
+                    cls.PREPARE_TRANSCRIPT_REF.format(
+                        transcript_gtf=params[TRANSCRIPT_GTF_FILE],
+                        genome_fasta_dir=params[GENOME_FASTA_DIR],
+                        ref_name=ref_name,
+                        bowtie_spec=bowtie_spec))
 
     @classmethod
     def _needs_bowtie_index(cls):
@@ -254,7 +264,7 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
         return True
 
     @classmethod
-    def write_quantification_commands(cls, writer, params):
+    def write_quantification_commands(cls, writer, record_usage, params):
         qualities_spec = "" if params[FASTQ_READS] else "--no-qualities"
 
         reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
@@ -267,7 +277,7 @@ class _RSEM(_TranscriptomeBasedQuantifierBase):
         ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
 
         cls._add_timed_quantification_command(
-            writer,
+            writer, record_usage,
             cls.QUANTIFY_ISOFORM_EXPRESSION.format(
                 qualities_spec=qualities_spec,
                 reads_spec=reads_spec,
@@ -313,7 +323,7 @@ class _Express(_TranscriptomeBasedQuantifierBase):
         return True
 
     @classmethod
-    def write_quantification_commands(cls, writer, params):
+    def write_quantification_commands(cls, writer, record_usage, params):
         ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
 
         qualities_spec = "-q" if params[FASTQ_READS] else "-f"
@@ -326,7 +336,7 @@ class _Express(_TranscriptomeBasedQuantifierBase):
         bowtie_stranded_spec = "--norc" if params[STRANDED_READS] else ""
 
         cls._add_timed_quantification_pipe(
-            writer,
+            writer, record_usage,
             [cls.MAP_READS_TO_TRANSCRIPT_REF.format(
                 qualities_spec=qualities_spec,
                 stranded_spec=bowtie_stranded_spec,
@@ -341,7 +351,7 @@ class _Express(_TranscriptomeBasedQuantifierBase):
              else "--fr-stranded") if params[STRANDED_READS] else ""
 
         cls._add_timed_quantification_command(
-            writer,
+            writer, record_usage,
             cls.QUANTIFY_ISOFORM_EXPRESSION.format(
                 stranded_spec=express_stranded_spec,
                 ref_name=ref_name))
@@ -391,10 +401,11 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
         return os.path.join(quantifier_dir, "sailfish", "index")
 
     @classmethod
-    def write_preparatory_commands(cls, writer, params):
+    def write_preparatory_commands(cls, writer, record_usage, params):
         # For convenience, we use a tool from the RSEM package to create the
         # transcript reference
-        super(_Sailfish, cls).write_preparatory_commands(writer, params)
+        super(_Sailfish, cls).write_preparatory_commands(
+            writer, record_usage, params)
 
         with writer.section():
             writer.add_comment(
@@ -405,13 +416,13 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
             index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
 
             cls._add_timed_prequantification_command(
-                writer,
+                writer, record_usage,
                 cls.CREATE_TRANSCRIPT_INDEX.format(
                     ref_name=ref_name, index_dir=index_dir,
                     num_threads=params[NUM_THREADS]))
 
     @classmethod
-    def write_quantification_commands(cls, writer, params):
+    def write_quantification_commands(cls, writer, record_usage, params):
         index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
 
         library_spec = \
@@ -427,7 +438,7 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
                 r=params[RIGHT_SIMULATED_READS])
 
         cls._add_timed_quantification_command(
-            writer,
+            writer, record_usage,
             cls.QUANTIFY_ISOFORM_EXPRESSION.format(
                 index_dir=index_dir,
                 library_spec=library_spec,
@@ -478,10 +489,11 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
         return os.path.join(quantifier_dir, "salmon", "index")
 
     @classmethod
-    def write_preparatory_commands(cls, writer, params):
+    def write_preparatory_commands(cls, writer, record_usage, params):
         # We again use a tool from the RSEM package to create the transcript
         # reference sequences
-        super(_Salmon, cls).write_preparatory_commands(writer, params)
+        super(_Salmon, cls).write_preparatory_commands(
+            writer, record_usage, params)
 
         with writer.section():
             index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
@@ -492,12 +504,12 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
                 ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
 
                 cls._add_timed_prequantification_command(
-                    writer,
+                    writer, record_usage,
                     cls.CREATE_SALMON_TRANSCRIPT_INDEX.format(
                         ref_name=ref_name, index_dir=index_dir))
 
     @classmethod
-    def write_quantification_commands(cls, writer, params):
+    def write_quantification_commands(cls, writer, record_usage, params):
         index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
 
         library_spec = "" if SIMULATED_READS in params else "I"
@@ -510,7 +522,7 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
                 r=params[RIGHT_SIMULATED_READS])
 
         cls._add_timed_quantification_command(
-            writer,
+            writer, record_usage,
             cls.QUANTIFY_ISOFORM_EXPRESSION.format(
                 index_dir=index_dir,
                 library_spec=library_spec,

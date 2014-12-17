@@ -238,7 +238,7 @@ class _ResourceUsageAccumulator(object):
         ru.write_usage_summary(usage_file_name, self.resource_usage_df)
 
 
-def _set_executables_for_commands():
+def _set_executables_for_commands(record_usage):
     pc.PREPARE_READ_DIRS.executables = [
         _reads_directory_checker(False),
         _prepare_read_simulation]
@@ -261,14 +261,19 @@ def _set_executables_for_commands():
     pc.CHECK_QUANTIFICATION.executables = [
         _run_directory_checker(True),
         _check_quantification_completed]
+
     pc.ANALYSE_RUNS.executables = [
         _run_directory_checker(True),
-        _ResourceUsageAccumulator(ru.PREQUANT_RESOURCE_TYPE),
-        _ResourceUsageAccumulator(ru.QUANT_RESOURCE_TYPE),
         _StatsAccumulator(tpms.TRANSCRIPT),
         _StatsAccumulator(tpms.GENE)] + \
         [_StatsAccumulator(tpms.TRANSCRIPT, classifier=clsfr, ascending=asc)
             for clsfr, asc in statistics.get_stratified_stats_types()]
+
+    if record_usage:
+        pc.ANALYSE_RUNS.executables += [
+            _ResourceUsageAccumulator(ru.PREQUANT_RESOURCE_TYPE),
+            _ResourceUsageAccumulator(ru.QUANT_RESOURCE_TYPE),
+        ]
 
 
 def _write_accumulated_stats_and_usage(options):
@@ -337,13 +342,11 @@ def _draw_distribution_graphs(
         plot_format, stats_dir, stats_option_values)
 
 
-def _analyse_runs(logger, options):
+def _analyse_runs(logger, record_usage, options):
     _write_accumulated_stats_and_usage(options)
 
     overall_transcript_stats = _get_overall_stats(options, tpms.TRANSCRIPT)
     overall_gene_stats = _get_overall_stats(options, tpms.GENE)
-    usage_prequant = _get_overall_usage(options, ru.PREQUANT_RESOURCE_TYPE)
-    usage_quant = _get_overall_usage(options, ru.QUANT_RESOURCE_TYPE)
 
     stats_option_values = _get_stats_option_values(overall_transcript_stats)
 
@@ -356,25 +359,29 @@ def _analyse_runs(logger, options):
     _draw_overall_stats_graphs(
         logger, plot_format, stats_dir, overall_gene_stats,
         stats_option_values, tpms.GENE)
-    _draw_usage_graphs(
-        logger, plot_format, stats_dir, usage_quant, usage_prequant,
-        stats_option_values)
     _draw_grouped_stats_graphs(
         logger, plot_format, stats_dir, options[po.GROUPED_THRESHOLD.name],
         stats_option_values)
-
     _draw_distribution_graphs(
         logger, plot_format, stats_dir, stats_option_values)
+
+    if record_usage:
+        usage_prequant = _get_overall_usage(options, ru.PREQUANT_RESOURCE_TYPE)
+        usage_quant = _get_overall_usage(options, ru.QUANT_RESOURCE_TYPE)
+        _draw_usage_graphs(
+            logger, plot_format, stats_dir, usage_quant, usage_prequant,
+            stats_option_values)
 
 
 def _run_piquant_command(logger, piquant_command, options, qr_options):
 
-    _set_executables_for_commands()
+    record_usage = not options[po.NO_USAGE.name]
+    _set_executables_for_commands(record_usage)
 
     po.execute_for_mqr_option_sets(piquant_command, logger, options, qr_options)
 
     if piquant_command == pc.ANALYSE_RUNS:
-        _analyse_runs(logger, options)
+        _analyse_runs(logger, record_usage, options)
 
 
 def piquant(args):

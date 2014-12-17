@@ -216,6 +216,12 @@ NO_CLEANUP = _PiquantOption(
     "(when creating reads) and assessing quantification accuracy (when " +
     "quantifying) will be deleted")
 
+NO_USAGE = _PiquantOption(
+    "nousage",
+    "If not specified, time and memory resource usage statistics will be " +
+    "gathered for prequantification and quantification, and resource usage " +
+    "plots produced.")
+
 NUM_THREADS = _QuantRunOption(
     "num_threads",
     "Number of threads to be used by multi-threaded quantification methods",

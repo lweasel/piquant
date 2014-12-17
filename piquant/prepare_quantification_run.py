@@ -31,13 +31,15 @@ def _get_unique_sequence_file(quantifier_dir):
 
 
 def _add_run_prequantification(
-        writer, quant_method, quant_params, quantifier_dir, transcript_gtf_file):
+        writer, quant_method, quant_params, quantifier_dir,
+        transcript_gtf_file, record_usage):
 
     with writer.if_block("-n \"$RUN_PREQUANTIFICATION\""):
         # Perform preparatory tasks required by a particular quantification
         # method prior to calculating abundances; for example, this might
         # include mapping reads to the genome with TopHat
-        quant_method.write_preparatory_commands(writer, quant_params)
+        quant_method.write_preparatory_commands(
+            writer, record_usage, quant_params)
         with writer.section():
             _add_calc_transcripts_per_gene(
                 writer, quantifier_dir, transcript_gtf_file)
@@ -46,14 +48,17 @@ def _add_run_prequantification(
                 writer, quantifier_dir, transcript_gtf_file)
 
 
-def _add_quantify_transcripts(writer, quant_method, quant_params, cleanup):
+def _add_quantify_transcripts(
+        writer, quant_method, quant_params, cleanup, record_usage):
+
     # Use the specified quantification method to calculate per-transcript TPMs
     with writer.if_block("-n \"$QUANTIFY_TRANSCRIPTS\""):
         with writer.section():
             writer.add_comment(
                 "Use {method} to calculate per-transcript TPMs.".format(
                     method=quant_method))
-            quant_method.write_quantification_commands(writer, quant_params)
+            quant_method.write_quantification_commands(
+                writer, record_usage, quant_params)
 
         if cleanup:
             writer.add_comment(
@@ -160,7 +165,7 @@ def _add_process_command_line_options(writer):
 
 
 def _add_analyse_results(
-        writer, reads_dir, run_dir, quantifier_dir, piquant_options,
+        writer, reads_dir, run_dir, quantifier_dir, options,
         quant_method, read_length, read_depth, paired_end,
         errors, bias, stranded, noise_perc):
 
@@ -172,7 +177,7 @@ def _add_analyse_results(
             _add_assemble_quant_data(
                 writer, quantifier_dir, fs_pro_file, quant_method)
         _add_analyse_quant_results(
-            writer, run_dir, piquant_options, quant_method=quant_method,
+            writer, run_dir, options, quant_method=quant_method,
             read_length=read_length, read_depth=read_depth,
             paired_end=paired_end, errors=errors, bias=bias,
             stranded=stranded, noise_perc=noise_perc)
@@ -205,7 +210,7 @@ def _get_quant_params(reads_dir, quantifier_dir, transcript_gtf, genome_fasta,
 
 
 def write_script(
-        reads_dir, run_dir, piquant_options,
+        reads_dir, run_dir, options,
         quant_method=None, read_length=50, read_depth=10,
         paired_end=False, errors=False, bias=False,
         stranded=False, noise_perc=0,
@@ -219,24 +224,26 @@ def write_script(
             _add_process_command_line_options(writer)
 
         quantifier_dir = os.path.join(
-            piquant_options[po.QUANT_OUTPUT_DIR.name],
+            options[po.QUANT_OUTPUT_DIR.name],
             "quantifier_scratch")
 
         quant_params = _get_quant_params(
             reads_dir, quantifier_dir, transcript_gtf, genome_fasta,
             num_threads, paired_end, errors, stranded)
 
+        record_usage = not options[po.NO_USAGE.name]
+
         with writer.section():
             _add_run_prequantification(
                 writer, quant_method, quant_params,
-                quantifier_dir, transcript_gtf)
+                quantifier_dir, transcript_gtf, record_usage)
 
         with writer.section():
-            cleanup = not piquant_options[po.NO_CLEANUP.name]
+            cleanup = not options[po.NO_CLEANUP.name]
             _add_quantify_transcripts(
-                writer, quant_method, quant_params, cleanup)
+                writer, quant_method, quant_params, cleanup, record_usage)
 
         _add_analyse_results(
-            writer, reads_dir, run_dir, quantifier_dir, piquant_options,
+            writer, reads_dir, run_dir, quantifier_dir, options,
             quant_method, read_length, read_depth, paired_end,
             errors, bias, stranded, noise_perc)
