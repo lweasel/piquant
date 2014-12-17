@@ -214,7 +214,7 @@ class _TranscriptomeBasedQuantifierBase(_QuantifierBase):
         return os.path.join(quantifier_dir, ref_name, ref_name)
 
     @classmethod
-    def write_preparatory_commands(cls, record_usage, writer, params):
+    def write_preparatory_commands(cls, writer, record_usage, params):
         with writer.section():
             writer.add_comment(
                 "Prepare the transcript reference if it doesn't already " +

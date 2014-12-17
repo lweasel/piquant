@@ -375,8 +375,8 @@ def _analyse_runs(logger, record_usage, options):
 
 
 def _run_piquant_command(logger, piquant_command, options, qr_options):
-
-    record_usage = not options[po.NO_USAGE.name]
+    record_usage = (po.NO_USAGE.name not in options) or \
+        (not options[po.NO_USAGE.name])
     _set_executables_for_commands(record_usage)
 
     po.execute_for_mqr_option_sets(piquant_command, logger, options, qr_options)
