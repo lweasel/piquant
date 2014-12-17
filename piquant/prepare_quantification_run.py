@@ -128,10 +128,10 @@ def _add_analyse_quant_results(
 
     run_name = os.path.basename(run_dir)
 
-    prequant_usage_file_name = ru.get_resource_usage_file(
-        ru.PREQUANT_RESOURCE_TYPE, prefix=ru.RUN_USAGE_PREFIX)
-    quant_usage_file_name = ru.get_resource_usage_file(
-        ru.QUANT_RESOURCE_TYPE, prefix=ru.RUN_USAGE_PREFIX)
+    prequant_usage_file_name = \
+        ru.get_resource_usage_file(ru.PREQUANT_RESOURCE_TYPE)
+    quant_usage_file_name = \
+        ru.get_resource_usage_file(ru.QUANT_RESOURCE_TYPE)
 
     resource_usage_spec = ""
     if record_usage:

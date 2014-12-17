@@ -58,6 +58,7 @@ import collections
 import docopt
 import itertools
 import numpy as np
+import os.path
 import pandas as pd
 import schema
 
@@ -92,14 +93,6 @@ def _validate_command_line_options(options):
         opt.validate_log_level(options)
         opt.validate_file_option(
             options[TPM_FILE], "Could not open TPM file")
-        opt.validate_file_option(
-            options[PREQUANT_USAGE_FILE],
-            "Could not open prequantification resource usage file",
-            nullable=True)
-        opt.validate_file_option(
-            options[QUANT_USAGE_FILE],
-            "Could not open quantification resource usage file",
-            nullable=True)
 
         for option in PIQUANT_OPTIONS:
             opt_name = option.get_option_name()
@@ -307,7 +300,12 @@ def _analyse_run(logger, options):
 def _summarise_resource_usage(logger, usage_file, resource_type, options):
     logger.info("Reading timing and memory usage from " + usage_file)
 
-    if not usage_file:
+    # The resource usage file may not have been specified (e.g. if the user is
+    # not interested in resource usage statistics), or it may not exist even if
+    # specified (i.e. for prequantification, which is executed in only one
+    # quantification directory per quantifier) - in either case, no further
+    # action needs to be taken.
+    if not (usage_file and os.path.exists(usage_file)):
         return
 
     # Read timing and memory usage info, then calculate sums of times over

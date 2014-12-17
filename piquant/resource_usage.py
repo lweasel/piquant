@@ -1,11 +1,10 @@
 import pandas as pd
 import os.path
 
-PREQUANT_RESOURCE_TYPE = "prequant"
-QUANT_RESOURCE_TYPE = "quant"
+PREQUANT_RESOURCE_TYPE = "prequant_usage"
+QUANT_RESOURCE_TYPE = "quant_usage"
 
-RUN_USAGE_PREFIX = "usage"
-OVERALL_USAGE_PREFIX = "overall_usage"
+OVERALL_USAGE_PREFIX = "overall"
 
 COMMAND = "command"
 REAL_TIME_SECS = "real"

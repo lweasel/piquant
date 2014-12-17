@@ -390,49 +390,6 @@ def _get_plot_subdirectory(parent_dir, sub_dir_name):
     return sub_dir
 
 
-def draw_quant_res_usage_graphs(
-        fformat, stats_dir, usage_data, mqr_option_values):
-
-    usage_graphs_dir = _get_plot_subdirectory(
-        stats_dir, "resource_usage_graphs")
-
-    numerical_mqr_options = \
-        [o for o in po.get_multiple_quant_run_options() if o.is_numeric]
-
-    for mqr_option in _get_non_degenerate_mqr_options(
-            po.get_multiple_quant_run_options(), mqr_option_values):
-
-        non_deg_numerical_mqr_opts = _get_non_degenerate_mqr_options(
-            _remove_from(numerical_mqr_options, mqr_option), mqr_option_values)
-        if len(non_deg_numerical_mqr_opts) == 0:
-            continue
-
-        mqr_option_usage_dir = _get_plot_subdirectory(
-            usage_graphs_dir, "per_" + mqr_option.name)
-
-        for num_p in non_deg_numerical_mqr_opts:
-            num_mqr_option_usage_dir = _get_plot_subdirectory(
-                mqr_option_usage_dir, "by_" + num_p.name)
-
-            fixed_mqr_options, fp_values_sets = \
-                _get_fixed_mqr_opts(po.get_multiple_quant_run_options(),
-                                    [mqr_option, num_p], mqr_option_values)
-
-            for fp_values_set in fp_values_sets:
-                stats_df, fixed_mqr_option_values = \
-                    _get_data_for_fixed_mqr_opts(
-                        usage_data, fixed_mqr_options, fp_values_set)
-
-                for usage_stat in ru.USAGE_STATS:
-                    usage_dir = _get_plot_subdirectory(
-                        num_mqr_option_usage_dir, usage_stat)
-
-                    graph_file_basename = os.path.join(usage_dir, "usage")
-                    _plot_usage_stat_vs_mqr_opt(
-                        fformat, stats_df, graph_file_basename,
-                        usage_stat, mqr_option, num_p, fixed_mqr_option_values)
-
-
 def draw_overall_stats_graphs(
         fformat, stats_dir, overall_stats, mqr_option_values, tpm_level):
 
@@ -571,3 +528,48 @@ def draw_distribution_graphs(fformat, stats_dir, mqr_option_values):
                 _plot_grouped_cumulative_dist(
                     fformat, stats_df, graph_file_basename, mqr_option,
                     clsfr, asc, fixed_mqr_option_values)
+
+
+def draw_quant_res_usage_graphs(
+        fformat, stats_dir, usage_data, mqr_option_values):
+
+    usage_graphs_dir = _get_plot_subdirectory(
+        stats_dir, "resource_usage_graphs")
+
+    numerical_mqr_options = \
+        [o for o in po.get_multiple_quant_run_options() if o.is_numeric]
+
+    for mqr_option in _get_non_degenerate_mqr_options(
+            po.get_multiple_quant_run_options(), mqr_option_values):
+
+        non_deg_numerical_mqr_opts = _get_non_degenerate_mqr_options(
+            _remove_from(numerical_mqr_options, mqr_option), mqr_option_values)
+        if len(non_deg_numerical_mqr_opts) == 0:
+            continue
+
+        mqr_option_usage_dir = _get_plot_subdirectory(
+            usage_graphs_dir, "per_" + mqr_option.name)
+
+        for num_p in non_deg_numerical_mqr_opts:
+            num_mqr_option_usage_dir = _get_plot_subdirectory(
+                mqr_option_usage_dir, "by_" + num_p.name)
+
+            fixed_mqr_options, fp_values_sets = \
+                _get_fixed_mqr_opts(po.get_multiple_quant_run_options(),
+                                    [mqr_option, num_p], mqr_option_values)
+
+            for fp_values_set in fp_values_sets:
+                stats_df, fixed_mqr_option_values = \
+                    _get_data_for_fixed_mqr_opts(
+                        usage_data, fixed_mqr_options, fp_values_set)
+
+                for usage_stat in ru.USAGE_STATS:
+                    usage_dir = _get_plot_subdirectory(
+                        num_mqr_option_usage_dir, usage_stat)
+
+                    graph_file_basename = os.path.join(usage_dir, "usage")
+                    _plot_usage_stat_vs_mqr_opt(
+                        fformat, stats_df, graph_file_basename,
+                        usage_stat, mqr_option, num_p, fixed_mqr_option_values)
+
+
