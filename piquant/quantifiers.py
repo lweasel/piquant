@@ -119,7 +119,7 @@ class _Cufflinks(_QuantifierBase):
         return os.path.join(quantifier_dir, "bowtie-index", "index")
 
     @classmethod
-    def write_preparatory_commands(cls, record_usage, writer, params):
+    def write_preparatory_commands(cls, writer, record_usage, params):
         writer.add_comment(
             "Prepare the bowtie index for read mapping if it doesn't " +
             "already exist. Note that this step only needs to be done " +
