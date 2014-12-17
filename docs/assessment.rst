@@ -160,12 +160,12 @@ This "distribution" classifier splits transcripts into two groups according to w
 Resource usage statistics
 -------------------------
 
-For each execution of a particular transcript quantification tool for reads simulated according to a certain set of sequencing parameters (and also for the single-execution of the prequantificaiton steps for each quantification tool), the following resource usage statistics are recorded:
+For each execution of a particular transcript quantification tool for reads simulated according to a certain set of sequencing parameters (and also for the single execution of the prequantification steps for each quantification tool), the following resource usage statistics are recorded:
 
-* *Real time*: The total elapsed real time of all quantification (or prequantification) commands in seconds (via the "%e" format option of the GNU ``time`` command)
-* *User time*: The total number of CPU-seconds that all quantification (or prequantification) commands spent in user mode (via the "%U" format option of GNU ``time``).
-* *System time*: The total number of CPU-seconds that all quantification (or prequantification) commands spent in kernel mode (via the "%S" format option of GNU ``time``).
-* *Maximum memory*: The maximum resident memory size of any quantification (or prequantification) command during its execution, in kilobytes (via the "%M" format option of GNU ``time``).
+* *Real time*: The total elapsed real time of all quantification (or prequantification) commands in seconds (via the ``%e`` format option of the GNU ``time`` command)
+* *User time*: The total number of CPU-seconds that all quantification (or prequantification) commands spent in user mode (via the ``%U`` format option of GNU ``time``).
+* *System time*: The total number of CPU-seconds that all quantification (or prequantification) commands spent in kernel mode (via the ``%S`` format option of GNU ``time``).
+* *Maximum memory*: The maximum resident memory size of any quantification (or prequantification) command during its execution, in kilobytes (via the ``%M`` format option of GNU ``time``).
 
 .. _assessment-single-run:
 
@@ -211,8 +211,8 @@ CSV files
 * ``overall_gene_stats.csv``: A corresponding CSV file with a field for each defined statistic which has been calculated over the whole set of input genes for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_gene_stats.csv`` files described above.
 * ``overall_transcript_stats_by_<classifier>.csv``: A CSV file for each "grouped" transcript classifier, containing the same fields as ``overall_transcript_stats.csv``, with statistics calculated for distinct subsets of transcripts as determined by the classifier, for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_transcript_stats_by_<classifier>.csv`` files described above.
 * ``overall_transcript_distribution_stats_<asc|desc>_by_<classifier>.csv``: Two CSV files ("ascending" and "descending") for each "distribution" transcript classifier, indicating the fraction of transcripts lying above or below values of the classifier threshold variable, for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_transcript_distribution_stats_<asc|desc>_by_<classifier>.csv`` files.
-* ``overall_quant_usage.csv``: A CSV file with a field for each resource usage statistic which have been calculated for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_quant_usage.csv`` files described above.
-* ``overall_prequant_usage.csv``: A CSV file with a field for each resource usage statistic which have been calculated when prequantification steps were run for each quantifier. This data is concatenated from the individual per-quantifier ``<run-id>_prequant_usage.csv`` files described above.
+* ``overall_quant_usage.csv``: A CSV file with a field for each resource usage statistic which has been calculated for each quantification run. This data is concatenated from the individual per-quantification run ``<run-id>_quant_usage.csv`` files described above.
+* ``overall_prequant_usage.csv``: A CSV file with a field for each resource usage statistic which has been calculated when prequantification steps were run for each quantifier. This data is concatenated from the individual per-quantifier ``<run-id>_prequant_usage.csv`` files described above.
 
 Note that neither of the resource usage CSV files will exist if the *piquant* command ``analyse_runs`` was run with the ``--nousage`` option.
 
@@ -261,6 +261,6 @@ As before, a plot will be produced for every combination of values of quantifica
 
 *"Resource usage statistic" graphs*
 
-In the sub-directory ``resource_usage_graphs``, a directory structure is created in exactly the same way as for "Overall statistics" graphs (see :ref:`overall-statistics-graphs` above). However, in this case, the graphs plotted measure resource usage statistics rather the accuracy statistics calculated over sets of transcripts or genes.
+In the sub-directory ``resource_usage_graphs``, a directory structure is created in exactly the same way as for "Overall statistics" graphs (see :ref:`above <overall-statistics-graphs>`). However, in this case, the graphs plotted measure resource usage statistics rather the than accuracy statistics calculated over sets of transcripts or genes.
 
 .. todo:: Document the plot produced for prequantification steps.

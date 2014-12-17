@@ -50,8 +50,8 @@ while these command-line parameters are optional:
 * ``--grouped-threshold``: The minimum number of transcripts required, in a group determined by a transcript classifier, for a statistic calculated for that group to be shown on a plot (default: 300).
 * ``--error-fraction-threshold``: Transcripts whose estimated TPM is greater than this percentage higher or lower than their real TPM are considered above threshold for the "error fraction" statistic.
 * ``--not-present-cutoff``: This cut-off value for a transcript's TPM is used to determined whether the transcript is considered to be present or not.
-* ``--prequant-usage-file``: A CSV file containing per-prequantification command resource usage statistics record using the GNU ``time`` command.
-* ``--quant-usage-file``: A CSV file containing per-quantification command resource usage statistics record using the GNU ``time`` command.
+* ``--prequant-usage-file``: A CSV file containing per-prequantification command resource usage statistics recorded using the GNU ``time`` command.
+* ``--quant-usage-file``: A CSV file containing per-quantification command resource usage statistics recorded using the GNU ``time`` command.
 
 .. _assemble-quantification-data:
 
