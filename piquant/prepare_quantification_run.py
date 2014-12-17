@@ -111,7 +111,9 @@ def _add_assemble_quant_data(writer, quantifier_dir, fs_pro_file, quant_method):
             unique_seq_file=_get_unique_sequence_file(quantifier_dir)))
 
 
-def _add_analyse_quant_results(writer, run_dir, options, **mqr_options):
+def _add_analyse_quant_results(
+        writer, run_dir, record_usage, options, **mqr_options):
+
     # Finally perform analysis on the calculated TPMs
     writer.add_comment("Perform analysis on calculated TPMs.")
 
@@ -124,22 +126,37 @@ def _add_analyse_quant_results(writer, run_dir, options, **mqr_options):
             name=options_dict[opt_name],
             val=str(opt_val))
 
+    run_name = os.path.basename(run_dir)
+
+    quant_usage_file_name = ru.get_resource_usage_file(
+        ru.QUANT_RESOURCE_TYPE, prefix=ru.RUN_USAGE_PREFIX)
+    resource_usage_spec = ("--resource-usage-file=" + quant_usage_file_name) \
+        if record_usage else ""
+
     writer.add_line(
         ("{command} --plot-format={format} " +
          "--grouped-threshold={gp_threshold} " +
          "--error-fraction-threshold={ef_threshold} " +
          "--not-present-cutoff={cutoff} " +
-         "{mqr_options_spec} {tpms_file} {timing_file} " +
+         "{ru_spec} {mqr_options_spec} {tpms_file} " +
          "{output_basename}").format(
             command=ANALYSE_DATA_SCRIPT,
             format=options[po.PLOT_FORMAT.name],
             gp_threshold=options[po.GROUPED_THRESHOLD.name],
             ef_threshold=options[po.ERROR_FRACTION_THRESHOLD.name],
             cutoff=options[po.NOT_PRESENT_CUTOFF.name],
-            mqr_options_spec=mqr_options_spec,
-            tpms_file=TPMS_FILE,
-            timing_file=ru.get_resource_usage_file(ru.QUANT_RESOURCE_TYPE),
-            output_basename=os.path.basename(run_dir)))
+            ru_spec=resource_usage_spec, mqr_options_spec=mqr_options_spec,
+            tpms_file=TPMS_FILE, output_basename=run_name))
+
+    if record_usage:
+        old_prequant_usage_file_name = ru.get_resource_usage_file(
+            ru.PREQUANT_RESOURCE_TYPE, prefix=ru.RUN_USAGE_PREFIX)
+        new_prequant_usage_file_name = ru.get_resource_usage_file(
+            ru.PREQUANT_RESOURCE_TYPE, prefix=run_name)
+        with writer.if_block("-f " + old_prequant_usage_file_name):
+            writer.add_line("mv {old_fn} {new_fn}".format(
+                old_fn=old_prequant_usage_file_name,
+                new_fn=new_prequant_usage_file_name))
 
 
 def _add_process_command_line_options(writer):
@@ -165,9 +182,9 @@ def _add_process_command_line_options(writer):
 
 
 def _add_analyse_results(
-        writer, reads_dir, run_dir, quantifier_dir, options,
-        quant_method, read_length, read_depth, paired_end,
-        errors, bias, stranded, noise_perc):
+        writer, reads_dir, run_dir, quantifier_dir, record_usage, options,
+        quant_method, read_length, read_depth, paired_end, errors,
+        bias, stranded, noise_perc):
 
     fs_pro_file = os.path.join(
         reads_dir, fs.get_expression_profile_file(fs.MAIN_TRANSCRIPTS))
@@ -177,7 +194,8 @@ def _add_analyse_results(
             _add_assemble_quant_data(
                 writer, quantifier_dir, fs_pro_file, quant_method)
         _add_analyse_quant_results(
-            writer, run_dir, options, quant_method=quant_method,
+            writer, run_dir, record_usage, options,
+            quant_method=quant_method,
             read_length=read_length, read_depth=read_depth,
             paired_end=paired_end, errors=errors, bias=bias,
             stranded=stranded, noise_perc=noise_perc)
@@ -244,6 +262,6 @@ def write_script(
                 writer, quant_method, quant_params, cleanup, record_usage)
 
         _add_analyse_results(
-            writer, reads_dir, run_dir, quantifier_dir, options,
-            quant_method, read_length, read_depth, paired_end,
-            errors, bias, stranded, noise_perc)
+            writer, reads_dir, run_dir, quantifier_dir, record_usage, options,
+            quant_method, read_length, read_depth, paired_end, errors,
+            bias, stranded, noise_perc)

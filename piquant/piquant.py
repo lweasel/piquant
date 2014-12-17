@@ -234,7 +234,8 @@ class _ResourceUsageAccumulator(object):
 
     def write_accumulated_data(self, stats_dir):
         usage_file_name = ru.get_resource_usage_file(
-            self.resource_type, prefix=ru.OVERALL_USAGE, directory=stats_dir)
+            self.resource_type, prefix=ru.OVERALL_USAGE_PREFIX,
+            directory=stats_dir)
         ru.write_usage_summary(usage_file_name, self.resource_usage_df)
 
 
@@ -294,7 +295,7 @@ def _get_overall_stats(options, tpm_level):
 
 def _get_overall_usage(options, resource_type):
     overall_usage_file = ru.get_resource_usage_file(
-        resource_type, prefix=ru.OVERALL_USAGE,
+        resource_type, prefix=ru.OVERALL_USAGE_PREFIX,
         directory=options[po.STATS_DIRECTORY.name])
     return pd.read_csv(overall_usage_file)
 

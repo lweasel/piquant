@@ -4,7 +4,8 @@ import os.path
 PREQUANT_RESOURCE_TYPE = "prequant"
 QUANT_RESOURCE_TYPE = "quant"
 
-OVERALL_USAGE = "overall_usage"
+RUN_USAGE_PREFIX = "usage"
+OVERALL_USAGE_PREFIX = "overall_usage"
 
 COMMAND = "command"
 REAL_TIME_SECS = "real"
