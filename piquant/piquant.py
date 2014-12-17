@@ -231,9 +231,9 @@ class _ResourceUsageAccumulator(object):
         self.resource_usage_df = self.resource_usage_df.append(usage_df)
 
     def write_accumulated_data(self, stats_dir):
-        ru.write_usage_summary(
-            stats_dir, "overall_usage", self.resource_type,
-            self.resource_usage_df)
+        usage_file_name = ru.get_resource_usage_file(
+            self.resource_type, prefix=ru.OVERALL_USAGE, directory=stats_dir)
+        ru.write_usage_summary(usage_file_name, self.resource_usage_df)
 
 
 def _set_executables_for_commands():
@@ -284,6 +284,13 @@ def _get_overall_stats(options, tpm_level):
     return pd.read_csv(overall_stats_file)
 
 
+def _get_overall_usage(options, resource_type):
+    overall_usage_file = ru.get_resource_usage_file(
+        resource_type, prefix=ru.OVERALL_USAGE,
+        directory=options[po.STATS_DIRECTORY.name])
+    return pd.read_csv(overall_usage_file)
+
+
 def _get_stats_option_values(overall_stats):
     return {p: overall_stats[p.name].value_counts().index.tolist()
             for p in po.get_multiple_quant_run_options()}
@@ -297,6 +304,14 @@ def _draw_overall_stats_graphs(
                 "whole set of {tpm_level} TPMs...".format(tpm_level=tpm_level))
     plot.draw_overall_stats_graphs(
         plot_format, stats_dir, overall_stats, stats_option_values, tpm_level)
+
+
+def _draw_usage_graphs(
+        logger, plot_format, stats_dir, usage_quant, stats_option_values):
+
+    logger.info("Draw graphs of time and memory resource usage...")
+    plot.draw_usage_graphs(
+        plot_format, stats_dir, usage_quant, stats_option_values)
 
 
 def _draw_grouped_stats_graphs(
@@ -320,27 +335,29 @@ def _analyse_runs(logger, options):
     _write_accumulated_stats_and_usage(options)
 
     overall_transcript_stats = _get_overall_stats(options, tpms.TRANSCRIPT)
-    transcript_stats_option_values = \
-        _get_stats_option_values(overall_transcript_stats)
-
     overall_gene_stats = _get_overall_stats(options, tpms.GENE)
-    gene_stats_option_values = _get_stats_option_values(overall_gene_stats)
+    overall_usage_quant = _get_overall_usage(options, ru.QUANT_RESOURCE_TYPE)
+
+    stats_option_values = _get_stats_option_values(overall_transcript_stats)
 
     plot_format = options[po.PLOT_FORMAT.name]
     stats_dir = options[po.STATS_DIRECTORY.name]
 
     _draw_overall_stats_graphs(
         logger, plot_format, stats_dir, overall_transcript_stats,
-        transcript_stats_option_values, tpms.TRANSCRIPT)
+        stats_option_values, tpms.TRANSCRIPT)
     _draw_overall_stats_graphs(
         logger, plot_format, stats_dir, overall_gene_stats,
-        gene_stats_option_values, tpms.GENE)
+        stats_option_values, tpms.GENE)
+    _draw_usage_graphs(
+        logger, plot_format, stats_dir, overall_usage_quant,
+        stats_option_values)
     _draw_grouped_stats_graphs(
         logger, plot_format, stats_dir, options[po.GROUPED_THRESHOLD.name],
-        transcript_stats_option_values)
+        stats_option_values)
 
     _draw_distribution_graphs(
-        logger, plot_format, stats_dir, transcript_stats_option_values)
+        logger, plot_format, stats_dir, stats_option_values)
 
 
 def _run_piquant_command(logger, piquant_command, options, qr_options):

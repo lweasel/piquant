@@ -305,8 +305,10 @@ def _analyse_time_and_memory(logger, options):
 
     # Add run identification data and write resource usage summary to file
     _add_mqr_option_values(usage_summary, options)
-    ru.write_usage_summary(
-        ".", options[OUT_FILE_BASENAME], ru.QUANT_RESOURCE_TYPE, usage_summary)
+
+    usage_file_name = ru.get_resource_usage_file(
+        ru.QUANT_RESOURCE_TYPE, prefix=options[OUT_FILE_BASENAME], directory=".")
+    ru.write_usage_summary(usage_file_name, usage_summary)
 
 
 def analyse_quantification_run(args):

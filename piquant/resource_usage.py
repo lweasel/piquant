@@ -4,11 +4,16 @@ import os.path
 PREQUANT_RESOURCE_TYPE = "prequant"
 QUANT_RESOURCE_TYPE = "quant"
 
+OVERALL_USAGE = "overall_usage"
+
 COMMAND = "command"
 REAL_TIME_SECS = "real"
 USER_MODE_SECS = "user"
 KERNEL_MODE_SECS = "sys"
 MAX_RESIDENT_MEMORY = "max_mem"
+
+USAGE_STATS = [REAL_TIME_SECS, USER_MODE_SECS,
+               KERNEL_MODE_SECS, MAX_RESIDENT_MEMORY]
 
 
 def get_usage_summary(usage_file):
@@ -34,9 +39,6 @@ def get_resource_usage_file(resource_type, prefix=None, directory=None):
     return file_name
 
 
-def write_usage_summary(directory, prefix, resource_type, usage_summary):
-    usage_file_name = get_resource_usage_file(
-        resource_type, prefix=prefix, directory=directory)
-
+def write_usage_summary(usage_file_name, usage_summary):
     with open(usage_file_name, "w") as out_file:
         usage_summary.to_csv(out_file, index=False)

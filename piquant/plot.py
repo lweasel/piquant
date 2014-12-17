@@ -9,6 +9,7 @@ import sys
 
 from . import classifiers
 from . import piquant_options as po
+from . import resource_usage as ru
 from . import statistics
 from . import tpms as t
 
@@ -186,6 +187,30 @@ def _plot_grouped_stat_vs_mqr_opt(
             _get_plot_bounds_setter(statistic))
 
 
+def _plot_usage_stat_vs_mqr_opt(
+        fformat, stats, base_name, usage_statistic, group_mqr_option,
+        varying_mqr_option, fixed_mqr_option_values):
+
+    fixed_mqr_option_info = po.get_value_names(fixed_mqr_option_values)
+
+    plot_info = _GroupedPlotInfo(group_mqr_option, fixed_mqr_option_info)
+    name_elements = plot_info.get_filename_parts(
+        base_name, usage_statistic, versus=varying_mqr_option.name)
+
+    with _saving_new_plot(fformat, name_elements):
+        plot_info.set_plot_title(
+            usage_statistic, versus=varying_mqr_option.title)
+
+        def _set_statistic_plot_bounds(xmin, xmax, ymin, ymax):
+            xmargin = 2 * (xmax - xmin) / 100.0
+            plt.xlim(xmin=xmin - xmargin, xmax=xmax + xmargin)
+
+        _plot_grouped_statistic(
+            stats, plot_info, varying_mqr_option.name, usage_statistic,
+            varying_mqr_option.title, usage_statistic,
+            _set_statistic_plot_bounds)
+
+
 def _plot_grouped_stat_vs_clsfr(
         fformat, stats, base_name, statistic, group_mqr_option,
         classifier, fixed_mqr_option_values):
@@ -341,13 +366,13 @@ def _get_fixed_mqr_opts(all_mqr_options, non_fixed, mqr_option_values):
     return fixed_mqr_options, value_sets
 
 
-def _get_stats_for_fixed_mqr_opts(stats_df, fixed_mqr_options, fo_values_set):
+def _get_data_for_fixed_mqr_opts(df, fixed_mqr_options, fo_values_set):
     fixed_mqr_option_values = {}
     for i, fixed_o in enumerate(fixed_mqr_options):
         fo_value = fo_values_set[i]
-        stats_df = stats_df[stats_df[fixed_o.name] == fo_value]
+        df = df[df[fixed_o.name] == fo_value]
         fixed_mqr_option_values[fixed_o] = fo_value
-    return stats_df, fixed_mqr_option_values
+    return df, fixed_mqr_option_values
 
 
 # Making plots over multiple sets of sequencing and quantification run options
@@ -358,6 +383,49 @@ def _get_plot_subdirectory(parent_dir, sub_dir_name):
     if not os.path.exists(sub_dir):
         os.mkdir(sub_dir)
     return sub_dir
+
+
+def draw_usage_graphs(
+        fformat, stats_dir, usage_data, mqr_option_values):
+
+    usage_graphs_dir = _get_plot_subdirectory(
+        stats_dir, "resource_usage_graphs")
+
+    numerical_mqr_options = \
+        [o for o in po.get_multiple_quant_run_options() if o.is_numeric]
+
+    for mqr_option in _get_non_degenerate_mqr_options(
+            po.get_multiple_quant_run_options(), mqr_option_values):
+
+        non_deg_numerical_mqr_opts = _get_non_degenerate_mqr_options(
+            _remove_from(numerical_mqr_options, mqr_option), mqr_option_values)
+        if len(non_deg_numerical_mqr_opts) == 0:
+            continue
+
+        mqr_option_usage_dir = _get_plot_subdirectory(
+            usage_graphs_dir, "per_" + mqr_option.name)
+
+        for num_p in non_deg_numerical_mqr_opts:
+            num_mqr_option_usage_dir = _get_plot_subdirectory(
+                mqr_option_usage_dir, "by_" + num_p.name)
+
+            fixed_mqr_options, fp_values_sets = \
+                _get_fixed_mqr_opts(po.get_multiple_quant_run_options(),
+                                    [mqr_option, num_p], mqr_option_values)
+
+            for fp_values_set in fp_values_sets:
+                stats_df, fixed_mqr_option_values = \
+                    _get_data_for_fixed_mqr_opts(
+                        usage_data, fixed_mqr_options, fp_values_set)
+
+                for usage_stat in ru.USAGE_STATS:
+                    usage_dir = _get_plot_subdirectory(
+                        num_mqr_option_usage_dir, usage_stat)
+
+                    graph_file_basename = os.path.join(usage_dir, "usage")
+                    _plot_usage_stat_vs_mqr_opt(
+                        fformat, stats_df, graph_file_basename,
+                        usage_stat, mqr_option, num_p, fixed_mqr_option_values)
 
 
 def draw_overall_stats_graphs(
@@ -394,7 +462,7 @@ def draw_overall_stats_graphs(
 
             for fp_values_set in fp_values_sets:
                 stats_df, fixed_mqr_option_values = \
-                    _get_stats_for_fixed_mqr_opts(
+                    _get_data_for_fixed_mqr_opts(
                         overall_stats, fixed_mqr_options, fp_values_set)
 
                 for stat in statistics.get_graphable_statistics():
@@ -443,7 +511,7 @@ def draw_grouped_stats_graphs(fformat, stats_dir, mqr_option_values, threshold):
 
             for fp_values_set in fp_values_sets:
                 stats_df, fixed_mqr_option_values = \
-                    _get_stats_for_fixed_mqr_opts(
+                    _get_data_for_fixed_mqr_opts(
                         clsfr_stats, fixed_mqr_options, fp_values_set)
 
                 for stat in statistics.get_graphable_statistics():
@@ -492,7 +560,7 @@ def draw_distribution_graphs(fformat, stats_dir, mqr_option_values):
 
             for fp_values_set in fp_values_sets:
                 stats_df, fixed_mqr_option_values = \
-                    _get_stats_for_fixed_mqr_opts(
+                    _get_data_for_fixed_mqr_opts(
                         clsfr_stats, fixed_mqr_options, fp_values_set)
 
                 _plot_grouped_cumulative_dist(
