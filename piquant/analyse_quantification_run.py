@@ -1,6 +1,6 @@
 """
 Usage:
-    analyse_quantification_run [{log_option_spec} --plot-format=<plot-format> --grouped-threshold=<grouped-threshold> --error-fraction-threshold=<ef-threshold> --not-present-cutoff=<cutoff> --resource-usage-file=<resource-usage-file>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --errors=<errors> --bias=<bias> --stranded=<stranded> --noise-perc=<noise-depth-percentage> <tpm-file> <out-file>
+    analyse_quantification_run [{log_option_spec} --plot-format=<plot-format> --grouped-threshold=<grouped-threshold> --error-fraction-threshold=<ef-threshold> --not-present-cutoff=<cutoff> --prequant-usage-file=<prequant-usage-file> --quant-usage-file=<quant-usage-file>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --errors=<errors> --bias=<bias> --stranded=<stranded> --noise-perc=<noise-depth-percentage> <tpm-file> <out-file>
 
 Options:
 {help_option_spec}
@@ -21,7 +21,9 @@ Options:
 --not-present-cutoff=<cutoff>
     Cut-off value for the number of transcripts per-million below which a
     transcript is considered to be "not present" [default: 0.1].
---resource-usage-file=<resource-usage-file>
+--prequant-usage-file=<prequant-usage-file>
+    CSV file recording time and memory usage of prequantification steps.
+--quant-usage-file=<quant-usage-file>
     CSV file recording time and memory usage of quantification steps.
 --quant-method=<quant-method>
     Method used to quantify transcript abundances.
@@ -71,7 +73,8 @@ from .__init__ import __version__
 TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
 TRUE_POSITIVES_LABEL = "true positive TPMs"
 TPM_FILE = "<tpm-file>"
-RESOURCE_USAGE_FILE = "--resource-usage-file"
+PREQUANT_USAGE_FILE = "--prequant-usage-file"
+QUANT_USAGE_FILE = "--quant-usage-file"
 OUT_FILE_BASENAME = "<out-file>"
 
 PIQUANT_OPTIONS = [
@@ -90,8 +93,13 @@ def _validate_command_line_options(options):
         opt.validate_file_option(
             options[TPM_FILE], "Could not open TPM file")
         opt.validate_file_option(
-            options[RESOURCE_USAGE_FILE],
-            "Could not open quantification resource usage file", nullable=True)
+            options[PREQUANT_USAGE_FILE],
+            "Could not open prequantification resource usage file",
+            nullable=True)
+        opt.validate_file_option(
+            options[QUANT_USAGE_FILE],
+            "Could not open quantification resource usage file",
+            nullable=True)
 
         for option in PIQUANT_OPTIONS:
             opt_name = option.get_option_name()
@@ -296,22 +304,31 @@ def _analyse_run(logger, options):
                  tp_gene_tpms, clsfr_stats)
 
 
-def _analyse_time_and_memory(logger, options):
-    logger.info("Reading timing and memory usage from " +
-                options[RESOURCE_USAGE_FILE])
+def _summarise_resource_usage(logger, usage_file, resource_type, options):
+    logger.info("Reading timing and memory usage from " + usage_file)
 
-    if options[RESOURCE_USAGE_FILE]:
-        # Read timing and memory usage info, then calculate sums of times over
-        # multiple command invocations, and maximum memory usage by any command
-        usage_summary = ru.get_usage_summary(options[RESOURCE_USAGE_FILE])
+    if not usage_file:
+        return
 
-        # Add run identification data and write resource usage summary to file
-        _add_mqr_option_values(usage_summary, options)
+    # Read timing and memory usage info, then calculate sums of times over
+    # multiple command invocations, and maximum memory usage by any command
+    usage_summary = ru.get_usage_summary(usage_file)
 
-        usage_file_name = ru.get_resource_usage_file(
-            ru.QUANT_RESOURCE_TYPE, prefix=options[OUT_FILE_BASENAME],
-            directory=".")
-        ru.write_usage_summary(usage_file_name, usage_summary)
+    # Add run identification data and write resource usage summary to file
+    _add_mqr_option_values(usage_summary, options)
+
+    usage_file_name = ru.get_resource_usage_file(
+        resource_type, prefix=options[OUT_FILE_BASENAME], directory=".")
+    ru.write_usage_summary(usage_file_name, usage_summary)
+
+
+def _analyse_resource_usage(logger, options):
+    _summarise_resource_usage(
+        logger, options[PREQUANT_USAGE_FILE],
+        ru.PREQUANT_RESOURCE_TYPE, options)
+    _summarise_resource_usage(
+        logger, options[QUANT_USAGE_FILE],
+        ru.QUANT_RESOURCE_TYPE, options)
 
 
 def analyse_quantification_run(args):
@@ -330,4 +347,4 @@ def analyse_quantification_run(args):
 
     # Write statistics and graphs for the quantification run
     _analyse_run(logger, options)
-    _analyse_time_and_memory(logger, options)
+    _analyse_resource_usage(logger, options)

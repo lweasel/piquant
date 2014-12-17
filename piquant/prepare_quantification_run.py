@@ -128,10 +128,16 @@ def _add_analyse_quant_results(
 
     run_name = os.path.basename(run_dir)
 
+    prequant_usage_file_name = ru.get_resource_usage_file(
+        ru.PREQUANT_RESOURCE_TYPE, prefix=ru.RUN_USAGE_PREFIX)
     quant_usage_file_name = ru.get_resource_usage_file(
         ru.QUANT_RESOURCE_TYPE, prefix=ru.RUN_USAGE_PREFIX)
-    resource_usage_spec = ("--resource-usage-file=" + quant_usage_file_name) \
-        if record_usage else ""
+
+    resource_usage_spec = ""
+    if record_usage:
+        resource_usage_spec = \
+            "--prequant-usage-file={pquf} --quant-usage-file={quf}".format(
+                pquf=prequant_usage_file_name, quf=quant_usage_file_name)
 
     writer.add_line(
         ("{command} --plot-format={format} " +
@@ -149,14 +155,8 @@ def _add_analyse_quant_results(
             tpms_file=TPMS_FILE, output_basename=run_name))
 
     if record_usage:
-        old_prequant_usage_file_name = ru.get_resource_usage_file(
-            ru.PREQUANT_RESOURCE_TYPE, prefix=ru.RUN_USAGE_PREFIX)
-        new_prequant_usage_file_name = ru.get_resource_usage_file(
-            ru.PREQUANT_RESOURCE_TYPE, prefix=run_name)
-        with writer.if_block("-f " + old_prequant_usage_file_name):
-            writer.add_line("mv {old_fn} {new_fn}".format(
-                old_fn=old_prequant_usage_file_name,
-                new_fn=new_prequant_usage_file_name))
+        writer.add_line("rm " + prequant_usage_file_name)
+        writer.add_line("rm " + quant_usage_file_name)
 
 
 def _add_process_command_line_options(writer):
