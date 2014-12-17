@@ -340,6 +340,11 @@ def plot_transcript_cumul_dist(
         plt.suptitle(_capitalized(clsfr_col) + " threshold: " + tpm_label)
 
 
+def draw_prequant_usage_barplot(
+        fformat, stats_dir, usage_prequant):
+    pass
+
+
 # Utility functions for manipulating sets of quantification run options
 
 
@@ -385,7 +390,7 @@ def _get_plot_subdirectory(parent_dir, sub_dir_name):
     return sub_dir
 
 
-def draw_usage_graphs(
+def draw_quant_res_usage_graphs(
         fformat, stats_dir, usage_data, mqr_option_values):
 
     usage_graphs_dir = _get_plot_subdirectory(

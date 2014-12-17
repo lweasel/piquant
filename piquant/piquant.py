@@ -227,8 +227,10 @@ class _ResourceUsageAccumulator(object):
 
         usage_file = ru.get_resource_usage_file(
             self.resource_type, prefix=run_name, directory=run_dir)
-        usage_df = pd.read_csv(usage_file)
-        self.resource_usage_df = self.resource_usage_df.append(usage_df)
+
+        if os.path.exists(usage_file):
+            usage_df = pd.read_csv(usage_file)
+            self.resource_usage_df = self.resource_usage_df.append(usage_df)
 
     def write_accumulated_data(self, stats_dir):
         usage_file_name = ru.get_resource_usage_file(
@@ -261,6 +263,7 @@ def _set_executables_for_commands():
         _check_quantification_completed]
     pc.ANALYSE_RUNS.executables = [
         _run_directory_checker(True),
+        _ResourceUsageAccumulator(ru.PREQUANT_RESOURCE_TYPE),
         _ResourceUsageAccumulator(ru.QUANT_RESOURCE_TYPE),
         _StatsAccumulator(tpms.TRANSCRIPT),
         _StatsAccumulator(tpms.GENE)] + \
@@ -307,11 +310,14 @@ def _draw_overall_stats_graphs(
 
 
 def _draw_usage_graphs(
-        logger, plot_format, stats_dir, usage_quant, stats_option_values):
+        logger, plot_format, stats_dir, usage_quant, usage_prequant,
+        stats_option_values):
 
     logger.info("Draw graphs of time and memory resource usage...")
-    plot.draw_usage_graphs(
+    plot.draw_quant_res_usage_graphs(
         plot_format, stats_dir, usage_quant, stats_option_values)
+    plot.draw_prequant_usage_barplot(
+        plot_format, stats_dir, usage_prequant)
 
 
 def _draw_grouped_stats_graphs(
@@ -336,7 +342,8 @@ def _analyse_runs(logger, options):
 
     overall_transcript_stats = _get_overall_stats(options, tpms.TRANSCRIPT)
     overall_gene_stats = _get_overall_stats(options, tpms.GENE)
-    overall_usage_quant = _get_overall_usage(options, ru.QUANT_RESOURCE_TYPE)
+    usage_prequant = _get_overall_usage(options, ru.PREQUANT_RESOURCE_TYPE)
+    usage_quant = _get_overall_usage(options, ru.QUANT_RESOURCE_TYPE)
 
     stats_option_values = _get_stats_option_values(overall_transcript_stats)
 
@@ -350,7 +357,7 @@ def _analyse_runs(logger, options):
         logger, plot_format, stats_dir, overall_gene_stats,
         stats_option_values, tpms.GENE)
     _draw_usage_graphs(
-        logger, plot_format, stats_dir, overall_usage_quant,
+        logger, plot_format, stats_dir, usage_quant, usage_prequant,
         stats_option_values)
     _draw_grouped_stats_graphs(
         logger, plot_format, stats_dir, options[po.GROUPED_THRESHOLD.name],
