@@ -51,7 +51,7 @@ class _QuantifierBase(object):
     @classmethod
     def _add_timed_pipe(cls, writer, record_usage, resource_type, pipe_commands):
         if record_usage:
-            line = "bash -c \"{pipe}\".".format(pipe=" | ".join(pipe_commands))
+            line = "bash -c \"{pipe}\"".format(pipe=" | ".join(pipe_commands))
             cls._add_timed_line(writer, True, resource_type, line)
         else:
             writer.add_pipe(*pipe_commands)
