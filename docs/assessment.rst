@@ -162,10 +162,10 @@ Resource usage statistics
 
 For each execution of a particular transcript quantification tool for reads simulated according to a certain set of sequencing parameters (and also for the single execution of the prequantification steps for each quantification tool), the following resource usage statistics are recorded:
 
-* *Real time*: The total elapsed real time of all quantification (or prequantification) commands in seconds (via the ``%e`` format option of the GNU ``time`` command)
-* *User time*: The total number of CPU-seconds that all quantification (or prequantification) commands spent in user mode (via the ``%U`` format option of GNU ``time``).
-* *System time*: The total number of CPU-seconds that all quantification (or prequantification) commands spent in kernel mode (via the ``%S`` format option of GNU ``time``).
-* *Maximum memory*: The maximum resident memory size of any quantification (or prequantification) command during its execution, in kilobytes (via the ``%M`` format option of GNU ``time``).
+* *Real time*: The total elapsed real time of all quantification (or prequantification) commands in seconds, log base 10 (via the ``%e`` format option of the GNU ``time`` command)
+* *User time*: The total number of CPU-seconds (log base 10) that all quantification (or prequantification) commands spent in user mode (via the ``%U`` format option of GNU ``time``).
+* *System time*: The total number of CPU-seconds (log base 10) that all quantification (or prequantification) commands spent in kernel mode (via the ``%S`` format option of GNU ``time``).
+* *Maximum memory*: The maximum resident memory size of any quantification (or prequantification) command during its execution, in gigabytes (via the ``%M`` format option of GNU ``time``).
 
 .. _assessment-single-run:
 
