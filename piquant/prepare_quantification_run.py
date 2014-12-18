@@ -155,8 +155,8 @@ def _add_analyse_quant_results(
             tpms_file=TPMS_FILE, output_basename=run_name))
 
     if record_usage:
-        writer.add_line("rm " + prequant_usage_file_name)
-        writer.add_line("rm " + quant_usage_file_name)
+        writer.add_line("rm -f " + prequant_usage_file_name)
+        writer.add_line("rm -f " + quant_usage_file_name)
 
 
 def _add_process_command_line_options(writer):

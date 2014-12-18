@@ -40,13 +40,8 @@ class _QuantifierBase(object):
 
     @classmethod
     def _add_timed_line(cls, writer, record_usage, resource_type, line):
-        if record_usage:
-            usage_file_name = ru.get_resource_usage_file(resource_type)
-            writer.add_line(
-                "/usr/bin/time -f \"%C,%e,%U,%S,%M\" -o {usage_file} -a {line}".
-                format(usage_file=usage_file_name, line=line))
-        else:
-            writer.add_line(line)
+        writer.add_line(
+            (ru.get_time_command(resource_type) if record_usage else "") + line)
 
     @classmethod
     def _add_timed_pipe(cls, writer, record_usage, resource_type, pipe_commands):

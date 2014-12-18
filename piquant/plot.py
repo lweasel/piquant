@@ -187,30 +187,6 @@ def _plot_grouped_stat_vs_mqr_opt(
             _get_plot_bounds_setter(statistic))
 
 
-def _plot_usage_stat_vs_mqr_opt(
-        fformat, stats, base_name, usage_statistic, group_mqr_option,
-        varying_mqr_option, fixed_mqr_option_values):
-
-    fixed_mqr_option_info = po.get_value_names(fixed_mqr_option_values)
-
-    plot_info = _GroupedPlotInfo(group_mqr_option, fixed_mqr_option_info)
-    name_elements = plot_info.get_filename_parts(
-        base_name, usage_statistic, versus=varying_mqr_option.name)
-
-    with _saving_new_plot(fformat, name_elements):
-        plot_info.set_plot_title(
-            usage_statistic, versus=varying_mqr_option.title)
-
-        def _set_statistic_plot_bounds(xmin, xmax, ymin, ymax):
-            xmargin = 2 * (xmax - xmin) / 100.0
-            plt.xlim(xmin=xmin - xmargin, xmax=xmax + xmargin)
-
-        _plot_grouped_statistic(
-            stats, plot_info, varying_mqr_option.name, usage_statistic,
-            varying_mqr_option.title, usage_statistic,
-            _set_statistic_plot_bounds)
-
-
 def _plot_grouped_stat_vs_clsfr(
         fformat, stats, base_name, statistic, group_mqr_option,
         classifier, fixed_mqr_option_values):
@@ -563,13 +539,11 @@ def draw_quant_res_usage_graphs(
                     _get_data_for_fixed_mqr_opts(
                         usage_data, fixed_mqr_options, fp_values_set)
 
-                for usage_stat in ru.USAGE_STATS:
+                for usage_stat in ru.get_resource_usage_statistics():
                     usage_dir = _get_plot_subdirectory(
-                        num_mqr_option_usage_dir, usage_stat)
+                        num_mqr_option_usage_dir, usage_stat.name)
 
                     graph_file_basename = os.path.join(usage_dir, "usage")
-                    _plot_usage_stat_vs_mqr_opt(
+                    _plot_grouped_stat_vs_mqr_opt(
                         fformat, stats_df, graph_file_basename,
                         usage_stat, mqr_option, num_p, fixed_mqr_option_values)
-
-

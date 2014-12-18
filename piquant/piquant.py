@@ -220,6 +220,7 @@ class _ResourceUsageAccumulator(object):
     def __init__(self, resource_type):
         self.resource_usage_df = pd.DataFrame()
         self.resource_type = resource_type
+        _ResourceUsageAccumulator.ACCUMULATORS.append(self)
 
     def __call__(self, logger, options, **qr_options):
         run_name = po.get_run_name(qr_options)
