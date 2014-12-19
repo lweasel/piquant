@@ -18,8 +18,8 @@ class _ResourceUsageStatistic(object):
         return self.value_extractor(usage_df[self.name])
 
     def stat_range(self, vals_range):
-        del vals_range
-        return (0, None)
+        max_val = math.ceil(vals_range[1] * 2) / 2.0
+        return (0, max_val + 0.01)
 
 
 _RESOURCE_USAGE_STATS = []
