@@ -75,3 +75,5 @@ In addition, the use of each quantification tool within the *piquant* pipeline h
 *piquant* has been tested with *Bowtie* version 1.0.0 and *TopHat* version 2.0.10.
 
 .. attention:: *TopHat* does not currently execute under Python 3. Hence, if *piquant* is being run in a virtual environment in which the command ``python`` invokes Python 3, the main *TopHat* script must be altered so as to invoke Python 2. This can be done by altering the first line of the *TopHat* script to read ``#!/usr/bin/env python2``.
+
+Finally, the recording of time and memory usage by quantification tools requires that the GNU ``time`` command is available at ``/usr/bin/time``. Resource usage recording can be turned off by specifying the ``--nousage`` option to the ``prepare_quant_dirs`` and ``analyse_runs`` *piquant* commands.
