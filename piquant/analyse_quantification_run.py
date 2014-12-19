@@ -107,9 +107,10 @@ def _get_tpm_infos(non_zero, tp_tpms):
             TpmInfo(tp_tpms, TRUE_POSITIVES_LABEL)]
 
 
-def _add_mqr_option_values(
-        stats, options, options_to_add=po.get_multiple_quant_run_options()):
+def _add_mqr_option_values(stats, options, options_to_add=None):
 
+    if options_to_add is None:
+        options_to_add = po.get_multiple_quant_run_options()
     for option in options_to_add:
         stats[option.name] = options[option.get_option_name()]
 
