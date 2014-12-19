@@ -231,9 +231,14 @@ def test_default_values_dont_overwrite_file_values_for_quant_run_options():
     assert qr_option_values[opt.name] == file_value
 
 
-def test_get_multi_quant_run_options_returns_piquant_option_instances():
+def test_get_multi_quant_run_options_returns_mqr_option_instances():
     opts = po.get_multiple_quant_run_options()
-    assert all([isinstance(o, po._PiquantOption) for o in opts])
+    assert all([isinstance(o, po._MultiQuantRunOption) for o in opts])
+
+
+def test_get_numerical_mqr_options_returns_numeric_options():
+    opts = po.get_numerical_mqr_options()
+    assert all([o.is_numeric for o in opts])
 
 
 def test_validate_option_values_returns_correct_number_of_options():

@@ -262,5 +262,3 @@ As before, a plot will be produced for every combination of values of quantifica
 *"Resource usage statistic" graphs*
 
 In the sub-directory ``resource_usage_graphs``, a directory structure is created in exactly the same way as for "Overall statistics" graphs (see :ref:`above <overall-statistics-graphs>`). However, in this case, the graphs plotted measure resource usage statistics rather the than accuracy statistics calculated over sets of transcripts or genes.
-
-.. todo:: Document the plot produced for prequantification steps.

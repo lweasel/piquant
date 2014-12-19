@@ -16,6 +16,7 @@ from . import prepare_read_simulation as prs
 from . import process
 from . import resource_usage as ru
 from . import statistics
+from . import stats_data
 from . import tpms
 from .__init__ import __version__
 
@@ -301,39 +302,31 @@ def _get_overall_usage(options, resource_type):
     return pd.read_csv(overall_usage_file)
 
 
-def _get_stats_option_values(overall_stats):
-    return {p: overall_stats[p.name].value_counts().index.tolist()
-            for p in po.get_multiple_quant_run_options()}
-
-
 def _draw_overall_stats_graphs(
         logger, plot_format, stats_dir, overall_stats,
-        stats_option_values, tpm_level):
+        option_values_set, tpm_level):
 
     logger.info("Drawing graphs derived from statistics calculated for the " +
                 "whole set of {tpm_level} TPMs...".format(tpm_level=tpm_level))
     plot.draw_overall_stats_graphs(
-        plot_format, stats_dir, overall_stats, stats_option_values, tpm_level)
+        plot_format, stats_dir, overall_stats, option_values_set, tpm_level)
 
 
 def _draw_usage_graphs(
-        logger, plot_format, stats_dir, usage_quant, usage_prequant,
-        stats_option_values):
+        logger, plot_format, stats_dir, usage_quant, option_values_set):
 
     logger.info("Draw graphs of time and memory resource usage...")
     plot.draw_quant_res_usage_graphs(
-        plot_format, stats_dir, usage_quant, stats_option_values)
-    plot.draw_prequant_usage_barplot(
-        plot_format, stats_dir, usage_prequant)
+        plot_format, stats_dir, usage_quant, option_values_set)
 
 
 def _draw_grouped_stats_graphs(
-        logger, plot_format, stats_dir, grouped_threshold, stats_option_values):
+        logger, plot_format, stats_dir, grouped_threshold, option_values_set):
 
     logger.info("Drawing graphs derived from statistics calculated on " +
                 "subsets of transcript TPMs...")
     plot.draw_grouped_stats_graphs(
-        plot_format, stats_dir, stats_option_values, grouped_threshold)
+        plot_format, stats_dir, option_values_set, grouped_threshold)
 
 
 def _draw_distribution_graphs(
@@ -350,29 +343,27 @@ def _analyse_runs(logger, record_usage, options):
     overall_transcript_stats = _get_overall_stats(options, tpms.TRANSCRIPT)
     overall_gene_stats = _get_overall_stats(options, tpms.GENE)
 
-    stats_option_values = _get_stats_option_values(overall_transcript_stats)
+    option_values_set = stats_data.OptionValuesSets(overall_transcript_stats)
 
     plot_format = options[po.PLOT_FORMAT.name]
     stats_dir = options[po.STATS_DIRECTORY.name]
 
     _draw_overall_stats_graphs(
         logger, plot_format, stats_dir, overall_transcript_stats,
-        stats_option_values, tpms.TRANSCRIPT)
+        option_values_set, tpms.TRANSCRIPT)
     _draw_overall_stats_graphs(
         logger, plot_format, stats_dir, overall_gene_stats,
-        stats_option_values, tpms.GENE)
+        option_values_set, tpms.GENE)
     _draw_grouped_stats_graphs(
         logger, plot_format, stats_dir, options[po.GROUPED_THRESHOLD.name],
-        stats_option_values)
+        option_values_set)
     _draw_distribution_graphs(
-        logger, plot_format, stats_dir, stats_option_values)
+        logger, plot_format, stats_dir, option_values_set)
 
     if record_usage:
-        usage_prequant = _get_overall_usage(options, ru.PREQUANT_RESOURCE_TYPE)
         usage_quant = _get_overall_usage(options, ru.QUANT_RESOURCE_TYPE)
         _draw_usage_graphs(
-            logger, plot_format, stats_dir, usage_quant, usage_prequant,
-            stats_option_values)
+            logger, plot_format, stats_dir, usage_quant, option_values_set)
 
 
 def _run_piquant_command(logger, piquant_command, options, qr_options):

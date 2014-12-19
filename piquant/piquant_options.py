@@ -443,6 +443,10 @@ def get_multiple_quant_run_options():
     return set(_MultiQuantRunOption.OPTIONS)
 
 
+def get_numerical_mqr_options():
+    return [o for o in get_multiple_quant_run_options() if o.is_numeric]
+
+
 def get_run_name(qr_options):
     """
     Get the name of a read simulation or quantification run.

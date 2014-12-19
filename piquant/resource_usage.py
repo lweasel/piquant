@@ -19,7 +19,7 @@ class _ResourceUsageStatistic(object):
 
     def stat_range(self, vals_range):
         del vals_range
-        return None
+        return (0, None)
 
 
 _RESOURCE_USAGE_STATS = []
