@@ -107,8 +107,10 @@ def _get_tpm_infos(non_zero, tp_tpms):
             TpmInfo(tp_tpms, TRUE_POSITIVES_LABEL)]
 
 
-def _add_mqr_option_values(stats, options):
-    for option in po.get_multiple_quant_run_options():
+def _add_mqr_option_values(
+        stats, options, options_to_add=po.get_multiple_quant_run_options()):
+
+    for option in options_to_add:
         stats[option.name] = options[option.get_option_name()]
 
 
@@ -297,7 +299,9 @@ def _analyse_run(logger, options):
                  tp_gene_tpms, clsfr_stats)
 
 
-def _summarise_resource_usage(logger, usage_file, resource_type, options):
+def _summarise_resource_usage(
+        logger, usage_file, resource_type, prequant, options):
+
     logger.info("Reading timing and memory usage from " + usage_file)
 
     # The resource usage file may not have been specified (e.g. if the user is
@@ -312,9 +316,14 @@ def _summarise_resource_usage(logger, usage_file, resource_type, options):
     # multiple command invocations, and maximum memory usage by any command
     usage_summary = ru.get_usage_summary(usage_file)
 
-    # Add run identification data and write resource usage summary to file
-    _add_mqr_option_values(usage_summary, options)
+    # Add run identification data
+    if prequant:
+        _add_mqr_option_values(
+            usage_summary, options, options_to_add=[po.QUANT_METHOD])
+    else:
+        _add_mqr_option_values(usage_summary, options)
 
+    # Write resource usage summary to file
     usage_file_name = ru.get_resource_usage_file(
         resource_type, prefix=options[OUT_FILE_BASENAME], directory=".")
     ru.write_usage_summary(usage_file_name, usage_summary)
@@ -323,10 +332,10 @@ def _summarise_resource_usage(logger, usage_file, resource_type, options):
 def _analyse_resource_usage(logger, options):
     _summarise_resource_usage(
         logger, options[PREQUANT_USAGE_FILE],
-        ru.PREQUANT_RESOURCE_TYPE, options)
+        ru.PREQUANT_RESOURCE_TYPE, True, options)
     _summarise_resource_usage(
         logger, options[QUANT_USAGE_FILE],
-        ru.QUANT_RESOURCE_TYPE, options)
+        ru.QUANT_RESOURCE_TYPE, False, options)
 
 
 def analyse_quantification_run(args):
