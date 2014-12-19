@@ -102,15 +102,17 @@ class _PiquantOption(object):
                         quant_run_option_values):
 
         del quant_run_option_values
+        self._set_new_value_in_options_dict(values_dict, option_values)
 
-        new_value = self._get_validate_vals(values_dict)[0] \
+    def _set_new_value_in_options_dict(self, values_dict, options_dict):
+        new_value = self._get_validated_vals(values_dict)[0] \
             if self.has_value() else values_dict[self.get_option_name()]
 
-        if self.name not in option_values \
+        if self.name not in options_dict \
                 or new_value != self.default_value():
-            option_values[self.name] = new_value
+            options_dict[self.name] = new_value
 
-    def _get_validate_vals(self, values_dict):
+    def _get_validated_vals(self, values_dict):
         validated_vals = None
         if self.has_value():
             validated_vals = opt.validate_options_list(
@@ -145,9 +147,9 @@ class _QuantRunOption(_PiquantOption):
     def _set_new_values(self, values_dict, option_values,
                         quant_run_option_values):
 
-        quant_run_option_values[self.name] = \
-            self._get_validate_vals(values_dict)[0] \
-            if self.has_value() else values_dict[self.get_option_name()]
+        del option_values
+        self._set_new_value_in_options_dict(
+            values_dict, quant_run_option_values)
 
 
 class _MultiQuantRunOption(_QuantRunOption):
@@ -164,7 +166,7 @@ class _MultiQuantRunOption(_QuantRunOption):
                         quant_run_option_values):
 
         quant_run_option_values[self.name] = \
-            set(self._get_validate_vals(values_dict))
+            set(self._get_validated_vals(values_dict))
 
 
 OPTIONS_FILE = _PiquantOption(
@@ -215,6 +217,12 @@ NO_CLEANUP = _PiquantOption(
     "If not specified, files non-essential for subsequent quantification " +
     "(when creating reads) and assessing quantification accuracy (when " +
     "quantifying) will be deleted")
+
+NO_USAGE = _PiquantOption(
+    "nousage",
+    "If not specified, time and memory resource usage statistics will be " +
+    "gathered for prequantification and quantification, and resource usage " +
+    "plots produced.")
 
 NUM_THREADS = _QuantRunOption(
     "num_threads",
@@ -433,6 +441,10 @@ def _fix_paths_for_dir_options(option_values):
 
 def get_multiple_quant_run_options():
     return set(_MultiQuantRunOption.OPTIONS)
+
+
+def get_numerical_mqr_options():
+    return [o for o in get_multiple_quant_run_options() if o.is_numeric]
 
 
 def get_run_name(qr_options):

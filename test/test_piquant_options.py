@@ -32,6 +32,20 @@ def _get_test_option(
     return option
 
 
+def _get_test_qr_option(
+        name="name", title="The Name",
+        description="description for the option",
+        is_numeric=False, option_value=_get_test_option_value()):
+
+    option = po._QuantRunOption(
+        name, description, title=title, option_value=option_value,
+        is_numeric=is_numeric)
+
+    po._PiquantOption.OPTIONS.remove(option)
+    po._QuantRunOption.OPTIONS.remove(option)
+    return option
+
+
 def _get_ignore_options():
     return [
         po.READ_DEPTH,
@@ -187,9 +201,44 @@ def test_get_file_name_part_returns_correct_value_when_file_namer_supplied():
     assert opt.get_file_name_part(value) == str(value) + "bp"
 
 
-def test_get_multi_quant_run_options_returns_piquant_option_instances():
+def test_default_values_dont_overwrite_file_values_for_piquant_options():
+    file_value = 10
+    default_value = file_value + 1
+    opt = _get_test_option(
+        option_value=_get_test_option_value(default_value=default_value))
+
+    option_values = {}
+    opt.validate_value(
+        {opt.get_option_name(): str(default_value)},
+        {opt.get_option_name(): str(file_value)},
+        option_values, {})
+
+    assert option_values[opt.name] == file_value
+
+
+def test_default_values_dont_overwrite_file_values_for_quant_run_options():
+    file_value = 10
+    default_value = file_value + 1
+    opt = _get_test_qr_option(
+        option_value=_get_test_option_value(default_value=default_value))
+
+    qr_option_values = {}
+    opt.validate_value(
+        {opt.get_option_name(): str(default_value)},
+        {opt.get_option_name(): str(file_value)},
+        {}, qr_option_values)
+
+    assert qr_option_values[opt.name] == file_value
+
+
+def test_get_multi_quant_run_options_returns_mqr_option_instances():
     opts = po.get_multiple_quant_run_options()
-    assert all([isinstance(o, po._PiquantOption) for o in opts])
+    assert all([isinstance(o, po._MultiQuantRunOption) for o in opts])
+
+
+def test_get_numerical_mqr_options_returns_numeric_options():
+    opts = po.get_numerical_mqr_options()
+    assert all([o.is_numeric for o in opts])
 
 
 def test_validate_option_values_returns_correct_number_of_options():

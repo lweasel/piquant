@@ -172,6 +172,7 @@ In addition to the command line options common to all ``piquant`` commands (see 
 * ``--genome-fasta``: The path to a directory containing per-chromosome genome sequences in FASTA-formatted files. This directory location must be supplied. The genome sequences should be the same as were supplied to the ``prepare_read_dirs`` command.
 * ``--num-threads``: Multi-threaded quantification methods will use this number of threads (default: 1).
 * ``--nocleanup``: When run, quantification tools may create a number of output files. Unless ``--nocleanup`` is specified, the  ``run_quantification.sh`` Bash script will be constructed so as to delete all of these, except those essential for *piquant* to calculate the accuracy with which quantification has been performed. 
+* ``--nousage``: By default, *piquant* will collect time and memory resource usage statistics for the execution of quantification tools. This is done via the GNU ``time`` command, which is assumed to reside at ``/usr/bin/time``. If the GNU ``time`` command is not available at this location, or resource usage statistics are not desired, specifying this option will disable their collection.
 * ``--plot-format``: The file format in which graphs produced during the analysis of this quantification run will be written to - one of "pdf", "svg" or "png" (default "pdf").
 * ``--grouped-threshold``: When producing graphs of statistics plotted against groups of transcripts determined by a transcript classifier (see :ref:`assessment-transcript-classifiers`), only groups with greater than this number of transcripts will contribute to the plot.
 * ``--error-fraction-threshold``: When producing graphs, transcripts whose estimated TPM (transcripts per million) is greater than this percentage higher or lower than their real TPM are considered above threshold for the "error fraction" statistic (default: 10).
@@ -205,7 +206,7 @@ In the case of unsuccessful termination, the file ``nohup.out`` in the relevant 
 Analyse quantification results (``analyse_runs``)
 -------------------------------------------------
 
-The ``analyse_runs`` command is used to gather data and calculate statistics, and to draw graphs, pertaining to the accuracy of quantification of transcript expression. Statistics are calculated, and graphs drawn, for those combinations of quantification tools and sequencing parameters determined by the options ``--read-length``,  ``--read-depth``, ``--paired-end``, ``--error``, ``--bias``, ``--stranded``, ``--noise-perc`` and ``--quant-method``.
+The ``analyse_runs`` command is used to gather data and calculate statistics, and to draw graphs, pertaining to the accuracy of quantification of transcript expression. Statistics are calculated, and graphs drawn, for those combinations of quantification tools and sequencing parameters determined by the options ``--read-length``,  ``--read-depth``, ``--paired-end``, ``--error``, ``--bias``, ``--stranded``, ``--noise-perc`` and ``--quant-method``. In addition, by default, graphs are produced comparing the time and memory usage of the different quantification tools during the prequantification and quantification steps.
 
 For more details on the statistics calculated and the graphs drawn, see :doc:`assessment`.
 
@@ -215,3 +216,4 @@ In addition to the command line options common to all ``piquant`` commands (see 
 * ``--stats-dir``: The path to a directory into which statistics and graph files will be written. The directory will be created if it does not already exist.
 * ``--plot-format``: The file format in which graphs produced during analysis will be written to - one of "pdf", "svg" or "png" (default "pdf").
 * ``--grouped-threshold``: When producing graphs of statistics plotted against groups of transcripts determined by a transcript classifier, only groups with greater than this number of transcripts will contribute to the plot.
+* ``--nousage``: Specify this option if graphs of resource usage are not desired to be produced. Note that if this option was specified when preparing quantification directories, it should also be specified here.

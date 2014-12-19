@@ -108,11 +108,12 @@ PREPARE_QUANT_DIRS = _PiquantCommand(
     "written to each directory which, when executed, will use the " +
     "appropriate tool and simulated RNA-seq reads to quantify transcript " +
     "expression.",
-    [po.READS_OUTPUT_DIR, po.QUANT_OUTPUT_DIR, po.NO_CLEANUP, po.NUM_THREADS,
-     po.OPTIONS_FILE, po.READ_LENGTH, po.READ_DEPTH, po.PAIRED_END, po.ERRORS,
-     po.BIAS, po.STRANDED, po.QUANT_METHOD, po.NOISE_DEPTH_PERCENT,
-     po.TRANSCRIPT_GTF, po.GENOME_FASTA_DIR, po.PLOT_FORMAT,
-     po.GROUPED_THRESHOLD, po.ERROR_FRACTION_THRESHOLD, po.NOT_PRESENT_CUTOFF])
+    [po.READS_OUTPUT_DIR, po.QUANT_OUTPUT_DIR, po.NO_CLEANUP, po.NO_USAGE,
+     po.NUM_THREADS, po.OPTIONS_FILE, po.READ_LENGTH, po.READ_DEPTH,
+     po.PAIRED_END, po.ERRORS, po.BIAS, po.STRANDED, po.QUANT_METHOD,
+     po.NOISE_DEPTH_PERCENT, po.TRANSCRIPT_GTF, po.GENOME_FASTA_DIR,
+     po.PLOT_FORMAT, po.GROUPED_THRESHOLD, po.ERROR_FRACTION_THRESHOLD,
+     po.NOT_PRESENT_CUTOFF])
 
 PREQUANTIFY = _PiquantCommand(
     "prequantify",
@@ -169,7 +170,7 @@ ANALYSE_RUNS = _PiquantCommand(
     [po.QUANT_OUTPUT_DIR, po.STATS_DIRECTORY, po.OPTIONS_FILE,
      po.READ_LENGTH, po.READ_DEPTH, po.PAIRED_END, po.ERRORS, po.BIAS,
      po.STRANDED, po.QUANT_METHOD, po.NOISE_DEPTH_PERCENT,
-     po.PLOT_FORMAT, po.GROUPED_THRESHOLD])
+     po.PLOT_FORMAT, po.GROUPED_THRESHOLD, po.NO_USAGE])
 
 
 def get_command_names():

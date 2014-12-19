@@ -95,6 +95,8 @@ The commands specified by the function's parameters will be joined together by p
 
 The text specified by the parameter ``comment`` will be written to the Bash script as an appropriately-formatted comment.
 
+.. note:: An exception to the use of BashScriptWriter is in the case where commands are being written that should contribute to the resource usage statistics recorded during prequantification or quantification. In this case, the methods ``_add_timed_{pre}quantification_<command|pipe>`` of the ``_BaseQuantifier`` class should be used instead.
+
 .. _extending-adding-new-statistics:
 
 Adding a new statistic

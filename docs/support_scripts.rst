@@ -19,8 +19,12 @@ For full details of the analyses produced, see :ref:`here <assessment-single-run
 Usage::
 
     analyse_quantification_run 
-        [--log-level=<log-level> --plot-format=<plot-format> --grouped-threshold=<grouped-threshold>]
-        [--error-fraction-threshold=<ef-threshold> --not-present-cutoff=<cutoff>] 
+        [--log-level=<log-level> --plot-format=<plot-format>] 
+        [--grouped-threshold=<grouped-threshold>]
+        [--error-fraction-threshold=<ef-threshold>] 
+        [--not-present-cutoff=<cutoff>] 
+        [--prequant-usage-file=<prequant-usage-file>]
+        [--quant-usage-file=<quant-usage-file>]
         --quant-method=<quant-method> --read-length=<read-length> 
         --read-depth=<read-depth> --paired-end=<paired-end> 
         --errors=<errors> --bias=<bias> --stranded=<stranded> 
@@ -46,6 +50,8 @@ while these command-line parameters are optional:
 * ``--grouped-threshold``: The minimum number of transcripts required, in a group determined by a transcript classifier, for a statistic calculated for that group to be shown on a plot (default: 300).
 * ``--error-fraction-threshold``: Transcripts whose estimated TPM is greater than this percentage higher or lower than their real TPM are considered above threshold for the "error fraction" statistic.
 * ``--not-present-cutoff``: This cut-off value for a transcript's TPM is used to determined whether the transcript is considered to be present or not.
+* ``--prequant-usage-file``: A CSV file containing per-prequantification command resource usage statistics recorded using the GNU ``time`` command.
+* ``--quant-usage-file``: A CSV file containing per-quantification command resource usage statistics recorded using the GNU ``time`` command.
 
 .. _assemble-quantification-data:
 

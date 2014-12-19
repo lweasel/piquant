@@ -15,6 +15,7 @@ def _get_test_options(output_dir):
         po.READS_OUTPUT_DIR.name: output_dir,
         po.QUANT_OUTPUT_DIR.name: output_dir,
         po.NO_CLEANUP.name: True,
+        po.NO_USAGE.name: True,
         po.PLOT_FORMAT.name: "pdf",
         po.GROUPED_THRESHOLD.name: 3000,
         po.ERROR_FRACTION_THRESHOLD.name: 10,
