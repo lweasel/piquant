@@ -87,6 +87,9 @@ class _BaseStatistic(object):
         self.title = title
         self.graphable = graphable
 
+    def get_axis_label(self):
+        return self.title
+
     def calculate(self, tpms, tp_tpms):
         """Calculate the statistic for a set of TPMs.
 

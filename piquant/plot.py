@@ -160,8 +160,8 @@ def _plot_grouped_statistic(
 
     plot_bounds_setter(xmin, xmax, ymin, ymax)
 
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
+    plt.xlabel(_capitalized(xlabel))
+    plt.ylabel(_capitalized(ylabel))
     plt.legend(title=plot_info.group_mqr_option.title, loc=4)
     plt.suptitle(plot_info.title)
 
@@ -183,7 +183,7 @@ def _plot_grouped_stat_vs_mqr_opt(
             statistic.title, versus=varying_mqr_option.title)
         _plot_grouped_statistic(
             stats, plot_info, varying_mqr_option.name, statistic.name,
-            varying_mqr_option.title, statistic.title,
+            varying_mqr_option.get_axis_label(), statistic.get_axis_label(),
             _get_plot_bounds_setter(statistic))
 
 
@@ -199,12 +199,12 @@ def _plot_grouped_stat_vs_clsfr(
         base_name, statistic.name, versus=clsfr_col)
 
     with _saving_new_plot(fformat, name_elements):
-        xlabel = _capitalized(classifier.get_plot_title())
-        plot_info.set_plot_title(statistic.title, versus=xlabel)
+        plot_info.set_plot_title(
+            statistic.title, versus=classifier.get_plot_title())
 
         _plot_grouped_statistic(
-            stats, plot_info, clsfr_col,
-            statistic.name, xlabel, statistic.title,
+            stats, plot_info, clsfr_col, statistic.name,
+            classifier.get_axis_label(), statistic.get_axis_label(),
             _get_plot_bounds_setter(statistic))
 
         min_xval = stats[clsfr_col].min()
@@ -229,8 +229,7 @@ def _plot_grouped_cumulative_dist(
             _capitalized(clsfr_col) + " threshold")
         _plot_grouped_statistic(
             stats, plot_info, clsfr_col, t.TRUE_POSITIVE_PERCENTAGE,
-            _capitalized(clsfr_col),
-            _get_distribution_plot_ylabel(ascending),
+            clsfr_col, _get_distribution_plot_ylabel(ascending),
             _set_distribution_plot_bounds)
 
 
@@ -289,7 +288,7 @@ def plot_statistic_vs_classifier(
         _get_plot_bounds_setter(statistic)(
             min_xval, max_xval, yvals.min(), yvals.max())
 
-        plt.xlabel(_capitalized(classifier.get_plot_title()))
+        plt.xlabel(_capitalized(classifier.get_axis_label()))
         plt.ylabel(statistic.title)
         plt.suptitle(statistic.title + " vs " + _decapitalized(clsfr_col))
 

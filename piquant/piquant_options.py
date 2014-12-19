@@ -156,10 +156,13 @@ class _MultiQuantRunOption(_QuantRunOption):
     OPTIONS = []
 
     def __init__(self, name, description, option_value=None,
-                 title=None, is_numeric=False):
+                 title=None, is_numeric=False, units=None):
 
         _QuantRunOption.__init__(
             self, name, description, option_value, title, is_numeric)
+
+        self.units = units
+
         _MultiQuantRunOption.OPTIONS.append(self)
 
     def _set_new_values(self, values_dict, option_values,
@@ -167,6 +170,12 @@ class _MultiQuantRunOption(_QuantRunOption):
 
         quant_run_option_values[self.name] = \
             set(self._get_validated_vals(values_dict))
+
+    def get_axis_label(self):
+        label = self.title
+        if self.units:
+            label += " ({u})".format(u=self.units)
+        return label
 
 
 OPTIONS_FILE = _PiquantOption(
@@ -252,7 +261,7 @@ READ_DEPTH = _MultiQuantRunOption(
 READ_LENGTH = _MultiQuantRunOption(
     "read_length",
     "Comma-separated list of read-lengths to perform quantification for",
-    title="Read length", is_numeric=True,
+    title="Read length", is_numeric=True, units="bp",
     option_value=_OptionValue(
         validator=lambda x: opt.validate_int_option(
             x, "Read length must be a positive integer", min_val=1),

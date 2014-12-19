@@ -8,10 +8,11 @@ OVERALL_USAGE_PREFIX = "overall"
 
 
 class _ResourceUsageStatistic(object):
-    def __init__(self, name, title, format_string, value_extractor):
+    def __init__(self, name, title, format_string, units, value_extractor):
         self.name = name
         self.title = title
         self.format_string = format_string
+        self.units = units
         self.value_extractor = value_extractor
 
     def get_value(self, usage_df):
@@ -21,23 +22,26 @@ class _ResourceUsageStatistic(object):
         max_val = math.ceil(vals_range[1] * 2) / 2.0
         return (0, max_val + 0.01)
 
+    def get_axis_label(self):
+        return "{t} ({u})".format(t=self.title, u=self.units)
+
 
 _RESOURCE_USAGE_STATS = []
 
 _RESOURCE_USAGE_STATS.append(_ResourceUsageStatistic(
-    "real-time", "Total elapsed real time", "%e",
+    "real-time", "Log10 total elapsed real time", "%e", "s",
     lambda x: math.log10(x.sum())))
 
 _RESOURCE_USAGE_STATS.append(_ResourceUsageStatistic(
-    "user-time", "Total user mode time", "%U",
+    "user-time", "Log10 total user mode time", "%U", "s",
     lambda x: math.log10(x.sum())))
 
 _RESOURCE_USAGE_STATS.append(_ResourceUsageStatistic(
-    "sys-time", "Total kernel mode time", "%S",
+    "sys-time", "Log10 total kernel mode time", "%S", "s",
     lambda x: math.log10(x.sum())))
 
 _RESOURCE_USAGE_STATS.append(_ResourceUsageStatistic(
-    "max-memory", "Maximum resident memory", "%M",
+    "max-memory", "Maximum resident memory", "%M", "Gb",
     lambda x: x.max() / 1048576.0))
 
 
