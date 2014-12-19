@@ -370,7 +370,7 @@ def draw_quant_res_usage_graphs(
         fformat, stats_dir, usage_data, opt_vals_set):
 
     _draw_stats_graphs(
-        fformat, stats_dir, "resoure_usage_graphs", usage_data, opt_vals_set,
+        fformat, stats_dir, "resource_usage_graphs", usage_data, opt_vals_set,
         ru.get_resource_usage_statistics(), statistics.OVERALL_STATS_PREFIX)
 
 
