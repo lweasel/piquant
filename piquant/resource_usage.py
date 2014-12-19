@@ -49,8 +49,9 @@ def get_time_command(resource_type):
     output_file = get_resource_usage_file(resource_type)
     format_string = ",".join(
         [rus.format_string for rus in _RESOURCE_USAGE_STATS])
-    return "/usr/bin/time -f \"%C,{format_string}\" -o {output_file} -a ".\
-        format(format_string=format_string, output_file=output_file)
+    return ("/usr/bin/time -f \"\\\"%C\\\",{format_string}\" " +
+            "-o {output_file} -a ").format(
+        format_string=format_string, output_file=output_file)
 
 
 def get_usage_summary(usage_file):
