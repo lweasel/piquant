@@ -207,7 +207,7 @@ NUM_MOLECULES = _QuantRunOption(
     "Flux Simulator parameters will be set for the main simulation to start " +
     "with this number of transcript molecules in the initial population",
     option_value=_OptionValue(
-        default_value="30000000",
+        default_value=30000000,
         validator=lambda x: opt.validate_int_option(
             x, "Number of molecules must be a positive integer", min_val=1)))
 
@@ -216,7 +216,7 @@ NUM_NOISE_MOLECULES = _QuantRunOption(
     "Flux Simulator parameters will be set for the noise simulation to start " +
     "with this number of noise transcript molecules in the initial population",
     option_value=_OptionValue(
-        default_value="2000000",
+        default_value=2000000,
         validator=lambda x: opt.validate_int_option(
             x, "Number of noise molecules must be a positive integer",
             min_val=1)))
