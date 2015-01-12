@@ -313,9 +313,12 @@ def _draw_overall_stats_graphs(
 
 
 def _draw_usage_graphs(
-        logger, plot_format, stats_dir, usage_quant, option_values_set):
+        logger, plot_format, stats_dir,
+        usage_prequant, usage_quant, option_values_set):
 
     logger.info("Draw graphs of time and memory resource usage...")
+    plot.draw_prequant_res_usage_graphs(
+        plot_format, stats_dir, usage_prequant)
     plot.draw_quant_res_usage_graphs(
         plot_format, stats_dir, usage_quant, option_values_set)
 
@@ -362,8 +365,10 @@ def _analyse_runs(logger, record_usage, options):
 
     if record_usage:
         usage_quant = _get_overall_usage(options, ru.QUANT_RESOURCE_TYPE)
+        usage_prequant = _get_overall_usage(options, ru.PREQUANT_RESOURCE_TYPE)
         _draw_usage_graphs(
-            logger, plot_format, stats_dir, usage_quant, option_values_set)
+            logger, plot_format, stats_dir,
+            usage_prequant, usage_quant, option_values_set)
 
 
 def _run_piquant_command(logger, piquant_command, options, qr_options):

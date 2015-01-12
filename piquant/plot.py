@@ -13,6 +13,8 @@ from . import resource_usage as ru
 from . import statistics
 from . import tpms as t
 
+RESOURCE_USAGE_DIR = "resource_usage_graphs"
+
 # Don't embed characters as paths when outputting SVG - assume fonts are
 # installed on machine where SVG will be viewed (see
 # http://matplotlib.org/users/customizing.html)
@@ -233,6 +235,57 @@ def _plot_grouped_cumulative_dist(
             _set_distribution_plot_bounds)
 
 
+def _draw_prequant_time_usage_graph(fformat, graph_file_basename, usage_data):
+    with _saving_new_plot(fformat, [graph_file_basename, "time_usage"]):
+        n_groups = len(usage_data.index)
+        index = np.arange(n_groups)
+
+        time_usage_stats = ru.get_time_usage_statistics()
+        gap_width = 0.1
+        bar_width = (1 - gap_width) / len(time_usage_stats)
+
+        dummy, axes = plt.subplots()
+        color_cycle = axes._get_lines.color_cycle
+
+        for i, usage_stat in enumerate(time_usage_stats):
+            plt.bar(index + i * bar_width,
+                    usage_data[usage_stat.name].values,
+                    bar_width, color=color_cycle.next(),
+                    label=_capitalized(usage_stat.name.replace('-', ' ')))
+
+        plt.xlabel('Quantification method')
+        plt.ylabel('Log10 total time (s)')
+        plt.title('Time taken for prequantification')
+        plt.xticks(index + ((1 - gap_width) / 2),
+                   usage_data["quant_method"].values)
+
+        box = axes.get_position()
+        axes.set_position([box.x0, box.y0, box.width * 0.9, box.height])
+        axes.legend(loc=6, bbox_to_anchor=(1, 0.5))
+
+
+def _draw_prequant_mem_usage_graph(fformat, graph_file_basename, usage_data):
+    with _saving_new_plot(fformat, [graph_file_basename, "memory_usage"]):
+        n_groups = len(usage_data.index)
+        index = np.arange(n_groups)
+
+        mem_usage_stat = ru.get_memory_usage_statistics()[0]
+        bar_width = 0.9
+
+        dummy, axes = plt.subplots()
+        color_cycle = axes._get_lines.color_cycle
+
+        plt.bar(index,
+                usage_data[mem_usage_stat.name].values,
+                bar_width, color=color_cycle.next())
+
+        plt.xlabel('Quantification method')
+        plt.ylabel('Resident memory (Gb)')
+        plt.title('Maximum resident memory during prequantification')
+        plt.xticks(index + bar_width / 2,
+                   usage_data["quant_method"].values)
+
+
 def log_tpm_scatter_plot(
         fformat, tpms, base_name, tpm_label, not_present_cutoff):
 
@@ -369,8 +422,16 @@ def draw_quant_res_usage_graphs(
         fformat, stats_dir, usage_data, opt_vals_set):
 
     _draw_stats_graphs(
-        fformat, stats_dir, "resource_usage_graphs", usage_data, opt_vals_set,
+        fformat, stats_dir, RESOURCE_USAGE_DIR, usage_data, opt_vals_set,
         ru.get_resource_usage_statistics(), statistics.OVERALL_STATS_PREFIX)
+
+
+def draw_prequant_res_usage_graphs(fformat, stats_dir, usage_data):
+    plot_dir = _get_plot_subdir(stats_dir, RESOURCE_USAGE_DIR)
+    graph_file_basename = os.path.join(plot_dir, "prequant")
+
+    _draw_prequant_time_usage_graph(fformat, graph_file_basename, usage_data)
+    _draw_prequant_mem_usage_graph(fformat, graph_file_basename, usage_data)
 
 
 def draw_overall_stats_graphs(

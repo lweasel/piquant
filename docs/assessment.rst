@@ -262,3 +262,5 @@ As before, a plot will be produced for every combination of values of quantifica
 *"Resource usage statistic" graphs*
 
 In the sub-directory ``resource_usage_graphs``, a directory structure is created in exactly the same way as for "Overall statistics" graphs (see :ref:`above <overall-statistics-graphs>`). However, in this case, the graphs plotted measure resource usage statistics rather the than accuracy statistics calculated over sets of transcripts or genes.
+
+The ``resource_usage_graphs`` directory also contains, at the top level, two graphs pertaining to prequantification: ``prequant_time_usage.pdf`` is a bar plot comparing the real, user and kernel mode time taken by each prequantification for each quantification method, and ``prequant_memory_usage.pdf`` is a bar plot comparing the maximum resident memory occupied by any process during prequantification.

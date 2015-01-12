@@ -5,11 +5,15 @@ import os.path
 PREQUANT_RESOURCE_TYPE = "prequant_usage"
 QUANT_RESOURCE_TYPE = "quant_usage"
 OVERALL_USAGE_PREFIX = "overall"
+TIME_USAGE_TYPE = "time"
+MEMORY_USAGE_TYPE = "memory"
 
 
 class _ResourceUsageStatistic(object):
-    def __init__(self, name, title, format_string, units, value_extractor):
+    def __init__(self, name, usage_type, title,
+                 format_string, units, value_extractor):
         self.name = name
+        self.usage_type = usage_type
         self.title = title
         self.format_string = format_string
         self.units = units
@@ -29,24 +33,38 @@ class _ResourceUsageStatistic(object):
 _RESOURCE_USAGE_STATS = []
 
 _RESOURCE_USAGE_STATS.append(_ResourceUsageStatistic(
-    "real-time", "Log10 total elapsed real time", "%e", "s",
+    "real-time", TIME_USAGE_TYPE,
+    "Log10 total elapsed real time", "%e", "s",
     lambda x: math.log10(x.sum())))
 
 _RESOURCE_USAGE_STATS.append(_ResourceUsageStatistic(
-    "user-time", "Log10 total user mode time", "%U", "s",
+    "user-time", TIME_USAGE_TYPE,
+    "Log10 total user mode time", "%U", "s",
     lambda x: math.log10(x.sum())))
 
 _RESOURCE_USAGE_STATS.append(_ResourceUsageStatistic(
-    "sys-time", "Log10 total kernel mode time", "%S", "s",
+    "sys-time", TIME_USAGE_TYPE,
+    "Log10 total kernel mode time", "%S", "s",
     lambda x: math.log10(x.sum())))
 
 _RESOURCE_USAGE_STATS.append(_ResourceUsageStatistic(
-    "max-memory", "Maximum resident memory", "%M", "Gb",
+    "max-memory", MEMORY_USAGE_TYPE,
+    "Maximum resident memory", "%M", "Gb",
     lambda x: x.max() / 1048576.0))
 
 
 def get_resource_usage_statistics():
     return set(_RESOURCE_USAGE_STATS)
+
+
+def get_time_usage_statistics():
+    return [rus for rus in _RESOURCE_USAGE_STATS
+            if rus.usage_type == TIME_USAGE_TYPE]
+
+
+def get_memory_usage_statistics():
+    return [rus for rus in _RESOURCE_USAGE_STATS
+            if rus.usage_type == MEMORY_USAGE_TYPE]
 
 
 def get_time_command(resource_type):
