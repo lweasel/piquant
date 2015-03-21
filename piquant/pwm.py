@@ -1,6 +1,7 @@
 # pylint: disable=W0142
 # pylint: disable=R0903
 
+import functools
 import operator
 
 NEUTRAL_SCORE = 0.25
@@ -26,4 +27,4 @@ class PWM(object):
         if score_length < self.length:
             scores += [NEUTRAL_SCORE] * (self.length - score_length)
 
-        return reduce(operator.mul, scores)
+        return functools.reduce(operator.mul, scores)

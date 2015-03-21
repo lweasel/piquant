@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+import piquant.randomise_read_strands as entry_point
+import sys
+
+entry_point.randomise_read_strands(sys.argv[1:])

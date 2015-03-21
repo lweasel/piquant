@@ -15,6 +15,7 @@ def _get_test_options(output_dir):
         po.READS_OUTPUT_DIR.name: output_dir,
         po.QUANT_OUTPUT_DIR.name: output_dir,
         po.NO_CLEANUP.name: True,
+        po.NO_USAGE.name: True,
         po.PLOT_FORMAT.name: "pdf",
         po.GROUPED_THRESHOLD.name: 3000,
         po.ERROR_FRACTION_THRESHOLD.name: 10,
@@ -69,8 +70,7 @@ def test_read_directory_checker_returns_correct_checker_if_directory_should_exis
         os.mkdir(options_dir)
 
         directory_checker = piq._reads_directory_checker(True)
-        directory_checker(_get_logger(), "dummy_dir",
-                          test_options, **get_test_qr_options())
+        directory_checker(_get_logger(), test_options, **get_test_qr_options())
 
 
 def test_read_directory_checker_returns_correct_checker_if_directory_should_exist_and_doesnt_exist():
@@ -79,8 +79,8 @@ def test_read_directory_checker_returns_correct_checker_if_directory_should_exis
 
         directory_checker = piq._reads_directory_checker(True)
         with pytest.raises(SystemExit):
-            directory_checker(_get_logger(), "dummy_dir",
-                              test_options, **get_test_qr_options())
+            directory_checker(_get_logger(), test_options,
+                              **get_test_qr_options())
 
 
 def test_read_directory_checker_returns_correct_checker_if_directory_shouldnt_exist_and_doesnt_exist():
@@ -88,8 +88,8 @@ def test_read_directory_checker_returns_correct_checker_if_directory_shouldnt_ex
         test_options = _get_test_options(temp_dir)
 
         directory_checker = piq._reads_directory_checker(False)
-        directory_checker(_get_logger(), "dummy_dir",
-                          test_options, **get_test_qr_options())
+        directory_checker(_get_logger(), test_options,
+                          **get_test_qr_options())
 
 
 def test_read_directory_checker_returns_correct_checker_if_directory_shouldnt_exist_and_does_exist():
@@ -101,16 +101,15 @@ def test_read_directory_checker_returns_correct_checker_if_directory_shouldnt_ex
 
         directory_checker = piq._reads_directory_checker(False)
         with pytest.raises(SystemExit):
-            directory_checker(_get_logger(), "dummy_dir",
-                              test_options, **get_test_qr_options())
+            directory_checker(_get_logger(), test_options,
+                              **get_test_qr_options())
 
 
 def test_prepare_read_simulation_creates_correct_files():
     with utils.temp_dir_created() as dir_path:
         options = _get_test_options(dir_path)
         qr_options = get_test_qr_options()
-        piq._prepare_read_simulation(
-            _get_logger(), "dummy_dir", options, **qr_options)
+        piq._prepare_read_simulation(_get_logger(), options, **qr_options)
 
         reads_dir = piq._get_options_dir(False, options, **qr_options)
         _check_file_exists(reads_dir, "run_simulation.sh")
@@ -130,7 +129,7 @@ def test_create_reads_executes_run_simulation_script():
         utils.write_executable_script(
             reads_dir, "run_simulation.sh", "touch " + test_filename)
 
-        piq._create_reads(_get_logger(), "dummy_dir", options, **qr_options)
+        piq._create_reads(_get_logger(), options, **qr_options)
         time.sleep(0.1)
 
         assert os.path.exists(reads_dir + os.path.sep + test_filename)
@@ -141,7 +140,7 @@ def test_prepare_quantification_creates_correct_file():
         options = _get_test_options(dir_path)
         qr_options = get_test_qr_options(quant_method=quant._Cufflinks())
         piq._prepare_quantification(
-            _get_logger(), "dummy_dir", options, **qr_options)
+            _get_logger(), options, **qr_options)
 
         quant_dir = piq._get_options_dir(True, options, **qr_options)
         _check_file_exists(quant_dir, "run_quantification.sh")

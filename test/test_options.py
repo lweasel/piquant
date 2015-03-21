@@ -266,6 +266,6 @@ def test_check_boolean_value_raises_exception_for_invalid_string():
 
 
 def check_exception_message(exc_info, *args):
-    exc_msg = exc_info.value.message
+    exc_msg = str(exc_info)
     for arg in args:
         assert str(arg) in exc_msg

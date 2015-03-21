@@ -4,6 +4,7 @@ from . import file_writer as fw
 from . import flux_simulator as fs
 from . import quantifiers as qs
 from . import piquant_options as po
+from . import resource_usage as ru
 
 RUN_SCRIPT = "run_quantification.sh"
 
@@ -21,10 +22,6 @@ TRANSCRIPT_COUNTS_FILE = "transcript_counts.csv"
 UNIQUE_SEQUENCE_FILE = "unique_sequence.csv"
 
 
-def _get_script_path(script_dir, script_name):
-    return os.path.join(script_dir, script_name)
-
-
 def _get_transcript_counts_file(quantifier_dir):
     return os.path.join(quantifier_dir, TRANSCRIPT_COUNTS_FILE)
 
@@ -34,30 +31,34 @@ def _get_unique_sequence_file(quantifier_dir):
 
 
 def _add_run_prequantification(
-        writer, script_dir, quant_method, quant_params,
-        quantifier_dir, transcript_gtf_file):
+        writer, quant_method, quant_params, quantifier_dir,
+        transcript_gtf_file, record_usage):
 
     with writer.if_block("-n \"$RUN_PREQUANTIFICATION\""):
         # Perform preparatory tasks required by a particular quantification
         # method prior to calculating abundances; for example, this might
         # include mapping reads to the genome with TopHat
-        quant_method.write_preparatory_commands(writer, quant_params)
+        quant_method.write_preparatory_commands(
+            writer, record_usage, quant_params)
         with writer.section():
             _add_calc_transcripts_per_gene(
-                writer, script_dir, quantifier_dir, transcript_gtf_file)
+                writer, quantifier_dir, transcript_gtf_file)
         with writer.section():
             _add_calc_uniq_seq_length(
-                writer, script_dir, quantifier_dir, transcript_gtf_file)
+                writer, quantifier_dir, transcript_gtf_file)
 
 
-def _add_quantify_transcripts(writer, quant_method, quant_params, cleanup):
+def _add_quantify_transcripts(
+        writer, quant_method, quant_params, cleanup, record_usage):
+
     # Use the specified quantification method to calculate per-transcript TPMs
     with writer.if_block("-n \"$QUANTIFY_TRANSCRIPTS\""):
         with writer.section():
             writer.add_comment(
                 "Use {method} to calculate per-transcript TPMs.".format(
                     method=quant_method))
-            quant_method.write_quantification_commands(writer, quant_params)
+            quant_method.write_quantification_commands(
+                writer, record_usage, quant_params)
 
         if cleanup:
             writer.add_comment(
@@ -65,23 +66,19 @@ def _add_quantify_transcripts(writer, quant_method, quant_params, cleanup):
             quant_method.write_cleanup(writer)
 
 
-def _add_calc_transcripts_per_gene(
-        writer, script_dir, quantifier_dir, transcript_gtf_file):
-
+def _add_calc_transcripts_per_gene(writer, quantifier_dir, transcript_gtf_file):
     # Calculate the number of transcripts per gene and write to a file
     writer.add_comment("Calculate the number of transcripts per gene.")
 
     counts_file = _get_transcript_counts_file(quantifier_dir)
     with writer.if_block("! -f " + counts_file):
         writer.add_line("{command} {transcript_gtf} > {counts_file}".format(
-            command=_get_script_path(script_dir, TRANSCRIPT_COUNTS_SCRIPT),
+            command=TRANSCRIPT_COUNTS_SCRIPT,
             transcript_gtf=transcript_gtf_file,
             counts_file=counts_file))
 
 
-def _add_calc_uniq_seq_length(
-        writer, script_dir, quantifier_dir, transcript_gtf_file):
-
+def _add_calc_uniq_seq_length(writer, quantifier_dir, transcript_gtf_file):
     # Calculate the length of unique sequence per transcript and write to a
     # file.
     writer.add_comment(
@@ -91,14 +88,12 @@ def _add_calc_uniq_seq_length(
     with writer.if_block("! -f " + unique_seq_file):
         writer.add_line(
             "{command} {transcript_gtf} > {unique_seq_file}".format(
-                command=_get_script_path(script_dir, UNIQUE_SEQUENCE_SCRIPT),
+                command=UNIQUE_SEQUENCE_SCRIPT,
                 transcript_gtf=transcript_gtf_file,
                 unique_seq_file=unique_seq_file))
 
 
-def _add_assemble_quant_data(
-        writer, script_dir, quantifier_dir, fs_pro_file, quant_method):
-
+def _add_assemble_quant_data(writer, quantifier_dir, fs_pro_file, quant_method):
     # Now assemble data required for analysis of quantification performance
     # into one file
     writer.add_comment(
@@ -108,7 +103,7 @@ def _add_assemble_quant_data(
     writer.add_line(
         ("{command} --method={method} --out={out_file} {fs_pro_file} " +
          "{counts_file} {unique_seq_file}").format(
-            command=_get_script_path(script_dir, ASSEMBLE_DATA_SCRIPT),
+            command=ASSEMBLE_DATA_SCRIPT,
             method=quant_method,
             out_file=TPMS_FILE,
             fs_pro_file=fs_pro_file,
@@ -117,7 +112,7 @@ def _add_assemble_quant_data(
 
 
 def _add_analyse_quant_results(
-        writer, script_dir, run_dir, options, **mqr_options):
+        writer, run_dir, record_usage, options, **mqr_options):
 
     # Finally perform analysis on the calculated TPMs
     writer.add_comment("Perform analysis on calculated TPMs.")
@@ -131,20 +126,37 @@ def _add_analyse_quant_results(
             name=options_dict[opt_name],
             val=str(opt_val))
 
+    run_name = os.path.basename(run_dir)
+
+    prequant_usage_file_name = \
+        ru.get_resource_usage_file(ru.PREQUANT_RESOURCE_TYPE)
+    quant_usage_file_name = \
+        ru.get_resource_usage_file(ru.QUANT_RESOURCE_TYPE)
+
+    resource_usage_spec = ""
+    if record_usage:
+        resource_usage_spec = \
+            "--prequant-usage-file={pquf} --quant-usage-file={quf}".format(
+                pquf=prequant_usage_file_name, quf=quant_usage_file_name)
+
     writer.add_line(
         ("{command} --plot-format={format} " +
          "--grouped-threshold={gp_threshold} " +
          "--error-fraction-threshold={ef_threshold} " +
          "--not-present-cutoff={cutoff} " +
-         "{mqr_options_spec} {tpms_file} {output_basename}").format(
-            command=_get_script_path(script_dir, ANALYSE_DATA_SCRIPT),
+         "{ru_spec} {mqr_options_spec} {tpms_file} " +
+         "{output_basename}").format(
+            command=ANALYSE_DATA_SCRIPT,
             format=options[po.PLOT_FORMAT.name],
             gp_threshold=options[po.GROUPED_THRESHOLD.name],
             ef_threshold=options[po.ERROR_FRACTION_THRESHOLD.name],
             cutoff=options[po.NOT_PRESENT_CUTOFF.name],
-            mqr_options_spec=mqr_options_spec,
-            tpms_file=TPMS_FILE,
-            output_basename=os.path.basename(run_dir)))
+            ru_spec=resource_usage_spec, mqr_options_spec=mqr_options_spec,
+            tpms_file=TPMS_FILE, output_basename=run_name))
+
+    if record_usage:
+        writer.add_line("rm -f " + prequant_usage_file_name)
+        writer.add_line("rm -f " + quant_usage_file_name)
 
 
 def _add_process_command_line_options(writer):
@@ -170,10 +182,9 @@ def _add_process_command_line_options(writer):
 
 
 def _add_analyse_results(
-        writer, reads_dir, run_dir, script_dir,
-        quantifier_dir, piquant_options,
-        quant_method, read_length, read_depth, paired_end,
-        errors, bias, stranded, noise_perc):
+        writer, reads_dir, run_dir, quantifier_dir, record_usage, options,
+        quant_method, read_length, read_depth, paired_end, errors,
+        bias, stranded, noise_perc):
 
     fs_pro_file = os.path.join(
         reads_dir, fs.get_expression_profile_file(fs.MAIN_TRANSCRIPTS))
@@ -181,9 +192,9 @@ def _add_analyse_results(
     with writer.if_block("-n \"$ANALYSE_RESULTS\""):
         with writer.section():
             _add_assemble_quant_data(
-                writer, script_dir, quantifier_dir, fs_pro_file, quant_method)
+                writer, quantifier_dir, fs_pro_file, quant_method)
         _add_analyse_quant_results(
-            writer, script_dir, run_dir, piquant_options,
+            writer, run_dir, record_usage, options,
             quant_method=quant_method,
             read_length=read_length, read_depth=read_depth,
             paired_end=paired_end, errors=errors, bias=bias,
@@ -217,7 +228,7 @@ def _get_quant_params(reads_dir, quantifier_dir, transcript_gtf, genome_fasta,
 
 
 def write_script(
-        reads_dir, run_dir, script_dir, piquant_options,
+        reads_dir, run_dir, options,
         quant_method=None, read_length=50, read_depth=10,
         paired_end=False, errors=False, bias=False,
         stranded=False, noise_perc=0,
@@ -231,25 +242,26 @@ def write_script(
             _add_process_command_line_options(writer)
 
         quantifier_dir = os.path.join(
-            piquant_options[po.QUANT_OUTPUT_DIR.name],
+            options[po.QUANT_OUTPUT_DIR.name],
             "quantifier_scratch")
 
         quant_params = _get_quant_params(
             reads_dir, quantifier_dir, transcript_gtf, genome_fasta,
             num_threads, paired_end, errors, stranded)
 
+        record_usage = not options[po.NO_USAGE.name]
+
         with writer.section():
             _add_run_prequantification(
-                writer, script_dir, quant_method, quant_params,
-                quantifier_dir, transcript_gtf)
+                writer, quant_method, quant_params,
+                quantifier_dir, transcript_gtf, record_usage)
 
         with writer.section():
-            cleanup = not piquant_options[po.NO_CLEANUP.name]
+            cleanup = not options[po.NO_CLEANUP.name]
             _add_quantify_transcripts(
-                writer, quant_method, quant_params, cleanup)
+                writer, quant_method, quant_params, cleanup, record_usage)
 
         _add_analyse_results(
-            writer, reads_dir, run_dir, script_dir,
-            quantifier_dir, piquant_options,
-            quant_method, read_length, read_depth, paired_end,
-            errors, bias, stranded, noise_perc)
+            writer, reads_dir, run_dir, quantifier_dir, record_usage, options,
+            quant_method, read_length, read_depth, paired_end, errors,
+            bias, stranded, noise_perc)

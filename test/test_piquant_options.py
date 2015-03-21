@@ -32,6 +32,20 @@ def _get_test_option(
     return option
 
 
+def _get_test_qr_option(
+        name="name", title="The Name",
+        description="description for the option",
+        is_numeric=False, option_value=_get_test_option_value()):
+
+    option = po._QuantRunOption(
+        name, description, title=title, option_value=option_value,
+        is_numeric=is_numeric)
+
+    po._PiquantOption.OPTIONS.remove(option)
+    po._QuantRunOption.OPTIONS.remove(option)
+    return option
+
+
 def _get_ignore_options():
     return [
         po.READ_DEPTH,
@@ -187,9 +201,44 @@ def test_get_file_name_part_returns_correct_value_when_file_namer_supplied():
     assert opt.get_file_name_part(value) == str(value) + "bp"
 
 
-def test_get_multi_quant_run_options_returns_piquant_option_instances():
+def test_default_values_dont_overwrite_file_values_for_piquant_options():
+    file_value = 10
+    default_value = file_value + 1
+    opt = _get_test_option(
+        option_value=_get_test_option_value(default_value=default_value))
+
+    option_values = {}
+    opt.validate_value(
+        {opt.get_option_name(): str(default_value)},
+        {opt.get_option_name(): str(file_value)},
+        option_values, {})
+
+    assert option_values[opt.name] == file_value
+
+
+def test_default_values_dont_overwrite_file_values_for_quant_run_options():
+    file_value = 10
+    default_value = file_value + 1
+    opt = _get_test_qr_option(
+        option_value=_get_test_option_value(default_value=default_value))
+
+    qr_option_values = {}
+    opt.validate_value(
+        {opt.get_option_name(): str(default_value)},
+        {opt.get_option_name(): str(file_value)},
+        {}, qr_option_values)
+
+    assert qr_option_values[opt.name] == file_value
+
+
+def test_get_multi_quant_run_options_returns_mqr_option_instances():
     opts = po.get_multiple_quant_run_options()
-    assert all([isinstance(o, po._PiquantOption) for o in opts])
+    assert all([isinstance(o, po._MultiQuantRunOption) for o in opts])
+
+
+def test_get_numerical_mqr_options_returns_numeric_options():
+    opts = po.get_numerical_mqr_options()
+    assert all([o.is_numeric for o in opts])
 
 
 def test_validate_option_values_returns_correct_number_of_options():
@@ -256,12 +305,14 @@ def test_validate_option_values_raises_exception_if_quant_run_option_values_not_
 def test_read_file_options_reads_options_from_file():
     quant_method = "Cufflinks"
     read_length = "10,20"
-    with tempfile.NamedTemporaryFile() as f:
-        f.write(po.QUANT_METHOD.get_option_name() + " " + quant_method + "\n")
-        f.write(po.READ_LENGTH.get_option_name() + " " + read_length + "\n")
-        f.flush()
+    with tempfile.NamedTemporaryFile(mode='w+') as tmp_file:
+        tmp_file.write(po.QUANT_METHOD.get_option_name() +
+                       " " + quant_method + "\n")
+        tmp_file.write(po.READ_LENGTH.get_option_name() +
+                       " " + read_length + "\n")
+        tmp_file.flush()
 
-        options = po._read_file_options(f.name)
+        options = po._read_file_options(tmp_file.name)
 
         assert options[po.QUANT_METHOD.get_option_name()] == quant_method
         assert options[po.READ_LENGTH.get_option_name()] == read_length
@@ -328,9 +379,8 @@ def test_execute_for_mqr_option_sets_executes_for_correct_number_of_option_sets(
 
     execute_counter = []
 
-    def count_incrementer(logger, script_dir, options, **qr_options):
+    def count_incrementer(logger, options, **qr_options):
         del logger
-        del script_dir
         del options
         del qr_options
         execute_counter.append(1)
@@ -338,7 +388,7 @@ def test_execute_for_mqr_option_sets_executes_for_correct_number_of_option_sets(
     command = pc._PiquantCommand("dummy", "dummy", [])
     command.executables = [count_incrementer]
     po.execute_for_mqr_option_sets(
-        command, None, None, None, qr_options)
+        command, None, None, qr_options)
 
     assert len(execute_counter) == len1 * len2 * len3
 
@@ -350,16 +400,14 @@ def test_execute_for_mqr_option_sets_executes_all_callables():
 
     execute_record = []
 
-    def callable1(logger, script_dir, options, **qr_options):
+    def callable1(logger, options, **qr_options):
         del logger
-        del script_dir
         del options
         del qr_options
         execute_record.append(1)
 
-    def callable2(logger, script_dir, options, **qr_options):
+    def callable2(logger, options, **qr_options):
         del logger
-        del script_dir
         del options
         del qr_options
         execute_record.append(2)
@@ -368,7 +416,7 @@ def test_execute_for_mqr_option_sets_executes_all_callables():
     command.executables = [callable1, callable2]
 
     po.execute_for_mqr_option_sets(
-        command, None, None, None, qr_options)
+        command, None, None, qr_options)
 
     assert 1 in execute_record
     assert 2 in execute_record
@@ -385,16 +433,15 @@ def test_execute_for_mqr_option_sets_executes_for_correct_sets_of_piquant_option
 
     execute_record = []
 
-    def callable1(logger, script_dir, options, **qr_option):
+    def callable1(logger, options, **qr_option):
         del logger
-        del script_dir
         del options
         execute_record.append([v for v in qr_option.values()])
 
     command = pc._PiquantCommand("dummy", "dummy", [])
     command.executables = [callable1]
     po.execute_for_mqr_option_sets(
-        command, None, None, None, qr_options)
+        command, None, None, qr_options)
 
     execute_record = \
         [set(piquant_options) for piquant_options in execute_record]

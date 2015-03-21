@@ -1,4 +1,4 @@
-piquant_pipeline.egg-info
+piquant.egg-info
 *.pyc
 *.swp
 .ipynb_checkpoints

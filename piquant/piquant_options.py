@@ -102,15 +102,17 @@ class _PiquantOption(object):
                         quant_run_option_values):
 
         del quant_run_option_values
+        self._set_new_value_in_options_dict(values_dict, option_values)
 
-        new_value = self._get_validate_vals(values_dict)[0] \
+    def _set_new_value_in_options_dict(self, values_dict, options_dict):
+        new_value = self._get_validated_vals(values_dict)[0] \
             if self.has_value() else values_dict[self.get_option_name()]
 
-        if self.name not in option_values \
+        if self.name not in options_dict \
                 or new_value != self.default_value():
-            option_values[self.name] = new_value
+            options_dict[self.name] = new_value
 
-    def _get_validate_vals(self, values_dict):
+    def _get_validated_vals(self, values_dict):
         validated_vals = None
         if self.has_value():
             validated_vals = opt.validate_options_list(
@@ -145,26 +147,35 @@ class _QuantRunOption(_PiquantOption):
     def _set_new_values(self, values_dict, option_values,
                         quant_run_option_values):
 
-        quant_run_option_values[self.name] = \
-            self._get_validate_vals(values_dict)[0] \
-            if self.has_value() else values_dict[self.get_option_name()]
+        del option_values
+        self._set_new_value_in_options_dict(
+            values_dict, quant_run_option_values)
 
 
 class _MultiQuantRunOption(_QuantRunOption):
     OPTIONS = []
 
     def __init__(self, name, description, option_value=None,
-                 title=None, is_numeric=False):
+                 title=None, is_numeric=False, units=None):
 
         _QuantRunOption.__init__(
             self, name, description, option_value, title, is_numeric)
+
+        self.units = units
+
         _MultiQuantRunOption.OPTIONS.append(self)
 
     def _set_new_values(self, values_dict, option_values,
                         quant_run_option_values):
 
         quant_run_option_values[self.name] = \
-            set(self._get_validate_vals(values_dict))
+            set(self._get_validated_vals(values_dict))
+
+    def get_axis_label(self):
+        label = self.title
+        if self.units:
+            label += " ({u})".format(u=self.units)
+        return label
 
 
 OPTIONS_FILE = _PiquantOption(
@@ -196,7 +207,7 @@ NUM_MOLECULES = _QuantRunOption(
     "Flux Simulator parameters will be set for the main simulation to start " +
     "with this number of transcript molecules in the initial population",
     option_value=_OptionValue(
-        default_value="30000000",
+        default_value=30000000,
         validator=lambda x: opt.validate_int_option(
             x, "Number of molecules must be a positive integer", min_val=1)))
 
@@ -205,7 +216,7 @@ NUM_NOISE_MOLECULES = _QuantRunOption(
     "Flux Simulator parameters will be set for the noise simulation to start " +
     "with this number of noise transcript molecules in the initial population",
     option_value=_OptionValue(
-        default_value="2000000",
+        default_value=2000000,
         validator=lambda x: opt.validate_int_option(
             x, "Number of noise molecules must be a positive integer",
             min_val=1)))
@@ -215,6 +226,12 @@ NO_CLEANUP = _PiquantOption(
     "If not specified, files non-essential for subsequent quantification " +
     "(when creating reads) and assessing quantification accuracy (when " +
     "quantifying) will be deleted")
+
+NO_USAGE = _PiquantOption(
+    "nousage",
+    "If not specified, time and memory resource usage statistics will be " +
+    "gathered for prequantification and quantification, and resource usage " +
+    "plots produced.")
 
 NUM_THREADS = _QuantRunOption(
     "num_threads",
@@ -244,7 +261,7 @@ READ_DEPTH = _MultiQuantRunOption(
 READ_LENGTH = _MultiQuantRunOption(
     "read_length",
     "Comma-separated list of read-lengths to perform quantification for",
-    title="Read length", is_numeric=True,
+    title="Read length", is_numeric=True, units="bp",
     option_value=_OptionValue(
         validator=lambda x: opt.validate_int_option(
             x, "Read length must be a positive integer", min_val=1),
@@ -435,6 +452,10 @@ def get_multiple_quant_run_options():
     return set(_MultiQuantRunOption.OPTIONS)
 
 
+def get_numerical_mqr_options():
+    return [o for o in get_multiple_quant_run_options() if o.is_numeric]
+
+
 def get_run_name(qr_options):
     """
     Get the name of a read simulation or quantification run.
@@ -474,8 +495,7 @@ def get_value_names(mqr_options):
     return value_names
 
 
-def execute_for_mqr_option_sets(
-        command, logger, script_dir, options, qr_options):
+def execute_for_mqr_option_sets(command, logger, options, qr_options):
     """
     Execute a piquant command for multiple option sets.
 
@@ -486,8 +506,6 @@ def execute_for_mqr_option_sets(
     command: The piquant command, an instance of
     piquant_command._PiquantCommand.
     logger: A Logger instance to write messages to standard out.
-    script_dir: The directory in which the main piquant script and its support
-    scripts are located.
     options: A dictionary mapping option name to option value for all command
     line options that are not instances of _QuantRunOption or
     _MultiQuantRunOption.
@@ -512,4 +530,4 @@ def execute_for_mqr_option_sets(
         for option_set in itertools.product(*mqr_option_values.values()):
             option_map = dict(zip(mqr_option_names, option_set))
             option_map.update(non_mqr_option_values)
-            to_call(logger, script_dir, options, **option_map)
+            to_call(logger, options, **option_map)

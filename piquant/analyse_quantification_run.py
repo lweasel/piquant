@@ -1,8 +1,6 @@
-#!/usr/bin/env python
-
 """
 Usage:
-    analyse_quantification_run [{log_option_spec} --plot-format=<plot-format> --grouped-threshold=<grouped-threshold> --error-fraction-threshold=<ef-threshold> --not-present-cutoff=<cutoff>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --errors=<errors> --bias=<bias> --stranded=<stranded> --noise-perc=<noise-depth-percentage> <tpm-file> <out-file>
+    analyse_quantification_run [{log_option_spec} --plot-format=<plot-format> --grouped-threshold=<grouped-threshold> --error-fraction-threshold=<ef-threshold> --not-present-cutoff=<cutoff> --prequant-usage-file=<prequant-usage-file> --quant-usage-file=<quant-usage-file>] --quant-method=<quant-method> --read-length=<read-length> --read-depth=<read-depth> --paired-end=<paired-end> --errors=<errors> --bias=<bias> --stranded=<stranded> --noise-perc=<noise-depth-percentage> <tpm-file> <out-file>
 
 Options:
 {help_option_spec}
@@ -23,6 +21,10 @@ Options:
 --not-present-cutoff=<cutoff>
     Cut-off value for the number of transcripts per-million below which a
     transcript is considered to be "not present" [default: 0.1].
+--prequant-usage-file=<prequant-usage-file>
+    CSV file recording time and memory usage of prequantification steps.
+--quant-usage-file=<quant-usage-file>
+    CSV file recording time and memory usage of quantification steps.
 --quant-method=<quant-method>
     Method used to quantify transcript abundances.
 --read-length=<read-length>
@@ -42,7 +44,7 @@ Options:
     (as a percentage of the depth of reads for the set of transcripts to be
     quantified).
 <tpm-file>
-    File containing real and calculated TPMs.
+    CSV file containing real and calculated TPMs.
 <out-file>
     Basename for output graph and data files.
 
@@ -56,12 +58,14 @@ import collections
 import docopt
 import itertools
 import numpy as np
+import os.path
 import pandas as pd
 import schema
 
 from . import classifiers
 from . import options as opt
 from . import piquant_options as po
+from . import resource_usage as ru
 from . import statistics
 from . import tpms as t
 from . import plot
@@ -70,6 +74,8 @@ from .__init__ import __version__
 TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
 TRUE_POSITIVES_LABEL = "true positive TPMs"
 TPM_FILE = "<tpm-file>"
+PREQUANT_USAGE_FILE = "--prequant-usage-file"
+QUANT_USAGE_FILE = "--quant-usage-file"
 OUT_FILE_BASENAME = "<out-file>"
 
 PIQUANT_OPTIONS = [
@@ -85,7 +91,8 @@ TpmInfo = collections.namedtuple("TpmInfo", ["tpms", "label"])
 def _validate_command_line_options(options):
     try:
         opt.validate_log_level(options)
-        opt.validate_file_option(options[TPM_FILE], "Could not open TPM file")
+        opt.validate_file_option(
+            options[TPM_FILE], "Could not open TPM file")
 
         for option in PIQUANT_OPTIONS:
             opt_name = option.get_option_name()
@@ -100,8 +107,11 @@ def _get_tpm_infos(non_zero, tp_tpms):
             TpmInfo(tp_tpms, TRUE_POSITIVES_LABEL)]
 
 
-def _add_mqr_option_values_to_stats(stats, options):
-    for option in po.get_multiple_quant_run_options():
+def _add_mqr_option_values(stats, options, options_to_add=None):
+
+    if options_to_add is None:
+        options_to_add = po.get_multiple_quant_run_options()
+    for option in options_to_add:
         stats[option.name] = options[option.get_option_name()]
 
 
@@ -112,7 +122,7 @@ def _write_overall_stats(transcript_tpms, tp_transcript_tpms,
             [(transcript_tpms, tp_transcript_tpms, t.TRANSCRIPT),
              (gene_tpms, tp_gene_tpms, t.GENE)]:
         stats = t.get_stats(tpms, tp_tpms, statistics.get_statistics())
-        _add_mqr_option_values_to_stats(stats, options)
+        _add_mqr_option_values(stats, options)
 
         stats_file_name = statistics.get_stats_file(
             ".", options[OUT_FILE_BASENAME], tpm_level)
@@ -127,7 +137,7 @@ def _write_stratified_stats(tpms, tp_tpms, non_zero, options):
             column_name = classifier.get_column_name()
             stats = t.get_grouped_stats(
                 tpms, tp_tpms, column_name, statistics.get_statistics())
-            _add_mqr_option_values_to_stats(stats, options)
+            _add_mqr_option_values(stats, options)
             clsfr_stats[classifier] = stats
 
             stats_file_name = statistics.get_stats_file(
@@ -138,7 +148,7 @@ def _write_stratified_stats(tpms, tp_tpms, non_zero, options):
             for ascending in [True, False]:
                 stats = t.get_distribution_stats(
                     non_zero, tp_tpms, classifier, ascending)
-                _add_mqr_option_values_to_stats(stats, options)
+                _add_mqr_option_values(stats, options)
 
                 stats_file_name = statistics.get_stats_file(
                     ".", options[OUT_FILE_BASENAME], t.TRANSCRIPT,
@@ -149,11 +159,11 @@ def _write_stratified_stats(tpms, tp_tpms, non_zero, options):
     return clsfr_stats
 
 
-def _draw_tpm_scatter_plot(tp_transcript_tpms, tp_gene_tpms, plot_format,
-                           basename, not_present_cutoff):
+def _draw_tpm_scatter_plots(tp_transcript_tpms, tp_gene_tpms, plot_format,
+                            basename, not_present_cutoff):
 
     plot.log_tpm_scatter_plot(
-        plot_format, tp_transcript_tpms, basename,
+        plot_format, tp_transcript_tpms, basename + "_transcript",
         TRUE_POSITIVES_LABEL, not_present_cutoff)
     plot.log_tpm_scatter_plot(
         plot_format, tp_gene_tpms, basename + "_gene",
@@ -241,7 +251,7 @@ def _draw_graphs(options, tp_transcript_tpms, non_zero_transcript_tpms,
                  tp_gene_tpms, clsfr_stats):
 
     # Make a scatter plot of log transformed calculated vs real TPMs
-    _draw_tpm_scatter_plot(
+    _draw_tpm_scatter_plots(
         tp_transcript_tpms, tp_gene_tpms,
         options[po.PLOT_FORMAT.name],
         options[OUT_FILE_BASENAME],
@@ -290,6 +300,45 @@ def _analyse_run(logger, options):
                  tp_gene_tpms, clsfr_stats)
 
 
+def _summarise_resource_usage(
+        logger, usage_file, resource_type, prequant, options):
+
+    logger.info("Reading timing and memory usage from " + usage_file)
+
+    # The resource usage file may not have been specified (e.g. if the user is
+    # not interested in resource usage statistics), or it may not exist even if
+    # specified (i.e. for prequantification, which is executed in only one
+    # quantification directory per quantifier) - in either case, no further
+    # action needs to be taken.
+    if not (usage_file and os.path.exists(usage_file)):
+        return
+
+    # Read timing and memory usage info, then calculate sums of times over
+    # multiple command invocations, and maximum memory usage by any command
+    usage_summary = ru.get_usage_summary(usage_file)
+
+    # Add run identification data
+    if prequant:
+        _add_mqr_option_values(
+            usage_summary, options, options_to_add=[po.QUANT_METHOD])
+    else:
+        _add_mqr_option_values(usage_summary, options)
+
+    # Write resource usage summary to file
+    usage_file_name = ru.get_resource_usage_file(
+        resource_type, prefix=options[OUT_FILE_BASENAME], directory=".")
+    ru.write_usage_summary(usage_file_name, usage_summary)
+
+
+def _analyse_resource_usage(logger, options):
+    _summarise_resource_usage(
+        logger, options[PREQUANT_USAGE_FILE],
+        ru.PREQUANT_RESOURCE_TYPE, True, options)
+    _summarise_resource_usage(
+        logger, options[QUANT_USAGE_FILE],
+        ru.QUANT_RESOURCE_TYPE, False, options)
+
+
 def analyse_quantification_run(args):
     # Read in command-line options
     docstring = opt.substitute_common_options_into_usage(
@@ -306,3 +355,4 @@ def analyse_quantification_run(args):
 
     # Write statistics and graphs for the quantification run
     _analyse_run(logger, options)
+    _analyse_resource_usage(logger, options)

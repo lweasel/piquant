@@ -4,12 +4,13 @@ from . import tpms as t
 class _Classifier(object):
     def __init__(self, column_name, value_extractor,
                  grouped_stats=True, distribution_plot_range=None,
-                 plot_title=None):
+                 plot_title=None, units=None):
         self.column_name = column_name
         self.value_extractor = value_extractor
         self.grouped_stats = grouped_stats
         self.distribution_plot_range = distribution_plot_range
         self.plot_title = plot_title if plot_title else column_name
+        self.units = units
 
     def get_column_name(self):
         return self.column_name
@@ -41,13 +42,19 @@ class _Classifier(object):
         suffix += "_by_" + self.get_column_name().replace(' ', '_')
         return suffix
 
+    def get_axis_label(self):
+        label = self.get_plot_title()
+        if self.units:
+            label += " ({u})".format(u=self.units)
+        return label
+
 
 class _LevelsClassifier(_Classifier):
     def __init__(self, column_name, value_extractor, levels,
-                 closed=False, plot_title=None):
+                 closed=False, plot_title=None, units=None):
 
         _Classifier.__init__(self, column_name, value_extractor,
-                             plot_title=plot_title)
+                             plot_title=plot_title, units=units)
 
         self.levels = levels
         self.closed = closed
@@ -83,7 +90,7 @@ _CLASSIFIERS.append(_LevelsClassifier(
 
 _CLASSIFIERS.append(_LevelsClassifier(
     "transcript length", lambda x: x[t.LENGTH],
-    [1000, 3162]))
+    [1000, 3162], units="bp"))
 
 _CLASSIFIERS.append(_LevelsClassifier(
     "unique sequence percentage",

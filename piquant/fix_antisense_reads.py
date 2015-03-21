@@ -1,9 +1,8 @@
-#!/usr/bin/env python
-
 """
 Usage:
-    fix_antisense_reads [{log_option_spec} --out-prefix=<out-prefix>]
-    <reads-file>
+    fix_antisense_reads
+        [{log_option_spec} --out-prefix=<out-prefix>]
+        <reads-file>
 
 Options:
 {help_option_spec}

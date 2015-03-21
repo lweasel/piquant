@@ -57,6 +57,7 @@ When quantifying transcripts with *eXpress* for a set of simulated RNA-seq reads
 * ``-a``: All valid alignments are reported per read or read pair.
 * ``-m 200``: All alignments are suppressed for a particular read or read pair if more than 200 alignments exist for it.
 * ``-S``: Alignments are printed in SAM [SAM]_ format.
+* ``--norc``: Only specified if stranded reads are being quantified, this option causes only paired-end read configurations corresponding to fragments from the forward strand to be considered.
 
 The alignments produced by *Bowtie* are piped to the ``view`` command of the *SAMtools* package to convert them to BAM format, for subsequent input to *eXpress*. *eXpress* is executed with the ``--f-stranded`` (for single-end reads) or ``--fr-stranded`` (for paired-end reads) command line options in the case that reads have been simulated for a stranded protocol. See the `eXpress manual <http://bio.math.berkeley.edu/eXpress/manual.html>`_ for further details on the options available.
 

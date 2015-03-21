@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Usage:
     simulate_read_bias [{log_option_spec} --out-prefix=<out-prefix>]
@@ -68,7 +66,7 @@ class OutputPicker(object):
         if self.index >= len(self.scores):
             return False
 
-        read_number = line_no / self.lines_per_fragment
+        read_number = line_no // self.lines_per_fragment
         if self.scores[self.index].read_number < read_number:
             self.index += 1
             if self.index >= len(self.scores):
@@ -100,7 +98,7 @@ def _get_fragment_counts(reads_file, num_reads, paired_end):
     if with_errors:
         lines_per_fragment *= 2
     if paired_end:
-        num_fragments /= 2
+        num_fragments //= 2
         lines_per_fragment *= 2
 
     return num_fragments, lines_per_fragment

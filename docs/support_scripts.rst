@@ -18,12 +18,18 @@ For full details of the analyses produced, see :ref:`here <assessment-single-run
 
 Usage::
 
-     analyse_quantification_run 
-        [--log-level=<log-level> --plot-format=<plot-format> --grouped-threshold=<threshold>] 
+    analyse_quantification_run 
+        [--log-level=<log-level> --plot-format=<plot-format>] 
+        [--grouped-threshold=<grouped-threshold>]
+        [--error-fraction-threshold=<ef-threshold>] 
+        [--not-present-cutoff=<cutoff>] 
+        [--prequant-usage-file=<prequant-usage-file>]
+        [--quant-usage-file=<quant-usage-file>]
         --quant-method=<quant-method> --read-length=<read-length> 
         --read-depth=<read-depth> --paired-end=<paired-end> 
-        --error=<errors> --bias=<bias> 
-        <tpm-file> <out-file>
+        --errors=<errors> --bias=<bias> --stranded=<stranded> 
+        --noise-perc=<noise-depth-percentage> 
+        <tpm-file> <out-file>    
 
 The following command-line options and positional arguments are required:
 
@@ -33,6 +39,8 @@ The following command-line options and positional arguments are required:
 * ``--paired-end``: A boolean, ``True`` if the simulated RNA-seq data consists of paired-end reads, or ``False`` if it consists of single-end reads.
 * ``--error``: A boolean, ``True`` if the simulated RNA-seq data contains sequencing errors.
 * ``--bias``: A boolean, ``True`` if sequence bias has been applied to the simulated RNA-seq data.
+* ``--stranded``: A boolean, ``True`` if the simulated reads were stranded.
+* ``--noise-perc``: An integer, the depth of sequencing of "noise" transcripts in the simulated RNA-seq data, as a percentage of the depth of sequencing of the main transcript set.
 * ``<tpm-file>``: A CSV file describing the per-transcript abundance estimates produced by a quantification run.
 * ``<out-file>``: A prefix for output CSV and graph files written by this script.
 
@@ -40,6 +48,10 @@ while these command-line parameters are optional:
 
 * ``--plot-format``: Output format for graphs, one of "pdf", "svg" or "png" (default "pdf").
 * ``--grouped-threshold``: The minimum number of transcripts required, in a group determined by a transcript classifier, for a statistic calculated for that group to be shown on a plot (default: 300).
+* ``--error-fraction-threshold``: Transcripts whose estimated TPM is greater than this percentage higher or lower than their real TPM are considered above threshold for the "error fraction" statistic.
+* ``--not-present-cutoff``: This cut-off value for a transcript's TPM is used to determined whether the transcript is considered to be present or not.
+* ``--prequant-usage-file``: A CSV file containing per-prequantification command resource usage statistics recorded using the GNU ``time`` command.
+* ``--quant-usage-file``: A CSV file containing per-quantification command resource usage statistics recorded using the GNU ``time`` command.
 
 .. _assemble-quantification-data:
 
@@ -53,15 +65,13 @@ Usage::
     assemble_quantification_data 
         [--log-level=<log-level>] 
         --method=<quantification-method> --out=<output-file> 
-        <pro-file> <quantification-file> 
-        <transcript-count-file> <unique-sequence-file>
+        <pro-file> <transcript-count-file> <unique-sequence-file>
 
 The following command-line options and positional arguments are required:
 
 * ``--method``: The quantification method by which transcript abundance estimates were produced.
 * ``--out``: The output CSV file name.
 * ``<pro-file>``: Full path of the *FluxSimulator* [FluxSimulator]_ expression profile file which contains 'ground truth' transcript abundances.
-* ``<quantification-file>``: Full path of the quantification tool-specific file containing estimated transcript abundances.
 * ``<transcript-count-file>``: Full path of a file containing per-gene transcript counts, as produced by :ref:`the script <count-transcripts-for-genes>` ``count_transcripts_for_genes``.
 * ``<unique-sequence-file>``: Full path of a file containing lengths of sequence unique to each transcript, as produced by :ref:`the script <calculate-unique-transcript-sequence>` ``calculate_unique_transcript_sequence``.
 
@@ -118,6 +128,48 @@ The following positional argument is required:
 
 * ``<gtf-file>``: Full path to the GTF file defining transcripts and genes.
 
+.. _fix-antisense-reads:
+
+Fix antisense reads
+-------------------
+
+``fix_antisense_reads`` is run when a ``run_simulation.sh`` script is executed and stranded single-end reads are being simulated. In this case, the reads produced by *FluxSimulator* correspond to both the sense and antisense strands. Those reads in the input FASTA or FASTQ file corresponding to the antisense strand are reverse complemented.
+
+Usage::
+
+    fix_antisense_reads
+        [--log-level=<log-level> --out-prefix=<out-prefix>]
+        <reads-file>
+
+The following positional argument is required:
+
+* ``<reads-file>``: A FASTA or FASTQ file containing single-end reads for which antisense reads are to be switched to the sense strand.
+
+while the following command-line option is optional:
+
+* ``--out-prefix``: String to be prepended to the input file name to form the output file name [default: "sense"].
+
+.. _randomise-read-strands:
+
+Randomise read strands
+----------------------
+
+``randomise_read_strands`` is run when a ``run_simulation.sh`` script is executed and unstranded paired-end reads are being simulated. In this case, the reads produced by *FluxSimulator* effectively originate from the sense strand. The script randomly reassigns pairs of paired-end reads in the input FASTA or FASTQ file such that the first read no corresponds to the antisense strand.
+
+Usage::
+
+    randomise_read_strands
+        [--log-level=<log-level> --out-prefix=<out-prefix>]
+        <reads-file>
+
+The following positional argument is required:
+
+* ``<reads-file>``: A FASTA or FASTQ file containing paired-end reads for which read pairs strands are to be randomly reassigned.
+
+while the following command-line option is optional:
+
+* ``--out-prefix``: String to be prepended to the input file name to form the output file name [default: "unstranded"].
+ 
 .. _simulate-read-bias:
 
 Simulate sequence bias in reads
