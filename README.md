@@ -9,7 +9,7 @@ piquant
 * Quantification: A number of transcriptome quantification tools estimate transcript abundances for each set of simulated reads.
 * Analysis: The comparative accuracy of expression estimates calculated by each tool can be assessed via a range of automatically generated statistics and graphs.
 
-The latest *piquant* documentation can be found [here](http://piquant.readthedocs.org/en/stable/).
+The latest *piquant* documentation can be found [here](http://piquant.readthedocs.org/en/latest/).
 
 Installation
 ============
