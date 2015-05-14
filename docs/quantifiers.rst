@@ -78,3 +78,30 @@ Then, when quantifying transcripts with *Sailfish* for a set of simulated RNA-se
 * ``-l "T=PE:O=><:S=SA"`` for paired-end stranded reads.
 
 After transcript abundance estimation has completed, of the files output by *Sailfish*, only ``quant_bias_corrected.sf`` is retained - that is, quantification estimates with *Sailfish*'s bias correction algorithms applied (unless the ``--nocleanup`` option was specified when the ``run_quantification.sh`` script was created). Relative transcript abundances are extracted from this file in units of TPM (transcripts per million).
+
+Salmon
+------
+
+.. note:: *piquant* has been tested with *Salmon* [Salmon]_ version 0.3.0.
+
+In preparation for quantifying transcripts with *Salmon*, the *Salmon* ``index`` command is executed to create a Salmon index for the input transcript set (for more information on *Salmon* commands, see the *Salmon* `manual <http://salmon.readthedocs.org/en/latest/index.html>`_).
+
+Then, when quantifying transcripts with *Salmon* for a set of simulated RNA-seq reads, the *Salmon* ``quant`` command is executed with the following settings for the library type (``-l``) option, depending on whether single- or paired-end, and stranded or unstranded reads are being quantified:
+
+* ``U`` for single-end reads of unknown strandedness
+* ``SF`` for single-end stranded reads
+* ``IU`` for paired-end reads of unknown strandedness
+* ``ISF`` for paired-end stranded reads.
+
+After transcript abundance estimation has completed, of the files output by *Salmon* only ``quant.sf`` is retained (unless the ``--nocleanup`` option was specified when the ``run_quantification.sh`` script was created). Relative transcript abundances are extracted from this file in units of TPM (transcripts per million).
+
+Kallisto
+--------
+
+.. note:: *piquant* has been tested with *Kallisto* [Kallisto]_ version 0.42.
+
+In preparation for quantifying transcripts with *Kallisto*, the *Kallisto* ``index`` command is executed to create a Kallisto index for the input transcript set (for more information on *Kallisto* commands, see the *Kallisto* `manual <http://pachterlab.github.io/kallisto/manual.html>`_).
+
+Then, when quantifying transcripts with *Kallisto* for a set of simulated RNA-seq reads, the *Kallisto* ``quant`` command is executed with a value of 200 for the ``--fragment-length`` option (estimated average fragment length) when single-end reads are being quantified.
+
+After transcripot abundance estimation has completed, of the files output by *Kallisto* only ``abundance.txt`` is retained (unless the ``--nocleanup`` option was specified when the ``run_quantification.sh`` script was created). Relative transcript abundances are extracted from this file in units of TPM (transcripts per million).
