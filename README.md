@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/lweasel/piquant.svg?branch=master)](https://travis-ci.org/lweasel/piquant) [![Coverage Status](https://coveralls.io/repos/lweasel/piquant/badge.png?branch=master)](https://coveralls.io/r/lweasel/piquant?branch=master) [![Code Health](https://landscape.io/github/lweasel/piquant/master/landscape.svg)](https://landscape.io/github/lweasel/piquant/master)
 
+[![DOI](https://zenodo.org/badge/13754/lweasel/piquant.svg)](http://dx.doi.org/10.5281/zenodo.18376)
+
 piquant
 =======
 
