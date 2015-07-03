@@ -125,11 +125,11 @@ class _BaseStatistic(object):
 
 
 @_statistic
-class _NumberOfNonZeroTPMs(_BaseStatistic):
+class _NumberOfExpressedTPMs(_BaseStatistic):
     # Calculates the total number of transcripts with non-zero real TPMs in the results.
     def __init__(self):
         _BaseStatistic.__init__(
-            self, "non-zero-tpms", "No. non-zero TPMs", graphable=False)
+            self, "expressed-tpms", "No. expressed TPMs", graphable=False)
 
     def calculate(self, tpms, expressed_tpms):
         return len(expressed_tpms)

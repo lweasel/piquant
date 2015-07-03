@@ -15,9 +15,9 @@ def _get_test_tpms():
 
     t.calculate_log_ratios(tpms)
     t.calculate_percent_error(tpms)
-    t.mark_positives_and_negatives(0.1, tpms)
+    t.truncate_tpms(test_tpms.NOT_PRESENT_CUTOFF, tpms)
 
-    return tpms, t.get_true_positives(tpms)
+    return tpms, t.get_expressed_tpms(tpms)
 
 
 def __get_test_grouped_tpms():
@@ -32,13 +32,15 @@ def __get_test_grouped_tpms():
 
 
 def _tpm_pairs(filter=lambda r, c: True):
-    return [(r, c) for r, c in zip(test_tpms.REAL_TPMS_VALS,
-                                   test_tpms.CALC_TPMS_VALS)
-            if filter(r, c)]
+    real = [(r if r > test_tpms.NOT_PRESENT_CUTOFF else 0)
+            for r in test_tpms.REAL_TPMS_VALS]
+    calc = [(c if c > test_tpms.NOT_PRESENT_CUTOFF else 0)
+            for c in test_tpms.CALC_TPMS_VALS]
+    return [(r, c) for r, c in zip(real, calc) if filter(r, c)]
 
 
-def _tp_tpm_pairs():
-    return _tpm_pairs(lambda r, c: test_tpms._true_positive(r, c))
+def _expressed_tpm_pairs():
+    return _tpm_pairs(lambda r, c: r > test_tpms.NOT_PRESENT_CUTOFF)
 
 
 def _group_tpm_pairs(group_val, filter=lambda r, c: True):
@@ -49,9 +51,9 @@ def _group_tpm_pairs(group_val, filter=lambda r, c: True):
             (gv == group_val and filter(r, c))]
 
 
-def _group_tp_tpm_pairs(group_val):
+def _group_expressed_tpm_pairs(group_val):
     return _group_tpm_pairs(
-        group_val, lambda r, c: test_tpms._true_positive(r, c))
+        group_val, lambda r, c: r > test_tpms.NOT_PRESENT_CUTOFF)
 
 
 def _check_statistic_value(stat_class, calculator, pair_func):
@@ -87,30 +89,18 @@ def test_get_graphable_statistics_returns_graphable_instances():
     assert all([s.graphable for s in g_stats])
 
 
-def _number_of_tpms(tpm_pairs):
-    return len(tpm_pairs)
+def _number_of_expressed_tpms(tpm_pairs):
+    return len([r for r, c in tpm_pairs if r > 0])
 
 
 def test_number_of_tpms_statistic_calculates_correct_value():
     _check_statistic_value(
-        statistics._NumberOfTPMs, _number_of_tpms, _tpm_pairs)
+        statistics._NumberOfExpressedTPMs, _number_of_expressed_tpms, _expressed_tpm_pairs)
 
 
 def test_number_of_tpms_statistic_calculates_correct_grouped_values():
     _check_grouped_statistic_values(
-        statistics._NumberOfTPMs, _number_of_tpms, _group_tpm_pairs)
-
-
-def test_number_of_true_positive_tpms_statistic_calculates_correct_value():
-    _check_statistic_value(
-        statistics._NumberOfTruePositiveTPMs,
-        _number_of_tpms, _tp_tpm_pairs)
-
-
-def test_number_of_true_positive_tpms_statistic_calculates_correct_grouped_values():
-    _check_grouped_statistic_values(
-        statistics._NumberOfTruePositiveTPMs,
-        _number_of_tpms, _group_tp_tpm_pairs)
+        statistics._NumberOfExpressedTPMs, _number_of_expressed_tpms, _group_expressed_tpm_pairs)
 
 
 def _spearman(tpm_pairs):
@@ -120,12 +110,12 @@ def _spearman(tpm_pairs):
 
 def test_spearman_correlation_statistic_calculates_correct_value():
     _check_statistic_value(
-        statistics._SpearmanCorrelation, _spearman, _tp_tpm_pairs)
+        statistics._SpearmanCorrelation, _spearman, _expressed_tpm_pairs)
 
 
 def test_spearman_correlation_statistic_calculates_correct_grouped_values():
     _check_grouped_statistic_values(
-        statistics._SpearmanCorrelation, _spearman, _group_tp_tpm_pairs)
+        statistics._SpearmanCorrelation, _spearman, _group_expressed_tpm_pairs)
 
 
 def _error_fraction(tpm_pairs):
@@ -133,20 +123,20 @@ def _error_fraction(tpm_pairs):
     above_threshold = \
         [r for r, c in tpm_pairs if
          error_percent(r, c) >
-            statistics._TruePositiveErrorFraction.ERROR_FRACTION_THRESHOLD]
+            statistics._ErrorFraction.ERROR_FRACTION_THRESHOLD]
     return len(above_threshold) / float(len(tpm_pairs))
 
 
-def test_true_positive_error_fraction_statistic_calculates_correct_value():
+def test_error_fraction_statistic_calculates_correct_value():
     _check_statistic_value(
-        statistics._TruePositiveErrorFraction,
-        _error_fraction, _tp_tpm_pairs)
+        statistics._ErrorFraction,
+        _error_fraction, _expressed_tpm_pairs)
 
 
-def test_true_positive_error_fraction_statistic_calculates_correct_grouped_values():
+def test_error_fraction_statistic_calculates_correct_grouped_values():
     _check_grouped_statistic_values(
-        statistics._TruePositiveErrorFraction,
-        _error_fraction, _group_tp_tpm_pairs)
+        statistics._ErrorFraction,
+        _error_fraction, _group_expressed_tpm_pairs)
 
 
 def _median_percent_error(tpm_pairs):
@@ -158,13 +148,13 @@ def _median_percent_error(tpm_pairs):
 def test_median_percent_error_statistic_calculates_correct_value():
     _check_statistic_value(
         statistics._MedianPercentError,
-        _median_percent_error, _tp_tpm_pairs)
+        _median_percent_error, _expressed_tpm_pairs)
 
 
 def test_median_percent_error_statistic_calculates_correct_grouped_values():
     _check_grouped_statistic_values(
         statistics._MedianPercentError,
-        _median_percent_error, _group_tp_tpm_pairs)
+        _median_percent_error, _group_expressed_tpm_pairs)
 
 
 def _sensitivity(tpm_pairs):
