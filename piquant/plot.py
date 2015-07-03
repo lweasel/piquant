@@ -327,7 +327,7 @@ def log_ratio_boxplot(
 def plot_statistic_vs_classifier(
         fformat, stats, base_name, statistic, classifier, threshold):
 
-    stats = stats[stats[statistics.TP_NUM_TPMS] > threshold]
+    stats = stats[stats[statistics.NON_ZERO_TPMS] > threshold]
     clsfr_col = classifier.get_column_name()
 
     with _saving_new_plot(fformat, [base_name, statistic.name, "vs", clsfr_col]):
@@ -474,7 +474,7 @@ def draw_grouped_stats_graphs(fformat, stats_dir, opt_vals_set, threshold):
     # particular quantification method.
     grouped_stats_dir = _get_plot_subdir(stats_dir, "grouped_stats_graphs")
 
-    num_tpms_filter = lambda x: x[statistics.TP_NUM_TPMS] > threshold
+    num_tpms_filter = lambda x: x[statistics.NON_ZERO_TPMS] > threshold
 
     clsfrs = classifiers.get_classifiers()
     grp_clsfrs = [c for c in clsfrs if c.produces_grouped_stats()]

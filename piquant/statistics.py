@@ -14,7 +14,7 @@ from . import classifiers
 from . import piquant_options as po
 from . import tpms as t
 
-TP_NUM_TPMS = "tp-num-tpms"
+NON_ZERO_TPMS = "non-zero-tpms"
 OVERALL_STATS_PREFIX = "overall"
 
 _SUMMARY_COUNT = "count"
@@ -90,21 +90,21 @@ class _BaseStatistic(object):
     def get_axis_label(self):
         return self.title
 
-    def calculate(self, tpms, tp_tpms):
+    def calculate(self, tpms, expressed_tpms):
         """Calculate the statistic for a set of TPMs.
 
         Calculate a single statistic value for the results of a quantification
         run.
         tpms: A pandas DataFrame describing the result of a quantification
         run.
-        tp_tpms: A pandas DataFrame describing those results of a
-        quantification run for which both real and calculated TPMs were above
-        a threshold value indicating "presence" of the transcript.
+        expressed_tpms: A pandas DataFrame describing the results of a
+        quantification run for which the real TPMs were above a threshold value
+        indicating 'presence' of the transcript.
         """
         raise NotImplementedError
 
-    def calculate_grouped(
-            self, grouped, grp_summary, tp_grouped, tp_grp_summary):
+    def calculate_grouped(self, grouped, grp_summary,
+                          expressed_grouped, expressed_grp_summary):
         """Calculate the statistic for a set of TPMs grouped by a classifier.
 
         Calculate a set of statistic values for the results of a quantification
@@ -114,49 +114,30 @@ class _BaseStatistic(object):
         quantification run grouped by a certain classifier of transcripts.
         grp_summary: A pandas DataFrame containing basic summary statistics
         calculated for 'grouped'.
-        tp_grouped: A pandas GroupBy instance describing those results of a
-        quantification run for which both real and calculated TPMs were above
-        a threshold value indicating "presence" of the transcript, grouped
-        by a certain classifier of transcripts.
-        tp_grp_summary: A pandas DataFrame containing basic sumnmary statistics
-        calculated for 'tp_grouped'.
+        expressed_grouped: A pandas GroupBy instance describing those results
+        of a quantification run for which the real TPMs were above a threshold
+        value indicating 'presence' of the transcript, grouped by a certain
+        classifier of transcripts.
+        expressed_grp_summary: A pandas DataFrame containing basic summary
+        statistics calculated for 'expressed_grouped'.
         """
         raise NotImplementedError
 
 
 @_statistic
-class _NumberOfTPMs(_BaseStatistic):
-    # Calculates the total number of transcript TPMs in the results.
+class _NumberOfNonZeroTPMs(_BaseStatistic):
+    # Calculates the total number of transcripts with non-zero real TPMs in the results.
     def __init__(self):
-        _BaseStatistic.__init__(self, "num-tpms", "No. TPMs", graphable=False)
+        _BaseStatistic.__init__(
+            self, "non-zero-tpms", "No. non-zero TPMs", graphable=False)
 
-    def calculate(self, tpms, tp_tpms):
-        return len(tpms)
+    def calculate(self, tpms, expressed_tpms):
+        return len(expressed_tpms)
 
-    def calculate_grouped(
-            self, grouped, grp_summary, tp_grouped, tp_grp_summary):
-        stats = grp_summary[t.REAL_TPM].unstack()
-        return stats[_SUMMARY_COUNT]
+    def calculate_grouped(self, grouped, grp_summary,
+                          expressed_grouped, expressed_grp_summary):
 
-    def stat_range(self, vals_range):
-        del vals_range
-        return (0, None)
-
-
-@_statistic
-class _NumberOfTruePositiveTPMs(_BaseStatistic):
-    # Calculates the total number of transcript TPMs in the results for which
-    # both real and calculated TPMs are above a threshold value indicating
-    # 'presence' of the transcript.
-    def __init__(self):
-        _BaseStatistic.__init__(self, TP_NUM_TPMS, "No. true positive TPMs")
-
-    def calculate(self, tpms, tp_tpms):
-        return len(tp_tpms)
-
-    def calculate_grouped(
-            self, grouped, grp_summary, tp_grouped, tp_grp_summary):
-        stats = tp_grp_summary[t.REAL_TPM].unstack()
+        stats = expressed_grp_summary[t.REAL_TPM].unstack()
         return stats[_SUMMARY_COUNT]
 
     def stat_range(self, vals_range):
@@ -167,24 +148,22 @@ class _NumberOfTruePositiveTPMs(_BaseStatistic):
 @_statistic
 class _SpearmanCorrelation(_BaseStatistic):
     # Calculates the Spearman rank correlation coefficient between calculated
-    # and real TPMs for 'true positive' transcript TPMs (those for which both
-    # real and calculated TPM were above a threshold value indicating
-    # 'presence' of the transcript).
+    # and real TPMs, for those transcripts with non-zero real TPMs.
     def __init__(self):
         _BaseStatistic.__init__(
-            self, "tp-log-tpm-rho", "Spearman's rho")
+            self, "log-tpm-rho", "Spearman's rho")
 
     @staticmethod
     def _calculate(tpms):
-        return tpms[t.LOG10_CALCULATED_TPM].corr(
-            tpms[t.LOG10_REAL_TPM], method='spearman')
+        return tpms[t.CALCULATED_TPM].corr(
+            tpms[t.REAL_TPM], method='spearman')
 
-    def calculate(self, tpms, tp_tpms):
-        return _SpearmanCorrelation._calculate(tp_tpms)
+    def calculate(self, tpms, expressed_tpms):
+        return _SpearmanCorrelation._calculate(expressed_tpms)
 
-    def calculate_grouped(
-            self, grouped, grp_summary, tp_grouped, tp_grp_summary):
-        return tp_grouped.apply(_SpearmanCorrelation._calculate)
+    def calculate_grouped(self, grouped, grp_summary,
+                          expressed_grouped, expressed_grp_summary):
+        return expressed_grouped.apply(_SpearmanCorrelation._calculate)
 
     def stat_range(self, vals_range):
         min_val = math.floor(vals_range[0] * 5) / 5.0
@@ -192,11 +171,10 @@ class _SpearmanCorrelation(_BaseStatistic):
 
 
 @_statistic
-class _TruePositiveErrorFraction(_BaseStatistic):
-    # Calculates the percentage of 'true positive' transcript TPMs (those for
-    # which both real and calculated TPMs were above a threshold value
-    # indicating 'presence' of the transcript) for which the calculated TPM
-    # was greater than a certain percentage above or below the real TPM.
+class _ErrorFraction(_BaseStatistic):
+    # Calculates the percentage of calculated TPMs which were greater than a
+    # certain percentage above or below the real TPM, for those transcripts
+    # with non-zero real TPMs.
 
     ERROR_FRACTION_THRESHOLD = 10
 
@@ -206,22 +184,22 @@ class _TruePositiveErrorFraction(_BaseStatistic):
 
     def __init__(self):
         _BaseStatistic.__init__(
-            self, "tp-error-frac", "True positive error fraction")
+            self, "error-frac", "Error fraction")
 
     @staticmethod
     def _calculate(tpms, error_percent):
         num_errors = len(tpms[abs(tpms[t.PERCENT_ERROR]) > error_percent])
         return float(num_errors) / len(tpms)
 
-    def calculate(self, tpms, tp_tpms):
-        return _TruePositiveErrorFraction._calculate(
-            tp_tpms, _TruePositiveErrorFraction.ERROR_FRACTION_THRESHOLD)
+    def calculate(self, tpms, expressed_tpms):
+        return _ErrorFraction._calculate(
+            expressed_tpms, _ErrorFraction.ERROR_FRACTION_THRESHOLD)
 
-    def calculate_grouped(
-            self, grouped, grp_summary, tp_grouped, tp_grp_summary):
-        return tp_grouped.apply(
-            _TruePositiveErrorFraction._calculate,
-            _TruePositiveErrorFraction.ERROR_FRACTION_THRESHOLD)
+    def calculate_grouped(self, grouped, grp_summary,
+                          expressed_grouped, expressed_grp_summary):
+        return expressed_grouped.apply(
+            _ErrorFraction._calculate,
+            _ErrorFraction.ERROR_FRACTION_THRESHOLD)
 
     def stat_range(self, vals_range):
         del vals_range
@@ -231,19 +209,22 @@ class _TruePositiveErrorFraction(_BaseStatistic):
 @_statistic
 class _MedianPercentError(_BaseStatistic):
     # Calculates the median of the percent errors of the calculated compared to
-    # real TPMs for 'true positive' transcript TPMs (those for which both
-    # real and calculated TPMs were above a threshold value indicating
-    # 'presence' of the transcript).
+    # real TPMs, for those transcripts with non-zero real TPMs
     def __init__(self):
         _BaseStatistic.__init__(
-            self, "tp-median-percent-error", "True positive median % error")
+            self, "median-percent-error", "Median % error")
 
-    def calculate(self, tpms, tp_tpms):
-        return tp_tpms[t.PERCENT_ERROR].median()
+    @staticmethod
+    def _calculate(tpms):
+        tpms = tpms[tpms[t.REAL_TPM] > 0]
+        return tpms[t.PERCENT_ERROR].median()
 
-    def calculate_grouped(
-            self, grouped, grp_summary, tp_grouped, tp_grp_summary):
-        stats = tp_grp_summary[t.PERCENT_ERROR].unstack()
+    def calculate(self, tpms, expressed_tpms):
+        return expressed_tpms[t.PERCENT_ERROR].median()
+
+    def calculate_grouped(self, grouped, grp_summary,
+                          expressed_grouped, expressed_grp_summary):
+        stats = expressed_grp_summary[t.PERCENT_ERROR].unstack()
         return stats[_SUMMARY_MEDIAN]
 
     def stat_range(self, vals_range):
@@ -270,17 +251,19 @@ class _Sensitivity(_BaseStatistic):
 
     @staticmethod
     def _calculate(tpms):
-        num_tp = len(tpms[tpms[t.TRUE_POSITIVE]])
-        num_fn = len(tpms[tpms[t.FALSE_NEGATIVE]])
+        num_tp = len(
+            tpms[(tpms[t.REAL_TPM] > 0) & (tpms[t.CALCULATED_TPM] > 0)])
+        num_fn = len(
+            tpms[(tpms[t.REAL_TPM] > 0) & (tpms[t.CALCULATED_TPM] == 0)])
         if num_tp + num_fn == 0:
             return 1
         return float(num_tp) / (num_tp + num_fn)
 
-    def calculate(self, tpms, tp_tpms):
+    def calculate(self, tpms, expressed_tpms):
         return _Sensitivity._calculate(tpms)
 
-    def calculate_grouped(
-            self, grouped, grp_summary, tp_grouped, tp_grp_summary):
+    def calculate_grouped(self, grouped, grp_summary,
+                          expressed_grouped, expressed_grp_summary):
         return grouped.apply(_Sensitivity._calculate)
 
     def stat_range(self, vals_range):
@@ -300,17 +283,19 @@ class _Specificity(_BaseStatistic):
 
     @staticmethod
     def _calculate(tpms):
-        num_fp = len(tpms[tpms[t.FALSE_POSITIVE]])
-        num_tn = len(tpms[tpms[t.TRUE_NEGATIVE]])
+        num_fp = len(
+            tpms[(tpms[t.REAL_TPM] == 0) & (tpms[t.CALCULATED_TPM] > 0)])
+        num_tn = len(
+            tpms[(tpms[t.REAL_TPM] == 0) & (tpms[t.CALCULATED_TPM] == 0)])
         if num_fp + num_tn == 0:
             return 1
         return float(num_tn) / (num_tn + num_fp)
 
-    def calculate(self, tpms, tp_tpms):
+    def calculate(self, tpms, expressed_tpms):
         return _Specificity._calculate(tpms)
 
-    def calculate_grouped(
-            self, grouped, grp_summary, tp_grouped, tp_grp_summary):
+    def calculate_grouped(self, grouped, grp_summary,
+                          expressed_grouped, expressed_grp_summary):
         return grouped.apply(_Specificity._calculate)
 
     def stat_range(self, vals_range):

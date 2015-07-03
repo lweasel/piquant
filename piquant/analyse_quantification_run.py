@@ -72,7 +72,6 @@ from . import plot
 from .__init__ import __version__
 
 TRANSCRIPT_COUNT_LABEL = "No. transcripts per gene"
-TRUE_POSITIVES_LABEL = "true positive TPMs"
 TPM_FILE = "<tpm-file>"
 PREQUANT_USAGE_FILE = "--prequant-usage-file"
 QUANT_USAGE_FILE = "--quant-usage-file"
@@ -102,11 +101,6 @@ def _validate_command_line_options(options):
         exit(exc.code)
 
 
-def _get_tpm_infos(non_zero, tp_tpms):
-    return [TpmInfo(non_zero, "non-zero real TPMs"),
-            TpmInfo(tp_tpms, TRUE_POSITIVES_LABEL)]
-
-
 def _add_mqr_option_values(stats, options, options_to_add=None):
 
     if options_to_add is None:
@@ -115,13 +109,13 @@ def _add_mqr_option_values(stats, options, options_to_add=None):
         stats[option.name] = options[option.get_option_name()]
 
 
-def _write_overall_stats(transcript_tpms, tp_transcript_tpms,
-                         gene_tpms, tp_gene_tpms, options):
+def _write_overall_stats(transcript_tpms, expressed_transcript_tpms,
+                         gene_tpms, expressed_gene_tpms, options):
 
-    for tpms, tp_tpms, tpm_level in \
-            [(transcript_tpms, tp_transcript_tpms, t.TRANSCRIPT),
-             (gene_tpms, tp_gene_tpms, t.GENE)]:
-        stats = t.get_stats(tpms, tp_tpms, statistics.get_statistics())
+    for tpms, expressed_tpms, tpm_level in \
+            [(transcript_tpms, expressed_transcript_tpms, t.TRANSCRIPT),
+             (gene_tpms, expressed_gene_tpms, t.GENE)]:
+        stats = t.get_stats(tpms, expressed_tpms, statistics.get_statistics())
         _add_mqr_option_values(stats, options)
 
         stats_file_name = statistics.get_stats_file(
@@ -129,14 +123,14 @@ def _write_overall_stats(transcript_tpms, tp_transcript_tpms,
         statistics.write_stats_data(stats_file_name, stats, index=False)
 
 
-def _write_stratified_stats(tpms, tp_tpms, non_zero, options):
+def _write_stratified_stats(tpms, expressed_tpms, options):
     clsfr_stats = {}
 
     for classifier in classifiers.get_classifiers():
         if classifier.produces_grouped_stats():
             column_name = classifier.get_column_name()
             stats = t.get_grouped_stats(
-                tpms, tp_tpms, column_name, statistics.get_statistics())
+                tpms, expressed_tpms, column_name, statistics.get_statistics())
             _add_mqr_option_values(stats, options)
             clsfr_stats[classifier] = stats
 
@@ -147,7 +141,7 @@ def _write_stratified_stats(tpms, tp_tpms, non_zero, options):
         elif classifier.produces_distribution_plots():
             for ascending in [True, False]:
                 stats = t.get_distribution_stats(
-                    non_zero, tp_tpms, classifier, ascending)
+                    expressed_tpms, classifier, ascending)
                 _add_mqr_option_values(stats, options)
 
                 stats_file_name = statistics.get_stats_file(
@@ -159,19 +153,20 @@ def _write_stratified_stats(tpms, tp_tpms, non_zero, options):
     return clsfr_stats
 
 
-def _draw_tpm_scatter_plots(tp_transcript_tpms, tp_gene_tpms, plot_format,
+def _draw_tpm_scatter_plots(non_zero_transcript_tpms, non_zero_gene_tpms, plot_format,
                             basename, not_present_cutoff):
 
     plot.log_tpm_scatter_plot(
-        plot_format, tp_transcript_tpms, basename + "_transcript",
-        TRUE_POSITIVES_LABEL, not_present_cutoff)
+        plot_format, non_zero_transcript_tpms, basename + "_transcript",
+        "non-zero TPMs", not_present_cutoff)
     plot.log_tpm_scatter_plot(
-        plot_format, tp_gene_tpms, basename + "_gene",
-        TRUE_POSITIVES_LABEL, not_present_cutoff)
+        plot_format, non_zero_gene_tpms, basename + "_gene",
+        "non-zero TPMs", not_present_cutoff)
 
 
-def _draw_log_ratio_boxplots(non_zero, tp_tpms, options):
-    tpm_infos = _get_tpm_infos(non_zero, tp_tpms)
+def _draw_log_ratio_boxplots(non_zero, options):
+    tpm_infos = [TpmInfo(non_zero, "non-zero TPMs")]
+
     clsfrs = [c for c in classifiers.get_classifiers()
               if c.produces_grouped_stats()]
 
@@ -192,10 +187,9 @@ def _draw_stats_vs_clsfr_plots(clsfr_stats, options):
                 options[po.GROUPED_THRESHOLD.name])
 
 
-def _draw_cumulative_dist_plots(
-        tp_tpms, non_zero, options):
+def _draw_cumulative_dist_plots(expressed_tpms, options):
+    tpm_infos = [TpmInfo(expressed_tpms, "non-zero real TPMs")]
 
-    tpm_infos = _get_tpm_infos(non_zero, tp_tpms)
     clsfrs = [c for c in classifiers.get_classifiers()
               if c.produces_distribution_plots()]
     ascending = [True, False]
@@ -207,12 +201,10 @@ def _draw_cumulative_dist_plots(
 
 
 def _prepare_data(transcript_tpms, gene_tpms, not_present_cutoff, logger):
-    # Determine whether each TPM measurement is a true/false positive/negative.
-    # For our purposes, marking an TPM as positive or negative is determined by
-    # whether it is greater or less than an "isoform not present" cutoff value.
+    # Set to zero any real or calculated TPM values less than a user-defined
+    # "isoform not present" cutoff value.
     logger.info("Marking positives and negatives...")
-    t.mark_positives_and_negatives(
-        not_present_cutoff, transcript_tpms, gene_tpms)
+    t.truncate_tpms(not_present_cutoff, transcript_tpms, gene_tpms)
 
     # Calculate the percent error (positive or negative) of the calculated TPM
     # values from the real values
@@ -229,8 +221,8 @@ def _prepare_data(transcript_tpms, gene_tpms, not_present_cutoff, logger):
 
 
 def _write_statistics(
-        options, logger, transcript_tpms, tp_transcript_tpms,
-        non_zero_transcript_tpms, gene_tpms, tp_gene_tpms):
+        options, logger, transcript_tpms, expressed_transcript_tpms,
+        gene_tpms, expressed_gene_tpms):
 
     for stat in statistics.get_statistics():
         stat.set_options(options)
@@ -238,29 +230,28 @@ def _write_statistics(
     # Write statistics pertaining to the set of quantified transcripts and
     # genes as a whole.
     logger.info("Writing overall statistics...")
-    _write_overall_stats(transcript_tpms, tp_transcript_tpms,
-                         gene_tpms, tp_gene_tpms, options)
+    _write_overall_stats(transcript_tpms, expressed_transcript_tpms,
+                         gene_tpms, expressed_gene_tpms, options)
 
     # Write statistics for TPMS stratified by various classification measures
     logger.info("Writing statistics for stratified TPMs")
     return _write_stratified_stats(
-        transcript_tpms, tp_transcript_tpms, non_zero_transcript_tpms, options)
+        transcript_tpms, expressed_transcript_tpms, options)
 
 
-def _draw_graphs(options, tp_transcript_tpms, non_zero_transcript_tpms,
-                 tp_gene_tpms, clsfr_stats):
+def _draw_graphs(options, non_zero_transcript_tpms, non_zero_gene_tpms,
+                 expressed_transcript_tpms, clsfr_stats):
 
     # Make a scatter plot of log transformed calculated vs real TPMs
     _draw_tpm_scatter_plots(
-        tp_transcript_tpms, tp_gene_tpms,
+        non_zero_transcript_tpms, non_zero_gene_tpms,
         options[po.PLOT_FORMAT.name],
         options[OUT_FILE_BASENAME],
         options[po.NOT_PRESENT_CUTOFF.name])
 
     # Make boxplots of log ratios stratified by various classification measures
     # (e.g. the number of transcripts per-originating gene of each transcript)
-    _draw_log_ratio_boxplots(
-        non_zero_transcript_tpms, tp_transcript_tpms, options)
+    _draw_log_ratio_boxplots(non_zero_transcript_tpms, options)
 
     # Make plots of statistics calculated on groups of transcripts stratified
     # by classification measures
@@ -268,8 +259,7 @@ def _draw_graphs(options, tp_transcript_tpms, non_zero_transcript_tpms,
 
     # Make plots showing the percentage of isoforms above or below threshold
     # values according to various classification measures
-    _draw_cumulative_dist_plots(
-        tp_transcript_tpms, non_zero_transcript_tpms, options)
+    _draw_cumulative_dist_plots(expressed_transcript_tpms, options)
 
 
 def _analyse_run(logger, options):
@@ -283,21 +273,23 @@ def _analyse_run(logger, options):
     _prepare_data(transcript_tpms, gene_tpms,
                   options[po.NOT_PRESENT_CUTOFF.name], logger)
 
-    # Get data frames containing only true positive TPMs and TPMs with non-zero
-    # real and estimated abundances
+    # Get a data frame containing only for transcripts with non-zero real and
+    # calculated TPMs
     logger.info("Getting filtered TPMs...")
-    tp_transcript_tpms = t.get_true_positives(transcript_tpms)
+    expressed_transcript_tpms = t.get_expressed_tpms(transcript_tpms)
     non_zero_transcript_tpms = t.get_non_zero_tpms(transcript_tpms)
-    tp_gene_tpms = t.get_true_positives(gene_tpms)
+    expressed_gene_tpms = t.get_expressed_tpms(transcript_tpms)
+    non_zero_gene_tpms = t.get_non_zero_tpms(gene_tpms)
 
     clsfr_stats = _write_statistics(
-        options, logger, transcript_tpms, tp_transcript_tpms,
-        non_zero_transcript_tpms, gene_tpms, tp_gene_tpms)
+        options, logger, transcript_tpms, expressed_transcript_tpms,
+        gene_tpms, expressed_gene_tpms)
 
     # Draw graphs
     logger.info("Plotting graphs...")
-    _draw_graphs(options, tp_transcript_tpms, non_zero_transcript_tpms,
-                 tp_gene_tpms, clsfr_stats)
+    _draw_graphs(options, non_zero_transcript_tpms,
+                 non_zero_gene_tpms, expressed_transcript_tpms,
+                 clsfr_stats)
 
 
 def _summarise_resource_usage(
