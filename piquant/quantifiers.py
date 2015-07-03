@@ -587,7 +587,8 @@ class _Kallisto(_TranscriptomeBasedQuantifierBase):
 
         length_spec = "-l 200" if SIMULATED_READS in params else ""
 
-        reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params else \
+        reads_spec = "--single {s}".format(s=params[SIMULATED_READS]) \
+            if SIMULATED_READS in params else \
             "{l} {r}".format(
                 l=params[LEFT_SIMULATED_READS],
                 r=params[RIGHT_SIMULATED_READS])
