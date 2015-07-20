@@ -14,7 +14,7 @@ from . import classifiers
 from . import piquant_options as po
 from . import tpms as t
 
-NON_ZERO_TPMS = "non-zero-tpms"
+EXPRESSED_TPMS = "expressed-tpms"
 OVERALL_STATS_PREFIX = "overall"
 
 _SUMMARY_COUNT = "count"
@@ -129,7 +129,7 @@ class _NumberOfExpressedTPMs(_BaseStatistic):
     # Calculates the total number of transcripts with non-zero real TPMs in the results.
     def __init__(self):
         _BaseStatistic.__init__(
-            self, "expressed-tpms", "No. expressed TPMs", graphable=False)
+            self, EXPRESSED_TPMS, "No. expressed TPMs", graphable=False)
 
     def calculate(self, tpms, expressed_tpms):
         return len(expressed_tpms)
