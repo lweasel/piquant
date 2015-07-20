@@ -470,7 +470,7 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
     ]
 
     REMOVE_OUTPUT_EXCEPT_ABUNDANCES = \
-        "rm -rf logs quant.sf"
+        "rm -rf logs quant.sf libFormatCounts.txt libParams"
 
     @classmethod
     def get_name(cls):
@@ -607,7 +607,7 @@ class _Kallisto(_TranscriptomeBasedQuantifierBase):
     def get_transcript_abundance(self, transcript_id):
         if self.abundances is None:
             self.abundances = pd.read_csv(
-                "output/abundance.txt", delim_whitespace=True,
+                "output/abundance.tsv", delim_whitespace=True,
                 index_col="target_id")
 
         return self.abundances.ix[transcript_id]["tpm"] \
