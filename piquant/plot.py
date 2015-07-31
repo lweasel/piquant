@@ -27,6 +27,13 @@ plt.rcParams['svg.fonttype'] = 'none'
 # plt.rcParams['ytick.labelsize'] = 'x-small'
 # plt.rcParams['legend.fontsize'] = 'small'
 
+# matplotlib parameters appropriate for paper
+#plt.rcParams['font.size'] = 20.0
+#plt.rcParams['axes.labelsize'] = 'large'
+#plt.rcParams['xtick.labelsize'] = 'medium'
+#plt.rcParams['ytick.labelsize'] = 'medium'
+#plt.rcParams['legend.fontsize'] = 'medium'
+
 
 class _GroupedPlotInfo(object):
     def __init__(self, group_mqr_option, fixed_mqr_option_info):
@@ -296,8 +303,8 @@ def log_tpm_scatter_plot(
 
         plt.suptitle("Scatter plot of log calculated vs real TPMs: " +
                      tpm_label)
-        plt.xlabel("Log10 real TPM")
-        plt.ylabel("Log10 calculated TPM")
+        plt.xlabel("$log_{10}$ real TPM")
+        plt.ylabel("$log_{10}$ calculated TPM")
 
         min_val = np.log10(not_present_cutoff) - 0.2
         plt.xlim(xmin=min_val)
@@ -343,7 +350,7 @@ def plot_statistic_vs_classifier(
 
         plt.xlabel(_capitalized(classifier.get_axis_label()))
         plt.ylabel(statistic.title)
-        plt.suptitle(statistic.title + " vs " + _decapitalized(clsfr_col))
+        plt.suptitle(statistic.title + " vs " + classifier.get_plot_title())
 
         _set_ticks_for_classifier_plot(
             np.arange(min_xval, max_xval + 1), classifier)

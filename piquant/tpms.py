@@ -87,8 +87,8 @@ def get_distribution(tpms, classifier, ascending):
     return xvals, yvals
 
 
-def get_distribution_stats(non_zero_tpms, classifier, ascending):
-    xvals, nz_yvals = get_distribution(non_zero_tpms, classifier, ascending)
+def get_distribution_stats(expressed_tpms, classifier, ascending):
+    xvals, nz_yvals = get_distribution(expressed_tpms, classifier, ascending)
 
     stats_dict = {}
     stats_dict[classifier.get_column_name()] = xvals

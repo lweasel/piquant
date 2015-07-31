@@ -188,7 +188,7 @@ def _draw_stats_vs_clsfr_plots(clsfr_stats, options):
 
 
 def _draw_cumulative_dist_plots(expressed_tpms, options):
-    tpm_infos = [TpmInfo(expressed_tpms, "non-zero real TPMs")]
+    tpm_infos = [TpmInfo(expressed_tpms, "expressed TPMs")]
 
     clsfrs = [c for c in classifiers.get_classifiers()
               if c.produces_distribution_plots()]

@@ -151,7 +151,7 @@ class _SpearmanCorrelation(_BaseStatistic):
     # and real TPMs, for those transcripts with non-zero real TPMs.
     def __init__(self):
         _BaseStatistic.__init__(
-            self, "log-tpm-rho", "Spearman's rho")
+            self, "log-tpm-rho", r"Spearman's $\rho$")
 
     @staticmethod
     def _calculate(tpms):
@@ -276,8 +276,8 @@ class _Specificity(_BaseStatistic):
     # Calculates the "specificity" of the transcript quantification method -
     # that is, the fraction of all transcripts considered to be 'not present'
     # (their real TPM below a threshold value - that is, both true negatives
-    # and false positives), which were correctly identified as being present
-    # (just the true negatives).
+    # and false positives), which were correctly identified as being not
+    # present (just the true negatives).
     def __init__(self):
         _BaseStatistic.__init__(self, "specificity", "Specificity")
 
