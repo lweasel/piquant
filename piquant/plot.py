@@ -430,7 +430,7 @@ def draw_quant_res_usage_graphs(
 
     _draw_stats_graphs(
         fformat, stats_dir, RESOURCE_USAGE_DIR, usage_data, opt_vals_set,
-        ru.get_resource_usage_statistics(), statistics.OVERALL_STATS_PREFIX)
+        ru.get_resource_usage_statistics(), "usage")
 
 
 def draw_prequant_res_usage_graphs(fformat, stats_dir, usage_data):
@@ -451,7 +451,7 @@ def draw_overall_stats_graphs(
     sub_dir = "overall_{l}_stats_graphs".format(l=tpm_level)
     _draw_stats_graphs(
         fformat, stats_dir, sub_dir, overall_stats, opt_vals_set,
-        statistics.get_graphable_statistics(), "usage")
+        statistics.get_graphable_statistics(), statistics.OVERALL_STATS_PREFIX)
 
 
 def grouped_stats_graph_drawer(
