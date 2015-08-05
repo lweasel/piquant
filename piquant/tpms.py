@@ -13,7 +13,6 @@ LOG10_REAL_TPM = "log10-real-tpm"
 LOG10_CALCULATED_TPM = "log10-calc-tpm"
 LOG10_RATIO = "log-ratio"
 NON_ZERO_PERCENTAGE = "non-zero-perc"
-TRUE_POSITIVE_PERCENTAGE = "tp-perc"
 
 CUMULATIVE_DISTRIBUTION_POINTS = 20
 

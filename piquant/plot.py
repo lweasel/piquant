@@ -237,7 +237,7 @@ def _plot_grouped_cumulative_dist(
         plot_info.set_plot_title(
             _capitalized(clsfr_col) + " threshold")
         _plot_grouped_statistic(
-            stats, plot_info, clsfr_col, t.TRUE_POSITIVE_PERCENTAGE,
+            stats, plot_info, clsfr_col, t.NON_ZERO_PERCENTAGE,
             clsfr_col, _get_distribution_plot_ylabel(ascending),
             _set_distribution_plot_bounds)
 
