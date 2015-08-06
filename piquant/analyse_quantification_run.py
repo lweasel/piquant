@@ -278,7 +278,7 @@ def _analyse_run(logger, options):
     logger.info("Getting filtered TPMs...")
     expressed_transcript_tpms = t.get_expressed_tpms(transcript_tpms)
     non_zero_transcript_tpms = t.get_non_zero_tpms(transcript_tpms)
-    expressed_gene_tpms = t.get_expressed_tpms(transcript_tpms)
+    expressed_gene_tpms = t.get_expressed_tpms(gene_tpms)
     non_zero_gene_tpms = t.get_non_zero_tpms(gene_tpms)
 
     clsfr_stats = _write_statistics(
