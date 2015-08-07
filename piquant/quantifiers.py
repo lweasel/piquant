@@ -462,15 +462,15 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
         "salmon index -t {ref_name}.transcripts.fa -i {index_dir}"
 
     QUANTIFY_ISOFORM_EXPRESSION = \
-        "salmon quant -p {num_threads} -i {index_dir} --biasCorrect -l " + \
+        "salmon quant -p {num_threads} -i {index_dir} -l " + \
         "{library_spec} {reads_spec} -o ."
     FILTER_COMMENT_LINES = [
-        r"grep -v '^# \[\|salmon' quant_bias_corrected.sf",
+        r"grep -v '^# \[\|salmon' quant.sf",
         "sed -e 's/# //'i > quant_filtered.csv"
     ]
 
     REMOVE_OUTPUT_EXCEPT_ABUNDANCES = \
-        "rm -rf logs quant.sf quant_bias_corrected.sf libFormatCounts.txt libParams"
+        "rm -rf logs quant.sf libFormatCounts.txt libParams"
 
     @classmethod
     def get_name(cls):
