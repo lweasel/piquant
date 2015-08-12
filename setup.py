@@ -30,7 +30,7 @@ setup(
         'pytz==2014.2',
         'schema==0.3.1',
         'scipy==0.13.3',
-        'seaborn==0.3.1',
+        'seaborn==0.6.0',
         'six==1.6.1',
     ],
     scripts=[

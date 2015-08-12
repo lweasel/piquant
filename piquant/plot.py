@@ -20,6 +20,9 @@ RESOURCE_USAGE_DIR = "resource_usage_graphs"
 # http://matplotlib.org/users/customizing.html)
 plt.rcParams['svg.fonttype'] = 'none'
 
+# This is the only way I can get fliers to appear in Seaborn boxplots
+plt.rcParams['lines.markeredgewidth'] = 0.5
+
 # matplotlib parameters appropriate for poster output
 # plt.rcParams['font.size'] = 16.0
 # plt.rcParams['axes.labelsize'] = 'medium'
@@ -28,7 +31,7 @@ plt.rcParams['svg.fonttype'] = 'none'
 # plt.rcParams['legend.fontsize'] = 'small'
 
 # matplotlib parameters appropriate for paper
-#plt.rcParams['font.size'] = 20.0
+#plt.rcParams['font.size'] = 16.0
 #plt.rcParams['axes.labelsize'] = 'large'
 #plt.rcParams['xtick.labelsize'] = 'medium'
 #plt.rcParams['ytick.labelsize'] = 'medium'
@@ -103,19 +106,23 @@ def _set_distribution_plot_bounds(xmin, xmax, ymin=None, ymax=None):
     plt.ylim(ymin=-2.5, ymax=102.5)
 
 
+def _set_plot_ybounds(statistic, ymin, ymax):
+    stat_range = statistic.stat_range((ymin, ymax))
+    if stat_range is not None:
+        min_val = stat_range[0]
+        max_val = stat_range[1]
+        if min_val is not None:
+            plt.ylim(ymin=min_val)
+        if max_val is not None:
+            plt.ylim(ymax=max_val)
+
+
 def _get_plot_bounds_setter(statistic):
     def _set_statistic_plot_bounds(xmin, xmax, ymin, ymax):
         xmargin = 2 * (xmax - xmin) / 100.0
         plt.xlim(xmin=xmin - xmargin, xmax=xmax + xmargin)
 
-        stat_range = statistic.stat_range((ymin, ymax))
-        if stat_range is not None:
-            min_val = stat_range[0]
-            max_val = stat_range[1]
-            if min_val is not None:
-                plt.ylim(ymin=min_val)
-            if max_val is not None:
-                plt.ylim(ymax=max_val)
+        _set_plot_ybounds(statistic, ymin, ymax)
 
     return _set_statistic_plot_bounds
 
@@ -321,8 +328,9 @@ def log_ratio_boxplot(
 
     with _saving_new_plot(
             fformat, [base_name, grouping_column, tpm_label, "boxplot"]):
-        sb.boxplot(tpms[t.LOG10_RATIO], groupby=tpms[grouping_column],
-                   sym='', color='lightblue')
+        sb.boxplot(x=tpms[grouping_column],
+                   y=tpms[t.LOG10_RATIO],
+                   color='lightblue', sym='')
 
         plt.suptitle("Log ratios of calculated to real TPMs: " + tpm_label)
         plt.xlabel(_capitalized(grouping_column))
@@ -354,6 +362,46 @@ def plot_statistic_vs_classifier(
 
         _set_ticks_for_classifier_plot(
             np.arange(min_xval, max_xval + 1), classifier)
+
+
+def _plot_statistic_boxplot(opt_dir, plot_file_prefix, fformat,
+                            data, statistic, main_opt, sub_opt=None):
+
+    output_dir = _get_plot_subdir(opt_dir, statistic.name) \
+        if sub_opt else opt_dir
+    graph_file_basename = os.path.join(output_dir, plot_file_prefix)
+
+    options = [main_opt]
+    if sub_opt:
+        options = [sub_opt] + options
+
+    flatten = lambda x: [item for sublist in x for item in sublist]
+
+    name_elements = [graph_file_basename, statistic.name] + \
+        flatten([["per", opt.name] for opt in options])
+
+    with _saving_new_plot(fformat, name_elements):
+        data = data.sort([opt.name for opt in options])
+
+        sb.boxplot(x=data[main_opt.name],
+                   y=data[statistic.name],
+                   hue=data[sub_opt.name] if sub_opt else None,
+                   showmeans=True,
+                   meanprops=dict(marker='D', markerfacecolor='none'))
+
+        ymin = data[statistic.name].min()
+        ymax = data[statistic.name].max()
+
+        _set_plot_ybounds(statistic, ymin, ymax)
+
+        plt.xlabel(main_opt.get_axis_label())
+        plt.ylabel(statistic.get_axis_label())
+        plt.legend(title=opt.title, loc=4)
+
+        title_elements = [statistic.title, "distribution"] + \
+            flatten([["per", _decapitalized(opt.title)] for opt in options])
+        title = " ".join(title_elements)
+        plt.suptitle(title)
 
 
 def plot_transcript_cumul_dist(
@@ -423,6 +471,21 @@ def _draw_stats_graphs(
                     option_plot_dir, fformat, option, num_opt,
                     stats, plot_file_prefix),
                 [option, num_opt], data_frame)
+
+        for stat in stats:
+            _plot_statistic_boxplot(option_plot_dir, plot_file_prefix, fformat,
+                                    data_frame, stat, option)
+
+        all_nondeg_opts = opt_vals_set.get_non_degenerate_options(
+            opts_to_remove=option)
+
+        for opt in all_nondeg_opts:
+            opt_dir = _get_plot_subdir(option_plot_dir, "by", opt.name)
+
+            for stat in stats:
+                _plot_statistic_boxplot(
+                    opt_dir, plot_file_prefix, fformat,
+                    data_frame, stat, option, opt)
 
 
 def draw_quant_res_usage_graphs(
