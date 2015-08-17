@@ -68,6 +68,13 @@ def write_stats_data(filename, data_frame, **kwargs):
         data_frame.to_csv(out_file, float_format="%.5f", **kwargs)
 
 
+def _rounded_stat_range(vals_range):
+    granularity = 0.2
+    border = 0.01
+    min_val = math.floor(vals_range[0] / granularity) * granularity
+    return (min_val - border, 1 + border)
+
+
 def _statistic(cls):
     # Mark a class as capable of calculate a statistic for the results of a
     # quantification run.
@@ -166,8 +173,7 @@ class _SpearmanCorrelation(_BaseStatistic):
         return expressed_grouped.apply(_SpearmanCorrelation._calculate)
 
     def stat_range(self, vals_range):
-        min_val = math.floor(vals_range[0] * 5) / 5.0
-        return (min_val - 0.01, 1.01)
+        return _rounded_stat_range(vals_range)
 
 
 @_statistic
@@ -202,8 +208,7 @@ class _ErrorFraction(_BaseStatistic):
             _ErrorFraction.ERROR_FRACTION_THRESHOLD)
 
     def stat_range(self, vals_range):
-        del vals_range
-        return _ZERO_TO_ONE_STAT_RANGE
+        return _rounded_stat_range(vals_range)
 
 
 @_statistic
@@ -267,8 +272,7 @@ class _Sensitivity(_BaseStatistic):
         return grouped.apply(_Sensitivity._calculate)
 
     def stat_range(self, vals_range):
-        min_val = math.floor(vals_range[0] * 5) / 5.0
-        return (min_val - 0.01, 1.01)
+        return _rounded_stat_range(vals_range)
 
 
 @_statistic
@@ -299,5 +303,4 @@ class _Specificity(_BaseStatistic):
         return grouped.apply(_Specificity._calculate)
 
     def stat_range(self, vals_range):
-        min_val = math.floor(vals_range[0] * 5) / 5.0
-        return (min_val - 0.01, 1.01)
+        return _rounded_stat_range(vals_range)
