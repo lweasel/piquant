@@ -396,7 +396,9 @@ def _plot_statistic_boxplot(opt_dir, plot_file_prefix, fformat,
 
         plt.xlabel(main_opt.get_axis_label())
         plt.ylabel(statistic.get_axis_label())
-        plt.legend(title=opt.title, loc=4)
+
+        if sub_opt:
+            plt.legend(title=sub_opt.title, loc=4)
 
         title_elements = [statistic.title, "distribution"] + \
             flatten([["per", _decapitalized(opt.title)] for opt in options])
