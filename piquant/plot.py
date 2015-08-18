@@ -383,6 +383,9 @@ def _plot_statistic_boxplot(opt_dir, plot_file_prefix, fformat,
     with _saving_new_plot(fformat, name_elements):
         data = data.sort([opt.name for opt in options])
 
+        for opt in options:
+            data[opt.name] = data[opt.name].apply(opt.get_value_name)
+
         sb.boxplot(x=data[main_opt.name],
                    y=data[statistic.name],
                    hue=data[sub_opt.name] if sub_opt else None,
