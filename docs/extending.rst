@@ -120,11 +120,11 @@ A boolean, ``True`` if graphs of the statistic should be plotted as part of *piq
 
 .. _extending-calculate-method:
 
-.. py:method:: calculate(tpms, tp_tpms)
+.. py:method:: calculate(tpms, expressed_tpms)
 
-``calculate`` should compute the statistic for a set of transcript abundances estimated by a particular quantification tool. The parameter ``tpms`` is a `pandas <http://pandas.pydata.org>`_ `DataFrame <http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html?highlight=dataframe#pandas.DataFrame>`_ describing the results of a quantification run, while ``tp_tpms`` is a DataFrame describing those results of the quantification run for which both real and estimated abundances were above a threshold value indicating "presence" of the transcript (i.e. "true positive" TPM measurements).
+``calculate`` should compute the statistic for a set of transcript abundances estimated by a particular quantification tool. The parameter ``tpms`` is a `pandas <http://pandas.pydata.org>`_ `DataFrame <http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html?highlight=dataframe#pandas.DataFrame>`_ describing the results of a quantification run, while ``expressed_tpms`` is a DataFrame describing those results of the quantification run for which real transcript abundances were above the threshold value indicating "presence" of the transcript.
 
-The ``tpms`` and ``tp_tpms`` DataFrame objects have a row for each estimated transcript abundance, and the following columns:
+The ``tpms`` and ``expressed_tpms`` DataFrame objects have a row for each estimated transcript abundance, and the following columns:
 
 * ``transcript``: Transcript identifier as specified in the input transcripts GTF file.
 * ``length``: Transcript length in base pairs.
@@ -135,9 +135,9 @@ The ``tpms`` and ``tp_tpms`` DataFrame objects have a row for each estimated tra
 
 ``calculate`` should return a single number, the computed statistic.
 
-.. py:method:: calculate_grouped(grouped, grp_summary, tp_grouped, tp_grp_summary)
+.. py:method:: calculate_grouped(grouped, grp_summary, expressed_grouped, expressed_grp_summary)
 
-``calculate_grouped`` should compute a set of statistic values for the results of a quantification run which have been grouped according to a certain method of classifying transcripts. The parameter ``grouped`` is a pandas `GroupBy <http://pandas.pydata.org/pandas-docs/stable/groupby.html>`_ instance, describing the results of a quantification run grouped by the transcript classifier; ``group_summary`` is a DataFrame containing basic summary statistics calculated for each group of transcripts. The parameters ``tp_grouped`` and ``tp_grp_summary`` are analogous to the first two parameters, but describe only results of the quantification run for "true positive" TPM measurements.
+``calculate_grouped`` should compute a set of statistic values for the results of a quantification run which have been grouped according to a certain method of classifying transcripts. The parameter ``grouped`` is a pandas `GroupBy <http://pandas.pydata.org/pandas-docs/stable/groupby.html>`_ instance, describing the results of a quantification run grouped by the transcript classifier; ``group_summary`` is a DataFrame containing basic summary statistics calculated for each group of transcripts. The parameters ``expressed_grouped`` and ``expressed_grp_summary`` are analogous to the first two parameters, but describe only results of the quantification run for which real transcript abundances were above the threshold value indiciated "presence" of the transcript.
 
 ``calculate_grouped`` should return a pandas `Series <http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html>`_ instance, enumerating the statistic as calculated for each transcript group. When adding a new statistic, it may be easiest to adapt one of the existing ``calcualate_grouped`` methods to your needs.
 

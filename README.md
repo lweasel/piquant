@@ -52,6 +52,8 @@ Changelog
 
 * 1.2 (xx/xx/xx):
   - Added Salmon and Kallisto quantification tools
+  - Improve reliability of between-run comparisons 
+  - Add boxplots of distributions of statistics
 * 1.1 (27/03/15):
   - Added gene-level analysis
   - Added strandedness and transcript "noise" as sequencing parameters

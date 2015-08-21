@@ -1,7 +1,7 @@
 Quantification tools
 ====================
 
-By default, the *piquant* pipeline has the ability to run the following four transcript quantification tools. The pipeline can, however, be easily extended to run additional quantification tools by editing the ``quantifiers.py`` Python module, as described in :ref:`extending-adding-new-quantifiers`.
+By default, the *piquant* pipeline has the ability to run the following six transcript quantification tools. The pipeline can, however, be easily extended to run additional quantification tools by editing the ``quantifiers.py`` Python module, as described in :ref:`extending-adding-new-quantifiers`.
 
 .. attention:: It is important to clarify that rather than testing the performance of quantification tools alone, *piquant* is actually testing the performance, as regards the accuracy of transcript quantification, of mapping plus quantification tool pipelines (at least in the case of quantification tools which require mapping of reads prior to quantification). It can easily be understood, for example, how difficulties encountered when mapping reads to the genome might adversely affect quantification performance, through factors beyond a quantification tool's control.
 
@@ -102,6 +102,6 @@ Kallisto
 
 In preparation for quantifying transcripts with *Kallisto*, the *Kallisto* ``index`` command is executed to create a Kallisto index for the input transcript set (for more information on *Kallisto* commands, see the *Kallisto* `manual <http://pachterlab.github.io/kallisto/manual.html>`_).
 
-Then, when quantifying transcripts with *Kallisto* for a set of simulated RNA-seq reads, the *Kallisto* ``quant`` command is executed with a value of 200 for the ``--fragment-length`` option (estimated average fragment length) when single-end reads are being quantified.
+Then, when quantifying transcripts with *Kallisto* for a set of simulated RNA-seq reads, the *Kallisto* ``quant`` command is executed, with the ``--single`` option specified and a value of 200 for the ``--fragment-length`` option (estimated average fragment length) when single-end reads are being quantified. The ``--bias`` option is specified in all cases, indicating that *Kallisto* should performed sequence-based bias correction.
 
-After transcripot abundance estimation has completed, of the files output by *Kallisto* only ``abundance.txt`` is retained (unless the ``--nocleanup`` option was specified when the ``run_quantification.sh`` script was created). Relative transcript abundances are extracted from this file in units of TPM (transcripts per million).
+After transcriptome abundance estimation has completed, of the files output by *Kallisto* only ``abundance.txt`` is retained (unless the ``--nocleanup`` option was specified when the ``run_quantification.sh`` script was created). Relative transcript abundances are extracted from this file in units of TPM (transcripts per million).

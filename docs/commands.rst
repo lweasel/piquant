@@ -84,26 +84,26 @@ eight read simulation directories will be created:
 
 Within each read simulation directory, three files are always written:
 
-* ``flux_simulator_main_expression.par``: A *FluxSimulator* [FluxSimulator]_ parameters file suitable for creating a transcript expression profile.
-* ``flux_simulator_main_simulation.par``: A *FluxSimulator* parameters file suitable for simulating RNA-seq reads according to the created transcript expression profile.
-* ``run_simulation.sh``: A Bash script which, when executed, will use *FluxSimulator* and the above two parameters files to simulate reads for the appropriate combination of sequencing parameters. 
+* ``flux_simulator_main_expression.par``: A *Flux Simulator* [FluxSimulator]_ parameters file suitable for creating a transcript expression profile.
+* ``flux_simulator_main_simulation.par``: A *Flux Simulator* parameters file suitable for simulating RNA-seq reads according to the created transcript expression profile.
+* ``run_simulation.sh``: A Bash script which, when executed, will use *Flux Simulator* and the above two parameters files to simulate reads for the appropriate combination of sequencing parameters. 
 
 In addition, if "background noise" reads are being simulated (i.e. the value of the ``--noise-perc`` option is greater than zero), the following two additional files are written:
 
-* ``flux_simulator_noise_expression.par``: A *FluxSimulator* parameters file suitable for creating a transcript expression profile for the set of transcripts that will be used to simulate background noise.
-* ``flux_simulator_noise_simulation.par``: A *FluxSimulator* parameters file suitable for simulating RNA-seq reads according to the created noise transcript expression profile.
+* ``flux_simulator_noise_expression.par``: A *Flux Simulator* parameters file suitable for creating a transcript expression profile for the set of transcripts that will be used to simulate background noise.
+* ``flux_simulator_noise_simulation.par``: A *Flux Simulator* parameters file suitable for simulating RNA-seq reads according to the created noise transcript expression profile.
 
 Note that it is possible to execute the ``run_simulation.sh`` script directly; however by using the ``piquant`` command ``create_reads``, sets of reads for several combinations of sequencing parameters can be created simultaneously as a batch (see :ref:`Create reads <simulate-reads>` below).
 
 In addition to the command line options common to all ``piquant`` commands (see :ref:`common-options` above), the ``prepare_read_dirs`` command takes the following additional options:
 
 * ``--reads-dir``: The parent directory into which directories in which reads will be simulated will be written. This directory will be created if it does not already exist (default: output).
-* ``--transcript-gtf``: The path to a GTF formatted file describing the main set of transcripts to be simulated by *FluxSimulator*. This GTF file location must be supplied. Note that the GTF file should only contain features of feature type "exon", and that every exon feature should specify both "gene_id" and "transcript_id" among its attributes.
+* ``--transcript-gtf``: The path to a GTF formatted file describing the main set of transcripts to be simulated by *Flux Simulator*. This GTF file location must be supplied. Note that the GTF file should only contain features of feature type "exon", and that every exon feature should specify both "gene_id" and "transcript_id" among its attributes.
 * ``--noise-transcript-gtf``: The path to a GTF formatted file describing a set of transcripts that will be used to simulated background noise. This GTF file location needs only be specified if background noise is being simulated (ie. for values of ``--noise-perc`` other than zero); however, in these cases it must be specified. The same requirements as to GTF file format apply as above for the option ``--transcript-gtf``.
 * ``--genome-fasta``: The path to a directory containing per-chromosome genome sequences in FASTA-formatted files. This directory location must be supplied.
-* ``--num-molecules``: *FluxSimulator* parameters will be set so that the initial pool of main transcripts contains this many molecules. Note that although it depends on this value, the number of fragments in the final library from which reads will be sequenced is also a complicated function of the parameters at each stage of *FluxSimulator*'s sequencing process. This parameter should be set high enough that the number of fragments in the final library exceeds the number of reads necessary to give any of the sequencing depths required. If the initial number of molecules is not great enough to create the required number of reads, the ``run_simulation.sh`` script will exit with an error (default: 30,000,000).
-* ``--num-noise-molecules``: *FluxSimulator* parameters will be set so that the initial pool of noise transcripts contains this many molecules; this parameter should be set high enough that the number of fragments in the final noise simulation library exceeds the number of reads necessary to give any required sequencing depth (default: 2,000,000).
-* ``--nocleanup``: When run, *FluxSimulator* creates a number of large intermediate files. Unless ``--nocleanup`` is specified, the ``run_simulation.sh`` Bash script will be constructed so as to delete these intermediate files once read simulation has finished.
+* ``--num-molecules``: *Flux Simulator* parameters will be set so that the initial pool of main transcripts contains this many molecules. Note that although it depends on this value, the number of fragments in the final library from which reads will be sequenced is also a complicated function of the parameters at each stage of *Flux Simulator*'s sequencing process. This parameter should be set high enough that the number of fragments in the final library exceeds the number of reads necessary to give any of the sequencing depths required. If the initial number of molecules is not great enough to create the required number of reads, the ``run_simulation.sh`` script will exit with an error (default: 30,000,000).
+* ``--num-noise-molecules``: *Flux Simulator* parameters will be set so that the initial pool of noise transcripts contains this many molecules; this parameter should be set high enough that the number of fragments in the final noise simulation library exceeds the number of reads necessary to give any required sequencing depth (default: 2,000,000).
+* ``--nocleanup``: When run, *Flux Simulator* creates a number of large intermediate files. Unless ``--nocleanup`` is specified, the ``run_simulation.sh`` Bash script will be constructed so as to delete these intermediate files once read simulation has finished.
 
 .. _simulate-reads:
 
@@ -125,7 +125,7 @@ Check reads were successfully created (``check_reads``)
 
 The ``check_reads`` command is used to confirm that simulation of RNA-seq reads via ``run_simulation.sh`` scripts successfully completed. For each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias``, ``--stranded`` and ``--noise-perc``, the relevant read simulation directory is checked for the existence of the appropriate FASTA or FASTQ files containing simulated reads. A message is printed to standard error for those combinations of sequencing parameters for which read simulation has not yet finished, or for which simulation terminated unsuccessfully.
 
-In the case of unsuccessful termination, the file ``nohup.out`` in the relevant simulation directory contains the messages output by both *FluxSimulator* and the *piquant* scripts that were executed, and this file can be examined for the source of error.
+In the case of unsuccessful termination, the file ``nohup.out`` in the relevant simulation directory contains the messages output by both *Flux Simulator* and the *piquant* scripts that were executed, and this file can be examined for the source of error.
 
 In addition to the command line options common to all ``piquant`` commands (see :ref:`common-options` above), the ``check_reads`` command takes the following additional options:
 
@@ -168,7 +168,7 @@ In addition to the command line options common to all ``piquant`` commands (see 
 
 * ``--reads-dir``: The parent directory in which directories in which reads were simulated are located (default: output).
 * ``--quant-dir``: The parent directory into which directories in which quantification will be performed will be written. This directory will be created if it does not already exist (default: output).
-* ``--transcript-gtf``: The path to a GTF formatted file describing the transcripts from which reads were simulated by *FluxSimulator*. This GTF file location must be supplied. The transcripts GTF file should be the same as was supplied to the ``prepare_read_dirs`` command (see :ref:`Prepare read directories <prepare-read-dirs>` above).
+* ``--transcript-gtf``: The path to a GTF formatted file describing the transcripts from which reads were simulated by *Flux Simulator*. This GTF file location must be supplied. The transcripts GTF file should be the same as was supplied to the ``prepare_read_dirs`` command (see :ref:`Prepare read directories <prepare-read-dirs>` above).
 * ``--genome-fasta``: The path to a directory containing per-chromosome genome sequences in FASTA-formatted files. This directory location must be supplied. The genome sequences should be the same as were supplied to the ``prepare_read_dirs`` command.
 * ``--num-threads``: Multi-threaded quantification methods will use this number of threads (default: 1).
 * ``--nocleanup``: When run, quantification tools may create a number of output files. Unless ``--nocleanup`` is specified, the  ``run_quantification.sh`` Bash script will be constructed so as to delete all of these, except those essential for *piquant* to calculate the accuracy with which quantification has been performed. 
@@ -176,7 +176,7 @@ In addition to the command line options common to all ``piquant`` commands (see 
 * ``--plot-format``: The file format in which graphs produced during the analysis of this quantification run will be written to - one of "pdf", "svg" or "png" (default "pdf").
 * ``--grouped-threshold``: When producing graphs of statistics plotted against groups of transcripts determined by a transcript classifier (see :ref:`assessment-transcript-classifiers`), only groups with greater than this number of transcripts will contribute to the plot.
 * ``--error-fraction-threshold``: When producing graphs, transcripts whose estimated TPM (transcripts per million) is greater than this percentage higher or lower than their real TPM are considered above threshold for the "error fraction" statistic (default: 10).
-* ``--not-present-cutoff``: When producing graphs, for example of the sensitivity and specificity of transcript detection by quantification methods, this cut-off value of the transcript TPM is used to determine whether the transcript is considered to be present or not (default: 0.1).
+* ``--not-present-cutoff``:  Prior to any statistics being calculated, all real and estimated TPM values below this cut-off value are truncated to zero, to avoid biasing analyses with differences between very low real and estimated TPM values that are likely of little biological interest (default 0.1).
 
 Prepare for quantification (``prequantify``)
 --------------------------------------------
