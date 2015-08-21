@@ -213,7 +213,7 @@ In the sub-directory ``overall_transcript_stats_graphs``, a sub-directory ``per_
 
     overall_<statistic>_per_<parameter_1>.pdf
 
-Also within each ``per_<parameter_1>`` directory, a further ``by_<parameter_2>`` is created for each quantification and simulation parameter for which quantification runs were performed for more than one value of that second parameter (excluding parameter 1 itself). Within each ``by_<parameter_2>`` directory, a ``<statistic>`` directory is created for each statistic marked as capable of producing graphs.
+Also within each ``per_<parameter_1>`` directory, a further ``by_<parameter_2>`` directory is created for each quantification and simulation parameter for which quantification runs were performed for more than one value of that second parameter (excluding *parameter 1* itself). Within each ``by_<parameter_2>`` directory, a ``<statistic>`` directory is created for each statistic marked as capable of producing graphs.
 
 Within each statistic directory, a boxplot is produced showing the distribution of values of that statistic over all quantification runs which share each different value of *parameter 1*, but further grouped into those quantification runs which share each different value of *parameter 2*::
 
