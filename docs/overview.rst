@@ -24,7 +24,7 @@ Simulation of RNA-seq reads proceeds in two steps. In the first, run via the ``p
 * strand-specific or unstranded reads
 * presence or absence of background read "noise"
 
-In the second step, RNA-seq reads are simulated. Each directory created in the first step contains a script which, when run, will use the *FluxSimulator* RNA-seq experiment simulator [FluxSimulator]_ to generate an expression profile for transcripts, then simulate reads for those transcripts according to the specified combination of sequencing parameters. This script can be run directly; however, using the ``piquant`` command ``create_reads``, reads for several combinations of sequencing parameters can be simulated at once as a batch.
+In the second step, RNA-seq reads are simulated. Each directory created in the first step contains a script which, when run, will use the *Flux Simulator* RNA-seq experiment simulator [FluxSimulator]_ to generate an expression profile for transcripts, then simulate reads for those transcripts according to the specified combination of sequencing parameters. This script can be run directly; however, using the ``piquant`` command ``create_reads``, reads for several combinations of sequencing parameters can be simulated at once as a batch.
 
 The ``piquant`` command ``check_reads`` provides an easy way to check that the read simulation processes completed correctly for specified combinations of sequencing parameters.
 
@@ -49,14 +49,16 @@ Requirements
 
 The *piquant* pipeline is implemented as a set of Python scripts and modules; it has currently been tested against Python versions 2.7.6 and 3.4.0 running under Ubuntu 12.04.4 LTS and 14.04.1 LTS.
 
-In order to simulate reads, the *FluxSimulator* RNA-seq experiment simulator is required to be installed, and the ``flux-simulator`` executable be added to the executable path (e.g. via the Unix PATH variable). *piquant* has been tested with FluxSimulator version 1.2.2.
+In order to simulate reads, the *Flux Simulator* RNA-seq experiment simulator is required to be installed, and the ``flux-simulator`` executable be added to the executable path (e.g. via the Unix PATH variable). *piquant* has been tested with Flux Simulator version 1.2.2.
 
-By default, *piquant* has the ability to run four different quantification tools:
+By default, *piquant* has the ability to run six different quantification tools:
 
-* *Cufflinks*: Transcript assembly, differential expression, and differential regulation for RNA-Seq [Cufflinks]_
-* *RSEM*: RNA-Seq by Expectation-Maximization [RSEM]_
-* *eXpress*: Streaming quantification for high-throughput sequencing [eXpress]_
-* *Sailfish*: Rapid Alignment-free Quantification of Isoform Abundance [Sailfish]_
+* *Cufflinks*: [Cufflinks]_
+* *RSEM*: [RSEM]_
+* *eXpress*: [eXpress]_
+* *Sailfish*: [Sailfish]_
+* *Salmon*: [Salmon]_
+* *Kallisto*: [Kallisto]_
 
 and these tools are required to be installed, and their relevant executables added to the executable path, if they are to be used within *piquant*. The pipeline has been tested with the following versions of these quantification tools:
 
@@ -64,13 +66,15 @@ and these tools are required to be installed, and their relevant executables add
 * *RSEM*: version 1.2.19
 * *eXpress*: version 1.5.1
 * *Sailfish*: version 0.6.3
+* *Salmon*: version 0.4.1
+* *Kallisto*: version 0.42.2.1
 
 In addition, the use of each quantification tool within the *piquant* pipeline has additional dependencies, which are enumerated below:
 
 * *Cufflinks*: *Bowtie* [Bowtie]_ and *TopHat* [TopHat]_ are required to map simulated reads to the genome. 
 * *RSEM*: *Bowtie* is required by RSEM to map simulated reads to the transcriptome.
 * *eXpress*: *Bowtie* is required to map simulated reads to the transcriptome. In this case, *piquant* creates transcriptome sequences for mapping using a tool from the *RSEM* package (``rsem-prepare-reference``).
-* *Sailfish*: *piquant* again uses ``rsem-prepare-reference`` from the *RSEM* package to create reference transcriptome sequences.
+* *Sailfish*, *Salmon* and *Kallisto*: *piquant* again uses ``rsem-prepare-reference`` from the *RSEM* package to create reference transcriptome sequences.
 
 *piquant* has been tested with *Bowtie* version 1.0.0 and *TopHat* version 2.0.10.
 

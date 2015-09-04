@@ -364,7 +364,7 @@ def test_get_value_names_returns_correct_translated_values():
 
     assert po.get_value_names(mqr_options) == \
         ["Cufflinks", "10x", "50b", "paired-end", "no errors",
-         "unstranded", "with bias", "noise-5x"]
+         "unstranded", "with bias", "5% noise"]
 
 
 def test_execute_for_mqr_option_sets_executes_for_correct_number_of_option_sets():

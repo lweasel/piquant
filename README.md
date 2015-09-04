@@ -50,10 +50,14 @@ in the tool's top-level directory.
 Changelog
 =========
 
-* 1.1 (xx/xx/xx):
+* 1.2 (xx/xx/xx):
+  - Added Salmon and Kallisto quantification tools
+  - Improve reliability of between-run comparisons 
+  - Add boxplots of distributions of statistics
+* 1.1 (27/03/15):
   - Added gene-level analysis
   - Added strandedness and transcript "noise" as sequencing parameters
-  - Added quantification tool resource usage (time and memory) plots
+  - Added quantification tool time and memory resource usage plots
   - Separate parent directories for read and quantification directories
   - Some hardcoded quantification and analysis values made user-definable
 * 1.0 (28/10/14): First full release

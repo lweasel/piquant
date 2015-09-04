@@ -470,7 +470,7 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
     ]
 
     REMOVE_OUTPUT_EXCEPT_ABUNDANCES = \
-        "rm -rf logs quant.sf"
+        "rm -rf logs quant.sf libFormatCounts.txt libParams"
 
     @classmethod
     def get_name(cls):
@@ -537,4 +537,78 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
                 index_col="Name")
 
         return self.abundances.ix[transcript_id]["TPM"] \
+            if transcript_id in self.abundances.index else 0
+
+
+@_quantifier
+class _Kallisto(_TranscriptomeBasedQuantifierBase):
+    CREATE_TRANSCRIPT_INDEX = \
+        "kallisto index -i {index_file} {ref_name}.transcripts.fa"
+
+    QUANTIFY_ISOFORM_EXPRESSION = \
+        "kallisto quant -i {index_file} --bias -o output {length_spec} {reads_spec}"
+
+    REMOVE_OUTPUT_EXCEPT_ABUNDANCES = \
+        "rm output/abundance.h5 output/run_info.json"
+
+    @classmethod
+    def get_name(cls):
+        return "Kallisto"
+
+    @classmethod
+    def _needs_bowtie_index(cls):
+        return False
+
+    @classmethod
+    def _get_index_file(cls, quantifier_dir):
+        return os.path.join(quantifier_dir, "kallisto", "kallisto.idx")
+
+    @classmethod
+    def write_preparatory_commands(cls, writer, record_usage, params):
+        # For convenience, we use a tool from the RSEM package to create the
+        # transcript reference
+        super(_Kallisto, cls).write_preparatory_commands(
+            writer, record_usage, params)
+
+        with writer.section():
+            writer.add_comment("Now create the Kallisto transcript index")
+
+            ref_name = cls._get_ref_name(params[QUANTIFIER_DIRECTORY])
+            index_file = cls._get_index_file(params[QUANTIFIER_DIRECTORY])
+
+            cls._add_timed_prequantification_command(
+                writer, record_usage,
+                cls.CREATE_TRANSCRIPT_INDEX.format(
+                    ref_name=ref_name, index_file=index_file))
+
+    @classmethod
+    def write_quantification_commands(cls, writer, record_usage, params):
+        index_file = cls._get_index_file(params[QUANTIFIER_DIRECTORY])
+
+        length_spec = "-l 200" if SIMULATED_READS in params else ""
+
+        reads_spec = "--single {s}".format(s=params[SIMULATED_READS]) \
+            if SIMULATED_READS in params else \
+            "{l} {r}".format(
+                l=params[LEFT_SIMULATED_READS],
+                r=params[RIGHT_SIMULATED_READS])
+
+        cls._add_timed_quantification_command(
+            writer, record_usage,
+            cls.QUANTIFY_ISOFORM_EXPRESSION.format(
+                index_file=index_file,
+                length_spec=length_spec,
+                reads_spec=reads_spec))
+
+    @classmethod
+    def write_cleanup(cls, writer):
+        writer.add_line(cls.REMOVE_OUTPUT_EXCEPT_ABUNDANCES)
+
+    def get_transcript_abundance(self, transcript_id):
+        if self.abundances is None:
+            self.abundances = pd.read_csv(
+                "output/abundance.tsv", delim_whitespace=True,
+                index_col="target_id")
+
+        return self.abundances.ix[transcript_id]["tpm"] \
             if transcript_id in self.abundances.index else 0

@@ -317,6 +317,8 @@ NOISE_DEPTH_PERCENT = _MultiQuantRunOption(
         validator=lambda x: opt.validate_int_option(
             x, "Noise depth percentage must be a positive integer", min_val=0),
         value_namer=lambda x:
+        "No noise" if x == 0 else "{d}% noise".format(d=x),
+        file_namer=lambda x:
         "no_noise" if x == 0 else "noise-{d}x".format(d=x)))
 
 TRANSCRIPT_GTF = _QuantRunOption(

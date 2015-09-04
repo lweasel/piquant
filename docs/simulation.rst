@@ -8,28 +8,28 @@ Running ``run_simulation.sh`` results in the following main steps being executed
 Create expression profiles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-*FluxSimulator* [FluxSimulator]_ is used to create an expression profile (a ``.pro`` file) for the supplied set of main transcripts. This profile defines the set of expressed transcripts, and the relative abundances of those transcripts, from which reads will subsequently be simulated. If the noise depth is greater than zero, then an expression profile for the supplied set of noise transcripts is also created.
+*Flux Simulator* [FluxSimulator]_ is used to create an expression profile (a ``.pro`` file) for the supplied set of main transcripts. This profile defines the set of expressed transcripts, and the relative abundances of those transcripts, from which reads will subsequently be simulated. If the noise depth is greater than zero, then an expression profile for the supplied set of noise transcripts is also created.
 
-For more information on the model and algorithm used by *FluxSimulator* to create expression profiles, see the *FluxSimulator* `website <http://sammeth.net/confluence/display/SIM/4.1.1+-+Gene+Expression+Profile>`_.
+For more information on the model and algorithm used by *Flux Simulator* to create expression profiles, see the *Flux Simulator* `website <http://sammeth.net/confluence/display/SIM/4.1.1+-+Gene+Expression+Profile>`_.
 
 Calculate required number of reads
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Given a particular read length and (approximate) desired sequencing depths, a certain number of reads will need to be simulated for both the main and noise transcript sets. These numbers are calculated by the support script ``calculate_reads_for_depth`` (see :ref:`calculate-reads-for-depth` for more details) and the *FluxSimulator* simulation parameters files, ``flux_simulator_main_simulation.par`` and ``flux_simulator_noise_expression.par``, are updated accordingly.
+Given a particular read length and (approximate) desired sequencing depths, a certain number of reads will need to be simulated for both the main and noise transcript sets. These numbers are calculated by the support script ``calculate_reads_for_depth`` (see :ref:`calculate-reads-for-depth` for more details) and the *Flux Simulator* simulation parameters files, ``flux_simulator_main_simulation.par`` and ``flux_simulator_noise_expression.par``, are updated accordingly.
 
 .. _simulate-reads:
 
 Simulate reads
 ^^^^^^^^^^^^^^
 
-Next, *FluxSimulator* is used to simulate the required number of reads for the desired sequencing depths, according to the previously created transcript expression profiles. Note that depending on the number of reads being simulated, this step can take considerable time.
+Next, *Flux Simulator* is used to simulate the required number of reads for the desired sequencing depths, according to the previously created transcript expression profiles. Note that depending on the number of reads being simulated, this step can take considerable time.
 
 Note that:
 
-* Reads are not simulated from the poly-A tails of transcripts (this behaviour is controlled by the *FluxSimulator* parameters ``POLYA_SHAPE`` and ``POLYA_SCALE``), as the multi-mapping of such reads was found to cause problems for certain quantification tools (for more details on *FluxSimulator*'s transcript modifications, see `here <http://sammeth.net/confluence/display/SIM/4.1.2+-+Transcript+Modifications>`_).
-* If sequencing errors have been specified, such errors are simulated with *FluxSimulator*'s 76bp error model; the simulator scales this error model appropriately for the length of reads being produced (for more details on *FluxSimulator*'s error models, see `here <http://sammeth.net/confluence/display/SIM/4.5.4+-+Error+Models>`_).
-* PCR amplification of fragments, controlled by the *FluxSimulator* parameter ``PCR_DISTRIBUTION``, is disabled (for more details on *FluxSimulator*'s simulation of PCR, see `here <http://sammeth.net/confluence/display/SIM/4.4.2+-+PCR+Amplification>`_). 
-* The *FluxSimulator* parameter ``UNIQUE_IDS`` is set to ensure that, in the case of paired-end reads, read names match for the reads of each pair, excluding the '/1' and '/2' suffix identifiers - this behaviour is required for some quantification tools. Note that with this option set, the reads are effectively stranded, since the first read of each pair ('/1') always originates from the sense strand, and the second ('/2') from the anti-sense strand. For more details on the ``UNIQUE_IDS`` parameter, see `here <http://sammeth.net/confluence/display/SIM/4.5.2+-+Read+Identifiers>`_. (*n.b.* in the case of single-end reads, the reads produced are unstranded).
+* Reads are not simulated from the poly-A tails of transcripts (this behaviour is controlled by the *Flux Simulator* parameters ``POLYA_SHAPE`` and ``POLYA_SCALE``), as the multi-mapping of such reads was found to cause problems for certain quantification tools (for more details on *Flux Simulator*'s transcript modifications, see `here <http://sammeth.net/confluence/display/SIM/4.1.2+-+Transcript+Modifications>`_).
+* If sequencing errors have been specified, such errors are simulated with *Flux Simulator*'s 76bp error model; the simulator scales this error model appropriately for the length of reads being produced (for more details on *Flux Simulator*'s error models, see `here <http://sammeth.net/confluence/display/SIM/4.5.4+-+Error+Models>`_).
+* PCR amplification of fragments, controlled by the *Flux Simulator* parameter ``PCR_DISTRIBUTION``, is disabled (for more details on *Flux Simulator*'s simulation of PCR, see `here <http://sammeth.net/confluence/display/SIM/4.4.2+-+PCR+Amplification>`_). 
+* The *Flux Simulator* parameter ``UNIQUE_IDS`` is set to ensure that, in the case of paired-end reads, read names match for the reads of each pair, excluding the '/1' and '/2' suffix identifiers - this behaviour is required for some quantification tools. Note that with this option set, the reads are effectively stranded, since the first read of each pair ('/1') always originates from the sense strand, and the second ('/2') from the anti-sense strand. For more details on the ``UNIQUE_IDS`` parameter, see `here <http://sammeth.net/confluence/display/SIM/4.5.2+-+Read+Identifiers>`_. (*n.b.* in the case of single-end reads, the reads produced are unstranded).
 
 Check reads
 ^^^^^^^^^^^
@@ -41,7 +41,7 @@ Join and shuffle reads
 
 If both main and noise reads have been simulated (i.e. if the noise depth is greater than zero), then the two FASTA or FASTQ files produced are concatenated.
 
-Note that some transcript quantification tools require reads to be presented in a random sequence. However the reads output by *FluxSimulator* have an inherent order, and hence reads are also randomly shuffled at this stage.
+Note that some transcript quantification tools require reads to be presented in a random sequence. However the reads output by *Flux Simulator* have an inherent order, and hence reads are also randomly shuffled at this stage.
 
 Fix strandedness
 ^^^^^^^^^^^^^^^^
@@ -60,7 +60,7 @@ If sequencing bias has been specified, then the support script ``simulate_read_b
 Finalise output files
 ^^^^^^^^^^^^^^^^^^^^^
 
-Finally, the reads output by *FluxSimulator* are put into a form suitable for downstream transcript quantification.  The result of running ``run_simulation.sh`` is one or two FASTA or FASTQ files containing the simulated reads:
+Finally, the reads output by *Flux Simulator* are put into a form suitable for downstream transcript quantification.  The result of running ``run_simulation.sh`` is one or two FASTA or FASTQ files containing the simulated reads:
 
 * For single-end reads, with no read errors specified, one FASTA file is output (``reads_final.fasta``).
 * For single-end reads, with read errors, one FASTQ file is output (``reads_final.fastq``).

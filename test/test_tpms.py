@@ -20,10 +20,9 @@ def _get_test_tpms():
     return tpms
 
 
-def _get_test_tp_tpms():
+def _get_test_expressed_tpms():
     tpms = _get_test_tpms()
-    return tpms[(tpms[t.REAL_TPM] > NOT_PRESENT_CUTOFF) &
-                (tpms[t.CALCULATED_TPM] > NOT_PRESENT_CUTOFF)]
+    return tpms[(tpms[t.REAL_TPM] > NOT_PRESENT_CUTOFF)]
 
 
 def _true_positive(real_tpm, calculated_tpm):
@@ -70,68 +69,6 @@ class _DummyClassifier:
 
     def get_classification_value(self, x):
         return self.value_func(x)
-
-
-def test_mark_positives_negatives_marks_correct_entries_as_true_positive():
-    tpms = _get_test_tpms()
-    t.mark_positives_and_negatives(NOT_PRESENT_CUTOFF, tpms)
-    for index, row in tpms.iterrows():
-        if _true_positive(row[t.REAL_TPM], row[t.CALCULATED_TPM]):
-            assert row[t.TRUE_POSITIVE]
-            assert not row[t.FALSE_POSITIVE]
-            assert not row[t.TRUE_NEGATIVE]
-            assert not row[t.FALSE_NEGATIVE]
-        else:
-            assert not row[t.TRUE_POSITIVE]
-
-
-def test_mark_positives_negatives_marks_correct_entries_as_false_positive():
-    tpms = _get_test_tpms()
-    t.mark_positives_and_negatives(NOT_PRESENT_CUTOFF, tpms)
-    for index, row in tpms.iterrows():
-        if _false_positive(row[t.REAL_TPM], row[t.CALCULATED_TPM]):
-            assert row[t.FALSE_POSITIVE]
-            assert not row[t.TRUE_POSITIVE]
-            assert not row[t.TRUE_NEGATIVE]
-            assert not row[t.FALSE_NEGATIVE]
-        else:
-            assert not row[t.FALSE_POSITIVE]
-
-
-def test_mark_positives_negatives_marks_correct_entries_as_true_negative():
-    tpms = _get_test_tpms()
-    t.mark_positives_and_negatives(NOT_PRESENT_CUTOFF, tpms)
-    for index, row in tpms.iterrows():
-        if _true_negative(row[t.REAL_TPM], row[t.CALCULATED_TPM]):
-            assert row[t.TRUE_NEGATIVE]
-            assert not row[t.FALSE_POSITIVE]
-            assert not row[t.TRUE_POSITIVE]
-            assert not row[t.FALSE_NEGATIVE]
-        else:
-            assert not row[t.TRUE_NEGATIVE]
-
-
-def test_mark_positives_negatives_marks_correct_entries_as_false_negative():
-    tpms = _get_test_tpms()
-    t.mark_positives_and_negatives(NOT_PRESENT_CUTOFF, tpms)
-    for index, row in tpms.iterrows():
-        if _false_negative(row[t.REAL_TPM], row[t.CALCULATED_TPM]):
-            assert row[t.FALSE_NEGATIVE]
-            assert not row[t.FALSE_POSITIVE]
-            assert not row[t.TRUE_NEGATIVE]
-            assert not row[t.TRUE_POSITIVE]
-        else:
-            assert not row[t.FALSE_NEGATIVE]
-
-
-def test_get_true_positives_returns_correct_number_of_entries():
-    tpms = _get_test_tpms()
-    t.mark_positives_and_negatives(NOT_PRESENT_CUTOFF, tpms)
-    tp_tpms = t.get_true_positives(tpms)
-
-    assert len(tp_tpms) == \
-        len([x for x, y in zip(CALC_TPMS_VALS, REAL_TPMS_VALS)
-            if x > NOT_PRESENT_CUTOFF and y > NOT_PRESENT_CUTOFF])
 
 
 def test_calculate_percent_error_calculates_correct_values():
@@ -182,7 +119,7 @@ def test_get_stats_returns_correct_number_of_statistics():
                   for i in range(num_statistics)]
 
     tpms = _get_test_tpms()
-    tp_tpms = _get_test_tp_tpms()
+    tp_tpms = _get_test_expressed_tpms()
 
     stats = t.get_stats(tpms, tp_tpms, statistics)
     assert len(stats.columns) == num_statistics
@@ -194,7 +131,7 @@ def test_get_stats_returns_correct_column_names():
     statistics = [_DummyStatistic(name1, False), _DummyStatistic(name2, False)]
 
     tpms = _get_test_tpms()
-    tp_tpms = _get_test_tp_tpms()
+    tp_tpms = _get_test_expressed_tpms()
 
     stats = t.get_stats(tpms, tp_tpms, statistics)
     assert name1 in stats.columns
@@ -207,7 +144,7 @@ def test_get_stats_calculates_correct_values():
     statistics = [_DummyStatistic(name1, False), _DummyStatistic(name2, True)]
 
     tpms = _get_test_tpms()
-    tp_tpms = _get_test_tp_tpms()
+    tp_tpms = _get_test_expressed_tpms()
 
     stats = t.get_stats(tpms, tp_tpms, statistics)
     assert stats[name1].ix[0] == len(tpms)
@@ -220,7 +157,7 @@ def test_get_grouped_stats_returns_correct_number_of_statistics():
                   for i in range(num_statistics)]
 
     tpms = _get_test_tpms()
-    tp_tpms = _get_test_tp_tpms()
+    tp_tpms = _get_test_expressed_tpms()
 
     stats = t.get_grouped_stats(tpms, tp_tpms, GROUP_TEST_COL, statistics)
     assert len(stats.columns) == num_statistics
@@ -232,7 +169,7 @@ def test_get_grouped_stats_returns_correct_column_names():
     statistics = [_DummyStatistic(name1, False), _DummyStatistic(name2, False)]
 
     tpms = _get_test_tpms()
-    tp_tpms = _get_test_tp_tpms()
+    tp_tpms = _get_test_expressed_tpms()
 
     stats = t.get_grouped_stats(tpms, tp_tpms, GROUP_TEST_COL, statistics)
     assert name1 in stats.columns
@@ -245,7 +182,7 @@ def test_get_grouped_stats_calculates_correct_values():
     statistics = [_DummyStatistic(name1, False), _DummyStatistic(name2, True)]
 
     tpms = _get_test_tpms()
-    tp_tpms = _get_test_tp_tpms()
+    tp_tpms = _get_test_expressed_tpms()
 
     stats = t.get_grouped_stats(tpms, tp_tpms, GROUP_TEST_COL, statistics)
     for group in set(GROUPS):

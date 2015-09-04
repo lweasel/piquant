@@ -5,3 +5,4 @@ piquant.egg-info
 output
 old-files
 dist
+test_*
