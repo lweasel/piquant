@@ -370,19 +370,20 @@ class _Express(_TranscriptomeBasedQuantifierBase):
 class _Sailfish(_TranscriptomeBasedQuantifierBase):
     CREATE_TRANSCRIPT_INDEX = \
         "sailfish index -p {num_threads} -t {ref_name}.transcripts.fa " + \
-        "-k 20 -o {index_dir}"
+        "-o {index_dir}"
 
     QUANTIFY_ISOFORM_EXPRESSION = \
         "sailfish quant -p {num_threads} -i {index_dir} -l {library_spec} " + \
         "{reads_spec} -o ."
+    # Avoid deprecated bias correction
     FILTER_COMMENT_LINES = [
-        r"grep -v '^# \[' quant_bias_corrected.sf",
+        r"grep -v '^# \[' quant.sf",
         "sed -e 's/# //'i > quant_filtered.csv"
     ]
 
+    # We produce fewer files now
     REMOVE_OUTPUT_EXCEPT_ABUNDANCES = \
-        "rm -rf logs quant_bias_corrected.sf quant.sf " + \
-        "reads.count_info reads.sfc"
+        "rm -rf logs quant.sf "
 
     @classmethod
     def get_name(cls):
@@ -421,11 +422,9 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
     def write_quantification_commands(cls, writer, record_usage, params):
         index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
 
-        library_spec = \
-            ("\"T=SE:S=S\"" if params[STRANDED_READS]
-             else "\"T=SE:S=U\"") if SIMULATED_READS in params else \
-            ("\"T=PE:O=><:S=SA\"" if params[STRANDED_READS]
-             else "\"T=PE:O=><:S=U\"")
+        # library specification is now identical to salmon
+        library_spec = "" if SIMULATED_READS in params else "I"
+        library_spec += "SF" if params[STRANDED_READS] else "U"
 
         reads_spec = "-r {r}".format(r=params[SIMULATED_READS]) \
             if SIMULATED_READS in params \
@@ -447,10 +446,11 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
         writer.add_line(cls.REMOVE_OUTPUT_EXCEPT_ABUNDANCES)
 
     def get_transcript_abundance(self, transcript_id):
+        # Index column is now "Name" just like salmon
         if self.abundances is None:
             self.abundances = pd.read_csv(
                 "quant_filtered.csv", delim_whitespace=True,
-                index_col="Transcript")
+                index_col="Name")
 
         return self.abundances.ix[transcript_id]["TPM"] \
             if transcript_id in self.abundances.index else 0
