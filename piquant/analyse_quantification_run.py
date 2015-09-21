@@ -128,9 +128,8 @@ def _write_stratified_stats(tpms, expressed_tpms, options):
 
     for classifier in classifiers.get_classifiers():
         if classifier.produces_grouped_stats():
-            column_name = classifier.get_column_name()
             stats = t.get_grouped_stats(
-                tpms, expressed_tpms, column_name, statistics.get_statistics())
+                tpms, expressed_tpms, classifier.name, statistics.get_statistics())
             _add_mqr_option_values(stats, options)
             clsfr_stats[classifier] = stats
 

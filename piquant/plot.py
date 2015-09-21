@@ -207,24 +207,22 @@ def _plot_grouped_stat_vs_clsfr(
         fformat, stats, base_name, statistic, group_mqr_option,
         classifier, fixed_mqr_option_values):
 
-    clsfr_col = classifier.get_column_name()
     fixed_mqr_option_info = po.get_value_names(fixed_mqr_option_values)
 
     plot_info = _GroupedPlotInfo(group_mqr_option, fixed_mqr_option_info)
     name_elements = plot_info.get_filename_parts(
-        base_name, statistic.name, versus=clsfr_col)
+        base_name, statistic.name, versus=classifier.name)
 
     with _saving_new_plot(fformat, name_elements):
-        plot_info.set_plot_title(
-            statistic.title, versus=classifier.get_plot_title())
+        plot_info.set_plot_title(statistic.title, versus=classifier.title)
 
         _plot_grouped_statistic(
-            stats, plot_info, clsfr_col, statistic.name,
+            stats, plot_info, classifier.name, statistic.name,
             classifier.get_axis_label(), statistic.get_axis_label(),
             _get_plot_bounds_setter(statistic))
 
-        min_xval = stats[clsfr_col].min()
-        max_xval = stats[clsfr_col].max()
+        min_xval = stats[classifier.name].min()
+        max_xval = stats[classifier.name].max()
         _set_ticks_for_classifier_plot(
             np.arange(min_xval, max_xval + 1), classifier)
 
@@ -233,19 +231,18 @@ def _plot_grouped_cumulative_dist(
         fformat, stats, base_name, group_mqr_option,
         classifier, ascending, fixed_mqr_option_values):
 
-    clsfr_col = classifier.get_column_name()
     fixed_mqr_option_info = po.get_value_names(fixed_mqr_option_values)
 
     plot_info = _GroupedPlotInfo(group_mqr_option, fixed_mqr_option_info)
     name_elements = plot_info.get_filename_parts(
-        base_name, clsfr_col, ascending=ascending)
+        base_name, classifier.name, ascending=ascending)
 
     with _saving_new_plot(fformat, name_elements):
         plot_info.set_plot_title(
-            _capitalized(clsfr_col) + " threshold")
+            _capitalized(classifier.name) + " threshold")
         _plot_grouped_statistic(
-            stats, plot_info, clsfr_col, t.NON_ZERO_PERCENTAGE,
-            clsfr_col, _get_distribution_plot_ylabel(ascending),
+            stats, plot_info, classifier.name, t.NON_ZERO_PERCENTAGE,
+            classifier.name, _get_distribution_plot_ylabel(ascending),
             _set_distribution_plot_bounds)
 
 
@@ -321,19 +318,18 @@ def log_tpm_scatter_plot(
 def log_ratio_boxplot(
         fformat, tpms, base_name, tpm_label, classifier, threshold):
 
-    grouping_column = classifier.get_column_name()
-    grouped_tpms = tpms.groupby(grouping_column)
+    grouped_tpms = tpms.groupby(classifier.name)
     tpms = grouped_tpms.filter(
         lambda x: len(x[t.REAL_TPM]) > threshold)
 
     with _saving_new_plot(
-            fformat, [base_name, grouping_column, tpm_label, "boxplot"]):
-        sb.boxplot(x=tpms[grouping_column],
+            fformat, [base_name, classifier.name, tpm_label, "boxplot"]):
+        sb.boxplot(x=tpms[classifier.name],
                    y=tpms[t.LOG10_RATIO],
                    color='lightblue', sym='')
 
         plt.suptitle("Log ratios of calculated to real TPMs: " + tpm_label)
-        plt.xlabel(_capitalized(grouping_column))
+        plt.xlabel(_capitalized(classifier.name))
         plt.ylabel("Log ratio (calculated/real TPM)")
 
         _set_ticks_for_classifier_plot(plt.xticks()[0], classifier)
@@ -343,10 +339,9 @@ def plot_statistic_vs_classifier(
         fformat, stats, base_name, statistic, classifier, threshold):
 
     stats = stats[stats[statistics.EXPRESSED_TPMS] > threshold]
-    clsfr_col = classifier.get_column_name()
 
-    with _saving_new_plot(fformat, [base_name, statistic.name, "vs", clsfr_col]):
-        xvals = stats[clsfr_col]
+    with _saving_new_plot(fformat, [base_name, statistic.name, "vs", classifier.name]):
+        xvals = stats[classifier.name]
         min_xval = xvals.min()
         max_xval = xvals.max()
         yvals = stats[statistic.name]
@@ -358,7 +353,7 @@ def plot_statistic_vs_classifier(
 
         plt.xlabel(_capitalized(classifier.get_axis_label()))
         plt.ylabel(statistic.title)
-        plt.suptitle(statistic.title + " vs " + classifier.get_plot_title())
+        plt.suptitle(statistic.title + " vs " + classifier.title)
 
         _set_ticks_for_classifier_plot(
             np.arange(min_xval, max_xval + 1), classifier)
@@ -412,10 +407,8 @@ def _plot_statistic_boxplot(opt_dir, plot_file_prefix, fformat,
 def plot_transcript_cumul_dist(
         fformat, tpms, base_name, tpm_label, classifier, ascending):
 
-    clsfr_col = classifier.get_column_name()
-
     with _saving_new_plot(
-            fformat, [base_name, clsfr_col, tpm_label,
+            fformat, [base_name, classifier.name, tpm_label,
                       ("asc" if ascending else "desc"), "distribution"]):
 
         xvals, yvals = t.get_distribution(tpms, classifier, ascending)
@@ -423,9 +416,9 @@ def plot_transcript_cumul_dist(
 
         _set_distribution_plot_bounds(xvals[0], xvals[-1])
 
-        plt.xlabel(_capitalized(clsfr_col))
+        plt.xlabel(_capitalized(classifier.name))
         plt.ylabel(_get_distribution_plot_ylabel(ascending))
-        plt.suptitle(_capitalized(clsfr_col) + " threshold: " + tpm_label)
+        plt.suptitle(_capitalized(classifier.name) + " threshold: " + tpm_label)
 
 
 # Making plots over multiple sets of sequencing and quantification run options
@@ -560,13 +553,29 @@ def draw_grouped_stats_graphs(fformat, stats_dir, opt_vals_set, threshold):
         clsfr_stats = pd.read_csv(stats_file)
 
         clsfr_dir = _get_plot_subdir(
-            grouped_stats_dir, "grouped_by", clsfr.get_column_name())
+            grouped_stats_dir, "grouped_by", clsfr.name)
+
+        stats = statistics.get_graphable_statistics()
+
+        for stat in stats:
+            _plot_statistic_boxplot(clsfr_dir, statistics.GROUPED_STATS_PREFIX,
+                                    fformat, clsfr_stats, stat, clsfr)
 
         for option in opt_vals_set.get_non_degenerate_options():
             opt_vals_set.exec_for_fixed_option_values_sets(
                 grouped_stats_graph_drawer(
                     clsfr_dir, fformat, option, clsfr, num_tpms_filter),
                 option, clsfr_stats)
+
+            opt_dir = _get_plot_subdir(clsfr_dir, "per", option.name)
+
+            for stat in stats:
+                _plot_statistic_boxplot(
+                    opt_dir, statistics.GROUPED_STATS_PREFIX, fformat,
+                    clsfr_stats, stat, clsfr, option)
+                _plot_statistic_boxplot(
+                    opt_dir, statistics.GROUPED_STATS_PREFIX, fformat,
+                    clsfr_stats, stat, option, clsfr)
 
 
 def distribution_stats_graph_drawer(
@@ -601,7 +610,7 @@ def draw_distribution_graphs(fformat, stats_dir, opt_vals_set):
         clsfr_stats = pd.read_csv(stats_file)
 
         clsfr_dir = _get_plot_subdir(
-            distribution_stats_dir, clsfr.get_column_name(), "distribution")
+            distribution_stats_dir, clsfr.name, "distribution")
 
         for option in opt_vals_set.get_non_degenerate_options():
             opt_vals_set.exec_for_fixed_option_values_sets(

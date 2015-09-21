@@ -47,8 +47,7 @@ def calculate_log_ratios(*tpm_sets):
 
 def apply_classifiers(tpms, classifiers):
     for classifier in classifiers:
-        column_name = classifier.get_column_name()
-        tpms[column_name] = tpms.apply(
+        tpms[classifier.name] = tpms.apply(
             classifier.get_classification_value, axis=1)
 
 
@@ -90,7 +89,7 @@ def get_distribution_stats(expressed_tpms, classifier, ascending):
     xvals, nz_yvals = get_distribution(expressed_tpms, classifier, ascending)
 
     stats_dict = {}
-    stats_dict[classifier.get_column_name()] = xvals
+    stats_dict[classifier.name] = xvals
     stats_dict[NON_ZERO_PERCENTAGE] = nz_yvals
 
     return pd.DataFrame.from_dict(stats_dict)

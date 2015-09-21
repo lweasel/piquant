@@ -24,7 +24,7 @@ def test_get_classifiers_returns_classifiers_instances():
 def test_classifier_get_column_name_returns_correct_name():
     name = "column name"
     c = _get_test_classifier(column_name=name)
-    assert c.get_column_name() == name
+    assert c.name == name
 
 
 def test_classifier_get_value_return_correct_value():

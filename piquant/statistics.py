@@ -16,6 +16,7 @@ from . import tpms as t
 
 EXPRESSED_TPMS = "expressed-tpms"
 OVERALL_STATS_PREFIX = "overall"
+GROUPED_STATS_PREFIX = "grouped"
 
 _SUMMARY_COUNT = "count"
 _SUMMARY_MEDIAN = "50%"

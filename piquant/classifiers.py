@@ -2,21 +2,19 @@ from . import tpms as t
 
 
 class _Classifier(object):
-    def __init__(self, column_name, value_extractor,
+    @classmethod
+    def capitalized(cls, text):
+        return text[:1].upper() + text[1:]
+
+    def __init__(self, name, value_extractor,
                  grouped_stats=True, distribution_plot_range=None,
-                 plot_title=None, units=None):
-        self.column_name = column_name
+                 title=None, units=None):
+        self.name = name
         self.value_extractor = value_extractor
         self.grouped_stats = grouped_stats
         self.distribution_plot_range = distribution_plot_range
-        self.plot_title = plot_title if plot_title else column_name
+        self.title = title if title else _Classifier.capitalized(name)
         self.units = units
-
-    def get_column_name(self):
-        return self.column_name
-
-    def get_plot_title(self):
-        return self.plot_title
 
     def get_value(self, row):
         return self.value_extractor(row)
@@ -36,25 +34,28 @@ class _Classifier(object):
     def get_value_labels(self, num_labels):
         return range(1, num_labels + 1)
 
+    def get_value_name(self, value):
+        return str(value)
+
     def get_stats_file_suffix(self, ascending=True):
         suffix = "_stats" if self.produces_grouped_stats() else \
             "_distribution_stats_" + ("asc" if ascending else "desc")
-        suffix += "_by_" + self.get_column_name().replace(' ', '_')
+        suffix += "_by_" + self.name.replace(' ', '_')
         return suffix
 
     def get_axis_label(self):
-        label = self.get_plot_title()
+        label = self.title
         if self.units:
             label += " ({u})".format(u=self.units)
         return label
 
 
 class _LevelsClassifier(_Classifier):
-    def __init__(self, column_name, value_extractor, levels,
-                 closed=False, plot_title=None, units=None):
+    def __init__(self, name, value_extractor, levels,
+                 closed=False, title=None, units=None):
 
-        _Classifier.__init__(self, column_name, value_extractor,
-                             plot_title=plot_title, units=units)
+        _Classifier.__init__(self, name, value_extractor,
+                             title=title, units=units)
 
         self.levels = levels
         self.closed = closed
@@ -73,11 +74,15 @@ class _LevelsClassifier(_Classifier):
     def get_value_labels(self, num_labels):
         return self.level_names[:num_labels]
 
+    def get_value_name(self, value):
+        return self.level_names[value]
+
 
 _CLASSIFIERS = []
 
-_CLASSIFIERS.append(_Classifier(
-    "gene transcript number", lambda x: x[t.TRANSCRIPT_COUNT]))
+_CLASSIFIERS.append(_LevelsClassifier(
+    "gene transcript number", lambda x: x[t.TRANSCRIPT_COUNT],
+    [5, 10, 15, 20]))
 
 _CLASSIFIERS.append(_Classifier(
     "absolute percent error", lambda x: abs(x[t.PERCENT_ERROR]),
@@ -86,7 +91,7 @@ _CLASSIFIERS.append(_Classifier(
 _CLASSIFIERS.append(_LevelsClassifier(
     "log10 real TPM", lambda x: x[t.LOG10_REAL_TPM],
     [0, 0.5, 1, 1.5],
-    plot_title=r"$log_{10}$ real TPM"))
+    title=r"$log_{10}$ Real TPM"))
 
 _CLASSIFIERS.append(_LevelsClassifier(
     "transcript length", lambda x: x[t.LENGTH],
