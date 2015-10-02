@@ -1,3 +1,5 @@
+import numpy as np
+
 from . import tpms as t
 
 
@@ -95,7 +97,7 @@ _CLASSIFIERS.append(_LevelsClassifier(
 
 _CLASSIFIERS.append(_LevelsClassifier(
     "transcript length", lambda x: x[t.LENGTH],
-    [1000, 3162], units="bp"))
+    [500, 1000, 3000], units="bp"))
 
 _CLASSIFIERS.append(_LevelsClassifier(
     "unique sequence percentage",
@@ -103,6 +105,11 @@ _CLASSIFIERS.append(_LevelsClassifier(
     if x[t.LENGTH] > 0 else 0.0,
     [20, 40, 60, 80, 100],
     closed=True))
+
+_CLASSIFIERS.append(_LevelsClassifier(
+    "unique sequence length",
+    lambda x: x[t.UNIQUE_SEQ_LENGTH],
+    [0, 100, 300, 1000], units="bp"))
 
 
 def get_classifiers():
