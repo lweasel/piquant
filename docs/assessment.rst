@@ -229,11 +229,21 @@ The sub-directory ``overall_gene_stats_graphs`` is structured in the same way as
 
 *"Grouped statistics" graphs*
 
-In the sub-directory ``grouped_stats_graphs``, a sub-directory ``grouped_by_<classifier>`` is created for each "grouped" transcript classifier. Graphs written below this directory will plot statistics calculated for groups of transcripts determined by that classifier.
+In the sub-directory ``grouped_stats_graphs``, a sub-directory ``grouped_by_<classifier>`` is created for each "grouped" transcript classifier. Graphs written below this directory will plot statistics calculated for groups of transcripts determined by that classifier. Firstly, a boxplot is produced for each graphable statistic, showing the distribution of values of that statistic for each group of transcripts determined by the classifier over all quantification runs::
 
-Within each ``grouped_by_<classifier>`` directory, a sub-directory ``per_<parameter>`` is created for each quantification and simulation parameter for which quantification runs were performed for more than one value of that parameter. Graphs written below this directory will plot statistics with a separate, coloured line for each value of that parameter.
+    grouped_<statistic>_per_<classifier>.pdf
 
-Within each ``per_<parameter>`` directory, a ``<statistic>`` directory is created for each statistic marked as capable of producing graphs. Graphs written into this directory will be named::
+Also within each ``grouped_by_<classifier>`` directory, a sub-directory ``per_<parameter>`` is created for each quantification and simulation parameter for which quantification runs were performed for more than one value of that parameter. Within each ``per_<parameter>`` directory, a ``<statistic>`` directory is created for each statistic marked as capable of producing graphs.
+
+Within each statistic directory, a boxplot is produced showing the distribution of values of that statistic for each group of transcripts determined by the classifier over all quantification runs, but further grouped into those runs which share each different value of *parameter*::
+
+    grouped_<statistic>_per_<parameter>_per_<classifier>.pdf
+
+In addition, a complementary boxplot shows the distribution of values of the statistic grouped into those runs which share each different value of *parameter*, and then secondarily grouped according to the transcript classifier::
+
+    grouped_<statistic>_per_<classifier>_per_<parameter>.pdf
+
+Furthermore, a set of graphs are written which plot statistics with a separate, coloured line for each value of *parameter*::
 
     grouped_<statistic>_vs_<classifier>_per_<parameter>_<other_parameter_values>.pdf
 
