@@ -65,9 +65,9 @@ and these tools are required to be installed, and their relevant executables add
 * *Cufflinks*: version 2.2.1
 * *RSEM*: version 1.2.19
 * *eXpress*: version 1.5.1
-* *Sailfish*: version 0.6.3
-* *Salmon*: version 0.4.1
-* *Kallisto*: version 0.42.2.1
+* *Sailfish*: version 0.8.0
+* *Salmon*: version 0.5.1
+* *Kallisto*: version 0.42.4
 
 In addition, the use of each quantification tool within the *piquant* pipeline has additional dependencies, which are enumerated below:
 

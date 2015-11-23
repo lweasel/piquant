@@ -375,15 +375,17 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
     QUANTIFY_ISOFORM_EXPRESSION = \
         "sailfish quant -p {num_threads} -i {index_dir} -l {library_spec} " + \
         "{reads_spec} -o ."
+
     # Avoid deprecated bias correction
     FILTER_COMMENT_LINES = [
         r"grep -v '^# \[' quant.sf",
-        "sed -e 's/# //'i > quant_filtered.csv"
+        "grep -v sailfish",
+        "sed -e 's/# //' > .quant_tmp"
     ]
 
     # We produce fewer files now
     REMOVE_OUTPUT_EXCEPT_ABUNDANCES = \
-        "rm -rf logs quant.sf "
+        "rm -rf logs stats.tsv"
 
     @classmethod
     def get_name(cls):
@@ -439,7 +441,9 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
                 library_spec=library_spec,
                 reads_spec=reads_spec,
                 num_threads=params[NUM_THREADS]))
+
         writer.add_pipe(*cls.FILTER_COMMENT_LINES)
+        writer.add_line("mv .quant_tmp quant.sf")
 
     @classmethod
     def write_cleanup(cls, writer):
@@ -449,7 +453,7 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
         # Index column is now "Name" just like salmon
         if self.abundances is None:
             self.abundances = pd.read_csv(
-                "quant_filtered.csv", delim_whitespace=True,
+                "quant.sf", delim_whitespace=True,
                 index_col="Name")
 
         return self.abundances.ix[transcript_id]["TPM"] \
@@ -459,18 +463,18 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
 @_quantifier
 class _Salmon(_TranscriptomeBasedQuantifierBase):
     CREATE_SALMON_TRANSCRIPT_INDEX = \
-        "salmon index -t {ref_name}.transcripts.fa -i {index_dir}"
+        "salmon index -t {ref_name}.transcripts.fa -i {index_dir} --type quasi"
 
     QUANTIFY_ISOFORM_EXPRESSION = \
         "salmon quant -p {num_threads} -i {index_dir} -l " + \
         "{library_spec} {reads_spec} -o ."
     FILTER_COMMENT_LINES = [
         r"grep -v '^# \[\|salmon' quant.sf",
-        "sed -e 's/# //'i > quant_filtered.csv"
+        "sed -e 's/# //'i > .quant_tmp"
     ]
 
     REMOVE_OUTPUT_EXCEPT_ABUNDANCES = \
-        "rm -rf logs quant.sf libFormatCounts.txt libParams"
+        "rm -rf logs libFormatCounts.txt libParams stats.tsv"
 
     @classmethod
     def get_name(cls):
@@ -524,7 +528,9 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
                 library_spec=library_spec,
                 reads_spec=reads_spec,
                 num_threads=params[NUM_THREADS]))
+
         writer.add_pipe(*cls.FILTER_COMMENT_LINES)
+        writer.add_line("mv .quant_tmp quant.sf")
 
     @classmethod
     def write_cleanup(cls, writer):
@@ -533,7 +539,7 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
     def get_transcript_abundance(self, transcript_id):
         if self.abundances is None:
             self.abundances = pd.read_csv(
-                "quant_filtered.csv", delim_whitespace=True,
+                "quant.sf", delim_whitespace=True,
                 index_col="Name")
 
         return self.abundances.ix[transcript_id]["TPM"] \
@@ -546,7 +552,8 @@ class _Kallisto(_TranscriptomeBasedQuantifierBase):
         "kallisto index -i {index_file} {ref_name}.transcripts.fa"
 
     QUANTIFY_ISOFORM_EXPRESSION = \
-        "kallisto quant -i {index_file} --bias -o output {length_spec} {reads_spec}"
+        "kallisto quant -i {index_file} -t {num_threads} --bias -o output " + \
+        "{length_spec} {reads_spec}"
 
     REMOVE_OUTPUT_EXCEPT_ABUNDANCES = \
         "rm output/abundance.h5 output/run_info.json"
@@ -598,7 +605,8 @@ class _Kallisto(_TranscriptomeBasedQuantifierBase):
             cls.QUANTIFY_ISOFORM_EXPRESSION.format(
                 index_file=index_file,
                 length_spec=length_spec,
-                reads_spec=reads_spec))
+                reads_spec=reads_spec,
+                num_threads=params[NUM_THREADS]))
 
     @classmethod
     def write_cleanup(cls, writer):
