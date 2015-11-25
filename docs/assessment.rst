@@ -76,6 +76,7 @@ The following "grouped" classifiers are provided:
 * :ref:`assessment-real-transcript-abundance`
 * :ref:`assessment-transcript-length`
 * :ref:`assessment-transcript-sequence-uniqueness`
+* :ref:`assessment-transcript-sequence-unique-length`
 
 .. _assessment-distribution-classifiers:
 
@@ -113,24 +114,38 @@ This classifier groups transcripts by a measure of their real abundance. Five ca
 Transcript length
 ^^^^^^^^^^^^^^^^^
 
-This classifier groups transcripts by their length in bases. Three categories are defined according to the log (base 10) of their length:
+This classifier groups transcripts by their length in bases. Four categories are defined:
 
-* *short*: Log length <= 3 (<=1000 bases)
-* *medium*: Log length <= 3.5 (>1000 bases and <=3162 bases)
-* *long*: Log length > 3.5 (>3162 bases)
+* *very short*: length <= 500 bases
+* *short*: > 500 and <= 1000 bases
+* *medium*: > 1000 and <= 3000 bases
+* *long*: > 3000 bases
 
 .. _assessment-transcript-sequence-uniqueness:
 
-Transcript sequence uniqueness
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Transcript unique sequence percentage
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This classifier groups transcripts by the percentage of their sequence which they do not share with any other transcript within their gene of origin. Five categories of transcripts are defined:
 
-* >0 and <=20% unique sequence
-* >20 and <=40% unique sequence
-* >40 and <=60% unique sequence
-* >60 and <=80% unique sequence
-* >80 and <=100% unique sequence
+* > 0 and <=20% unique sequence
+* > 20 and <=40% unique sequence
+* > 40 and <=60% unique sequence
+* > 60 and <=80% unique sequence
+* > 80 and <=100% unique sequence
+
+.. _assessment-transcript-sequence-unique-length:
+
+Transcript unique sequence length
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This classifier groups transcripts by the absolute length of sequence which they do not share with any other transcript within their gene of origin. Five categories are defined according to the length of unique sequence:
+
+* 0 unique bases
+* > 0 and <= 100 unique bases
+* > 100 and <= 300 unique bases
+* > 300 and <= 1000 unique bases
+* > 1000 unique bases
 
 .. _assessment-absolute-percent-error:
 
