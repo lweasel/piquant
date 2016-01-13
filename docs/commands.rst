@@ -32,7 +32,7 @@ The following command line options control which combinations of sequencing para
 * ``--read-length``: A comma-separated list of integer read lengths for which to simulate reads or perform quantification.
 * ``--read-depth``: A comma-separated list of integer read depths for which to simulate reads or perform quantification.
 * ``--paired-end``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed for single- or paired-end reads or both.
-* ``--error``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed without or with sequencing errors introduced into the reads, or both.
+* ``--errors``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed without or with sequencing errors introduced into the reads, or both.
 * ``--bias``: A comma-separated list of "False" or "True" strings indicating whether read simulation or quantification should be performed without or with sequence bias introduced into the reads, or both.
 * ``--stranded``: A comma-separated list of "False" or "True" strings  indicating whether reads should be simulated as coming from an unstranded or strand-specific RNA-seq protocol, or both.
 * ``--noise-perc``: A comma-separated list of positive integers. Each indicates a percentage of the main sequencing depth; in each case a set "noise transcripts" will be sequenced to this depth. A value of zero indicates that no noise reads will be simulated.
@@ -44,7 +44,7 @@ Except in the case of the ``--quant-method`` option when simulating reads, value
   --read-length 35,50,75,100
   --read-depth 10,30
   --paired-end False,True
-  --error False,True
+  --errors False,True
   --bias False
   --stranded True
   --noise-perc 0,5,10
@@ -61,12 +61,12 @@ As options can be specified both in an options file, and via individual command 
 Prepare read directories (``prepare_read_dirs``)
 ------------------------------------------------
 
-The ``prepare_read_dirs`` command is used to prepare the directories in which RNA-seq reads will subsequently be simulated - one such directory is created for each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias``, ``--stranded`` and ``--noise-perc``, and each directory is named according to its particular set of sequencing parameters. For example, with the following command line options specified:
+The ``prepare_read_dirs`` command is used to prepare the directories in which RNA-seq reads will subsequently be simulated - one such directory is created for each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--errors``, ``--bias``, ``--stranded`` and ``--noise-perc``, and each directory is named according to its particular set of sequencing parameters. For example, with the following command line options specified:
 
 * ``--read-length``: 50
 * ``--read-depth``: 30
 * ``--paired-end``: False,True
-* ``--error``: False,True
+* ``--errors``: False,True
 * ``--bias``: False,True
 * ``--stranded``: False
 * ``--noise_perc``: 0
@@ -110,7 +110,7 @@ In addition to the command line options common to all ``piquant`` commands (see 
 Create reads (``create_reads``)
 ---------------------------------
 
-The ``create_reads`` command is used to simulate RNA-seq reads via the ``run_simulation.sh`` scripts that have been written by the ``prepare_read_dirs`` command (see :ref:`Prepare read directories <prepare-read-dirs>` above). For each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--error``, ``--bias``, ``--stranded`` and ``--noise-perc``, the appropriate ``run_simulation.sh`` script is launched as a background process, ignoring hangup signals (via the ``nohup`` command). After launching the scripts, ``piquant`` exits.
+The ``create_reads`` command is used to simulate RNA-seq reads via the ``run_simulation.sh`` scripts that have been written by the ``prepare_read_dirs`` command (see :ref:`Prepare read directories <prepare-read-dirs>` above). For each possible combination of sequencing parameters determined by the options ``--read-length``, ``--read-depth``, ``--paired-end``, ``--errors``, ``--bias``, ``--stranded`` and ``--noise-perc``, the appropriate ``run_simulation.sh`` script is launched as a background process, ignoring hangup signals (via the ``nohup`` command). After launching the scripts, ``piquant`` exits.
 
 In addition to the command line options common to all ``piquant`` commands (see :ref:`common-options` above), the ``create_reads`` command takes the following additional options:
 

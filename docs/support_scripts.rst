@@ -37,7 +37,7 @@ The following command-line options and positional arguments are required:
 * ``--read-length``: An integer, the length of reads in the simulated RNA-seq data.
 * ``--read-depth``: An integer, the depth of sequencing in the simulated RNA-seq data.
 * ``--paired-end``: A boolean, ``True`` if the simulated RNA-seq data consists of paired-end reads, or ``False`` if it consists of single-end reads.
-* ``--error``: A boolean, ``True`` if the simulated RNA-seq data contains sequencing errors.
+* ``--errors``: A boolean, ``True`` if the simulated RNA-seq data contains sequencing errors.
 * ``--bias``: A boolean, ``True`` if sequence bias has been applied to the simulated RNA-seq data.
 * ``--stranded``: A boolean, ``True`` if the simulated reads were stranded.
 * ``--noise-perc``: An integer, the depth of sequencing of "noise" transcripts in the simulated RNA-seq data, as a percentage of the depth of sequencing of the main transcript set.

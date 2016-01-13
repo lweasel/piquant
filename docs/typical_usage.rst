@@ -19,7 +19,7 @@ We write an options file containing command line options common to the *piquant*
     --read-length 50,100
     --read-depth 10,30
     --paired-end False,True
-    --error True
+    --errors True
     --bias True
     --stranded False
     --noise-perc 0
