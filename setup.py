@@ -43,5 +43,8 @@ setup(
         'bin/piquant',
         'bin/randomise_read_strands',
         'bin/simulate_read_bias'
-    ]
+    ],
+    package_data={
+        'piquant': ['bias_motif.pwm'],
+    },
 )
