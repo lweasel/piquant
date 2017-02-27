@@ -21,7 +21,7 @@ setup(
         'docopt==0.6.1',
         'docutils==0.11',
         'matplotlib==1.4.1',
-        'numpy==1.9.0',
+        'numpy==1.10.4',
         'pandas==0.13.0',
         'py==1.4.20',
         'pyparsing==2.0.2',
@@ -31,7 +31,7 @@ setup(
         'schema==0.3.1',
         'scipy==0.13.3',
         'seaborn==0.6.0',
-        'six==1.6.1',
+        'six==1.9',
     ],
     scripts=[
         'bin/analyse_quantification_run',
