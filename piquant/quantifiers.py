@@ -300,8 +300,8 @@ class _Express(_TranscriptomeBasedQuantifierBase):
     MAP_READS_TO_TRANSCRIPT_REF = \
         "bowtie {qualities_spec} -e 99999999 -l 25 -I 1 -X 1000 -a -S " + \
         "-m 200 -p {num_threads} {stranded_spec} {ref_name} {reads_spec}"
-    CONVERT_SAM_TO_BAM = \
-        "samtools view -Sb - > hits.bam"
+    CONVERT_SAM_TO_BAM_AND_SORT = \
+        "samtools sort -n -o hits.bam"
     QUANTIFY_ISOFORM_EXPRESSION = \
         "express {stranded_spec} {ref_name}.transcripts.fa hits.bam"
 
@@ -339,7 +339,7 @@ class _Express(_TranscriptomeBasedQuantifierBase):
                 ref_name=ref_name,
                 reads_spec=reads_spec,
                 num_threads=params[NUM_THREADS]),
-             cls.CONVERT_SAM_TO_BAM]
+             cls.CONVERT_SAM_TO_BAM_AND_SORT]
         )
 
         express_stranded_spec = \
