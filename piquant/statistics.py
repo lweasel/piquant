@@ -15,7 +15,6 @@ from . import piquant_options as po
 from . import tpms as t
 
 EXPRESSED_TPMS = "expressed-tpms"
-OVERALL_STATS_PREFIX = "overall"
 GROUPED_STATS_PREFIX = "grouped"
 
 _SUMMARY_COUNT = "count"
@@ -59,9 +58,13 @@ def get_stratified_stats_types():
 def get_stats_file(directory, prefix, tpm_level,
                    classifier=None, ascending=False):
 
-    return os.path.join(directory, "_".join([prefix, tpm_level])) + \
-        (classifier.get_stats_file_suffix(ascending=ascending)
-            if classifier else "_stats") + ".csv"
+    name_elements = [prefix] if prefix else []
+    name_elements.append(tpm_level)
+    name_elements.append(
+        classifier.get_stats_file_suffix(ascending=ascending)
+        if classifier else "stats")
+
+    return os.path.join(directory, "_".join(name_elements) + ".csv")
 
 
 def write_stats_data(filename, data_frame, **kwargs):

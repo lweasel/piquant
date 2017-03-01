@@ -45,9 +45,9 @@ class _GroupedPlotInfo(object):
         self.title = None
 
     def get_filename_parts(
-            self, base_name, plotted, versus=None, ascending=None):
+            self, plotted, versus=None, ascending=None):
 
-        name_elements = [base_name, plotted]
+        name_elements = [plotted]
         if versus:
             name_elements += ["vs", versus]
         name_elements += ["per", self.group_mqr_option.title.lower()]
@@ -72,13 +72,14 @@ class _GroupedPlotInfo(object):
 
 
 @contextlib.contextmanager
-def _saving_new_plot(fformat, file_name_elements):
+def _saving_new_plot(fformat, plotdir, file_name_elements):
     plt.figure()
     try:
         yield
     finally:
         file_name = "_".join([str(el) for el in file_name_elements])
         file_name = file_name.replace(' ', '_')
+        file_name = os.path.join(plotdir, file_name)
         plt.savefig(file_name + "." + fformat, format=fformat)
         plt.close()
 
@@ -185,16 +186,16 @@ def _plot_grouped_statistic(
 
 
 def _plot_grouped_stat_vs_mqr_opt(
-        fformat, stats, base_name, statistic, group_mqr_option,
+        fformat, stats, plot_dir, statistic, group_mqr_option,
         varying_mqr_option, fixed_mqr_option_values):
 
     fixed_mqr_option_info = po.get_value_names(fixed_mqr_option_values)
 
     plot_info = _GroupedPlotInfo(group_mqr_option, fixed_mqr_option_info)
     name_elements = plot_info.get_filename_parts(
-        base_name, statistic.name, versus=varying_mqr_option.name)
+        statistic.name, versus=varying_mqr_option.name)
 
-    with _saving_new_plot(fformat, name_elements):
+    with _saving_new_plot(fformat, plot_dir, name_elements):
         plot_info.set_plot_title(
             statistic.title, versus=varying_mqr_option.title)
         _plot_grouped_statistic(
@@ -204,16 +205,16 @@ def _plot_grouped_stat_vs_mqr_opt(
 
 
 def _plot_grouped_stat_vs_clsfr(
-        fformat, stats, base_name, statistic, group_mqr_option,
+        fformat, stats, plot_dir, statistic, group_mqr_option,
         classifier, fixed_mqr_option_values):
 
     fixed_mqr_option_info = po.get_value_names(fixed_mqr_option_values)
 
     plot_info = _GroupedPlotInfo(group_mqr_option, fixed_mqr_option_info)
     name_elements = plot_info.get_filename_parts(
-        base_name, statistic.name, versus=classifier.name)
+        statistic.name, versus=classifier.name)
 
-    with _saving_new_plot(fformat, name_elements):
+    with _saving_new_plot(fformat, plot_dir, name_elements):
         plot_info.set_plot_title(statistic.title, versus=classifier.title)
 
         _plot_grouped_statistic(
@@ -228,16 +229,16 @@ def _plot_grouped_stat_vs_clsfr(
 
 
 def _plot_grouped_cumulative_dist(
-        fformat, stats, base_name, group_mqr_option,
+        fformat, stats, plot_dir, group_mqr_option,
         classifier, ascending, fixed_mqr_option_values):
 
     fixed_mqr_option_info = po.get_value_names(fixed_mqr_option_values)
 
     plot_info = _GroupedPlotInfo(group_mqr_option, fixed_mqr_option_info)
     name_elements = plot_info.get_filename_parts(
-        base_name, classifier.name, ascending=ascending)
+        classifier.name, ascending=ascending)
 
-    with _saving_new_plot(fformat, name_elements):
+    with _saving_new_plot(fformat, plot_dir, name_elements):
         plot_info.set_plot_title(
             _capitalized(classifier.name) + " threshold")
         _plot_grouped_statistic(
@@ -246,8 +247,8 @@ def _plot_grouped_cumulative_dist(
             _set_distribution_plot_bounds)
 
 
-def _draw_prequant_time_usage_graph(fformat, graph_file_basename, usage_data):
-    with _saving_new_plot(fformat, [graph_file_basename, "time_usage"]):
+def _draw_prequant_time_usage_graph(fformat, plot_dir, usage_data):
+    with _saving_new_plot(fformat, plot_dir, ["prequant", "time_usage"]):
         n_groups = len(usage_data.index)
         index = np.arange(n_groups)
 
@@ -275,8 +276,8 @@ def _draw_prequant_time_usage_graph(fformat, graph_file_basename, usage_data):
         axes.legend(loc=6, bbox_to_anchor=(1, 0.5))
 
 
-def _draw_prequant_mem_usage_graph(fformat, graph_file_basename, usage_data):
-    with _saving_new_plot(fformat, [graph_file_basename, "memory_usage"]):
+def _draw_prequant_mem_usage_graph(fformat, plot_dir, usage_data):
+    with _saving_new_plot(fformat, plot_dir, ["prequant", "memory_usage"]):
         n_groups = len(usage_data.index)
         index = np.arange(n_groups)
 
@@ -300,7 +301,8 @@ def _draw_prequant_mem_usage_graph(fformat, graph_file_basename, usage_data):
 def log_tpm_scatter_plot(
         fformat, tpms, base_name, tpm_label, not_present_cutoff):
 
-    with _saving_new_plot(fformat, [base_name, tpm_label, "log10 scatter"]):
+    with _saving_new_plot(fformat, ".",
+                          [base_name, tpm_label, "log10 scatter"]):
         plt.scatter(tpms[t.LOG10_REAL_TPM].values,
                     tpms[t.LOG10_CALCULATED_TPM].values,
                     c="lightblue", alpha=0.4)
@@ -323,7 +325,7 @@ def log_ratio_boxplot(
         lambda x: len(x[t.REAL_TPM]) > threshold)
 
     with _saving_new_plot(
-            fformat, [base_name, classifier.name, tpm_label, "boxplot"]):
+            fformat, ".", [base_name, classifier.name, tpm_label, "boxplot"]):
         sb.boxplot(x=tpms[classifier.name],
                    y=tpms[t.LOG10_RATIO],
                    color='lightblue', sym='')
@@ -340,7 +342,8 @@ def plot_statistic_vs_classifier(
 
     stats = stats[stats[statistics.EXPRESSED_TPMS] > threshold]
 
-    with _saving_new_plot(fformat, [base_name, statistic.name, "vs", classifier.name]):
+    with _saving_new_plot(fformat, ".",
+                          [base_name, statistic.name, "vs", classifier.name]):
         xvals = stats[classifier.name]
         min_xval = xvals.min()
         max_xval = xvals.max()
@@ -359,12 +362,11 @@ def plot_statistic_vs_classifier(
             np.arange(min_xval, max_xval + 1), classifier)
 
 
-def _plot_statistic_boxplot(opt_dir, plot_file_prefix, fformat,
-                            data, statistic, main_opt, sub_opt=None):
+def _plot_statistic_boxplot(
+        opt_dir, fformat, data, statistic, main_opt, sub_opt=None):
 
     output_dir = _get_plot_subdir(opt_dir, statistic.name) \
         if sub_opt else opt_dir
-    graph_file_basename = os.path.join(output_dir, plot_file_prefix)
 
     options = [main_opt]
     if sub_opt:
@@ -372,10 +374,10 @@ def _plot_statistic_boxplot(opt_dir, plot_file_prefix, fformat,
 
     flatten = lambda x: [item for sublist in x for item in sublist]
 
-    name_elements = [graph_file_basename, statistic.name] + \
+    name_elements = [statistic.name] + \
         flatten([["per", opt.name] for opt in options])
 
-    with _saving_new_plot(fformat, name_elements):
+    with _saving_new_plot(fformat, output_dir, name_elements):
         data = data.sort([opt.name for opt in options])
 
         for opt in options:
@@ -408,7 +410,7 @@ def plot_transcript_cumul_dist(
         fformat, tpms, base_name, tpm_label, classifier, ascending):
 
     with _saving_new_plot(
-            fformat, [base_name, classifier.name, tpm_label,
+            fformat, ".", [base_name, classifier.name, tpm_label,
                       ("asc" if ascending else "desc"), "distribution"]):
 
         xvals, yvals = t.get_distribution(tpms, classifier, ascending)
@@ -433,25 +435,23 @@ def _get_plot_subdir(parent_dir, *sub_dir_name_elems):
 
 
 def stats_graphs_vs_num_opt_drawer(
-        plot_dir, fformat, grp_option, num_option, stats, plot_file_prefix):
+        plot_dir, fformat, grp_option, num_option, stats):
 
     num_opt_dir = _get_plot_subdir(plot_dir, "by", num_option.name)
 
     def drawer(df, fixed_option_values):
         for stat in stats:
             stat_dir = _get_plot_subdir(num_opt_dir, stat.name)
-            graph_file_basename = os.path.join(stat_dir, plot_file_prefix)
 
             _plot_grouped_stat_vs_mqr_opt(
-                fformat, df, graph_file_basename, stat, grp_option,
+                fformat, df, stat_dir, stat, grp_option,
                 num_option, fixed_option_values)
 
     return drawer
 
 
 def _draw_stats_graphs(
-        fformat, stats_dir, sub_dir, data_frame, opt_vals_set,
-        stats, plot_file_prefix):
+        fformat, stats_dir, sub_dir, data_frame, opt_vals_set, stats):
 
     main_plot_dir = _get_plot_subdir(stats_dir, sub_dir)
 
@@ -466,12 +466,11 @@ def _draw_stats_graphs(
         for num_opt in nondeg_numerical_opts:
             opt_vals_set.exec_for_fixed_option_values_sets(
                 stats_graphs_vs_num_opt_drawer(
-                    option_plot_dir, fformat, option, num_opt,
-                    stats, plot_file_prefix),
+                    option_plot_dir, fformat, option, num_opt, stats),
                 [option, num_opt], data_frame)
 
         for stat in stats:
-            _plot_statistic_boxplot(option_plot_dir, plot_file_prefix, fformat,
+            _plot_statistic_boxplot(option_plot_dir, fformat,
                                     data_frame, stat, option)
 
         all_nondeg_opts = opt_vals_set.get_non_degenerate_options(
@@ -482,8 +481,7 @@ def _draw_stats_graphs(
 
             for stat in stats:
                 _plot_statistic_boxplot(
-                    opt_dir, plot_file_prefix, fformat,
-                    data_frame, stat, option, opt)
+                    opt_dir, fformat, data_frame, stat, option, opt)
 
 
 def draw_quant_res_usage_graphs(
@@ -491,15 +489,14 @@ def draw_quant_res_usage_graphs(
 
     _draw_stats_graphs(
         fformat, stats_dir, RESOURCE_USAGE_DIR, usage_data, opt_vals_set,
-        ru.get_resource_usage_statistics(), "usage")
+        ru.get_resource_usage_statistics())
 
 
 def draw_prequant_res_usage_graphs(fformat, stats_dir, usage_data):
     plot_dir = _get_plot_subdir(stats_dir, RESOURCE_USAGE_DIR)
-    graph_file_basename = os.path.join(plot_dir, "prequant")
 
-    _draw_prequant_time_usage_graph(fformat, graph_file_basename, usage_data)
-    _draw_prequant_mem_usage_graph(fformat, graph_file_basename, usage_data)
+    _draw_prequant_time_usage_graph(fformat, plot_dir, usage_data)
+    _draw_prequant_mem_usage_graph(fformat, plot_dir, usage_data)
 
 
 def draw_overall_stats_graphs(
@@ -509,10 +506,10 @@ def draw_overall_stats_graphs(
     # e.g. the Spearman correlation of calculated and real TPMs graphed as
     # read-depth varies, for each quantification method, in the case of
     # paired-end reads with errors and bias.
-    sub_dir = "overall_{l}_stats_graphs".format(l=tpm_level)
+    sub_dir = "{l}_stats_graphs".format(l=tpm_level)
     _draw_stats_graphs(
         fformat, stats_dir, sub_dir, overall_stats, opt_vals_set,
-        statistics.get_graphable_statistics(), statistics.OVERALL_STATS_PREFIX)
+        statistics.get_graphable_statistics())
 
 
 def grouped_stats_graph_drawer(
@@ -523,11 +520,10 @@ def grouped_stats_graph_drawer(
     def drawer(df, fixed_option_values):
         for stat in statistics.get_graphable_statistics():
             statistic_dir = _get_plot_subdir(option_stats_dir, stat.name)
-            graph_file_basename = os.path.join(statistic_dir, "grouped")
 
             filtered_stats_df = df[num_tpms_filter(df)]
             _plot_grouped_stat_vs_clsfr(
-                fformat, filtered_stats_df, graph_file_basename,
+                fformat, filtered_stats_df, statistic_dir,
                 stat, grp_option, clsfr, fixed_option_values)
 
     return drawer
@@ -549,7 +545,7 @@ def draw_grouped_stats_graphs(fformat, stats_dir, opt_vals_set, threshold):
 
     for clsfr in grp_clsfrs:
         stats_file = statistics.get_stats_file(
-            stats_dir, statistics.OVERALL_STATS_PREFIX, t.TRANSCRIPT, clsfr)
+            stats_dir, None, t.TRANSCRIPT, clsfr)
         clsfr_stats = pd.read_csv(stats_file)
 
         clsfr_dir = _get_plot_subdir(
@@ -558,8 +554,8 @@ def draw_grouped_stats_graphs(fformat, stats_dir, opt_vals_set, threshold):
         stats = statistics.get_graphable_statistics()
 
         for stat in stats:
-            _plot_statistic_boxplot(clsfr_dir, statistics.GROUPED_STATS_PREFIX,
-                                    fformat, clsfr_stats, stat, clsfr)
+            _plot_statistic_boxplot(
+                clsfr_dir, fformat, clsfr_stats, stat, clsfr)
 
         for option in opt_vals_set.get_non_degenerate_options():
             opt_vals_set.exec_for_fixed_option_values_sets(
@@ -571,22 +567,19 @@ def draw_grouped_stats_graphs(fformat, stats_dir, opt_vals_set, threshold):
 
             for stat in stats:
                 _plot_statistic_boxplot(
-                    opt_dir, statistics.GROUPED_STATS_PREFIX, fformat,
-                    clsfr_stats, stat, clsfr, option)
+                    opt_dir, fformat, clsfr_stats, stat, clsfr, option)
                 _plot_statistic_boxplot(
-                    opt_dir, statistics.GROUPED_STATS_PREFIX, fformat,
-                    clsfr_stats, stat, option, clsfr)
+                    opt_dir, fformat, clsfr_stats, stat, option, clsfr)
 
 
 def distribution_stats_graph_drawer(
         plot_dir, fformat, grp_option, clsfr, asc):
 
     option_stats_dir = _get_plot_subdir(plot_dir, "per", grp_option.name)
-    graph_file_basename = os.path.join(option_stats_dir, "distribution")
 
     def drawer(df, fixed_option_values):
         _plot_grouped_cumulative_dist(
-            fformat, df, graph_file_basename, grp_option,
+            fformat, df, option_stats_dir, grp_option,
             clsfr, asc, fixed_option_values)
 
     return drawer
@@ -605,8 +598,7 @@ def draw_distribution_graphs(fformat, stats_dir, opt_vals_set):
 
     for clsfr, asc in itertools.product(dist_clsfrs, [True, False]):
         stats_file = statistics.get_stats_file(
-            stats_dir, statistics.OVERALL_STATS_PREFIX,
-            t.TRANSCRIPT, clsfr, asc)
+            stats_dir, None, t.TRANSCRIPT, clsfr, asc)
         clsfr_stats = pd.read_csv(stats_file)
 
         clsfr_dir = _get_plot_subdir(
