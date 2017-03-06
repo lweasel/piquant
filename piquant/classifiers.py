@@ -40,8 +40,8 @@ class _Classifier(object):
         return str(value)
 
     def get_stats_file_suffix(self, ascending=True):
-        suffix = "_stats" if self.produces_grouped_stats() else \
-            "_distribution_stats_" + ("asc" if ascending else "desc")
+        suffix = "stats" if self.produces_grouped_stats() else \
+            "distribution_stats_" + ("asc" if ascending else "desc")
         suffix += "_by_" + self.name.replace(' ', '_')
         return suffix
 

@@ -209,8 +209,7 @@ class _StatsAccumulator(object):
 
     def write_accumulated_data(self, stats_dir):
         overall_stats_file = statistics.get_stats_file(
-            stats_dir, statistics.OVERALL_STATS_PREFIX,
-            self.tpm_level, self.classifier, self.ascending)
+            stats_dir, None, self.tpm_level, self.classifier, self.ascending)
         statistics.write_stats_data(
             overall_stats_file, self.overall_stats_df, index=False)
 
@@ -236,8 +235,7 @@ class _ResourceUsageAccumulator(object):
 
     def write_accumulated_data(self, stats_dir):
         usage_file_name = ru.get_resource_usage_file(
-            self.resource_type, prefix=ru.OVERALL_USAGE_PREFIX,
-            directory=stats_dir)
+            self.resource_type, None, directory=stats_dir)
         ru.write_usage_summary(usage_file_name, self.resource_usage_df)
 
 
@@ -290,15 +288,13 @@ def _write_accumulated_stats_and_usage(options):
 
 def _get_overall_stats(options, tpm_level):
     overall_stats_file = statistics.get_stats_file(
-        options[po.STATS_DIRECTORY.name],
-        statistics.OVERALL_STATS_PREFIX, tpm_level)
+        options[po.STATS_DIRECTORY.name], None, tpm_level)
     return pd.read_csv(overall_stats_file)
 
 
 def _get_overall_usage(options, resource_type):
     overall_usage_file = ru.get_resource_usage_file(
-        resource_type, prefix=ru.OVERALL_USAGE_PREFIX,
-        directory=options[po.STATS_DIRECTORY.name])
+        resource_type, None, directory=options[po.STATS_DIRECTORY.name])
     return pd.read_csv(overall_usage_file)
 
 

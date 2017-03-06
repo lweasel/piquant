@@ -20,4 +20,4 @@ def read_gtf_file(gtf_file):
 def get_attributes_dict(attributes_str):
     strip_quotes = lambda x: x.replace('"', '')
     return {attr: strip_quotes(val) for attr, val in
-            [av.split() for av in attributes_str.split("; ")]}
+            [av.split(" ", 1) for av in attributes_str.split("; ")]}

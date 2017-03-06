@@ -69,19 +69,19 @@ def test_classifier_get_value_labels_returns_correct_labels():
 
 def test_classifier_get_stats_file_suffix_returns_correct_suffix_for_grouped_stats():
     c = _get_test_classifier(column_name="column name", grouped_stats=True)
-    assert c.get_stats_file_suffix() == "_stats_by_column_name"
+    assert c.get_stats_file_suffix() == "stats_by_column_name"
 
 
 def test_classifier_get_stats_file_suffix_returns_correct_suffix_for_non_grouped_stats_and_ascending_order():
     c = _get_test_classifier(column_name="column name", grouped_stats=False)
     assert c.get_stats_file_suffix(True) == \
-        "_distribution_stats_asc_by_column_name"
+        "distribution_stats_asc_by_column_name"
 
 
 def test_classifier_get_stats_file_suffix_returns_correct_suffix_for_non_grouped_stats_and_descending_order():
     c = _get_test_classifier(column_name="column name", grouped_stats=False)
     assert c.get_stats_file_suffix(False) == \
-        "_distribution_stats_desc_by_column_name"
+        "distribution_stats_desc_by_column_name"
 
 
 def test_levels_classifier_get_classification_value_returns_correct_value():

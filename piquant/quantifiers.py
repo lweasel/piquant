@@ -78,31 +78,33 @@ class _QuantifierBase(object):
 class _Cufflinks(_QuantifierBase):
     FPKM_COLUMN = "FPKM"
 
-    CALC_BOWTIE_INDEX_DIR = \
-        "BOWTIE_INDEX_DIR=$(dirname {bowtie_index})"
-    BOWTIE_INDEX_DIR_DOESNT_EXIST = \
-        "! -d $BOWTIE_INDEX_DIR"
-    MAKE_BOWTIE_INDEX_DIR = \
-        "mkdir -p $BOWTIE_INDEX_DIR"
+    STAR_INDEX_DOESNT_EXIST = \
+        "! -d {star_index}"
+    MAKE_STAR_INDEX_DIR = \
+        "mkdir -p {star_index}"
     GET_GENOME_REF_FASTA_LIST = \
-        "REF_FILES=$(ls -1 {genome_fasta_dir}/*.fa | tr '\\n' ',')"
-    STRIP_LAST_COMMA_FROM_FA_LIST = \
-        "REF_FILES=${REF_FILES%,}"
-    BUILD_BOWTIE_INDEX = \
-        "bowtie-build $REF_FILES {bowtie_index}"
-    CONSTRUCT_BOWTIE_REF_FASTA = \
-        "bowtie-inspect {bowtie_index} > {bowtie_index}.fa"
+        "REF_FILES=$(ls -1 {genome_fasta_dir}/*.fa | tr '\\n' ' ')"
+    CREATE_STAR_INDEX = \
+        "STAR --runThreadN {num_threads} --runMode genomeGenerate " + \
+        "--genomeDir {star_index} --genomeFastaFiles $REF_FILES " + \
+        "--sjdbGTFfile {transcript_gtf} --sjdbOverhang 100 "
+    CONSTRUCT_GENOME_MULTIFASTA = \
+        "cat $REF_FILES > {genome_multifasta}"
 
-    MAP_READS_TO_GENOME_WITH_TOPHAT = \
-        "tophat {stranded_spec} --no-coverage-search -p {num_threads} " + \
-        "-o tho {bowtie_index} {reads_spec}"
+    MAKE_STAR_OUTPUT_DIR = \
+        "mkdir -p star_tmp"
+    MAP_READS_TO_GENOME_WITH_STAR = \
+        "STAR --runThreadN {num_threads} --genomeDir {star_index} " + \
+        "--readFilesIn {reads_spec} --outSAMstrandField intronMotif " + \
+        "--outFilterIntronMotifs RemoveNoncanonical " + \
+        "--outSAMtype BAM SortedByCoordinate --outFileNamePrefix star_tmp/star"
     QUANTIFY_ISOFORM_EXPRESSION = \
-        "cufflinks -o transcriptome -u -b {bowtie_index}.fa " + \
+        "cufflinks -o transcriptome -u -b {genome_multifasta} " + \
         "-p {num_threads} " + "{stranded_spec} -G {transcript_gtf} " + \
-        "tho/accepted_hits.bam"
+        "star_tmp/starAligned.sortedByCoord.out.bam"
 
-    REMOVE_TOPHAT_OUTPUT_DIR = \
-        "rm -rf tho"
+    REMOVE_STAR_OUTPUT_DIR = \
+        "rm -rf star_tmp"
     REMOVE_OUTPUT_EXCEPT_ABUNDANCES = \
         r"find transcriptome \! -name 'isoforms.fpkm_tracking' -type f -delete"
 
@@ -111,39 +113,47 @@ class _Cufflinks(_QuantifierBase):
         return "Cufflinks"
 
     @classmethod
-    def _get_bowtie_index(cls, quantifier_dir):
-        return os.path.join(quantifier_dir, "bowtie-index", "index")
+    def _get_star_index(cls, quantifier_dir):
+        return os.path.join(quantifier_dir, cls.get_name().lower(),
+                            "STAR_index")
+
+    @classmethod
+    def _get_genome_multifasta(cls, quantifier_dir):
+        return os.path.join(quantifier_dir, cls.get_name().lower(),
+                            "genome.fa")
 
     @classmethod
     def write_preparatory_commands(cls, writer, record_usage, params):
         writer.add_comment(
-            "Prepare the bowtie index for read mapping if it doesn't " +
-            "already exist. Note that this step only needs to be done " +
-            "once for a particular reference genome")
+            "Create a STAR index for read mapping if it doesn't already " +
+            "exist. Note that this step only needs to be done once for a " +
+            "particular reference genome.")
 
-        bowtie_index = cls._get_bowtie_index(params[QUANTIFIER_DIRECTORY])
-
-        writer.add_line(cls.CALC_BOWTIE_INDEX_DIR.format(
-            bowtie_index=bowtie_index))
+        quantifier_dir = params[QUANTIFIER_DIRECTORY]
+        star_index = cls._get_star_index(quantifier_dir)
+        genome_multifasta = cls._get_genome_multifasta(quantifier_dir)
 
         with writer.section():
-            with writer.if_block(cls.BOWTIE_INDEX_DIR_DOESNT_EXIST):
-                writer.add_line(cls.MAKE_BOWTIE_INDEX_DIR)
+            with writer.if_block(cls.STAR_INDEX_DOESNT_EXIST.format(
+                    star_index=star_index)):
+                writer.add_line(cls.MAKE_STAR_INDEX_DIR.format(
+                    star_index=star_index))
                 writer.add_line(
                     cls.GET_GENOME_REF_FASTA_LIST.format(
                         genome_fasta_dir=params[GENOME_FASTA_DIR]))
-                writer.add_line(cls.STRIP_LAST_COMMA_FROM_FA_LIST)
-                cls._add_timed_prequantification_command(
-                    writer, record_usage,
-                    cls.BUILD_BOWTIE_INDEX.format(bowtie_index=bowtie_index))
-                cls._add_timed_prequantification_command(
-                    writer, record_usage,
-                    cls.CONSTRUCT_BOWTIE_REF_FASTA.format(
-                        bowtie_index=bowtie_index))
+                writer.add_line(cls.CONSTRUCT_GENOME_MULTIFASTA.format(
+                    genome_multifasta=genome_multifasta))
+                writer.add_line(cls.CREATE_STAR_INDEX.format(
+                    star_index=star_index,
+                    transcript_gtf=params[TRANSCRIPT_GTF_FILE],
+                    num_threads=params[NUM_THREADS]))
 
     @classmethod
     def write_quantification_commands(cls, writer, record_usage, params):
-        bowtie_index = cls._get_bowtie_index(params[QUANTIFIER_DIRECTORY])
+        star_index = cls._get_star_index(params[QUANTIFIER_DIRECTORY])
+
+        genome_multifasta = cls._get_genome_multifasta(
+            params[QUANTIFIER_DIRECTORY])
 
         reads_spec = params[SIMULATED_READS] if SIMULATED_READS in params \
             else "{l} {r}".format(
@@ -153,25 +163,27 @@ class _Cufflinks(_QuantifierBase):
         stranded_spec = "--library-type " + \
             ("fr-secondstrand" if params[STRANDED_READS] else "fr-unstranded")
 
+        writer.add_line(cls.MAKE_STAR_OUTPUT_DIR)
+
         cls._add_timed_quantification_command(
             writer, record_usage,
-            cls.MAP_READS_TO_GENOME_WITH_TOPHAT.format(
-                bowtie_index=bowtie_index,
+            cls.MAP_READS_TO_GENOME_WITH_STAR.format(
+                star_index=star_index,
                 reads_spec=reads_spec,
-                stranded_spec=stranded_spec,
                 num_threads=params[NUM_THREADS]))
+
 
         cls._add_timed_quantification_command(
             writer, record_usage,
             cls.QUANTIFY_ISOFORM_EXPRESSION.format(
-                bowtie_index=bowtie_index,
+                genome_multifasta=genome_multifasta,
                 transcript_gtf=params[TRANSCRIPT_GTF_FILE],
                 stranded_spec=stranded_spec,
                 num_threads=params[NUM_THREADS]))
 
     @classmethod
     def write_cleanup(cls, writer):
-        writer.add_line(cls.REMOVE_TOPHAT_OUTPUT_DIR)
+        writer.add_line(cls.REMOVE_STAR_OUTPUT_DIR)
         writer.add_line(cls.REMOVE_OUTPUT_EXCEPT_ABUNDANCES)
 
     def __init__(self):

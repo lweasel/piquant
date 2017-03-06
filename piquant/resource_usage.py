@@ -4,7 +4,6 @@ import os.path
 
 PREQUANT_RESOURCE_TYPE = "prequant_usage"
 QUANT_RESOURCE_TYPE = "quant_usage"
-OVERALL_USAGE_PREFIX = "overall"
 TIME_USAGE_TYPE = "time"
 MEMORY_USAGE_TYPE = "memory"
 
