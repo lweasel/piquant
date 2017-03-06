@@ -18,7 +18,7 @@ def test_run_in_directory_executes_command_in_directory():
 
         with open(dirname + os.path.sep + 'out.txt') as f:
             path = f.readlines()[0].strip()
-            assert path == dirname
+            assert path == os.path.realpath(dirname)
 
 
 def test_run_in_directory_include_command_line_args():
