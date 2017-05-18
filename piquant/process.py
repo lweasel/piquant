@@ -26,5 +26,7 @@ def run_in_directory(run_dir, command, cl_args=None, nohup=True):
         args = args + cl_args
     if nohup:
         args = ['nohup'] + args
-    subprocess.Popen(args)
+    proc = subprocess.Popen(args)
+    if not nohup:
+        proc.wait()
     os.chdir(cwd)

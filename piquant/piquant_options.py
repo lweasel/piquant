@@ -233,6 +233,12 @@ NO_USAGE = _PiquantOption(
     "gathered for prequantification and quantification, and resource usage " +
     "plots produced.")
 
+RUN_WITH_NOHUP = _PiquantOption(
+    "nohup",
+    "If specified, read simulation and quantification runs will be executed " +
+    "simultaneously as background processes, ignoring hangup signals (via " +
+    "the nohup command.")
+
 NUM_THREADS = _QuantRunOption(
     "num_threads",
     "Number of threads to be used by multi-threaded quantification methods",

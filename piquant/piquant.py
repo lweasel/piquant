@@ -98,7 +98,8 @@ def _create_reads(logger, options, **qr_options):
     run_dir = _get_options_dir(False, options, **qr_options)
     logger.debug("Creating reads in " + run_dir)
 
-    process.run_in_directory(run_dir, './run_simulation.sh')
+    process.run_in_directory(run_dir, './run_simulation.sh',
+                             nohup=options[po.RUN_WITH_NOHUP.name])
 
 
 def _check_reads_created(logger, options, **qr_options):
@@ -126,8 +127,9 @@ def _run_directory_checker(should_exist):
     return check_run_directory
 
 
-def _execute_quantification_script(run_dir, cl_opts):
-    process.run_in_directory(run_dir, './run_quantification.sh', cl_opts)
+def _execute_quantification_script(run_dir, options, cl_opts):
+    process.run_in_directory(run_dir, './run_quantification.sh', cl_opts,
+                             nohup=options[po.RUN_WITH_NOHUP.name])
 
 
 def _prepare_quantification(logger, options, **qr_options):
@@ -165,7 +167,7 @@ def _prequantifier():
         if quant_method not in quantifiers_used:
             quantifiers_used.append(quant_method)
             logger.info("Executing prequantification for " + str(quant_method))
-            _execute_quantification_script(run_dir, ["-p"])
+            _execute_quantification_script(run_dir, options, ["-p"])
             time.sleep(1)
 
     return prequantify
@@ -175,7 +177,7 @@ def _quantify(logger, options, **qr_options):
     run_dir = _get_options_dir(True, options, **qr_options)
 
     logger.info("Executing shell script to run quantification analysis.")
-    _execute_quantification_script(run_dir, ["-qa"])
+    _execute_quantification_script(run_dir, options, ["-qa"])
 
 
 def _check_quantification_completed(logger, options, **qr_options):

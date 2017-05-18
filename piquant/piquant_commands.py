@@ -80,7 +80,8 @@ CREATE_READS = _PiquantCommand(
     "as a background process, ignoring hangup signals (via the nohup " +
     "command). After launching the scripts, piquant exits.",
     [po.READS_OUTPUT_DIR, po.OPTIONS_FILE, po.READ_LENGTH, po.READ_DEPTH,
-     po.PAIRED_END, po.ERRORS, po.BIAS, po.STRANDED, po.NOISE_DEPTH_PERCENT])
+     po.PAIRED_END, po.ERRORS, po.BIAS, po.STRANDED, po.NOISE_DEPTH_PERCENT,
+     po.RUN_WITH_NOHUP])
 
 CHECK_READS = _PiquantCommand(
     "check_reads",
@@ -126,7 +127,7 @@ PREQUANTIFY = _PiquantCommand(
     "index for the genome, or creating transcript FASTA sequences",
     [po.QUANT_OUTPUT_DIR, po.OPTIONS_FILE, po.READ_LENGTH, po.READ_DEPTH,
      po.PAIRED_END, po.ERRORS, po.BIAS, po.STRANDED, po.QUANT_METHOD,
-     po.NOISE_DEPTH_PERCENT])
+     po.NOISE_DEPTH_PERCENT, po.RUN_WITH_NOHUP])
 
 QUANTIFY = _PiquantCommand(
     "quantify",
@@ -140,7 +141,7 @@ QUANTIFY = _PiquantCommand(
     "nohup command). After launching the scripts, piquant exits.",
     [po.READS_OUTPUT_DIR, po.QUANT_OUTPUT_DIR, po.OPTIONS_FILE, po.READ_LENGTH,
      po.READ_DEPTH, po.PAIRED_END, po.ERRORS, po.BIAS, po.STRANDED,
-     po.QUANT_METHOD, po.NOISE_DEPTH_PERCENT])
+     po.QUANT_METHOD, po.NOISE_DEPTH_PERCENT, po.RUN_WITH_NOHUP])
 
 CHECK_QUANTIFICATION = _PiquantCommand(
     "check_quant",
