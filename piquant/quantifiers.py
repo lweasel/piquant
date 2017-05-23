@@ -380,8 +380,9 @@ class _Express(_TranscriptomeBasedQuantifierBase):
 
 @_quantifier
 class _Sailfish(_TranscriptomeBasedQuantifierBase):
+    # add --perfectHash to reduce the required memory in quantification process
     CREATE_TRANSCRIPT_INDEX = \
-        "sailfish index -p {num_threads} -t {ref_name}.transcripts.fa " + \
+        "sailfish index --perfectHash -p {num_threads} -t {ref_name}.transcripts.fa " + \
         "-o {index_dir}"
 
     QUANTIFY_ISOFORM_EXPRESSION = \
@@ -474,12 +475,15 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
 
 @_quantifier
 class _Salmon(_TranscriptomeBasedQuantifierBase):
+    # remove --type quasi as it is now the default type for Salmon
     CREATE_SALMON_TRANSCRIPT_INDEX = \
-        "salmon index -t {ref_name}.transcripts.fa -i {index_dir} --type quasi"
+        "salmon index -t {ref_name}.transcripts.fa -i {index_dir}"
 
+    # add --seqBias flag to enable sequence-specific bias
+    # specify library type as -l A Salmon would automaticcaly detect the library type
     QUANTIFY_ISOFORM_EXPRESSION = \
-        "salmon quant -p {num_threads} -i {index_dir} -l " + \
-        "{library_spec} {reads_spec} -o ."
+        "salmon quant --seqBias -p {num_threads} -i {index_dir} -l A " + \
+        "{reads_spec} -o ."
     FILTER_COMMENT_LINES = [
         r"grep -v '^# \[\|salmon' quant.sf",
         "sed -e 's/# //'i > .quant_tmp"
@@ -524,9 +528,6 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
     def write_quantification_commands(cls, writer, record_usage, params):
         index_dir = cls._get_index_dir(params[QUANTIFIER_DIRECTORY])
 
-        library_spec = "" if SIMULATED_READS in params else "I"
-        library_spec += "SF" if params[STRANDED_READS] else "U"
-
         reads_spec = "-r {r}".format(r=params[SIMULATED_READS]) \
             if SIMULATED_READS in params \
             else "-1 {l} -2 {r}".format(
@@ -537,7 +538,6 @@ class _Salmon(_TranscriptomeBasedQuantifierBase):
             writer, record_usage,
             cls.QUANTIFY_ISOFORM_EXPRESSION.format(
                 index_dir=index_dir,
-                library_spec=library_spec,
                 reads_spec=reads_spec,
                 num_threads=params[NUM_THREADS]))
 
@@ -565,7 +565,7 @@ class _Kallisto(_TranscriptomeBasedQuantifierBase):
 
     QUANTIFY_ISOFORM_EXPRESSION = \
         "kallisto quant -i {index_file} -t {num_threads} --bias -o output " + \
-        "{length_spec} {reads_spec}"
+        "{length_spec} {length_sd} {reads_spec}"
 
     REMOVE_OUTPUT_EXCEPT_ABUNDANCES = \
         "rm output/abundance.h5 output/run_info.json"
@@ -606,6 +606,9 @@ class _Kallisto(_TranscriptomeBasedQuantifierBase):
 
         length_spec = "-l 200" if SIMULATED_READS in params else ""
 
+        # add -s, required for single end
+        length_sd = "-s 20" if SIMULATED_READS in params else ""
+
         reads_spec = "--single {s}".format(s=params[SIMULATED_READS]) \
             if SIMULATED_READS in params else \
             "{l} {r}".format(
@@ -617,6 +620,7 @@ class _Kallisto(_TranscriptomeBasedQuantifierBase):
             cls.QUANTIFY_ISOFORM_EXPRESSION.format(
                 index_file=index_file,
                 length_spec=length_spec,
+                length_sd=length_sd,
                 reads_spec=reads_spec,
                 num_threads=params[NUM_THREADS]))
 
