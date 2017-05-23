@@ -19,7 +19,8 @@ def _get_test_options(output_dir):
         po.PLOT_FORMAT.name: "pdf",
         po.GROUPED_THRESHOLD.name: 3000,
         po.ERROR_FRACTION_THRESHOLD.name: 10,
-        po.NOT_PRESENT_CUTOFF.name: 0.1
+        po.NOT_PRESENT_CUTOFF.name: 0.1,
+        po.RUN_WITH_NOHUP.name: True
     }
 
 
