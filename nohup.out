@@ -1,0 +1,44 @@
+Obtaining file:///home/yshen/projects/piquant
+  Running setup.py (path:/home/yshen/projects/piquant/setup.py) egg_info for package from file:///home/yshen/projects/piquant
+    
+Requirement already satisfied (use --upgrade to upgrade): Cython==0.20.1 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): Jinja2==2.7.2 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): MarkupSafe==0.23 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): Pygments==1.6 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): Sphinx==1.2.2 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): argparse==1.2.1 in /usr/lib/python2.7 (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): docopt==0.6.1 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): docutils==0.11 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): matplotlib==1.4.1 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): pandas==0.13.0 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): py==1.4.20 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): pyparsing==2.0.2 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): pytest==2.5.2 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): python-dateutil==2.2 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): pytz==2014.2 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): schema==0.3.1 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): scipy==0.13.3 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): seaborn==0.6.0 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): six==1.9 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): numpy>=1.6 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from matplotlib==1.4.1->piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): nose>=0.11.1 in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from matplotlib==1.4.1->piquant==1.1.0)
+Requirement already satisfied (use --upgrade to upgrade): mock in /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages (from matplotlib==1.4.1->piquant==1.1.0)
+Installing collected packages: piquant
+  Running setup.py develop for piquant
+    
+    Creating /home/yshen/.virtualenvs/piquant/lib/python2.7/site-packages/piquant.egg-link (link to .)
+    piquant 1.1.0 is already the active version in easy-install.pth
+    Installing analyse_quantification_run script to /home/yshen/.virtualenvs/piquant/bin
+    Installing assemble_quantification_data script to /home/yshen/.virtualenvs/piquant/bin
+    Installing calculate_reads_for_depth script to /home/yshen/.virtualenvs/piquant/bin
+    Installing calculate_unique_transcript_sequence script to /home/yshen/.virtualenvs/piquant/bin
+    Installing count_transcripts_for_genes script to /home/yshen/.virtualenvs/piquant/bin
+    Installing fix_antisense_reads script to /home/yshen/.virtualenvs/piquant/bin
+    Installing piquant script to /home/yshen/.virtualenvs/piquant/bin
+    Installing randomise_read_strands script to /home/yshen/.virtualenvs/piquant/bin
+    Installing simulate_read_bias script to /home/yshen/.virtualenvs/piquant/bin
+    Installing fasta_to_fastq script to /home/yshen/.virtualenvs/piquant/bin
+    
+    Installed /home/yshen/projects/piquant
+Successfully installed piquant
+Cleaning up...
