@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+import piquant.fasta_to_fastq as entry_point
+import sys
+
+entry_point.fasta_to_fastq(sys.argv[1:])
