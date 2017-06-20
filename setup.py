@@ -41,6 +41,7 @@ setup(
         'bin/fix_antisense_reads',
         'bin/piquant',
         'bin/randomise_read_strands',
-        'bin/simulate_read_bias'
+        'bin/simulate_read_bias',
+        'bin/fasta_to_fastq'
     ]
 )
