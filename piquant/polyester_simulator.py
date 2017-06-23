@@ -228,9 +228,9 @@ def _write_read_simulation_R_script(
 
 
 def _write_read_simulation_R_scripts(
-        reads_dir,read_depth = 10, read_length = 100,
-        paired_end = False, errors = False, stranded = False,
-        bias=True, noise_perc=20):
+        reads_dir,read_depth, read_length,
+        paired_end, errors, stranded,
+        bias, noise_perc):
     _write_read_simulation_R_script(
             reads_dir, read_depth, read_length,
             paired_end, errors, stranded,
