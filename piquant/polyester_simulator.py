@@ -6,7 +6,6 @@ from . import file_writer as fw
 
 MAIN_TRANSCRIPTS = "main"
 NOISE_TRANSCRIPTS = "noise"
-TRANSCRIPT_FILE = "polyester.transcripts.fa"
 LIBRARY_LIST = ["Biostrings","dplyr","readr","polyester"]
 PROFILE_DATA_VARIABLE = "pro_data"
 TRANSCRIPT_ID_COLUMN_VARIABLE = "Transcript_ID"
@@ -70,8 +69,13 @@ def get_simulated_reads_file(paired_end=None):
     return reads_file
 
 
-def _get_polyester_simulator_file(transcript_set):
+def get_polyester_simulator_file(transcript_set):
     return "polyester_simulator_{trans_set}.R".format(
+            trans_set=transcript_set)
+
+
+def get_polyester_reference_file(transcript_set):
+    return "polyester_{trans_set}.transcripts.fa".format(
             trans_set=transcript_set)
 
 
@@ -85,10 +89,11 @@ def _add_library(writer):
     writer.add_library(LIBRARY_LIST)
 
 
-def _get_variables(
+def get_variables(
         reads_dir,read_depth, read_length, paired_end,
         errors, stranded, bias, noise_perc, transcript_set):
     pro_file = get_flux_expression_profile(transcript_set)
+    TRANSCRIPT_FILE = get_polyester_reference_file(transcript_set)
     bias_model = "rnaf" if bias else "none"
     params_dict = {
             READ_DEPTH_VARIABLE: read_depth,
@@ -111,6 +116,8 @@ def _get_variables(
         params_dict[PERCENTAGE_VARIABLE] = round(noise_perc,2)/100
     else:
         params_dict[PERCENTAGE_VARIABLE] = 1
+    if paired_end:
+        params_dict[READ_DEPTH_VARIABLE] = read_depth/2
     return params_dict
 
 
@@ -118,7 +125,7 @@ def _add_variables(writer,reads_dir,read_depth, read_length,
         paired_end, errors, stranded, bias, noise_perc, transcript_set):
     writer._add_line("")
     writer.add_comment("Set sequencing parameters and file names")
-    my_vars = _get_variables(
+    my_vars = get_variables(
             reads_dir, read_depth, read_length, paired_end,
             errors, stranded, bias, noise_perc, transcript_set)
     for var,val in my_vars.items():
@@ -211,7 +218,7 @@ def _add_simulation_run(writer,errors):
 def _write_read_simulation_R_script(
         reads_dir,read_depth, read_length, paired_end,
         errors, stranded, bias, noise_perc, transcript_set):
-    with fw.writing_to_file(fw.RScriptWriter,reads_dir,_get_polyester_simulator_file(transcript_set)) as writer:
+    with fw.writing_to_file(fw.RScriptWriter,reads_dir,get_polyester_simulator_file(transcript_set)) as writer:
         _add_top_comment(writer)
         _add_library(writer)
         _add_variables(
