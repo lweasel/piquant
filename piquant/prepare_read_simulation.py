@@ -34,14 +34,27 @@ def _add_create_expression_profiles(writer, noise_perc):
         _add_create_expression_profile(writer, fs.NOISE_TRANSCRIPTS)
 
 
-def _add_create_transcript_reference(writer, transcript_gtf_file, genome_fasta_dir):
+def _add_create_transcript_reference(
+        writer, transcript_gtf, genome_fasta_dir, transcript_set):
+    writer.add_comment(
+                 "Prepare the {trans_set} transcript reference using rsem-prepare-reference from RSEM".format(trans_set=transcript_set))
+    reference_file = "polyester_" + transcript_set
+    my_command = "rsem-prepare-reference --gtf {gtf} {fasta} {ref_file}".format(
+            gtf=transcript_gtf, fasta=genome_fasta_dir, ref_file=reference_file)
+    writer.add_line(my_command)
+    my_command = "rm *.chrlist *.grp *.idx.fa *.seq *.ti"
+    writer.add_line(my_command)
+
+
+def _add_create_transcript_references(
+        writer, transcript_gtf, genome_fasta_dir,
+        noise_transcript_gtf, noise_perc):
     writer.add_line("")
-    writer.add_comment("Prepare the transcript reference using rsem-prepare-reference from RSEM")
-    my_command = "rsem-prepare-reference --gtf {gtf} {fasta} polyester".format(
-            gtf=transcript_gtf_file,fasta=genome_fasta_dir)
-    writer.add_line(my_command)
-    my_command = "rm *.chrlist *.grp polyester.idx.fa polyester.n2g.idx.fa *.seq *.ti"
-    writer.add_line(my_command)
+    _add_create_transcript_reference(
+            writer, transcript_gtf, genome_fasta_dir, fs.MAIN_TRANSCRIPTS)
+    if noise_perc != 0:
+        _add_create_transcript_reference(
+                writer, noise_transcript_gtf, genome_fasta_dir, fs.NOISE_TRANSCRIPTS)
 
 
 def _add_create_ps_temp_dir(writer):
@@ -54,7 +67,7 @@ def _add_run_simulation(writer,transcript_set):
     writer.add_line("")
     writer.add_comment(
             "Run the {trans_set} polyester simulation".format(trans_set=transcript_set))
-    writer.add_line("R --no-save < " + ps._get_polyester_simulator_file(transcript_set))
+    writer.add_line("R --no-save < " + ps.get_polyester_simulator_file(transcript_set))
 
 
 def _add_rename(writer,old_name,new_name):
@@ -120,6 +133,25 @@ def _add_convert_fasta_file(writer, fasta_file,fastq_file):
             "fasta_to_fastq {fasta_file} {fastq_file}".format(fasta_file=fasta_file,fastq_file=fastq_file))
 
 
+def _add_shuffle_reads(writer, isPairedEnd,fastq_file_1, fastq_file_2 = None):
+    writer.add_line("")
+    writer.add_comment("Some isoform quantifiers require reads to be presented in a random order, hence we shuffle the reads output by Polyeser.")
+    if isPairedEnd:
+        writer.add_line(
+                r"paste {file1} {file2} | paste - - - - | shuf > reads_shuf.out".format(file1 = fastq_file_1,file2=fastq_file_2))
+        writer.add_line(
+                r"cut -f1,3,5,7 reads_shuf.out | tr '\t' '\n' > {file1}".format(file1=fastq_file_1,file2=fastq_file_2))
+        writer.add_line(
+                r"cut -f2,4,6,8 reads_shuf.out | tr '\t' '\n' > {file2}".format(file1=fastq_file_1, file2=fastq_file_2))
+        writer.add_line(
+                "rm reads_shuf.out")
+    else:
+        writer.add_line(
+                r"paste - - - - < {file1} | shuf | tr '\t' '\n' > reads_final.tmp".format(file1=fastq_file_1))
+        writer.add_line(
+                r"mv reads_final.tmp {file1}".format(file1 = fastq_file_1))
+
+
 def _add_process_reads(writer, paired_end, noise_perc):
     if noise_perc != 0:
         writer.add_line("")
@@ -142,6 +174,7 @@ def _add_process_reads(writer, paired_end, noise_perc):
             writer.add_comment("Convert the FASTA reads files to FASTQ reads files")
             _add_convert_fasta_file(writer,left_reads,left_reads_fastq)
             _add_convert_fasta_file(writer,right_reads,right_reads_fastq)
+            _add_shuffle_reads(writer, True, left_reads_fastq, right_reads_fastq)
         else:
             main_reads = ps.get_reads_file(FASTA, None, True, fs.MAIN_TRANSCRIPTS)
             noise_reads = ps.get_reads_file(FASTA, None, True, fs.NOISE_TRANSCRIPTS)
@@ -152,6 +185,7 @@ def _add_process_reads(writer, paired_end, noise_perc):
             writer.add_line("")
             writer.add_comment("Convert the FASTA reads file to FASTQ reads file")
             _add_convert_fasta_file(writer,reads,reads_fastq)
+            _add_shuffle_reads(writer, False, reads_fastq)
     else:
         if paired_end:
             left_reads = ps.get_reads_file(FASTA, 1)
@@ -162,12 +196,14 @@ def _add_process_reads(writer, paired_end, noise_perc):
             writer.add_comment("Convert the FASTA reads files to FASTQ reads files")
             _add_convert_fasta_file(writer,left_reads,left_reads_fastq)
             _add_convert_fasta_file(writer,right_reads,right_reads_fastq)
+            _add_shuffle_reads(writer, True, left_reads_fastq, right_reads_fastq)
         else:
             reads = ps.get_reads_file(FASTA)
             reads_fastq = ps.get_reads_file(FASTQ)
             writer.add_line("")
             writer.add_comment("Convert the FASTA reads file to FASTQ reads file")
             _add_convert_fasta_file(writer,reads,reads_fastq)
+            _add_shuffle_reads(writer, False, reads_fastq)
 
 
 def _add_remove_fs_temp_dir(writer):
@@ -177,14 +213,16 @@ def _add_remove_fs_temp_dir(writer):
 
 
 def _write_read_simulation_Bash_script(
-        reads_dir, transcript_gtf_file, genome_fasta_dir,
-        paired_end,noise_perc):
+        reads_dir, transcript_gtf, noise_transcript_gtf,
+        genome_fasta_dir, paired_end, noise_perc):
     with fw.writing_to_file(
             fw.BashScriptWriter,reads_dir,RUN_SCRIPT) as writer:
         _add_create_fs_temp_dir(writer)
         _add_create_expression_profiles(writer, noise_perc)
         _add_remove_fs_temp_dir(writer)
-        _add_create_transcript_reference(writer, transcript_gtf_file, genome_fasta_dir)
+        _add_create_transcript_references(
+                         writer, transcript_gtf, genome_fasta_dir,
+                         noise_transcript_gtf, noise_perc)
         _add_run_simulations(writer, paired_end, noise_perc)
         _add_process_reads(writer, paired_end, noise_perc)
 
@@ -204,8 +242,8 @@ def create_simulation_files(
             num_noise_molecules, reads_dir)
     # write shell script
     _write_read_simulation_Bash_script(
-            reads_dir, transcript_gtf, genome_fasta,
-            paired_end,noise_perc)
+            reads_dir, transcript_gtf, noise_transcript_gtf,
+            genome_fasta, paired_end,noise_perc)
     # write polyester simulator R scripts
     ps._write_read_simulation_R_scripts(
         reads_dir, read_depth, read_length, paired_end,
