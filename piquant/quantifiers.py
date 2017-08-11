@@ -196,6 +196,8 @@ class _Cufflinks(_QuantifierBase):
                 "transcriptome/isoforms.fpkm_tracking",
                 delim_whitespace=True, index_col="tracking_id")
 
+            self.abundances = self.abundances[self.abundances["length"] > 300]
+
             self.norm_constant = \
                 1000000 / (self.abundances[_Cufflinks.FPKM_COLUMN].sum())
 
@@ -385,8 +387,9 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
         "sailfish index --perfectHash -p {num_threads} -t {ref_name}.transcripts.fa " + \
         "-o {index_dir}"
 
+    # add --biasCorrect to enable bias correction
     QUANTIFY_ISOFORM_EXPRESSION = \
-        "sailfish quant -p {num_threads} -i {index_dir} -l {library_spec} " + \
+        "sailfish quant --biasCorrect -p {num_threads} -i {index_dir} -l {library_spec} " + \
         "{reads_spec} -o ."
 
     # Avoid deprecated bias correction
@@ -476,8 +479,9 @@ class _Sailfish(_TranscriptomeBasedQuantifierBase):
 @_quantifier
 class _Salmon(_TranscriptomeBasedQuantifierBase):
     # remove --type quasi as it is now the default type for Salmon
+    # add --perfectHash to reduce the required memory in quantification process
     CREATE_SALMON_TRANSCRIPT_INDEX = \
-        "salmon index -t {ref_name}.transcripts.fa -i {index_dir}"
+        "salmon index --perfectHash -t {ref_name}.transcripts.fa -i {index_dir}"
 
     # add --seqBias flag to enable sequence-specific bias
     # specify library type as -l A Salmon would automaticcaly detect the library type
