@@ -68,6 +68,7 @@ def _validate_command_line_options(options):
 
 def _read_expression_profiles(pro_file):
     profiles = fs.read_expression_profiles(pro_file)
+    profiles = profiles[profiles[fs.PRO_FILE_LENGTH_COL] > 300]
     profiles[tpms.REAL_TPM] = \
         profiles[fs.PRO_FILE_FRAC_COL].map(lambda x: 1000000 * x)
     return profiles
