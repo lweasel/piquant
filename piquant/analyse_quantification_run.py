@@ -214,6 +214,10 @@ def _prepare_data(transcript_tpms, gene_tpms, not_present_cutoff, logger):
     logger.info("Calculating TPM log ratios...")
     t.calculate_log_ratios(transcript_tpms, gene_tpms)
 
+    # Calculate relative difference between calculated and real TPMs
+    logger.info("Calculating TPM relative difference...")
+    t.calculate_relative_difference(transcript_tpms, gene_tpms)
+
     # Apply various classification measures to the transcript TPM data
     logger.info("Applying classifiers...")
     t.apply_classifiers(transcript_tpms, classifiers.get_classifiers())
