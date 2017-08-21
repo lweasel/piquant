@@ -62,12 +62,13 @@ PREPARE_READ_DIRS = _PiquantCommand(
     "'error', 'bias', 'stranded' and 'noise-perc', and each directory is " +
     "named according to its particular set of sequencing parameters. A " +
     "run_simulation.sh bash script is written to each directory which, when " +
-    "executed, will use the FluxSimulator RNA-seq read simulator to " +
+    "executed, will use the chosen 'simulator' to " +
     "simulate reads for the appropriate combination of sequencing parameters.",
     [po.READS_OUTPUT_DIR, po.NUM_MOLECULES, po.NUM_NOISE_MOLECULES,
      po.NO_CLEANUP, po.OPTIONS_FILE, po.READ_LENGTH, po.READ_DEPTH,
      po.PAIRED_END, po.ERRORS, po.BIAS, po.STRANDED, po.NOISE_DEPTH_PERCENT,
-     po.TRANSCRIPT_GTF, po.NOISE_TRANSCRIPT_GTF, po.GENOME_FASTA_DIR])
+     po.TRANSCRIPT_GTF, po.NOISE_TRANSCRIPT_GTF, po.GENOME_FASTA_DIR,
+     po.SIMULATOR])
 
 CREATE_READS = _PiquantCommand(
     "create_reads",

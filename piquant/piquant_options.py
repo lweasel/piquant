@@ -247,6 +247,15 @@ NUM_THREADS = _QuantRunOption(
         validator=lambda x: opt.validate_int_option(
             x, "Number of threads must be a positive integer", min_val=1)))
 
+SIMULATORS = ["Flux","Polyester"]
+SIMULATOR = _PiquantOption(
+    "simulator",
+    "Simulator used to simulate RNA-seq reads (one of {simulators})".format(simulators = SIMULATORS),
+    option_value=_OptionValue(
+        default_value="Flux",
+        validator=lambda x: opt.validate_list_option(
+                x,SIMULATORS,"Invalid simulator")))
+
 QUANT_METHOD = _MultiQuantRunOption(
     "quant_method",
     "Comma-separated list of quantification methods to run",

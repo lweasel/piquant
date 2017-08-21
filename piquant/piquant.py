@@ -12,7 +12,8 @@ from . import piquant_commands as pc
 from . import piquant_options as po
 from . import plot
 from . import prepare_quantification_run as prq
-from . import prepare_read_simulation as prs
+from . import prepare_read_simulation_flux as prsf
+from . import prepare_read_simulation_polyester as prsp
 from . import process
 from . import resource_usage as ru
 from . import statistics
@@ -74,8 +75,8 @@ def _prepare_read_simulation(logger, options, **qr_options):
     Write bash script and support files to perform RNA-seq read simulation.
 
     Write a bash script and support files such that when the bash script is
-    executed, Flux Simulator will be used to simulate RNA-seq reads for the
-    quantification run options encapsulated by 'qr_options'.
+    executed, the chosen simulator will be used to simulate RNA-seq reads
+    for the quantification run options encapsulated by 'qr_options'.
 
     logger: Logs messages to standard error.
     options: A dictionary mapping from piquant command line option names to
@@ -91,8 +92,10 @@ def _prepare_read_simulation(logger, options, **qr_options):
     cleanup = not options[po.NO_CLEANUP.name]
     logger.debug("Creating simulation files in " + reads_dir)
 
-    prs.create_simulation_files(reads_dir, cleanup, **qr_options)
-
+    if options["simulator"] == "Flux":
+        prsf.create_simulation_files(reads_dir, cleanup, **qr_options)
+    else:
+        prsp.create_simulation_files(reads_dir, cleanup, **qr_options)
 
 def _create_reads(logger, options, **qr_options):
     run_dir = _get_options_dir(False, options, **qr_options)
