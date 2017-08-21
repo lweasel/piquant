@@ -308,3 +308,65 @@ class _Specificity(_BaseStatistic):
 
     def stat_range(self, vals_range):
         return _rounded_stat_range(vals_range)
+
+
+@_statistic
+class _MedianRelativeDifference(_BaseStatistic):
+    # Calculate the median of the relative difference between the calculated
+    # TPMs to the real TPMs, for those transcripts with none-zero of the sum
+    def __init__(self):
+        _BaseStatistic.__init__(
+                self, "median-relative-difference", "Median relative difference")
+
+    @staticmethod
+    def _calculate(tpms):
+        tpms = tpms[(tpms[t.REAL_TPM] + tpms[t.CALCULATED_TPM]) > 0]
+        return tpms[t.RELATIVE_DIFFERENCE].median()
+
+    def calculate(self, tpms, expressed_tpms):
+        return _MedianRelativeDifference._calculate(tpms)
+
+    def calculate_grouped(self, grouped, grp_summary,
+            expressed_grouped, expressed_grp_summary):
+        stats = expressed_grp_summary[t.RELATIVE_DIFFERENCE].unstack()
+        return stats[_SUMMARY_MEDIAN]
+
+    def stat_range(self, vals_range):
+        division = 5.0
+        closest_div = lambda x: math.floor(x / division) * division
+        ymin, ymax = vals_range
+        if ymin > 0 and ymax > 0:
+            return (0, closest_div(ymax) + division)
+        elif ymin < 0 and ymax < 0:
+            return (closest_div(ymin), 0)
+        else:
+            return (closest_div(ymin), closest_div(ymax) + division)
+
+
+@_statistic
+class _F1Score(_BaseStatistic):
+    # Calculate the F1 score of the transcript quantification method
+    def __init__(self):
+        _BaseStatistic.__init__(self, "f1-score", "F1 score")
+
+    @staticmethod
+    def _calculate(tpms):
+        num_tp = len(
+                tpms[(tpms[t.REAL_TPM] > 0) & (tpms[t.CALCULATED_TPM] > 0)])
+        num_fp = len(
+                tpms[(tpms[t.REAL_TPM] == 0) & (tpms[t.CALCULATED_TPM] > 0)])
+        num_fn = len(
+                tpms[(tpms[t.REAL_TPM] > 0) & (tpms[t.CALCULATED_TPM] == 0)])
+        if (2*num_tp + num_fp + num_fn) == 0:
+            return 1
+        return 2*float(num_tp)/(2*num_tp + num_fp + num_fn)
+
+    def calculate(self, tpms, expressed_tpms):
+        return _F1Score._calculate(tpms)
+
+    def calculate_grouped(self, grouped, grp_summary,
+            expressed_grouped, expressed_grp_summary):
+        return grouped.apply(_F1Score._calculate)
+
+    def stat_range(self, vals_range):
+        return _rounded_stat_range(vals_range)
