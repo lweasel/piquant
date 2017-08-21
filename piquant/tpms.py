@@ -13,6 +13,7 @@ LOG10_REAL_TPM = "log10-real-tpm"
 LOG10_CALCULATED_TPM = "log10-calc-tpm"
 LOG10_RATIO = "log-ratio"
 NON_ZERO_PERCENTAGE = "non-zero-perc"
+RELATIVE_DIFFERENCE = "relative-difference"
 
 CUMULATIVE_DISTRIBUTION_POINTS = 20
 
@@ -43,6 +44,12 @@ def calculate_log_ratios(*tpm_sets):
         tpms[LOG10_CALCULATED_TPM] = np.log10(tpms[CALCULATED_TPM])
         tpms[LOG10_RATIO] = \
             tpms[LOG10_CALCULATED_TPM] - tpms[LOG10_REAL_TPM]
+
+
+def calculate_relative_difference(*tpm_sets):
+    for tpm in tpm_sets:
+        tpm[RELATIVE_DIFFERENCE] = \
+                2*(tpm[CALCULATED_TPM] - tpm[REAL_TPM])/(tpm[CALCULATED_TPM] + tpm[REAL_TPM])
 
 
 def apply_classifiers(tpms, classifiers):
