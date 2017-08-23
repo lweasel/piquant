@@ -26,6 +26,34 @@ FLUX_UNIQUE_SEQUENCE_LENGTH <- read_csv("data/flux/transcript_stats_by_unique_se
 POLYESTER_UNIQUE_SEQUENCE_LENGTH <- read_csv("data/polyester/transcript_stats_by_unique_sequence_length.csv")
 FLUX_UNIQUE_SEQUENCE_PERCENTAGE <- read_csv("data/flux/transcript_stats_by_unique_sequence_percentage.csv")
 POLYESTER_UNIQUE_SEQUENCE_PERCENTAGE <- read_csv("data/polyester/transcript_stats_by_unique_sequence_percentage.csv")
+FLUX_GENE_SPECIFICITY <- read_csv("data/flux/gene_specificity.csv")
+FLUX_GENE_SENSITIVITY <- read_csv("data/flux/gene_sensitivity.csv")
+FLUX_GENE_LOG_TPM_RHO <- read_csv("data/flux/gene_log-tpm-rho.csv")
+FLUX_GENE_ERROR_FRAC <- read_csv("data/flux/gene_error-frac.csv")
+FLUX_GENE_MEDIAN_PERCENT_ERROR <- read_csv("data/flux/gene_median-percent-error.csv")
+FLUX_GENE_EXPRESSED_TPMS <- read_csv("data/flux/gene_expressed-tpms.csv")
+
+FLUX_TRANSCRIPT_SPECIFICITY <- read_csv("data/flux/transcript_specificity.csv")
+FLUX_TRANSCRIPT_SENSITIVITY <- read_csv("data/flux/transcript_sensitivity.csv")
+FLUX_TRANSCRIPT_LOG_TPM_RHO <- read_csv("data/flux/transcript_log-tpm-rho.csv")
+FLUX_TRANSCRIPT_ERROR_FRAC <- read_csv("data/flux/transcript_error-frac.csv")
+FLUX_TRANSCRIPT_MEDIAN_PERCENT_ERROR <- read_csv("data/flux/transcript_median-percent-error.csv")
+FLUX_TRANSCRIPT_EXPRESSED_TPMS <- read_csv("data/flux/transcript_expressed-tpms.csv")
+
+POLYESTER_GENE_SPECIFICITY <- read_csv("data/polyester/gene_specificity.csv")
+POLYESTER_GENE_SENSITIVITY <- read_csv("data/polyester/gene_sensitivity.csv")
+POLYESTER_GENE_LOG_TPM_RHO <- read_csv("data/polyester/gene_log-tpm-rho.csv")
+POLYESTER_GENE_ERROR_FRAC <- read_csv("data/polyester/gene_error-frac.csv")
+POLYESTER_GENE_MEDIAN_PERCENT_ERROR <- read_csv("data/polyester/gene_median-percent-error.csv")
+POLYESTER_GENE_EXPRESSED_TPMS <- read_csv("data/polyester/gene_expressed-tpms.csv")
+
+POLYESTER_TRANSCRIPT_SPECIFICITY <- read_csv("data/polyester/transcript_specificity.csv")
+POLYESTER_TRANSCRIPT_SENSITIVITY <- read_csv("data/polyester/transcript_sensitivity.csv")
+POLYESTER_TRANSCRIPT_LOG_TPM_RHO <- read_csv("data/polyester/transcript_log-tpm-rho.csv")
+POLYESTER_TRANSCRIPT_ERROR_FRAC <- read_csv("data/polyester/transcript_error-frac.csv")
+POLYESTER_TRANSCRIPT_MEDIAN_PERCENT_ERROR <- read_csv("data/polyester/transcript_median-percent-error.csv")
+POLYESTER_TRANSCRIPT_EXPRESSED_TPMS <- read_csv("data/polyester/transcript_expressed-tpms.csv")
+
 FLUX <- "Flux Simulator"
 flux <- "flux"
 POLYESTER <- "Polyester"
@@ -105,6 +133,18 @@ my_data <- function(dataset) {
 }
 
 
+my_data_without_quant_method <- function(dataset){
+  dataset$bias <- as.factor(dataset$bias)
+  dataset$errors <- as.factor(dataset$errors)
+  dataset$noise_perc <- as.factor(dataset$noise_perc)
+  dataset$paired_end <- as.factor(dataset$paired_end)
+  dataset$read_depth <-  as.factor(dataset$read_depth)
+  dataset$read_length <- as.factor(dataset$read_length)
+  dataset$stranded <- as.factor(dataset$stranded)
+  dataset
+}
+
+
 my_prequant_data <- function(dataset){
   dataset$quant_method <- as.factor(data$quant_method)
   dataset
@@ -158,10 +198,35 @@ POLYESTER_UNIQUE_SEQUENCE_LENGTH = my_grouped_data(POLYESTER_UNIQUE_SEQUENCE_LEN
 FLUX_UNIQUE_SEQUENCE_PERCENTAGE = my_grouped_data(FLUX_UNIQUE_SEQUENCE_PERCENTAGE,UNIQUE_SEQUENCE_PERCENTAGE)
 POLYESTER_UNIQUE_SEQUENCE_PERCENTAGE = my_grouped_data(POLYESTER_UNIQUE_SEQUENCE_PERCENTAGE,UNIQUE_SEQUENCE_PERCENTAGE)
 
+FLUX_GENE_SPECIFICITY <- my_data_without_quant_method(FLUX_GENE_SPECIFICITY)
+FLUX_GENE_SENSITIVITY <- my_data_without_quant_method(FLUX_GENE_SENSITIVITY)
+FLUX_GENE_LOG_TPM_RHO <- my_data_without_quant_method(FLUX_GENE_LOG_TPM_RHO)
+FLUX_GENE_ERROR_FRAC <- my_data_without_quant_method(FLUX_GENE_ERROR_FRAC)
+FLUX_GENE_MEDIAN_PERCENT_ERROR <- my_data_without_quant_method(FLUX_GENE_MEDIAN_PERCENT_ERROR)
+FLUX_GENE_EXPRESSED_TPMS <- my_data_without_quant_method(FLUX_GENE_EXPRESSED_TPMS)
+FLUX_TRANSCRIPT_SPECIFICITY <- my_data_without_quant_method(FLUX_TRANSCRIPT_SPECIFICITY)
+FLUX_TRANSCRIPT_SENSITIVITY <- my_data_without_quant_method(FLUX_TRANSCRIPT_SENSITIVITY)
+FLUX_TRANSCRIPT_LOG_TPM_RHO <- my_data_without_quant_method(FLUX_TRANSCRIPT_LOG_TPM_RHO)
+FLUX_TRANSCRIPT_ERROR_FRAC <- my_data_without_quant_method(FLUX_TRANSCRIPT_ERROR_FRAC)
+FLUX_TRANSCRIPT_MEDIAN_PERCENT_ERROR <- my_data_without_quant_method(FLUX_TRANSCRIPT_MEDIAN_PERCENT_ERROR)
+FLUX_TRANSCRIPT_EXPRESSED_TPMS <- my_data_without_quant_method(FLUX_TRANSCRIPT_EXPRESSED_TPMS)
+POLYESTER_GENE_SPECIFICITY <- my_data_without_quant_method(POLYESTER_GENE_SPECIFICITY)
+POLYESTER_GENE_SENSITIVITY <- my_data_without_quant_method(POLYESTER_GENE_SENSITIVITY)
+POLYESTER_GENE_LOG_TPM_RHO <- my_data_without_quant_method(POLYESTER_GENE_LOG_TPM_RHO)
+POLYESTER_GENE_ERROR_FRAC <- my_data_without_quant_method(POLYESTER_GENE_ERROR_FRAC)
+POLYESTER_GENE_MEDIAN_PERCENT_ERROR <- my_data_without_quant_method(POLYESTER_GENE_MEDIAN_PERCENT_ERROR)
+POLYESTER_GENE_EXPRESSED_TPMS <- my_data_without_quant_method(POLYESTER_GENE_EXPRESSED_TPMS)
+POLYESTER_TRANSCRIPT_SPECIFICITY <- my_data_without_quant_method(POLYESTER_TRANSCRIPT_SPECIFICITY)
+POLYESTER_TRANSCRIPT_SENSITIVITY <- my_data_without_quant_method(POLYESTER_TRANSCRIPT_SENSITIVITY)
+POLYESTER_TRANSCRIPT_LOG_TPM_RHO <- my_data_without_quant_method(POLYESTER_TRANSCRIPT_LOG_TPM_RHO)
+POLYESTER_TRANSCRIPT_ERROR_FRAC <- my_data_without_quant_method(POLYESTER_TRANSCRIPT_ERROR_FRAC)
+POLYESTER_TRANSCRIPT_MEDIAN_PERCENT_ERROR <- my_data_without_quant_method(POLYESTER_TRANSCRIPT_MEDIAN_PERCENT_ERROR)
+POLYESTER_TRANSCRIPT_EXPRESSED_TPMS <- my_data_without_quant_method(POLYESTER_TRANSCRIPT_EXPRESSED_TPMS)
+
 
 get_data <-
-  function(simulator,
-           dataname,
+  function(pre_dataname,
+           suf_dataname,
            bias_list = BIAS_LIST,
            errors_list = ERROR_LIST,
            noise_perc_list = NOISE_PERC_LIST,
@@ -170,7 +235,7 @@ get_data <-
            read_depth_list = READ_DEPTH_LIST,
            read_length_list = READ_LENGTH_LIST,
            stranded_list = STRANDED_LIST) {
-    dataname <- paste(simulator, dataname, sep = "_")
+    dataname <- paste(pre_dataname, suf_dataname, sep = "_")
     dataset <-
       switch(
         dataname,
@@ -189,22 +254,57 @@ get_data <-
         "flux_Unique Sequence Length" = FLUX_UNIQUE_SEQUENCE_LENGTH,
         "polyester_Unique Sequence Length" = POLYESTER_UNIQUE_SEQUENCE_LENGTH,
         "flux_Unique Sequence Percentage" = FLUX_UNIQUE_SEQUENCE_PERCENTAGE,
-        "polyester_Unique Sequence Percentage" = POLYESTER_UNIQUE_SEQUENCE_PERCENTAGE
+        "polyester_Unique Sequence Percentage" = POLYESTER_UNIQUE_SEQUENCE_PERCENTAGE,
+        "flux_gene_specificity" = FLUX_GENE_SPECIFICITY,
+        "flux_gene_sensitivity" = FLUX_GENE_SENSITIVITY,
+        "flux_gene_error-frac" = FLUX_GENE_ERROR_FRAC,
+        "flux_gene_log-tpm-rho" = FLUX_GENE_LOG_TPM_RHO,
+        "flux_gene_median-percent-error" = FLUX_GENE_MEDIAN_PERCENT_ERROR,
+        "flux_gene_expressed-tpms" = FLUX_GENE_EXPRESSED_TPMS,
+        "polyester_gene_specificity" = POLYESTER_GENE_SPECIFICITY,
+        "polyester_gene_sensitivity" = POLYESTER_GENE_SENSITIVITY,
+        "polyester_gene_error-frac" = POLYESTER_GENE_ERROR_FRAC,
+        "polyester_gene_log-tpm-rho" = POLYESTER_GENE_LOG_TPM_RHO,
+        "polyester_gene_median-percent-error" = POLYESTER_GENE_MEDIAN_PERCENT_ERROR,
+        "polyester_gene_expressed-tpms" = POLYESTER_GENE_EXPRESSED_TPMS,
+        "flux_transcript_specificity" = FLUX_TRANSCRIPT_SPECIFICITY,
+        "flux_transcript_sensitivity" = FLUX_TRANSCRIPT_SENSITIVITY,
+        "flux_transcript_error-frac" = FLUX_TRANSCRIPT_ERROR_FRAC,
+        "flux_transcript_log-tpm-rho" = FLUX_TRANSCRIPT_LOG_TPM_RHO,
+        "flux_transcript_median-percent-error" = FLUX_TRANSCRIPT_MEDIAN_PERCENT_ERROR,
+        "flux_transcript_expressed-tpms" = FLUX_TRANSCRIPT_EXPRESSED_TPMS,
+        "polyester_transcript_specificity" = POLYESTER_TRANSCRIPT_SPECIFICITY,
+        "polyester_transcript_sensitivity" = POLYESTER_TRANSCRIPT_SENSITIVITY,
+        "polyester_transcript_error-frac" = POLYESTER_TRANSCRIPT_ERROR_FRAC,
+        "polyester_transcript_log-tpm-rho" = POLYESTER_TRANSCRIPT_LOG_TPM_RHO,
+        "polyester_transcript_median-percent-error" = POLYESTER_TRANSCRIPT_MEDIAN_PERCENT_ERROR,
+        "polyester_transcript_expressed-tpms" = POLYESTER_TRANSCRIPT_EXPRESSED_TPMS
       )
-    dataset <-
-      dataset[(dataset$bias %in% bias_list) &
-                (dataset$errors %in% errors_list) &
-                (dataset$noise_perc %in% noise_perc_list) &
-                (dataset$paired_end %in% paired_end_list) &
-                (dataset$quant_method %in% quant_method_list) &
-                (dataset$read_depth %in% read_depth_list) &
-                (dataset$read_length %in% read_length_list) &
-                (dataset$stranded %in% stranded_list), ]
+    if(length(quant_method_list) == length(QUANT_METHOD_LIST)){
+      dataset <- 
+        dataset[(dataset$bias %in% bias_list) &
+                  (dataset$errors %in% errors_list) &
+                  (dataset$noise_perc %in% noise_perc_list) &
+                  (dataset$paired_end %in% paired_end_list) &
+                  (dataset$read_depth %in% read_depth_list) &
+                  (dataset$read_length %in% read_length_list) &
+                  (dataset$stranded %in% stranded_list), ]
+    }else{
+      dataset <-
+        dataset[(dataset$bias %in% bias_list) &
+                  (dataset$errors %in% errors_list) &
+                  (dataset$noise_perc %in% noise_perc_list) &
+                  (dataset$paired_end %in% paired_end_list) &
+                  (dataset$quant_method %in% quant_method_list) &
+                  (dataset$read_depth %in% read_depth_list) &
+                  (dataset$read_length %in% read_length_list) &
+                  (dataset$stranded %in% stranded_list), ]
+    }
   }
 
 
-get_all_data <- function(simulator, dataname) {
-  dataname <- paste(simulator, dataname, sep = "_")
+get_all_data <- function(simulator, level) {
+  dataname <- paste(simulator, level, sep = "_")
   dataset <-
     switch(
       dataname,
@@ -277,7 +377,13 @@ my_par_convert <- function(simulator,
       "transcript length" = dataset$`transcript length`,
       "unique sequence length" = dataset$`unique sequence length`,
       "unique sequence percentage" = dataset$`unique sequence percentage`,
-      "grouped" = dataset$`grouped`
+      "grouped" = dataset$`grouped`,
+      "Cufflinks" = dataset$`Cufflinks`,
+      "Express" = dataset$`Express`,
+      "RSEM" = dataset$`RSEM`,
+      "Kallisto" = dataset$`Kallisto`,
+      "Sailfish" = dataset$`Sailfish`,
+      "Salmon" = dataset$`Salmon`
     )
 }
 
@@ -573,11 +679,250 @@ simulation_compares_of_simulators <-
   }
 
 
+quantifier_compare <-
+  function(
+    simulator,
+    level,
+    stat,
+    isGroupBy,
+    grouped_by,
+    quantifier1,
+    quantifier2,
+    bias_list,
+    errors_list,
+    noise_perc_list,
+    paired_end_list,
+    read_depth_list,
+    read_length_list,
+    stranded_list
+  ){
+    data_name <- paste(simulator,level,sep = "_")
+    dataset <- get_data(data_name,stat,bias_list,
+                        errors_list,
+                        noise_perc_list,
+                        paired_end_list,
+                        QUANT_METHOD_LIST,
+                        read_depth_list,
+                        read_length_list,
+                        stranded_list)
+    quantifier_x <- my_par_convert(data_name,
+                                  stat,
+                                  quantifier1,
+                                  bias_list,
+                                  errors_list,
+                                  noise_perc_list,
+                                  paired_end_list,
+                                  QUANT_METHOD_LIST,
+                                  read_depth_list,
+                                  read_length_list,
+                                  stranded_list)
+    quantifier_y <- my_par_convert(data_name,
+                                  stat,
+                                  quantifier2,
+                                  bias_list,
+                                  errors_list,
+                                  noise_perc_list,
+                                  paired_end_list,
+                                  QUANT_METHOD_LIST,
+                                  read_depth_list,
+                                  read_length_list,
+                                  stranded_list)
+    if (isGroupBy){
+      grouped_by_par <- my_par_convert(data_name,
+                                   stat,
+                                   grouped_by,
+                                   bias_list,
+                                   errors_list,
+                                   noise_perc_list,
+                                   paired_end_list,
+                                   QUANT_METHOD_LIST,
+                                   read_depth_list,
+                                   read_length_list,
+                                   stranded_list)
+      p <- ggplot(dataset,aes(quantifier_x,quantifier_y)) +
+        geom_point(aes(colour = grouped_by_par)) + 
+        scale_colour_hue(name = grouped_by)
+    }else{
+      p <- ggplot(dataset,aes(quantifier_x,quantifier_y)) +
+        geom_point()
+    }
+    p <- p + 
+      xlab(quantifier1)+ylab(quantifier2) +
+      geom_smooth(method=lm) +
+      ggtitle(level) +
+      theme(plot.title = element_text(hjust = 0.5)) +
+      theme_bw()
+    p
+  }
+
+
+quantifier_compares <- 
+  function(simulator,
+           stat,
+           isGroupBy,
+           grouped_by,
+           quantifier1,
+           quantifier2,
+           bias_list,
+           errors_list,
+           noise_perc_list,
+           paired_end_list,
+           read_depth_list,
+           read_length_list,
+           stranded_list){
+    gene_plot <- quantifier_compare(
+      simulator,
+      GENE,
+      stat,
+      isGroupBy,
+      grouped_by,
+      quantifier1,
+      quantifier2,
+      bias_list,
+      errors_list,
+      noise_perc_list,
+      paired_end_list,
+      read_depth_list,
+      read_length_list,
+      stranded_list
+    )
+    transcript_plot <- quantifier_compare(
+      simulator,
+      TRANSCRIPT,
+      stat,
+      isGroupBy,
+      grouped_by,
+      quantifier1,
+      quantifier2,
+      bias_list,
+      errors_list,
+      noise_perc_list,
+      paired_end_list,
+      read_depth_list,
+      read_length_list,
+      stranded_list
+    )
+    title_simulator <- switch(simulator,"flux" = FLUX,"polyetser" = POLYESTER)
+    plot_grid(gene_plot,
+              transcript_plot,
+              ncol = 1,
+              nrow = 2) + ggtitle(title_simulator)
+  }
+
+
+quantifier_compares_of_simulators <- 
+  function(simulator_list,
+           stat,
+           isGroupBy,
+           grouped_by,
+           quantifier1,
+           quantifier2,
+           bias_list,
+           errors_list,
+           noise_perc_list,
+           paired_end_list,
+           read_depth_list,
+           read_length_list,
+           stranded_list){
+  if (length(simulator_list) == 2){
+    flux_plots <- quantifier_compares(flux,
+                                      stat,
+                                      isGroupBy,
+                                      grouped_by,
+                                      quantifier1,
+                                      quantifier2,
+                                      bias_list,
+                                      errors_list,
+                                      noise_perc_list,
+                                      paired_end_list,
+                                      read_depth_list,
+                                      read_length_list,
+                                      stranded_list)
+    polyester_plots <- quantifier_compares(polyester,
+                                           stat,
+                                           isGroupBy,
+                                           grouped_by,
+                                           quantifier1,
+                                           quantifier2,
+                                           bias_list,
+                                           errors_list,
+                                           noise_perc_list,
+                                           paired_end_list,
+                                           read_depth_list,
+                                           read_length_list,
+                                           stranded_list)
+    plot_grid(flux_plots,
+              polyester_plots,
+              ncol = 2,
+              nrow = 1)
+  } else if (length(simulator_list) == 1){
+    simulator <-
+      switch(simulator_list,
+             "Flux Simulator" = flux,
+             "Polyester" = polyester)
+    quantifier_compares(simulator,stat,isGroupBy,
+                        grouped_by,
+                        quantifier1,
+                        quantifier2,
+                        bias_list,
+                        errors_list,
+                        noise_perc_list,
+                        paired_end_list,
+                        read_depth_list,
+                        read_length_list,
+                        stranded_list)
+  }
+  }
+
+
+prequantification_usage_plot <- 
+  function(simulator, stat){
+    dataset <- switch(simulator,
+                      "flux" = FLUX_PREQUANTIFICATION_USAGE,
+                      "polyester" = POLYESTER_PREQUANTIFICATION_USAGE)
+    my_stat <- switch(stat,
+                   "max-memory" = dataset$`max-memory`,
+                   "real-time" = dataset$`real-time`,
+                   "sys-time" = dataset$`sys-time`,
+                   "user-time" = dataset$`user-time`)
+    title_simulator <- switch(simulator,
+                              "flux" = FLUX,
+                              "polyester" = POLYESTER)
+    p <- ggplot(dataset) +
+      geom_bar(aes(quant_method,my_stat),stat = "identity", fill = 'light blue') +
+      ggtitle(title_simulator) +
+      xlab("quant_method") +
+      ylab(stat) +
+      theme(plot.title = element_text(hjust = 0.5)) +
+      theme_bw()
+    p
+  }
+
+
+prequantification_usage_plots <- 
+  function(simulator_list, stat){
+    if (length(simulator_list) == 1){
+      simulator <-
+        switch(simulator_list,
+               "Flux Simulator" = flux,
+               "Polyester" = polyester)
+      prequantification_usage_plot(simulator, stat)
+    }else if (length(simulator_list == 2)){
+      flux_plot <- prequantification_usage_plot(flux, stat)
+      polyester_plot <- prequantification_usage_plot(polyester, stat)
+      plot_grid(flux_plot,
+                polyester_plot,
+                ncol = 2,
+                nrow = 1)
+    }
+  }
+
+
 get_gene_transcript_raw_data_table <-
-  function(simulator_list, dataname) {
+  function(simulator_list, level) {
+    stat_name <-
+      switch(level, "Genes" = GENE, "Transcripts" = TRANSCRIPT)
     if (length(simulator_list) == 2) {
-      stat_name <-
-        switch(dataname, "Genes" = GENE, "Transcripts" = TRANSCRIPT)
       flux_data <- get_all_data(flux, stat_name)
       polyester_data <- get_all_data(polyester, stat_name)
       flux_data$simulator <- FLUX
@@ -588,8 +933,6 @@ get_gene_transcript_raw_data_table <-
         switch(simulator_list,
                "Flux Simulator" = flux,
                "Polyester" = polyester)
-      stat_name <-
-        switch(dataname, "Genes" = GENE, "Transcripts" = TRANSCRIPT)
       get_all_data(simulator, stat_name)
     }
   }
@@ -637,6 +980,70 @@ get_grouped_raw_data_table <- function(simulator_list,grouped_by){
     dataset
   }
 }
+
+
+get_quantifier_correlation_raw_table <- function(simulator_list,level,measurement){
+  level <-
+    switch(level, "Genes" = GENE, "Transcripts" = TRANSCRIPT)
+  if (length(simulator_list) == 2) {
+    flux_data <- get_data(pre_dataname = paste(flux,level,sep = "_"),
+                          suf_dataname = measurement,
+                          BIAS_LIST,
+                          ERROR_LIST,
+                          NOISE_PERC_LIST,
+                          PAIRED_END_LIST,
+                          QUANT_METHOD_LIST,
+                          READ_DEPTH_LIST,
+                          READ_LENGTH_LIST,
+                          STRANDED_LIST)
+    polyester_data <- get_data(pre_dataname = paste(polyester,level,sep = "_"),
+                               suf_dataname = measurement,
+                               bias_list = BIAS_LIST,
+                               errors_list = ERROR_LIST,
+                               noise_perc_list = NOISE_PERC_LIST,
+                               paired_end_list = PAIRED_END_LIST,
+                               QUANT_METHOD_LIST,
+                               read_depth_list = READ_DEPTH_LIST,
+                               read_length_list = READ_LENGTH_LIST,
+                               stranded_list = STRANDED_LIST)
+    flux_data$simulator <- FLUX
+    polyester_data$simulator <- POLYESTER
+    my_data <- rbind(flux_data, polyester_data)
+    my_data
+  } else if (length(simulator_list) == 1) {
+    simulator <-
+      switch(simulator_list,
+             "Flux Simulator" = flux,
+             "Polyester" = polyester)
+    my_data <- get_data(paste(simulator,level,sep = "_"),
+                        measurement,
+                        BIAS_LIST,
+                        ERROR_LIST,
+                        NOISE_PERC_LIST,
+                        PAIRED_END_LIST,
+                        QUANT_METHOD_LIST,
+                        READ_DEPTH_LIST,
+                        READ_LENGTH_LIST,
+                        STRANDED_LIST)
+    my_data
+  }
+}
+
+
+get_prequantification_raw_table <-
+  function(simulator_list){
+    if (length(simulator_list) == 1){
+      my_data <- switch(simulator_list,
+                               "Flux Simulator" = FLUX_PREQUANTIFICATION_USAGE,
+                               "Polyester" = POLYESTER_PREQUANTIFICATION_USAGE)
+    }else if (length(simulator_list) == 2){
+      flux_data <- FLUX_PREQUANTIFICATION_USAGE
+      polyester_data <- POLYESTER_PREQUANTIFICATION_USAGE
+      flux_data$simulator <- FLUX
+      polyester_data$simulator <- POLYESTER
+      my_data <- rbind(flux_data, polyester_data)
+    }
+  }
 
 
 shinyServer(function(input, output) {
@@ -942,6 +1349,138 @@ shinyServer(function(input, output) {
     )
   })
   
+  output$correlation_between_quantifiers_specificity <- renderPlot({
+    quantifier_compares_of_simulators(
+      input$simulator,
+      SPECIFICITY,
+      input$quant_correlation_group,
+      input$quantifier_group_by,
+      input$quantifier_parameter1,
+      input$quantifier_parameter2,
+      input$quantification_bias,
+      input$quantification_errors,
+      input$quantification_noise_perc,
+      input$quantification_paired_end,
+      input$quantification_read_depth,
+      input$quantification_read_length,
+      input$quantification_stranded
+    )
+  })
+  
+  output$correlation_between_quantifiers_sensitivity <- renderPlot({
+    quantifier_compares_of_simulators(
+      input$simulator,
+      SENSITIVITY,
+      input$quant_correlation_group,
+      input$quantifier_group_by,
+      input$quantifier_parameter1,
+      input$quantifier_parameter2,
+      input$quantification_bias,
+      input$quantification_errors,
+      input$quantification_noise_perc,
+      input$quantification_paired_end,
+      input$quantification_read_depth,
+      input$quantification_read_length,
+      input$quantification_stranded
+    )
+  })
+  
+  output$correlation_between_quantifiers_error_frac <- renderPlot({
+    quantifier_compares_of_simulators(
+      input$simulator,
+      ERROR_FRAC,
+      input$quant_correlation_group,
+      input$quantifier_group_by,
+      input$quantifier_parameter1,
+      input$quantifier_parameter2,
+      input$quantification_bias,
+      input$quantification_errors,
+      input$quantification_noise_perc,
+      input$quantification_paired_end,
+      input$quantification_read_depth,
+      input$quantification_read_length,
+      input$quantification_stranded
+    )
+  })
+  
+  output$correlation_between_quantifiers_log_tpm_rho <- renderPlot({
+    quantifier_compares_of_simulators(
+      input$simulator,
+      LOG_TPM_RHO,
+      input$quant_correlation_group,
+      input$quantifier_group_by,
+      input$quantifier_parameter1,
+      input$quantifier_parameter2,
+      input$quantification_bias,
+      input$quantification_errors,
+      input$quantification_noise_perc,
+      input$quantification_paired_end,
+      input$quantification_read_depth,
+      input$quantification_read_length,
+      input$quantification_stranded
+    )
+  })
+  
+  output$correlation_between_quantifiers_median_percent_error <- renderPlot({
+    quantifier_compares_of_simulators(
+      input$simulator,
+      MEDIAN_PERCENT_ERROR,
+      input$quant_correlation_group,
+      input$quantifier_group_by,
+      input$quantifier_parameter1,
+      input$quantifier_parameter2,
+      input$quantification_bias,
+      input$quantification_errors,
+      input$quantification_noise_perc,
+      input$quantification_paired_end,
+      input$quantification_read_depth,
+      input$quantification_read_length,
+      input$quantification_stranded
+    )
+  })
+  
+  output$correlation_between_quantifiers_expressed_tpms <- renderPlot({
+    quantifier_compares_of_simulators(
+      input$simulator,
+      EXPRESSED_TPMS,
+      input$quant_correlation_group,
+      input$quantifier_group_by,
+      input$quantifier_parameter1,
+      input$quantifier_parameter2,
+      input$quantification_bias,
+      input$quantification_errors,
+      input$quantification_noise_perc,
+      input$quantification_paired_end,
+      input$quantification_read_depth,
+      input$quantification_read_length,
+      input$quantification_stranded
+    )
+  })
+  
+  output$pre_max_memory <- renderPlot({
+    prequantification_usage_plots(
+      input$simulator,
+      MAX_MEMORY)
+  })
+  
+  output$pre_real_time <- renderPlot({
+    prequantification_usage_plots(
+      input$simulator,
+      REAL_TIME)
+  })
+  
+  output$pre_sys_time <- renderPlot({
+    prequantification_usage_plots(
+      input$simulator,
+      SYS_TIME)
+  })
+  
+  output$pre_user_time <- renderPlot({
+    prequantification_usage_plots(
+      input$simulator,
+      USER_TIME)
+  })
+  
   output$gene_transcript_raw_data <- renderDataTable({
     get_gene_transcript_raw_data_table(input$simulator, input$stat_set)
   })
@@ -950,6 +1489,34 @@ shinyServer(function(input, output) {
   })
   output$grouped_raw_data <- renderDataTable({
     get_grouped_raw_data_table(input$simulator,input$grouped_by)
+  })
+  
+  output$correlation_between_quantifiers_specificity_raw_data <- renderDataTable({
+    get_quantifier_correlation_raw_table(input$simulator,input$stat_set,SPECIFICITY)
+  })
+  
+  output$correlation_between_quantifiers_sensitivity_raw_data <- renderDataTable({
+    get_quantifier_correlation_raw_table(input$simulator,input$stat_set,SENSITIVITY)
+  })
+  
+  output$correlation_between_quantifiers_error_frac_raw_data <- renderDataTable({
+    get_quantifier_correlation_raw_table(input$simulator,input$stat_set,ERROR_FRAC)
+  })
+  
+  output$correlation_between_quantifiers_expressed_tpms_raw_data <- renderDataTable({
+    get_quantifier_correlation_raw_table(input$simulator,input$stat_set,EXPRESSED_TPMS)
+  })
+  
+  output$correlation_between_quantifiers_log_tpm_rho_raw_data <- renderDataTable({
+    get_quantifier_correlation_raw_table(input$simulator,input$stat_set,LOG_TPM_RHO)
+  })
+  
+  output$correlation_between_quantifiers_median_percent_error_raw_data <- renderDataTable({
+    get_quantifier_correlation_raw_table(input$simulator,input$stat_set,MEDIAN_PERCENT_ERROR)
+  })
+  
+  output$prequantification_resource_usage_raw_data <- renderDataTable({
+    get_prequantification_raw_table(input$simulator)
   })
   
 

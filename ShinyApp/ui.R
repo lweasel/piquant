@@ -1,5 +1,6 @@
 library(shiny)
 
+
 PAR_LIST <-
   c(
     "bias",
@@ -7,6 +8,16 @@ PAR_LIST <-
     "noise_perc",
     "paired_end",
     "quant_method",
+    "read_depth",
+    "read_length",
+    "stranded"
+  )
+QUANT_METHOD_COR_GROUP_LIST <- 
+  c(
+    "bias",
+    "errors",
+    "noise_perc",
+    "paired_end",
     "read_depth",
     "read_length",
     "stranded"
@@ -32,7 +43,8 @@ INTEREST_LIST <-
     "Prequantification Resource Usage",
     "Quantification Resource Usage",
     "Distribution Stats",
-    "Grouped Stats"
+    "Grouped Stats",
+    "Correlation Between Quantifiers"
   )
 SUB_GOAL_LIST <- c("Plots", "Raw Data")
 GROUP_BY_LIST <- c("Gene Transcript Number",
@@ -96,7 +108,7 @@ shinyUI(fluidPage(
             )
           ),
           conditionalPanel(
-            condition = "input.goal != 'Grouped Stats' & input.plot_or_data_button == 'Plots'",
+            condition = "input.goal != 'Grouped Stats' & input.plot_or_data_button == 'Plots' & input.goal != 'Correlation Between Quantifiers' & input.goal != 'Prequantification Resource Usage' ",
             wellPanel(
               selectInput(
                 inputId = "simulation_parameter1",
@@ -131,17 +143,42 @@ shinyUI(fluidPage(
              )
            )
          ),
-       conditionalPanel(condition = "input.goal == 'Genes&Transcripts Stats' & input.plot_or_data_button == 'Raw Data'",
-                           wellPanel(
-                             radioButtons(
-                               "stat_set",
-                               label = "Choose a property",
-                               inline = TRUE,
-                               choices = SET_LIST
-                             )
-                           )
+      conditionalPanel(
+        condition = "input.goal == 'Genes&Transcripts Stats' | input.goal == 'Correlation Between Quantifiers' & input.plot_or_data_button == 'Raw Data'",
+        wellPanel(radioButtons(
+          "stat_set",
+          label = "Choose a property",
+          inline = TRUE,
+          choices = SET_LIST
+        ))
+      ), 
+      conditionalPanel(
+        condition = "input.goal == 'Correlation Between Quantifiers' & input.plot_or_data_button == 'Plots'",
+        wellPanel(
+          selectInput(
+            inputId = "quantifier_parameter1",
+            label = "Choose a quantifier",
+            choices = QUANT_METHOD_LIST,
+            selected = QUANT_METHOD_LIST[4]
+          ),
+          selectInput(
+            inputId = "quantifier_parameter2",
+            label = "Choose another quantifier",
+            choices = QUANT_METHOD_LIST,
+            selected = QUANT_METHOD_LIST[6]
+          ),
+            checkboxInput("quant_correlation_group", label = "Group data?"),
+            conditionalPanel(
+              condition = "input.quant_correlation_group",
+              selectInput(
+                inputId = "quantifier_group_by",
+                label = "Group by:",
+                choices = QUANT_METHOD_COR_GROUP_LIST,
+                selected = QUANT_METHOD_COR_GROUP_LIST[3]
+              )
+            )
+        )
       ),
-      
       conditionalPanel(
         condition = "input.goal != 'Prequantification Resource Usage' & input.plot_or_data_button == 'Plots'",
         tags$h3("Data Filter"),
@@ -174,12 +211,15 @@ shinyUI(fluidPage(
             choices = PAIRED_END_LIST,
             selected = PAIRED_END_LIST
           ),
-          checkboxGroupInput(
-            "quantification_quant_method",
-            label = "Quantification method: ",
-            inline = TRUE,
-            choices = QUANT_METHOD_LIST,
-            selected = QUANT_METHOD_LIST
+          conditionalPanel(
+            condition = "input.goal != 'Correlation Between Quantifiers'",
+            checkboxGroupInput(
+              "quantification_quant_method",
+              label = "Quantification method: ",
+              inline = TRUE,
+              choices = QUANT_METHOD_LIST,
+              selected = QUANT_METHOD_LIST
+            )
           ),
           checkboxGroupInput(
             "quantification_read_length",
@@ -275,12 +315,9 @@ shinyUI(fluidPage(
         )
       ),
       conditionalPanel(
-        condition = "input.goal == 'Preuantification Resource Usage' & input.plot_or_data_button == 'Raw Data'",
+        condition = "input.goal == 'Prequantification Resource Usage' & input.plot_or_data_button == 'Raw Data'",
         id = "prequantification_resource_usage_raw_data_page",
-        div(
-          dataTableOutput("prequantification_resource_usage_raw_data"),
-          style = "font-size:80%"
-        )
+        dataTableOutput("prequantification_resource_usage_raw_data")
       ),
       
       # grouped stats page
@@ -308,6 +345,45 @@ shinyUI(fluidPage(
         condition = "input.goal == 'Grouped Stats' & input.plot_or_data_button == 'Raw Data'",
         id = "grouped_raw_data_page",
         div(dataTableOutput("grouped_raw_data"), style = "font-size:80%")
+      ),
+      
+      # correlation between quantifiers page
+      conditionalPanel(
+        condition = "input.goal == 'Correlation Between Quantifiers' & input.plot_or_data_button == 'Plots'",
+        id = "correlation_between_quantifiers_plot_page",
+        tabsetPanel(
+          tabPanel("Specificity",
+                   plotOutput("correlation_between_quantifiers_specificity", width = "auto", height = "500px")),
+          tabPanel("Sensitivity",
+                   plotOutput("correlation_between_quantifiers_sensitivity", width = "auto", height = "500px")),
+          tabPanel("Error fraction",
+                   plotOutput("correlation_between_quantifiers_error_frac", width = "auto", height = "500px")),
+          tabPanel("Expressed tpms",
+                   plotOutput("correlation_between_quantifiers_expressed_tpms", width = "auto", height = "500px")),
+          tabPanel("Spearman's rho",
+                   plotOutput("correlation_between_quantifiers_log_tpm_rho", width = "auto", height = "500px")),
+          tabPanel("Median percent error",
+                   plotOutput("correlation_between_quantifiers_median_percent_error", width = "auto", height = "500px"))
+        )
+      ),
+      
+      conditionalPanel(
+        condition = "input.goal == 'Correlation Between Quantifiers' & input.plot_or_data_button == 'Raw Data'",
+        id = "Correlation_Between_Quantifiers_raw_data_page",
+        tabsetPanel(
+          tabPanel("Specificity",
+                   div(dataTableOutput("correlation_between_quantifiers_specificity_raw_data"), style = "font-size:80%")),
+          tabPanel("Sensitivity",
+                   div(dataTableOutput("correlation_between_quantifiers_sensitivity_raw_data"), style = "font-size:80%")),
+          tabPanel("Error fraction",
+                   div(dataTableOutput("correlation_between_quantifiers_error_frac_raw_data"), style = "font-size:80%")),
+          tabPanel("Expressed tpms",
+                   div(dataTableOutput("correlation_between_quantifiers_expressed_tpms_raw_data"), style = "font-size:80%")),
+          tabPanel("Spearman's rho",
+                   div(dataTableOutput("correlation_between_quantifiers_log_tpm_rho_raw_data"), style = "font-size:80%")),
+          tabPanel("Median percent error",
+                   div(dataTableOutput("correlation_between_quantifiers_median_percent_error_raw_data"), style = "font-size:80%"))
+        )
       )
     )
   )
