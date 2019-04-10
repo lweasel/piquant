@@ -13,7 +13,7 @@ setup(
     packages=['piquant'],
     install_requires=[
         'Cython==0.20.1',
-        'Jinja2==2.7.2',
+        'Jinja2>=2.10.1'
         'MarkupSafe==0.23',
         'Pygments==1.6',
         'Sphinx==1.2.2',
