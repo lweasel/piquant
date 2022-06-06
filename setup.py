@@ -23,7 +23,7 @@ setup(
         'matplotlib==1.4.1',
         'numpy==1.10.4',
         'pandas==0.13.0',
-        'py==1.4.20',
+        'py==1.10.0',
         'pyparsing==2.0.2',
         'pytest==2.5.2',
         'python-dateutil==2.2',
