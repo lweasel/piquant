@@ -21,7 +21,7 @@ setup(
         'docopt==0.6.1',
         'docutils==0.11',
         'matplotlib==1.4.1',
-        'numpy==1.10.4',
+        'numpy==1.21.0',
         'pandas==0.13.0',
         'py==1.10.0',
         'pyparsing==2.0.2',
