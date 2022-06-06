@@ -15,7 +15,7 @@ setup(
         'Cython==0.20.1',
         'Jinja2>=2.10.1',
         'MarkupSafe==0.23',
-        'Pygments==1.6',
+        'Pygments==2.7.4',
         'Sphinx==1.2.2',
         'argparse==1.2.1',
         'docopt==0.6.1',
